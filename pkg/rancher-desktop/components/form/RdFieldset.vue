@@ -60,7 +60,7 @@ export default defineComponent({
           v-tooltip="{
             content: lockedTooltip,
             html: true,
-            placement: 'right'
+            placement: 'right',
           }"
           class="icon icon-lock"
         />

@@ -1,7 +1,7 @@
 import { NavItemName } from '@pkg/config/transientSettings';
 
 interface NavItems {
-  name: NavItemName;
+  name:  NavItemName;
   tabs?: string[];
 }
 const wslTabs: string[] = ['integrations', 'network', 'proxy'];

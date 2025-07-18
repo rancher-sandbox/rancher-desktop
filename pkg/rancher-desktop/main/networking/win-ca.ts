@@ -25,7 +25,7 @@ import { executable } from '@pkg/utils/resources';
  * Asynchronously enumerate the certificate authorities that should be used to
  * build the Rancher Desktop trust store, in PEM format in undefined order.
  */
-export default async function* getWinCertificates(): AsyncIterable<string> {
+export default async function * getWinCertificates(): AsyncIterable<string> {
   // Windows will dynamically download CA certificates on demand by default;
   // this means that if we just enumerate the Windows certificate store, we will
   // be missing some standard certificates.  To approximate the desired

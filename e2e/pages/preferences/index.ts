@@ -7,12 +7,12 @@ import { WslNav } from './wsl';
 import type { Page } from '@playwright/test';
 
 export class PreferencesPage {
-  readonly page: Page;
-  readonly application: ApplicationNav;
-  readonly virtualMachine: VirtualMachineNav;
+  readonly page:            Page;
+  readonly application:     ApplicationNav;
+  readonly virtualMachine:  VirtualMachineNav;
   readonly containerEngine: ContainerEngineNav;
-  readonly kubernetes: KubernetesNav;
-  readonly wsl: WslNav;
+  readonly kubernetes:      KubernetesNav;
+  readonly wsl:             WslNav;
 
   constructor(page: Page) {
     this.page = page;

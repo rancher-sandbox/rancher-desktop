@@ -1,12 +1,12 @@
 import type { Page, Locator } from '@playwright/test';
 
 export class KubernetesNav {
-  readonly page: Page;
-  readonly nav: Locator;
-  readonly kubernetesToggle: Locator;
-  readonly kubernetesVersion: Locator;
-  readonly kubernetesPort: Locator;
-  readonly kubernetesOptions: Locator;
+  readonly page:                          Page;
+  readonly nav:                           Locator;
+  readonly kubernetesToggle:              Locator;
+  readonly kubernetesVersion:             Locator;
+  readonly kubernetesPort:                Locator;
+  readonly kubernetesOptions:             Locator;
   readonly kubernetesVersionLockedFields: Locator;
 
   constructor(page: Page) {

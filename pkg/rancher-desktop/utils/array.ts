@@ -1,4 +1,5 @@
 import xor from 'lodash/xor.js';
+
 import { get, isEqual } from '@pkg/utils/object';
 
 export function removeObject<T>(ary: T[], obj: T): T[] {
@@ -15,7 +16,7 @@ export function removeObjects<T>(ary: T[], objs: T[]): T[] {
   let i;
   let indexes = [];
 
-  for ( i = 0 ; i < objs.length ; i++ ) {
+  for ( i = 0; i < objs.length; i++ ) {
     let idx = ary.indexOf(objs[i]);
 
     // Find multiple copies of the same value
@@ -38,18 +39,18 @@ export function removeObjects<T>(ary: T[], objs: T[]): T[] {
 
   // Group all the indexes into contiguous ranges
   while ( indexes.length ) {
-    first = indexes.shift() as number;
+    first = indexes.shift()!;
     last = first;
 
     while ( indexes.length && indexes[0] === last + 1 ) {
-      last = indexes.shift() as number;
+      last = indexes.shift()!;
     }
 
     ranges.push({ start: first, end: last });
   }
 
   // Remove the items by range
-  for ( i = ranges.length - 1 ; i >= 0 ; i--) {
+  for ( i = ranges.length - 1; i >= 0; i--) {
     const { start, end } = ranges[i];
 
     ary.splice(start, end - start + 1);
@@ -119,7 +120,7 @@ function findOrFilterBy<T, K, V>(
   method: 'find', ary: T[] | null, keyOrObj: string | K, val?: V
 ): T;
 function findOrFilterBy<T, K, V>(
-  method: keyof T[], ary: T[] | null, keyOrObj: string | K, val?: V
+  method: keyof T[], ary: T[] | null, keyOrObj: string | K, val?: V,
 ): T[] {
   ary = ary || [];
 
@@ -148,13 +149,13 @@ function findOrFilterBy<T, K, V>(
 }
 
 export function filterBy<T, K, V>(
-  ary: T[] | null, keyOrObj: string | K, val?: V
+  ary: T[] | null, keyOrObj: string | K, val?: V,
 ): T[] {
   return findOrFilterBy('filter', ary, keyOrObj, val);
 }
 
 export function findBy<T, K, V>(
-  ary: T[] | null, keyOrObj: string | K, val?: V
+  ary: T[] | null, keyOrObj: string | K, val?: V,
 ): T {
   return findOrFilterBy('find', ary, keyOrObj, val);
 }
@@ -195,7 +196,7 @@ export function sameArrayObjects<T>(aryA: T[], aryB: T[], positionAgnostic = fal
   }
 
   if (positionAgnostic) {
-    const consumedB: { [pos: number]: boolean } = {};
+    const consumedB: Record<number, boolean> = {};
 
     aryB.forEach((_, index) => {
       consumedB[index] = false;
@@ -235,13 +236,13 @@ export function concatStrings(a: string[], b: string[]): string[] {
   return [...a.map((aa) => b.map((bb) => aa.concat(bb)))].reduce((acc, arr) => [...arr, ...acc], []);
 }
 
-interface KubeResource { metadata: { labels: { [name: string]: string} } } // Migrate to central kube types resource when those are brought in
+interface KubeResource { metadata: { labels: Record<string, string> } } // Migrate to central kube types resource when those are brought in
 export function getUniqueLabelKeys<T extends KubeResource>(aryResources: T[]): string[] {
   const uniqueObj = aryResources.reduce((res, r) => {
     Object.keys(r.metadata.labels).forEach((l) => (res[l] = true));
 
     return res;
-  }, {} as {[label: string]: boolean});
+  }, {} as Record<string, boolean>);
 
   return Object.keys(uniqueObj).sort();
 }

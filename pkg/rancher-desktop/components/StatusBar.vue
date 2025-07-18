@@ -5,12 +5,12 @@ import { mapGetters } from 'vuex';
 import BackendProgress from '@pkg/components/BackendProgress.vue';
 import StatusBarItem, { StatusBarItemData } from '@pkg/components/StatusBarItem.vue';
 
-type BarItem = {
-  name: string,
+interface BarItem {
+  name:       string,
   component?: string,
-  icon: string,
-  data?: StatusBarItemData,
-};
+  icon:       string,
+  data?:      StatusBarItemData,
+}
 
 export default defineComponent({
   name:       'status-bar',
@@ -65,13 +65,12 @@ export default defineComponent({
       <status-bar-item
         v-for="item in items"
         :key="item.name"
+        :ref="item.name"
         :sub-component="item.component"
         :data="item.data"
         :icon="item.icon"
-        :ref="item.name"
         class="status-bar-item"
-      >
-      </status-bar-item>
+      />
     </div>
     <div class="right-column">
       <BackendProgress class="progress" />

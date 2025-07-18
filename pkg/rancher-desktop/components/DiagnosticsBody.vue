@@ -155,7 +155,7 @@ export default defineComponent({
           </empty-state>
         </td>
       </template>
-      <template #group-row="{group}">
+      <template #group-row="{ group }">
         <tr
           :ref="`group-${group.ref}`"
           class="group-row"
@@ -171,7 +171,7 @@ export default defineComponent({
                 :class="{
                   icon: true,
                   'icon-chevron-right': !expanded[group.ref],
-                  'icon-chevron-down': !!expanded[group.ref]
+                  'icon-chevron-down': !!expanded[group.ref],
                 }"
                 @click.stop="toggleExpand(group.ref)"
               />
@@ -186,9 +186,9 @@ export default defineComponent({
           </td>
         </tr>
       </template>
-      <template #col:description="{row}">
+      <template #col:description="{ row }">
         <td>
-          <span v-html="row.description"></span>
+          <span v-html="row.description" />
           <a
             v-if="row.documentation"
             :href="row.documentation"
@@ -196,7 +196,7 @@ export default defineComponent({
           ><span class="icon icon-external-link" /></a>
         </td>
       </template>
-      <template #col:mute="{row}">
+      <template #col:mute="{ row }">
         <td>
           <toggle-switch
             class="mute-toggle"
@@ -208,11 +208,11 @@ export default defineComponent({
       </template>
       <template
         v-if="featureFixes"
-        #sub-row="{row}"
+        #sub-row="{ row }"
       >
         <tr>
           <!--We want an empty data cell so description will align with name-->
-          <td></td>
+          <td />
           <td
             v-if="row.fixes.length > 0"
             class="sub-row"

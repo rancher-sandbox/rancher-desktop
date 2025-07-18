@@ -1,10 +1,10 @@
 import type { Page, Locator } from '@playwright/test';
 
 export class TroubleshootingPage {
-  readonly page: Page;
+  readonly page:               Page;
   readonly factoryResetButton: Locator;
-  readonly logsButton: Locator;
-  readonly troubleshooting: Locator;
+  readonly logsButton:         Locator;
+  readonly troubleshooting:    Locator;
 
   constructor(page: Page) {
     this.page = page;

@@ -41,14 +41,14 @@ import type { ElectronApplication, Page } from '@playwright/test';
 
 let credStore = '';
 let dockerConfigPath = '';
-let originalDockerConfigContents: string|undefined;
+let originalDockerConfigContents: string | undefined;
 let plaintextConfigPath = '';
-let originalPlaintextConfigContents: string|undefined;
+let originalPlaintextConfigContents: string | undefined;
 
 interface entryType {
   ServerURL: string;
-  Username: string;
-  Secret: string;
+  Username:  string;
+  Secret:    string;
 }
 
 function makeEntry(url: string, username: string, secret: string): entryType {

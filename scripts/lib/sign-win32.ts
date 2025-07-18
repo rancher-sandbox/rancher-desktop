@@ -37,9 +37,9 @@ const DEFAULT_WINDOWS_CONFIG = {
 };
 
 interface ElectronBuilderConfiguration {
-  productName: string;
-  files?: Array<string>;
-  win?: Partial<typeof DEFAULT_WINDOWS_CONFIG & typeof REQUIRED_WINDOWS_CONFIG>;
+  productName:   string;
+  files?:        string[];
+  win?:          Partial<typeof DEFAULT_WINDOWS_CONFIG & typeof REQUIRED_WINDOWS_CONFIG>;
   extraMetadata: {
     version: string;
   }
@@ -77,7 +77,7 @@ export async function sign(workDir: string): Promise<string[]> {
     '/sha1', certFingerprint,
     '/fd', 'SHA256',
     '/td', 'SHA256',
-    '/tr', config.win.rfc3161TimeStampServer as string,
+    '/tr', config.win.rfc3161TimeStampServer!,
     '/du', 'https://rancherdesktop.io',
     '/d', versionedAppName,
   ];
@@ -107,7 +107,7 @@ export async function sign(workDir: string): Promise<string[]> {
  * @param unpackedDir The directory holding the unpacked zip file.
  * @param signingConfig The signing config from electron-builder.yaml
  */
-async function *findFilesToSign(unpackedDir: string, signingConfig: Record<string, string[]>): AsyncIterable<string> {
+async function * findFilesToSign(unpackedDir: string, signingConfig: Record<string, string[]>): AsyncIterable<string> {
   /** toSign is the set of files that we want to sign. */
   const toSign = new Set<string>();
   /** toSkip is the set of files we are explicitly skipping signing. */
@@ -150,7 +150,7 @@ async function *findFilesToSign(unpackedDir: string, signingConfig: Record<strin
 /**
  * Recursively yield all plain files in the given directory.
  */
-async function *findFiles(dir: string): AsyncIterable<string> {
+async function * findFiles(dir: string): AsyncIterable<string> {
   for (const child of await fs.promises.readdir(dir, { withFileTypes: true })) {
     if (child.isDirectory()) {
       yield * findFiles(path.join(dir, child.name));

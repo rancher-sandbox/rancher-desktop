@@ -35,7 +35,7 @@ export class MobyClient implements ContainerEngineClient {
     this.endpoint = endpoint;
   }
 
-  readonly vm: VMExecutor;
+  readonly vm:       VMExecutor;
   readonly executable = executable('docker');
   readonly endpoint: string;
 

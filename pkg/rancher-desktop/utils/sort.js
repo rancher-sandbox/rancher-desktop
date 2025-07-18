@@ -185,7 +185,7 @@ export function sortBy(ary, keys, desc) {
   }
 
   return (ary || []).slice().sort((objA, objB) => {
-    for ( let i = 0 ; i < keys.length ; i++ ) {
+    for ( let i = 0; i < keys.length; i++ ) {
       const parsed = parseField(keys[i]);
       const a = get(objA, parsed.field);
       const b = get(objB, parsed.field);

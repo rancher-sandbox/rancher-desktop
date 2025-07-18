@@ -1,26 +1,28 @@
 <script>
-import { mapGetters } from 'vuex';
-import day from 'dayjs';
-import isEmpty from 'lodash/isEmpty';
-import { dasherize, ucFirst } from '@pkg/utils/string';
-import { get, clone } from '@pkg/utils/object';
-import { removeObject } from '@pkg/utils/array';
 import { Checkbox } from '@rancher/components';
-import AsyncButton, { ASYNC_BUTTON_STATES } from '@pkg/components/AsyncButton';
-import ActionDropdown from '@pkg/components/ActionDropdown';
-import throttle from 'lodash/throttle';
+import day from 'dayjs';
 import debounce from 'lodash/debounce';
+import isEmpty from 'lodash/isEmpty';
+import throttle from 'lodash/throttle';
+import { mapGetters } from 'vuex';
+
 import THead from './THead';
-import filtering from './filtering';
-import selection from './selection';
-import sorting from './sorting';
-import paging from './paging';
-import grouping from './grouping';
 import actions from './actions';
 import AdvancedFiltering from './advanced-filtering';
-import LabeledSelect from '@pkg/components/form/LabeledSelect';
-import { getParent } from '@pkg/utils/dom';
+import filtering from './filtering';
+import grouping from './grouping';
+import paging from './paging';
+import selection from './selection';
+import sorting from './sorting';
+
+import ActionDropdown from '@pkg/components/ActionDropdown';
+import AsyncButton, { ASYNC_BUTTON_STATES } from '@pkg/components/AsyncButton';
 import { FORMATTERS } from '@pkg/components/SortableTable/sortable-config';
+import LabeledSelect from '@pkg/components/form/LabeledSelect';
+import { removeObject } from '@pkg/utils/array';
+import { getParent } from '@pkg/utils/dom';
+import { get, clone } from '@pkg/utils/object';
+import { dasherize, ucFirst } from '@pkg/utils/string';
 
 // Uncomment for table performance debugging
 // import tableDebug from './debug';
@@ -40,7 +42,7 @@ import { FORMATTERS } from '@pkg/components/SortableTable/sortable-config';
 export default {
   name:       'SortableTable',
   components: {
-    THead, Checkbox, AsyncButton, ActionDropdown, LabeledSelect
+    THead, Checkbox, AsyncButton, ActionDropdown, LabeledSelect,
   },
   mixins: [
     filtering,
@@ -65,12 +67,12 @@ export default {
       //    width:  number
       // }
       type:     Array,
-      required: true
+      required: true,
     },
     rows: {
       // The array of objects to show
       type:     Array,
-      required: true
+      required: true,
     },
     keyField: {
       // Field that is unique for each row.
@@ -80,7 +82,7 @@ export default {
 
     loading: {
       type:     Boolean,
-      required: false
+      required: false,
     },
 
     /**
@@ -90,13 +92,13 @@ export default {
      */
     altLoading: {
       type:     Boolean,
-      required: false
+      required: false,
     },
 
     groupBy: {
       // Field to group rows by, row[groupBy] must be something that can be a map key
       type:    String,
-      default: null
+      default: null,
     },
     groupRef: {
       // Object to provide as the reference for rendering the grouping row
@@ -106,26 +108,26 @@ export default {
     groupSort: {
       // Field to order groups by, defaults to groupBy
       type:    Array,
-      default: null
+      default: null,
     },
 
     defaultSortBy: {
       // Default field to sort by if none is specified
       // uses name on headers
       type:    String,
-      default: null
+      default: null,
     },
 
     tableActions: {
       // Show bulk table actions
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     rowActions: {
       // Show action dropdown on the end of each row
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     mangleActionResources: {
@@ -136,19 +138,19 @@ export default {
     rowActionsWidth: {
       // How wide the action dropdown column should be
       type:    Number,
-      default: 40
+      default: 40,
     },
 
     search: {
       // Show search input to filter rows
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     extraSearchFields: {
       // Additional fields that aren't defined in the headers to search in on each row
       type:    Array,
-      default: null
+      default: null,
     },
 
     subRows: {
@@ -189,7 +191,7 @@ export default {
      */
     topDivider: {
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     /**
@@ -197,16 +199,16 @@ export default {
      */
     bodyDividers: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     overflowX: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     overflowY: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     /**
@@ -222,7 +224,7 @@ export default {
      */
     pagingLabel: {
       type:    String,
-      default: 'sortableTable.paging.generic'
+      default: 'sortableTable.paging.generic',
     },
 
     /**
@@ -248,7 +250,7 @@ export default {
      */
     noRowsKey: {
       type:    String,
-      default: 'sortableTable.noRows'
+      default: 'sortableTable.noRows',
     },
 
     /**
@@ -256,7 +258,7 @@ export default {
      */
     showNoRows: {
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     /**
@@ -264,7 +266,7 @@ export default {
      */
     noDataKey: {
       type:    String,
-      default: 'sortableTable.noData' // i18n-uses sortableTable.noData
+      default: 'sortableTable.noData', // i18n-uses sortableTable.noData
     },
 
     /**
@@ -272,7 +274,7 @@ export default {
      */
     showHeaders: {
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     sortGenerationFn: {
@@ -295,7 +297,7 @@ export default {
      */
     getCustomDetailLink: {
       type:    Function,
-      default: null
+      default: null,
     },
 
     /**
@@ -304,21 +306,21 @@ export default {
      */
     componentTestid: {
       type:    String,
-      default: 'sortable-table'
+      default: 'sortable-table',
     },
     /**
      * Allows for the usage of a query param to work for simple filtering (q)
      */
     useQueryParamsForSimpleFiltering: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     /**
      * Manually force the update of live and delayed cells. Change this number to kick off the update
      */
     forceUpdateLiveAndDelayed: {
       type:    Number,
-      default: 0
+      default: 0,
     },
 
     /**
@@ -326,7 +328,7 @@ export default {
      */
     externalPaginationEnabled: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     /**
@@ -334,8 +336,8 @@ export default {
      */
     externalPaginationResult: {
       type:    Object,
-      default: null
-    }
+      default: null,
+    },
   },
 
   data() {
@@ -399,7 +401,7 @@ export default {
         const route = {
           name:   this.$route.name,
           params: { ...this.$route.params },
-          query:  { ...this.$route.query, q }
+          query:  { ...this.$route.query, q },
         };
 
         if (!q && this.$route.query?.q) {
@@ -446,7 +448,7 @@ export default {
           this.$nextTick(() => this.updateLiveAndDelayed());
         }
       },
-      immediate: true
+      immediate: true,
     },
 
     // this is the flag that indicates that manual refresh data has been loaded
@@ -459,7 +461,7 @@ export default {
           this.$nextTick(() => this.updateLiveAndDelayed());
         }
       },
-      immediate: true
+      immediate: true,
     },
 
     loading: {
@@ -481,7 +483,7 @@ export default {
           this.isLoading = neu;
         }
       },
-      immediate: true
+      immediate: true,
     },
   },
 
@@ -513,7 +515,7 @@ export default {
     fullColspan() {
       let span = 0;
 
-      for ( let i = 0 ; i < this.columns.length ; i++ ) {
+      for ( let i = 0; i < this.columns.length; i++ ) {
         if (!this.columns[i].hide) {
           span++;
         }
@@ -607,7 +609,7 @@ export default {
         'body-dividers': this.bodyDividers,
         'overflow-y':    this.overflowY,
         'overflow-x':    this.overflowX,
-        'alt-loading':   this.altLoading && this.isLoading
+        'alt-loading':   this.altLoading && this.isLoading,
       };
     },
 
@@ -658,7 +660,7 @@ export default {
             key:                        this.get(row, this.keyField),
             showSubRow:                 this.showSubRow(row, this.keyField),
             canRunBulkActionOfInterest: this.canRunBulkActionOfInterest(row),
-            columns:                    []
+            columns:                    [],
           };
 
           group.rows.push(rowData);
@@ -704,7 +706,7 @@ export default {
       });
 
       return rows;
-    }
+    },
   },
 
   methods: {
@@ -838,7 +840,7 @@ export default {
       const expr = col.value || col.name;
 
       if (!expr) {
-        console.error('No path has been defined for this column, unable to get value of cell', col); // eslint-disable-line no-console
+        console.error('No path has been defined for this column, unable to get value of cell', col);
 
         return '';
       }
@@ -981,13 +983,13 @@ export default {
         perPage: this.perPage,
         filter:  {
           searchFields: this.searchFields,
-          searchQuery:  this.searchQuery
+          searchQuery:  this.searchQuery,
         },
         sort:       this.sortFields,
-        descending: this.descending
+        descending: this.descending,
       });
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -997,14 +999,14 @@ export default {
     :data-testid="componentTestid + '-list-container'"
   >
     <div
-      :class="{'titled': $slots.title && $slots.title.length}"
+      :class="{ titled: $slots.title && $slots.title.length }"
       class="sortable-table-header"
     >
       <slot name="title" />
       <div
         v-if="showHeaderRow"
         class="fixed-header-actions"
-        :class="{button: !!$slots['header-button'], 'advanced-filtering': hasAdvancedFiltering}"
+        :class="{ button: !!$slots['header-button'], 'advanced-filtering': hasAdvancedFiltering }"
       >
         <div
           :class="bulkActionsClass"
@@ -1019,7 +1021,7 @@ export default {
                 v-clean-tooltip="actionTooltip"
                 type="button"
                 class="btn role-primary"
-                :class="{[bulkActionClass]:true}"
+                :class="{ [bulkActionClass]: true }"
                 :disabled="!act.enabled"
                 :data-testid="componentTestid + '-' + act.action"
                 @click="applyTableAction(act, null, $event)"
@@ -1057,7 +1059,7 @@ export default {
                       v-close-popper
                       v-clean-tooltip="{
                         content: actionTooltip,
-                        placement: 'right'
+                        placement: 'right',
                       }"
                       :class="{ disabled: !act.enabled }"
                       @click="applyTableAction(act, null, $event)"
@@ -1103,7 +1105,7 @@ export default {
               v-for="(filter, i) in advancedFilteringValues"
               :key="i"
             >
-              <span class="label">{{ `"${filter.value}" ${ t('sortableTable.in') } ${filter.label}` }}</span>
+              <span class="label">{{ `"${filter.value}" ${t('sortableTable.in')} ${filter.label}` }}</span>
               <span
                 class="cross"
                 @click="clearAdvancedFilter(i)"
@@ -1273,7 +1275,7 @@ export default {
           v-if="groupBy"
           name="group-row"
           :group="groupedRows"
-          :fullColspan="fullColspan"
+          :full-colspan="fullColspan"
         >
           <tr class="group-row">
             <td :colspan="fullColspan">
@@ -1309,7 +1311,7 @@ export default {
               <tr
                 class="main-row"
                 :data-testid="componentTestid + '-' + i + '-row'"
-                :class="{ 'has-sub-row': row.showSubRow}"
+                :class="{ 'has-sub-row': row.showSubRow }"
                 :data-node-id="row.key"
                 :data-cant-run-bulk-action-of-interest="actionOfInterest && !row.canRunBulkActionOfInterest"
               >
@@ -1335,7 +1337,7 @@ export default {
                     :class="{
                       icon: true,
                       'icon-chevron-right': !expanded[row.row[keyField]],
-                      'icon-chevron-down': !!expanded[row.row[keyField]]
+                      'icon-chevron-down': !!expanded[row.row[keyField]],
                     }"
                     @click.stop="toggleExpand(row.row)"
                   />
@@ -1350,15 +1352,15 @@ export default {
                     :col="col.col"
                     :dt="dt"
                     :expanded="expanded"
-                    :rowKey="row.key"
+                    :row-key="row.key"
                   >
                     <td
                       v-show="!hasAdvancedFiltering || (hasAdvancedFiltering && col.col.isColVisible)"
                       :key="col.col.name"
                       :data-title="col.col.label"
-                      :data-testid="`sortable-cell-${ i }-${ j }`"
+                      :data-testid="`sortable-cell-${i}-${j}`"
                       :align="col.col.align || 'left'"
-                      :class="{['col-'+col.dasherize]: !!col.col.formatter, [col.col.breakpoint]: !!col.col.breakpoint, ['skip-select']: col.col.skipSelect}"
+                      :class="{ ['col-' + col.dasherize]: !!col.col.formatter, [col.col.breakpoint]: !!col.col.breakpoint, ['skip-select']: col.col.skipSelect }"
                       :width="col.col.width"
                     >
                       <slot
@@ -1437,11 +1439,11 @@ export default {
             :full-colspan="fullColspan"
             :row="row.row"
             :sub-matches="subMatches"
-            :keyField="keyField"
-            :componentTestid="componentTestid"
+            :key-field="keyField"
+            :component-testid="componentTestid"
             :i="i"
-            :onRowMouseEnter="onRowMouseEnter"
-            :onRowMouseLeave="onRowMouseLeave"
+            :on-row-mouse-enter="onRowMouseEnter"
+            :on-row-mouse-leave="onRowMouseLeave"
           >
             <tr
               v-if="row.row.stateDescription"
@@ -1457,8 +1459,8 @@ export default {
                 align="middle"
               />
               <td
-                :colspan="fullColspan - (tableActions ? 1: 0)"
-                :class="{ 'text-error' : row.row.stateObj.error }"
+                :colspan="fullColspan - (tableActions ? 1 : 0)"
+                :class="{ 'text-error': row.row.stateObj.error }"
               >
                 {{ row.row.stateDescription }}
               </td>
@@ -1529,12 +1531,12 @@ export default {
         @shortkey="focusPrevious($event)"
       />
       <button
-        v-shortkey="['shift','j']"
+        v-shortkey="['shift', 'j']"
         class="hide"
         @shortkey="focusNext($event, true)"
       />
       <button
-        v-shortkey="['shift','k']"
+        v-shortkey="['shift', 'k']"
         class="hide"
         @shortkey="focusPrevious($event, true)"
       />

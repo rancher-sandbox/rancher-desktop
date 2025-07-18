@@ -54,13 +54,13 @@ export default defineComponent({
 <template>
   <div
     class="bar"
-    :class="{indeterminate}"
+    :class="{ indeterminate }"
     :style="barStyle"
   >
     <div
       class="indicator"
       :style="indicatorStyle"
-    ></div>
+    />
   </div>
 </template>
 

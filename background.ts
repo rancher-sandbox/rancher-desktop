@@ -89,7 +89,7 @@ const diagnostics: DiagnosticsManager = new DiagnosticsManager();
 let cfg: settings.Settings;
 let firstRunDialogComplete = false;
 let gone = false; // when true indicates app is shutting down
-let imageEventHandler: ImageEventHandler|null = null;
+let imageEventHandler: ImageEventHandler | null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
@@ -112,13 +112,13 @@ let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked:
  */
 let pendingRestartContext: CommandWorkerInterface.CommandContext | undefined;
 
-let httpCommandServer: HttpCommandServer|null = null;
+let httpCommandServer: HttpCommandServer | null = null;
 const httpCredentialHelperServer = new HttpCredentialHelperServer();
 
 if (process.platform === 'linux') {
   // On Linux, put Electron into a new process group so that we can more
   // reliably kill processes we spawn from extensions.
-  import('posix-node').then(({ default: { setpgid }}) => {
+  import('posix-node').then(({ default: { setpgid } }) => {
     setpgid?.(0, 0);
   }).catch(ex => {
     console.error(`Ignoring error setting process group: ${ ex }`);
@@ -492,7 +492,7 @@ async function checkPrerequisites() {
       try {
         const data = await fs.promises.readFile(nestedFile, { encoding: 'utf8' });
 
-        if (data && (data.toLowerCase()[0] === 'y' || data[0] === '1')) {
+        if (data && (data.toLowerCase().startsWith('y') || data.startsWith('1'))) {
           messageId = 'ok';
           break;
         }
@@ -1378,15 +1378,15 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return jsonStringifyWithWhiteSpace(settingsImpl.getLockedSettings());
   }
 
-  getDiagnosticCategories(): string[]|undefined {
+  getDiagnosticCategories(): string[] | undefined {
     return diagnostics.getCategoryNames();
   }
 
-  getDiagnosticIdsByCategory(category: string): string[]|undefined {
+  getDiagnosticIdsByCategory(category: string): string[] | undefined {
     return diagnostics.getIdsForCategory(category);
   }
 
-  getDiagnosticChecks(category: string|null, checkID: string|null): Promise<DiagnosticsResultCollection> {
+  getDiagnosticChecks(category: string | null, checkID: string | null): Promise<DiagnosticsResultCollection> {
     return diagnostics.getChecks(category, checkID);
   }
 
@@ -1543,7 +1543,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return Object.fromEntries(entries);
   }
 
-  async installExtension(image: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}> {
+  async installExtension(image: string, state: 'install' | 'uninstall'): Promise<{ status: number, data?: any }> {
     const em = await getExtensionManager();
 
     if (!em) {

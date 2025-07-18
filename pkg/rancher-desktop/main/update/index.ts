@@ -49,14 +49,14 @@ let updateTimer: NodeJS.Timeout;
 /** The update interval reported by the server. */
 let updateInterval = 0;
 
-export type UpdateState = {
+export interface UpdateState {
   configured: boolean;
-  available: boolean;
+  available:  boolean;
   downloaded: boolean;
-  error?: Error;
-  info?: LonghornUpdateInfo;
-  progress?: ProgressInfo;
-};
+  error?:     Error;
+  info?:      LonghornUpdateInfo;
+  progress?:  ProgressInfo;
+}
 const updateState: UpdateState = {
   configured: false, available: false, downloaded: false,
 };
@@ -216,7 +216,7 @@ export default async function setupUpdate(enabled: boolean, doInstall = false): 
     try {
       const newUpdater = await getUpdater();
 
-      if (!newUpdater || !newUpdater.isUpdaterActive()) {
+      if (!newUpdater?.isUpdaterActive()) {
         console.debug(`No update configuration found.`);
         state = State.NO_CONFIGURATION;
 

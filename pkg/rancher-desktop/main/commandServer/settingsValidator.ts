@@ -43,11 +43,11 @@ type ValidatorFunc<S, C, D> =
  */
 type SettingsValidationMapEntry<S, T> = {
   [k in keyof T]:
-  T[k] extends string | Array<string> | number | boolean ?
-  ValidatorFunc<S, T[k], T[k]> :
-  T[k] extends Record<string, infer V> ?
+  T[k] extends string | string[] | number | boolean ?
+    ValidatorFunc<S, T[k], T[k]> :
+    T[k] extends Record<string, infer V> ?
   SettingsValidationMapEntry<S, T[k]> | ValidatorFunc<S, T[k], Record<string, V>> :
-  never;
+      never;
 };
 
 /**
@@ -59,11 +59,11 @@ type SettingsValidationMap = SettingsValidationMapEntry<Settings, Settings>;
 type TransientSettingsValidationMap = SettingsValidationMapEntry<TransientSettings, TransientSettings>;
 
 export default class SettingsValidator {
-  k8sVersions: Array<string> = [];
-  allowedSettings: SettingsValidationMap | null = null;
+  k8sVersions:              string[] = [];
+  allowedSettings:          SettingsValidationMap | null = null;
   allowedTransientSettings: TransientSettingsValidationMap | null = null;
-  synonymsTable: settingsLike|null = null;
-  lockedSettings: LockedSettingsType = { };
+  synonymsTable:            settingsLike | null = null;
+  lockedSettings:           LockedSettingsType = { };
   protected isFatal = false;
 
   validateSettings(
@@ -163,7 +163,7 @@ export default class SettingsValidator {
       },
     };
     this.canonicalizeSynonyms(newSettings);
-    const errors: Array<string> = [];
+    const errors: string[] = [];
     const needToUpdate = this.checkProposedSettings(
       _.merge({}, currentSettings, newSettings),
       this.allowedSettings,
@@ -191,7 +191,7 @@ export default class SettingsValidator {
     };
 
     this.canonicalizeSynonyms(currentTransientSettings);
-    const errors: Array<string> = [];
+    const errors: string[] = [];
     const needToUpdate = this.checkProposedSettings(
       _.merge({}, currentTransientSettings, newTransientSettings),
       this.allowedTransientSettings,
@@ -728,7 +728,7 @@ export default class SettingsValidator {
   }
 
   protected canonicalizeBool(newSettings: settingsLike, index: string): void {
-    const desiredValue: boolean|string = newSettings[index];
+    const desiredValue: boolean | string = newSettings[index];
 
     if (desiredValue === 'true') {
       newSettings[index] = true;

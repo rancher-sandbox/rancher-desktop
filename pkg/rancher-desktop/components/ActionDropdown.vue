@@ -2,24 +2,24 @@
 import { Dropdown as VDropdown } from 'floating-vue';
 
 export default {
-  name: 'ActionDropdown',
+  name:       'ActionDropdown',
   components: { VDropdown },
 
   props: {
     size: {
       type:    String,
-      default: '' // possible values are xs, sm, lg. empty is default .btn
+      default: '', // possible values are xs, sm, lg. empty is default .btn
     },
     // whether this is a button and dropdown (default) or dropdown that looks like a button/dropdown
     dualAction: {
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     disableButton: {
       type:    Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
 
   computed: {
@@ -44,7 +44,7 @@ export default {
       }
 
       return out;
-    }
+    },
   },
 
   methods: {
@@ -56,24 +56,24 @@ export default {
     togglePopover() {
       // this.$refs.popoverButton.click();
     },
-  }
+  },
 };
 </script>
 <template>
   <div class="dropdown-button-group">
     <div
       class="dropdown-button bg-primary btn-role-primary"
-      :class="{'one-action':!dualAction, [buttonSize]:true, 'disabled': disableButton}"
+      :class="{ 'one-action': !dualAction, [buttonSize]: true, disabled: disableButton }"
     >
       <v-dropdown
         placement="bottom"
         :container="false"
         :disabled="disableButton"
-        :popper-options="{modifiers: { flip: { enabled: false } } }"
+        :popper-options="{ modifiers: { flip: { enabled: false } } }"
       >
         <slot
           name="button-content"
-          :buttonSize="buttonSize"
+          :button-size="buttonSize"
         >
           <button
             ref="popoverButton"

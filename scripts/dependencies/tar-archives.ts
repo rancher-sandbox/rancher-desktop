@@ -64,7 +64,7 @@ export class ExtensionProxyImage implements Dependency {
           input = stream.Readable.from(input);
         }
 
-        return stream.promises.finished((input as stream.Readable).pipe(image.entry({
+        return stream.promises.finished((input).pipe(image.entry({
           name,
           size,
           type:  'file',

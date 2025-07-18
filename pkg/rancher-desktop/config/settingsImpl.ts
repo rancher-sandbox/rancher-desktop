@@ -148,7 +148,7 @@ function finishConfiguringSettings(cfg: Settings, deploymentProfiles: Deployment
     // Auto-update doesn't work for CI or local builds, so don't enable it by default.
     // CI builds use a version string like `git describe`, e.g. "v1.1.0-4140-g717225dc".
     // Versions like "1.9.0-tech-preview" are pre-releases and not CI builds, so should not disable auto-update.
-    if (appVersion.match(/^v?\d+\.\d+\.\d+-\d+-g[0-9a-f]+$/) || appVersion.includes('?')) {
+    if ((/^v?\d+\.\d+\.\d+-\d+-g[0-9a-f]+$/.exec(appVersion)) || appVersion.includes('?')) {
       cfg.application.updater.enabled = false;
       console.log('updates disabled');
     }

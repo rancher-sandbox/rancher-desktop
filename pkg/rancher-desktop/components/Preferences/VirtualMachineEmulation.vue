@@ -31,8 +31,13 @@ export default defineComponent({
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
     ...mapState('transientSettings', ['macOsVersion', 'isArm']),
-    options(): { label: string, value: VMType, description: string, disabled: boolean,
-      compatiblePrefs: CompatiblePrefs | [] }[] {
+    options(): {
+      label:           string,
+      value:           VMType,
+      description:     string,
+      disabled:        boolean,
+      compatiblePrefs: CompatiblePrefs | []
+    }[] {
       return Object.values(VMType)
         .map((x) => {
           return {
@@ -121,14 +126,14 @@ export default defineComponent({
               :options="options"
               :name="groupName"
               :disabled="isLocked"
-              :class="{ 'locked-radio' : isLocked }"
+              :class="{ 'locked-radio': isLocked }"
             >
               <template
                 v-for="(option, index) in options"
                 #[index]="{ isDisabled }"
               >
                 <radio-button
-                  :key="groupName+'-'+index"
+                  :key="groupName + '-' + index"
                   v-tooltip="disabledVmTypeTooltip(option.disabled)"
                   :name="groupName"
                   :value="preferences.virtualMachine.type"

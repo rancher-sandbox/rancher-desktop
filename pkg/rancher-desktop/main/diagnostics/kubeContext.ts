@@ -28,7 +28,7 @@ const KubeContextDefaultChecker: DiagnosticsChecker = {
       encoding: 'utf-8',
     });
     const config = JSON.parse(stdout);
-    const contexts = config['contexts'] as Array<any> ?? [];
+    const contexts = config['contexts'] as any[] ?? [];
     const passed = contexts.some(context => context.name === 'rancher-desktop');
     let description = 'Unknown issue determining default Kubernetes context.';
 

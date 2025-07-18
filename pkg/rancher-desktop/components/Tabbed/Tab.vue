@@ -5,24 +5,24 @@ export default {
   props: {
     label: {
       default: null,
-      type:    String
+      type:    String,
     },
     labelKey: {
       default: null,
-      type:    String
+      type:    String,
     },
     name: {
       required: true,
-      type:     String
+      type:     String,
     },
     tooltip: {
       default: null,
-      type:    [String, Object]
+      type:    [String, Object],
     },
     weight: {
       default:  0,
       required: false,
-      type:     Number
+      type:     Number,
     },
     showHeader: {
       type:    Boolean,
@@ -30,16 +30,16 @@ export default {
     },
     displayAlertIcon: {
       type:    Boolean,
-      default: null
+      default: null,
     },
     error: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     badge: {
       default:  0,
       required: false,
-      type:     Number
+      type:     Number,
     },
   },
 
@@ -68,7 +68,7 @@ export default {
       }
 
       return this.sideTabs || false;
-    }
+    },
   },
 
   watch: {
@@ -76,7 +76,7 @@ export default {
       if (neu) {
         this.$emit('active');
       }
-    }
+    },
   },
 
   mounted() {
@@ -85,7 +85,7 @@ export default {
 
   beforeUnmount() {
     this.removeTab(this);
-  }
+  },
 };
 </script>
 
@@ -110,7 +110,7 @@ export default {
       </h2>
       <slot name="tab-header-right" />
     </div>
-    <slot v-bind="{active}" />
+    <slot v-bind="{ active }" />
   </section>
 </template>
 

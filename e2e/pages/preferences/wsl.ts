@@ -1,12 +1,12 @@
 import type { Page, Locator } from '@playwright/test';
 
 export class WslNav {
-  readonly page: Page;
-  readonly nav: Locator;
+  readonly page:            Page;
+  readonly nav:             Locator;
   readonly wslIntegrations: Locator;
-  readonly addressTitle: Locator;
+  readonly addressTitle:    Locator;
   readonly tabIntegrations: Locator;
-  readonly tabProxy: Locator;
+  readonly tabProxy:        Locator;
 
   constructor(page: Page) {
     this.page = page;

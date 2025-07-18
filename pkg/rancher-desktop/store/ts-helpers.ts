@@ -20,13 +20,13 @@ export type MutationsType<T> = {
  * subset we currently need.  We're not using the types from Vuex as that does
  * not provide typing to match the mutations.
  */
-export type ActionContext<T> = {
+export interface ActionContext<T> {
   commit<mutationType extends keyof MutationsPayloadType<T>>(
     type: mutationType,
     payload: MutationsPayloadType<T>[mutationType],
     commitOptions?: CommitOptions): void;
-  dispatch: Dispatch;
-  state: T;
+  dispatch:  Dispatch;
+  state:     T;
   rootState: any;
-  getters: any;
-};
+  getters:   any;
+}

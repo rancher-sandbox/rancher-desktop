@@ -41,7 +41,7 @@ export default defineComponent({
     :heading="emptyStateHeading"
   >
     <template #body>
-      <span v-html="emptyStateBody"></span>
+      <span v-html="emptyStateBody" />
     </template>
     <template #primary-action>
       <button

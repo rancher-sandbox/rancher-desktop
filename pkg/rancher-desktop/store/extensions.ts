@@ -14,11 +14,11 @@ import type { ExtensionMetadata } from '@pkg/main/extensions/types';
  */
 interface BackendExtensionState {
   /** The installed extension version. */
-  version: string;
+  version:  string;
   /** Information from the extension's metadata.json. */
   metadata: ExtensionMetadata;
   /** Labels on the extension image. */
-  labels: Record<string, string>;
+  labels:   Record<string, string>;
 }
 
 /**
@@ -27,11 +27,11 @@ interface BackendExtensionState {
  */
 export type ExtensionState = BackendExtensionState & {
   /** The extension id, excluding the version (tag). Also known as "slug". */
-  id: string;
+  id:                string;
   /** The version available in the marketplace. */
   availableVersion?: string;
   /** Whether this extension can be upgraded (i.e. availableVersion > version). */
-  canUpgrade: boolean;
+  canUpgrade:        boolean;
 };
 
 interface ExtensionsState {
@@ -39,14 +39,14 @@ interface ExtensionsState {
 }
 
 export interface MarketplaceData {
-  slug: string;
-  version: string;
+  slug:                  string;
+  version:               string;
   containerd_compatible: boolean;
-  labels: Record<string, string>;
-  title: string;
-  logo: string;
-  publisher: string;
-  short_description: string;
+  labels:                Record<string, string>;
+  title:                 string;
+  logo:                  string;
+  publisher:             string;
+  short_description:     string;
 }
 
 export const state: () => ExtensionsState = () => ({ extensions: {} });

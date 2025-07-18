@@ -85,7 +85,7 @@ export function fitOnScreen(contentElem, triggerElemOrEvent, opt, useDefaults) {
       bottom: 163,
       left:   0,
       width:  147,
-      height: 80
+      height: 80,
     };
   }
 

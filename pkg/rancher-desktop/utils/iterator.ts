@@ -32,9 +32,9 @@ const doneSentinel: unique symbol = Symbol('iterator complete');
  * It's also possible to call .error() to indicate an exception.
  */
 export default class AsyncCallbackIterator<T> implements AsyncIterableIterator<T> {
-  #next: Promise<T | typeof doneSentinel>;
+  #next:    Promise<T | typeof doneSentinel>;
   #resolve: (value: T | PromiseLike<T> | typeof doneSentinel) => void;
-  #reject: (reason?: any) => void;
+  #reject:  (reason?: any) => void;
   #done = false;
 
   // #pending is used to provide backpressure; this will be resolved when we are
@@ -44,7 +44,7 @@ export default class AsyncCallbackIterator<T> implements AsyncIterableIterator<T
   constructor() {
     this.#resolve = undefined as any;
     this.#reject = undefined as any;
-    this.#next = new Promise<T|typeof doneSentinel>((resolve, reject) => {
+    this.#next = new Promise<T | typeof doneSentinel>((resolve, reject) => {
       this.#resolve = resolve;
       this.#reject = reject;
     });
@@ -110,7 +110,7 @@ export default class AsyncCallbackIterator<T> implements AsyncIterableIterator<T
       return { done: true, value: undefined };
     }
 
-    this.#next = new Promise<T|typeof doneSentinel>((resolve, reject) => {
+    this.#next = new Promise<T | typeof doneSentinel>((resolve, reject) => {
       this.#resolve = resolve;
       this.#reject = reject;
     });

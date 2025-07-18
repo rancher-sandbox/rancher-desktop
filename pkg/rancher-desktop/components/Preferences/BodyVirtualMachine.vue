@@ -90,7 +90,7 @@ export default defineComponent({
     <div class="virtual-machine-content">
       <component
         v-bind="$attrs"
-        :is="`preferences-virtual-machine-${ activeTab }`"
+        :is="`preferences-virtual-machine-${activeTab}`"
         :preferences="preferences"
       />
     </div>

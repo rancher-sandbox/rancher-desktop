@@ -44,7 +44,7 @@ export interface LonghornProviderOptions extends CustomPublishOptions {
   /**
    * The GitHub repository name.  Should be detected during packaging.
    */
-   readonly repo: string;
+  readonly repo: string;
 
   /**
    * Whether to use `v`-prefixed tag name.
@@ -59,7 +59,7 @@ export interface LonghornUpdateInfo extends UpdateInfo {
    * The minimum time (milliseconds since Unix epoch) we should next check for
    * an update.
    */
-  nextUpdateTime: number;
+  nextUpdateTime:             number;
   /**
    * Whether there is an unsupported version of Rancher Desktop that is
    * newer than the latest supported version.
@@ -72,43 +72,43 @@ export interface LonghornUpdateInfo extends UpdateInfo {
  * Responder service.
  */
 interface LonghornUpgraderResponse {
-  versions: UpgradeResponderVersion[];
+  versions:                 UpgradeResponderVersion[];
   /**
    * The number of minutes before the next update check should be performed.
    */
   requestIntervalInMinutes: number;
 }
 
-type UpgradeResponderVersion = {
-    Name: string;
-    ReleaseDate: Date;
-    Supported?: boolean;
-    Tags: string[];
-};
+interface UpgradeResponderVersion {
+  Name:        string;
+  ReleaseDate: Date;
+  Supported?:  boolean;
+  Tags:        string[];
+}
 
-type UpgradeResponderQueryResult = {
-  latest: UpgradeResponderVersion;
-  requestIntervalInMinutes: number,
+interface UpgradeResponderQueryResult {
+  latest:                     UpgradeResponderVersion;
+  requestIntervalInMinutes:   number,
   unsupportedUpdateAvailable: boolean,
-};
+}
 
-export type UpgradeResponderRequestPayload = {
+export interface UpgradeResponderRequestPayload {
   appVersion: string;
   extraInfo: {
-    platform: string;
+    platform:        string;
     platformVersion: string;
-    wslVersion?: string,
+    wslVersion?:     string,
   },
-};
+}
 
 export interface GitHubReleaseAsset {
   url: string;
 
   browser_download_url: string;
-  id: number;
-  name: string;
-  label: string;
-  size: number;
+  id:                   number;
+  name:                 string;
+  label:                string;
+  size:                 number;
 }
 
 /**
@@ -117,16 +117,16 @@ export interface GitHubReleaseAsset {
  */
 interface GitHubReleaseInfo {
   url: string;
-  id: number;
+  id:  number;
 
-  tag_name: string;
-  name: string;
-  body: string;
-  draft: boolean;
+  tag_name:   string;
+  name:       string;
+  body:       string;
+  draft:      boolean;
   prerelease: boolean;
 
   published_at: string;
-  assets: GitHubReleaseAsset[];
+  assets:       GitHubReleaseAsset[];
 }
 
 /**
@@ -136,29 +136,29 @@ interface GitHubReleaseInfo {
  */
 interface LonghornCache {
   /** The minimum time (in Unix epoch) we should next check for an update. */
-  nextUpdateTime: number;
+  nextUpdateTime:             number;
   /**
    * Whether there is an unsupported version of Rancher Desktop that is
    * newer than the latest supported version.
    */
   unsupportedUpdateAvailable: boolean;
   /** Whether the recorded release is an installable update */
-  isInstallable: boolean;
+  isInstallable:              boolean;
   release: {
     /** Release tag, typically in the form "v1.2.3". */
-    tag: string;
+    tag:   string;
     /** The name of the release, typically the same as the tag. */
-    name: string;
+    name:  string;
     /** Release notes, in GitHub-flavoured markdown. */
     notes: string;
     /** The release date of the next release. */
-    date: string;
+    date:  string;
   },
   file: {
     /** URL to download the release. */
-    url: string;
+    url:      string;
     /** File size of the release. */
-    size: number;
+    size:     number;
     /** Checksum of the release. */
     checksum: string;
   }
@@ -288,10 +288,12 @@ export async function queryUpgradeResponder(url: string, currentVersion: semver.
   // trying to run a simplified test.  In that case, break the protocol and do
   // a HTTP GET instead of the HTTP POST with data we should do for actual
   // Longhorn Upgrade Responder servers.
-  const requestOptions = /^https?:\/\/[^/]+\.github\.io\//.test(url) ? { method: 'GET' } : {
-    method: 'POST',
-    body:   JSON.stringify(requestPayload),
-  };
+  const requestOptions = /^https?:\/\/[^/]+\.github\.io\//.test(url)
+    ? { method: 'GET' }
+    : {
+      method: 'POST',
+      body:   JSON.stringify(requestPayload),
+    };
 
   console.debug(`Checking ${ url } for updates`);
   const responseRaw = await fetch(url, requestOptions);

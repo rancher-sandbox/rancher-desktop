@@ -16,14 +16,14 @@ import { defineComponent } from 'vue';
 
 import type { PropType } from 'vue';
 
-type Option = {
+interface Option {
   /** The label to display as the option. */
   label: string;
   /** The value that will be emitted on @input */
-  id: string;
+  id:    string;
   /** Optional icon */
   icon?: string;
-};
+}
 
 export default defineComponent({
   name:  'split-button',
@@ -160,14 +160,13 @@ export default defineComponent({
       class="indicator icon-btn icon icon-chevron-down role-multi-action"
       :aria-expanded="showing"
       @click="show"
-    >
-    </button>
+    />
     <div
       v-if="showing"
       class="background"
       @click="hide"
       @contextmenu.prevent
-    ></div>
+    />
     <ul
       v-if="showing"
       class="list-unstyled menu"
@@ -188,7 +187,7 @@ export default defineComponent({
       >
         <i
           v-if="opt.icon"
-          :class="{icon: true, [`icon-${opt.icon}`]: true}"
+          :class="{ icon: true, [`icon-${opt.icon}`]: true }"
         />
         <span v-text="opt.label" />
       </li>

@@ -1,7 +1,7 @@
-import { isMore, isRange, suppressContextMenu, isAlternate } from '@pkg/utils/platform';
-import { get } from '@pkg/utils/object';
 import { filterBy } from '@pkg/utils/array';
 import { getParent } from '@pkg/utils/dom';
+import { get } from '@pkg/utils/object';
+import { isMore, isRange, suppressContextMenu, isAlternate } from '@pkg/utils/platform';
 
 export const ALL = 'all';
 export const SOME = 'some';
@@ -107,7 +107,7 @@ export default {
       });
 
       return out.sort((a, b) => (b.weight || 0) - (a.weight || 0));
-    }
+    },
   },
 
   data() {
@@ -134,7 +134,7 @@ export default {
       }
 
       this.update([], toRemove);
-    }
+    },
   },
 
   methods: {
@@ -273,7 +273,7 @@ export default {
         this.$store.commit(`action-menu/show`, {
           resources,
           event: e,
-          elem:  actionElement
+          elem:  actionElement,
         });
 
         return;
@@ -382,7 +382,7 @@ export default {
           [from, to] = [to, from];
         }
 
-        for ( let i = from.group ; i <= to.group ; i++ ) {
+        for ( let i = from.group; i <= to.group; i++ ) {
           const items = grouped[i].rows;
           let j = (from.group === i ? from.item : 0);
 
@@ -410,14 +410,14 @@ export default {
     groupIdx(node) {
       const grouped = this.groupedRows;
 
-      for ( let i = 0 ; i < grouped.length ; i++ ) {
+      for ( let i = 0; i < grouped.length; i++ ) {
         const rows = grouped[i].rows;
 
-        for ( let j = 0 ; j < rows.length ; j++ ) {
+        for ( let j = 0; j < rows.length; j++ ) {
           if ( rows[j] === node ) {
             return {
               group: i,
-              item:  j
+              item:  j,
             };
           }
         }
@@ -455,7 +455,7 @@ export default {
       // Uncheck and check the checkboxes of nodes that have been added/removed
       if (toRemove.length) {
         this.$nextTick(() => {
-          for ( let i = 0 ; i < toRemove.length ; i++ ) {
+          for ( let i = 0; i < toRemove.length; i++ ) {
             this.updateInput(toRemove[i], false, this.keyField);
           }
         });
@@ -463,7 +463,7 @@ export default {
 
       if (toAdd.length) {
         this.$nextTick(() => {
-          for ( let i = 0 ; i < toAdd.length ; i++ ) {
+          for ( let i = 0; i < toAdd.length; i++ ) {
             this.updateInput(toAdd[i], true, this.keyField);
           }
         });
@@ -531,7 +531,7 @@ export default {
       this.update([], this.selectedRows);
     },
 
-  }
+  },
 };
 
 // ---------------------------------------------------------------------

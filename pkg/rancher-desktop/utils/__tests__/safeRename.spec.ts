@@ -17,9 +17,9 @@ const modules = mockModules({
     promises: {
       ...fs.promises,
       copyFile: jest.spyOn(fs.promises, 'copyFile'),
-      rename: jest.spyOn(fs.promises, 'rename'),
-      unlink: jest.spyOn(fs.promises, 'unlink'),
-    }
+      rename:   jest.spyOn(fs.promises, 'rename'),
+      unlink:   jest.spyOn(fs.promises, 'unlink'),
+    },
   },
   'fs-extra': {
     copy: jest.fn(extraCopy),

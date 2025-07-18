@@ -13,7 +13,7 @@ const console = Logging.steve;
  */
 export class Steve {
   private static instance: Steve;
-  private process!: ChildProcess;
+  private process!:        ChildProcess;
 
   private isRunning: boolean;
 

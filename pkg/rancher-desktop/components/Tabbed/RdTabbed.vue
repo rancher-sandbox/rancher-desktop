@@ -15,8 +15,8 @@ export default defineComponent({
     :use-hash="true"
     class="action-tabs"
   >
-    <slot name="tabs"></slot>
-    <slot></slot>
+    <slot name="tabs" />
+    <slot />
   </tabbed>
 </template>
 

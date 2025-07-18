@@ -16,7 +16,7 @@
       name="pull"
       :weight="1"
     />
-    <slot></slot>
+    <slot />
   </rd-tabbed>
 </template>
 

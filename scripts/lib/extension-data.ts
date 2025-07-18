@@ -22,9 +22,9 @@ interface ExtensionInfo {
   /** Whether this extension is compatible with containerd; defaults to true. */
   containerd_compatible?: boolean;
   /** Override for the logo. */
-  logo?: string;
+  logo?:                  string;
   /** GitHub repository, as "org/repo", used to check for updates. */
-  github_repo?: string;
+  github_repo?:           string;
 }
 
 export class Extension extends VersionedDependency {
@@ -38,9 +38,9 @@ export class Extension extends VersionedDependency {
   }
 
   /** The extension name, i.e. the image name, excluding the tag. */
-  readonly name: string;
+  readonly name:           string;
   readonly currentVersion: Promise<string>;
-  readonly info: ExtensionInfo;
+  readonly info:           ExtensionInfo;
 
   download(context: DownloadContext): Promise<void> {
     // There is no download for marketplace extension data.

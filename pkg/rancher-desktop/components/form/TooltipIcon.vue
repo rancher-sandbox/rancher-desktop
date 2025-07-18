@@ -23,7 +23,7 @@ export default {
       content: t(tooltipText),
       placement: tooltipPlacement,
     }"
-    :class="`icon ${ icon }`"
+    :class="`icon ${icon}`"
   />
 </template>
 

@@ -41,7 +41,7 @@
           </div>
         </div>
       </template>
-      <template #col:containerState="{row}">
+      <template #col:containerState="{ row }">
         <td>
           <badge-state
             :color="isRunning(row) ? 'bg-success' : 'bg-darker'"
@@ -49,14 +49,14 @@
           />
         </td>
       </template>
-      <template #col:imageName="{row}">
+      <template #col:imageName="{ row }">
         <td>
           <span v-tooltip="getTooltipConfig(row.imageName)">
             {{ shortSha(row.imageName) }}
           </span>
         </td>
       </template>
-      <template #col:containerName="{row}">
+      <template #col:containerName="{ row }">
         <td>
           <span v-tooltip="getTooltipConfig(row.containerName)">
             {{ shortSha(row.containerName) }}
@@ -111,8 +111,8 @@ import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
-import {ContainerEngine} from '@pkg/config/settings';
-import {ipcRenderer} from '@pkg/utils/ipcRenderer';
+import { ContainerEngine } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 let containerCheckInterval = null;
 
@@ -124,7 +124,7 @@ let containerCheckInterval = null;
 export default defineComponent({
   name:       'Containers',
   title:      'Containers',
-  components: {SortableTable, BadgeState, Banner},
+  components: { SortableTable, BadgeState, Banner },
   data() {
     return {
       /** @type import('@pkg/config/settings').Settings | undefined */
@@ -133,7 +133,7 @@ export default defineComponent({
       containersList:       null,
       showRunning:          false,
       containersNamespaces: [],
-      error: null,
+      error:                null,
       headers:              [
         // INFO: Disable for now since we can only get the running containers.
         {
@@ -394,7 +394,7 @@ export default defineComponent({
       await this.execCommand('rm', container);
     },
     viewLogs(container) {
-      this.$router.push(`/containers/logs/${container.Id}`);
+      this.$router.push(`/containers/logs/${ container.Id }`);
     },
     isRunning(container) {
       return container.State === 'running' || container.Status === 'Up';
@@ -450,11 +450,11 @@ export default defineComponent({
             }
           }
 
-          return `Failed to execute command: ${command}`;
+          return `Failed to execute command: ${ command }`;
         };
 
         this.error = extractErrorMessage(error);
-        console.error(`Error executing command ${command}`, error);
+        console.error(`Error executing command ${ command }`, error);
       }
     },
     shortSha(sha) {

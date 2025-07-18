@@ -77,10 +77,16 @@ export default defineComponent({
         :is-locked="isPreferenceLocked('experimental.containerEngine.webAssembly.enabled')"
         @update:value="onChange('experimental.containerEngine.webAssembly.enabled', $event)"
       >
-        <template v-if="webAssemblyIncompatible" #below>
+        <template
+          v-if="webAssemblyIncompatible"
+          #below
+        >
           <banner color="warning">
             WebAssembly must be enabled for the
-            <a href="#" @click.prevent="$root.navigate('Kubernetes')">Spin Operator</a>
+            <a
+              href="#"
+              @click.prevent="$root.navigate('Kubernetes')"
+            >Spin Operator</a>
             to be installed.
           </banner>
         </template>

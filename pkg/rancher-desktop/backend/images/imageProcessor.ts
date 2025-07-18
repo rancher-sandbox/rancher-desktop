@@ -16,9 +16,9 @@ const console = Logging.images;
  * Not all fields are set for every process.
  */
 export interface childResultType {
-  stdout: string;
-  stderr: string;
-  code: number;
+  stdout:  string;
+  stderr:  string;
+  code:    number;
   signal?: string;
 }
 
@@ -27,18 +27,18 @@ export interface childResultType {
  */
 export interface imageType {
   imageName: string;
-  tag: string;
-  imageID: string;
-  size: string;
-  digest: string;
+  tag:       string;
+  imageID:   string;
+  size:      string;
+  digest:    string;
 }
 
 /**
  * Options for `processChildOutput`.
  */
-type ProcessChildOutputOptions = {
+interface ProcessChildOutputOptions {
   /** The name of the executable; defaults to `processorName`. */
-  commandName?: string;
+  commandName?:   string;
   /** The sub-command being executed; typically the first argument. */
   subcommandName: string;
   /** What notifications to send. */
@@ -48,9 +48,9 @@ type ProcessChildOutputOptions = {
     /** Send stderr as it comes in via `image-process-output`. */
     stderr?: boolean;
     /** Send stdout after the command succeeds to the window via `ok:images-process-output`. */
-    ok?: boolean;
+    ok?:     boolean;
   }
-};
+}
 
 /**
  * ImageProcessors take requests, from the UI or caused by state transitions
@@ -70,19 +70,19 @@ type ProcessChildOutputOptions = {
  * an active ImageProcessor can be dropped.
  */
 export abstract class ImageProcessor extends EventEmitter {
-  protected executor: VMExecutor;
+  protected executor:      VMExecutor;
   // Sometimes the `images` subcommand repeatedly fires the same error message.
   // Instead of logging it every time, keep track of the current error and give a count instead.
   private lastErrorMessage = '';
   private sameErrorMessageCount = 0;
   protected showedStderr = false;
   private refreshInterval: ReturnType<typeof timers.setInterval> | null = null;
-  protected images:imageType[] = [];
+  protected images:        imageType[] = [];
   protected _isReady = false;
   protected isK8sReady = false;
   private hasImageListeners = false;
   private isWatching = false;
-  _refreshImages: () => Promise<void>;
+  _refreshImages:          () => Promise<void>;
   protected currentNamespace = 'default';
   // See https://github.com/rancher-sandbox/rancher-desktop/issues/977
   // for a task to get rid of the concept of an active imageProcessor.
@@ -398,7 +398,7 @@ export abstract class ImageProcessor extends EventEmitter {
 
   protected abstract get processorName(): string;
 
-  abstract getNamespaces(): Promise<Array<string>>;
+  abstract getNamespaces(): Promise<string[]>;
 
   abstract buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<childResultType>;
 

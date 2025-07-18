@@ -5,8 +5,8 @@ import { defineComponent } from 'vue';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 
 interface pathManagementOptions {
-  label: string,
-  value: PathManagementStrategy,
+  label:       string,
+  value:       PathManagementStrategy,
   description: string
 }
 
@@ -34,7 +34,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ['input'],
+  emits:    ['input'],
   computed: {
     options(): pathManagementOptions[] {
       return [
@@ -77,7 +77,7 @@ export default defineComponent({
     :options="options"
     :row="row"
     :disabled="isLocked"
-    :class="{ 'locked-radio' : isLocked }"
+    :class="{ 'locked-radio': isLocked }"
     class="path-management"
     @update:value="updateVal"
   >
@@ -90,7 +90,7 @@ export default defineComponent({
     <template #1="{ option, isDisabled, mode }">
       <radio-button
         v-bind="$attrs"
-        :key="groupName+'-'+option.value"
+        :key="groupName + '-' + option.value"
         :name="groupName"
         :value="value"
         :label="option.label"

@@ -7,13 +7,13 @@
     :kubernetes-is-disabled="!settings.kubernetes.enabled"
     :service-being-edited="serviceBeingEdited"
     :error-message="errorMessage"
-    @updatePort="handleUpdatePort"
-    @toggledServiceFilter="onIncludeK8sServicesChanged"
-    @editPortForward="handleEditPortForward"
-    @cancelPortForward="handleCancelPortForward"
-    @cancelEditPortForward="handleCancelEditPortForward"
-    @updatePortForward="handleUpdatePortForward"
-    @closeError="handleCloseError"
+    @update-port="handleUpdatePort"
+    @toggled-service-filter="onIncludeK8sServicesChanged"
+    @edit-port-forward="handleEditPortForward"
+    @cancel-port-forward="handleCancelPortForward"
+    @cancel-edit-port-forward="handleCancelEditPortForward"
+    @update-port-forward="handleUpdatePortForward"
+    @close-error="handleCloseError"
   />
 </template>
 
@@ -33,7 +33,7 @@ export default defineComponent({
   data() {
     return {
       state:              ipcRenderer.sendSync('k8s-state'),
-      settings:           defaultSettings as Settings,
+      settings:           defaultSettings,
       services:           [] as ServiceEntry[],
       errorMessage:       null as string | null,
       serviceBeingEdited: null as ServiceEntry | null,

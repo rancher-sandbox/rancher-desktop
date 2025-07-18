@@ -19,8 +19,8 @@ const console = Logging['path-management'];
  */
 export class RcFilePathManager implements PathManager {
   readonly strategy = PathManagementStrategy.RcFiles;
-  private readonly posixMutex : Mutex;
-  private readonly cshMutex : Mutex;
+  private readonly posixMutex :Mutex;
+  private readonly cshMutex :  Mutex;
   private readonly fishMutex : Mutex;
 
   constructor() {

@@ -1,19 +1,20 @@
-import type {Locator, Page} from '@playwright/test';
-import {expect} from '@playwright/test';
+import { expect } from '@playwright/test';
+
+import type { Locator, Page } from '@playwright/test';
 
 export class ContainerLogsPage {
-  readonly page: Page;
-  readonly terminal: Locator;
-  readonly containerInfo: Locator;
-  readonly containerName: Locator;
-  readonly containerState: Locator;
-  readonly searchWidget: Locator;
-  readonly searchInput: Locator;
-  readonly searchPrevButton: Locator;
-  readonly searchNextButton: Locator;
+  readonly page:              Page;
+  readonly terminal:          Locator;
+  readonly containerInfo:     Locator;
+  readonly containerName:     Locator;
+  readonly containerState:    Locator;
+  readonly searchWidget:      Locator;
+  readonly searchInput:       Locator;
+  readonly searchPrevButton:  Locator;
+  readonly searchNextButton:  Locator;
   readonly searchClearButton: Locator;
-  readonly errorMessage: Locator;
-  readonly loadingIndicator: Locator;
+  readonly errorMessage:      Locator;
+  readonly loadingIndicator:  Locator;
 
   constructor(page: Page) {
     this.page = page;

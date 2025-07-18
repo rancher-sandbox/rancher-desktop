@@ -2,7 +2,6 @@ import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 
 import Containers from '../pages/Containers.vue';
 import DenyRoot from '../pages/DenyRoot.vue';
-import Volumes from '../pages/Volumes.vue';
 import Diagnostics from '../pages/Diagnostics.vue';
 import Dialog from '../pages/Dialog.vue';
 import Extensions from '../pages/Extensions.vue';
@@ -16,12 +15,13 @@ import Snapshots from '../pages/Snapshots.vue';
 import SudoPrompt from '../pages/SudoPrompt.vue';
 import Troubleshooting from '../pages/Troubleshooting.vue';
 import UnmetPrerequisites from '../pages/UnmetPrerequisites.vue';
+import Volumes from '../pages/Volumes.vue';
+import ContainerLogs from '../pages/containers/logs/_id.vue';
 import ExtensionsItem from '../pages/extensions/_root/_src/_id.vue';
 import ImagesAdd from '../pages/images/add.vue';
 import ImagesScan from '../pages/images/scans/_image-name.vue';
 import SnapshotsCreate from '../pages/snapshots/create.vue';
 import SnapshotsDialog from '../pages/snapshots/dialog.vue';
-import ContainerLogs from '../pages/containers/logs/_id.vue';
 import VolumeFiles from '../pages/volumes/files/_name.vue';
 
 export default createRouter({

@@ -3,12 +3,12 @@ import { shallowMount } from '@vue/test-utils';
 
 import mockModules from '@pkg/utils/testUtils/mockModules';
 
-type Progress = {
-  current: number;
-  max: number;
-  description?: string;
+interface Progress {
+  current:         number;
+  max:             number;
+  description?:    string;
   transitionTime?: Date;
-};
+}
 
 function wrap(props: Record<string, any>) {
   return shallowMount(BackendProgress, { propsData: props });
@@ -27,10 +27,10 @@ mockModules({
       invoke(name: string) {
         expect(name).toEqual('k8s-progress');
         return Promise.resolve(progress);
-      }
+      },
     },
-  }
-})
+  },
+});
 
 const { default: BackendProgress } = await import('../BackendProgress.vue');
 
@@ -82,7 +82,7 @@ describe('BackendProgress', () => {
 
           // We need transitionTime to be non-zero; so we start at time=1s, and
           // mock Date.now() to be duration + 1 second.
-          Object.assign(progress, { max: -1, transitionTime: 1});
+          Object.assign(progress, { max: -1, transitionTime: 1 });
           jest.spyOn(Date, 'now').mockReturnValue((duration + 1) * 1_000);
           callback?.(undefined, progress);
           jest.advanceTimersByTime(1_000); // We delay rendering by half a second

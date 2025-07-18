@@ -1,6 +1,7 @@
 /** @jest-environment node */
 
-import {jest} from '@jest/globals';
+import { jest } from '@jest/globals';
+
 import * as childProcess from '@pkg/utils/childProcess';
 import mockModules from '@pkg/utils/testUtils/mockModules';
 
@@ -16,8 +17,8 @@ const { default: RegistryAuth } = await import('@pkg/backend/containerClient/aut
 describe('RegistryAuth', () => {
   describe('parseAuthHeader', () => {
     const testCases: {
-      input: string,
-      expected: { scheme: string, parameters?: Record<string, string>}[],
+      input:    string,
+      expected: { scheme: string, parameters?: Record<string, string> }[],
     }[] = [
       { input: '', expected: [] },
       {

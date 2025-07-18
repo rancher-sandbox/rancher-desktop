@@ -1,6 +1,7 @@
 /** @jest-environment node */
 
 import { jest } from '@jest/globals';
+
 import WindowsIntegrationManager, { WSLDistro } from '@pkg/integrations/windowsIntegrationManager';
 
 describe('WindowsIntegrationManager', () => {

@@ -1,18 +1,18 @@
 import util from 'util';
 
-import {ContainersPage} from './containers-page';
-import {DiagnosticsPage} from './diagnostics-page';
-import {ExtensionsPage} from './extensions-page';
-import {ImagesPage} from './images-page';
-import {K8sPage} from './k8s-page';
-import {PortForwardPage} from './portforward-page';
-import {SnapshotsPage} from './snapshots-page';
-import {TroubleshootingPage} from './troubleshooting-page';
-import {VolumesPage} from './volumes-page';
-import {WSLIntegrationsPage} from './wsl-integrations-page';
-import {tool} from '../utils/TestUtils';
+import { ContainersPage } from './containers-page';
+import { DiagnosticsPage } from './diagnostics-page';
+import { ExtensionsPage } from './extensions-page';
+import { ImagesPage } from './images-page';
+import { K8sPage } from './k8s-page';
+import { PortForwardPage } from './portforward-page';
+import { SnapshotsPage } from './snapshots-page';
+import { TroubleshootingPage } from './troubleshooting-page';
+import { VolumesPage } from './volumes-page';
+import { WSLIntegrationsPage } from './wsl-integrations-page';
+import { tool } from '../utils/TestUtils';
 
-import type {Locator, Page} from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 const pageConstructors = {
   General:         (page: Page) => page,
@@ -25,13 +25,13 @@ const pageConstructors = {
   Snapshots:       (page: Page) => new SnapshotsPage(page),
   Diagnostics:     (page: Page) => new DiagnosticsPage(page),
   Extensions:      (page: Page) => new ExtensionsPage(page),
-  Volumes: (page: Page) => new VolumesPage(page),
+  Volumes:         (page: Page) => new VolumesPage(page),
 };
 
 export class NavPage {
-  readonly page: Page;
-  readonly progressBar: Locator;
-  readonly mainTitle: Locator;
+  readonly page:              Page;
+  readonly progressBar:       Locator;
+  readonly mainTitle:         Locator;
   readonly preferencesButton: Locator;
 
   constructor(page: Page) {
@@ -120,7 +120,7 @@ export class NavPage {
    * the destination tab.
    */
   async navigateTo<pageName extends keyof typeof pageConstructors>(tab: pageName):
-      Promise<ReturnType<typeof pageConstructors[pageName]>>;
+  Promise<ReturnType<typeof pageConstructors[pageName]>>;
 
   async navigateTo(tab: keyof typeof pageConstructors) {
     await this.page.click(`.nav li[item="/${ tab }"] a`);

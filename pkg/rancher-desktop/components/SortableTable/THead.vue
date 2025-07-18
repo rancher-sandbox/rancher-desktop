@@ -1,39 +1,41 @@
 <script>
 import { Checkbox } from '@rancher/components';
+
 import { SOME, NONE } from './selection';
-import { AUTO, CENTER, fitOnScreen } from '@pkg/utils/position';
+
 import LabeledSelect from '@pkg/components/form/LabeledSelect';
+import { AUTO, CENTER, fitOnScreen } from '@pkg/utils/position';
 
 export default {
   components: { Checkbox, LabeledSelect },
   props:      {
     columns: {
       type:     Array,
-      required: true
+      required: true,
     },
     sortBy: {
       type:     String,
-      required: true
+      required: true,
     },
     defaultSortBy: {
       type:    String,
-      default: ''
+      default: '',
     },
     group: {
       type:    String,
-      default: ''
+      default: '',
     },
     groupOptions: {
       type:    Array,
-      default: () => []
+      default: () => [],
     },
     descending: {
       type:     Boolean,
-      required: true
+      required: true,
     },
     hasAdvancedFiltering: {
       type:     Boolean,
-      required: false
+      required: false,
     },
     tableColsOptions: {
       type:    Array,
@@ -57,7 +59,7 @@ export default {
     },
     rowActionsWidth: {
       type:     Number,
-      required: true
+      required: true,
     },
     subExpandColumn: {
       type:    Boolean,
@@ -88,7 +90,7 @@ export default {
   data() {
     return {
       tableColsOptionsVisibility: false,
-      tableColsMenuPosition:      null
+      tableColsMenuPosition:      null,
     };
   },
 
@@ -108,7 +110,7 @@ export default {
         // unregister click event
         window.removeEventListener('click', this.onClickOutside);
       }
-    }
+    },
   },
   computed: {
     isAll: {
@@ -118,7 +120,7 @@ export default {
 
       set(value) {
         this.$emit('on-toggle-all', value);
-      }
+      },
     },
     hasAdvGrouping() {
       return this.group?.length && this.groupOptions?.length;
@@ -130,7 +132,7 @@ export default {
 
       set(val) {
         this.$emit('group-value-change', val);
-      }
+      },
     },
 
     isIndeterminate() {
@@ -138,7 +140,7 @@ export default {
     },
     hasColumnWithSubLabel() {
       return this.columns.some((col) => col.subLabel);
-    }
+    },
   },
 
   methods: {
@@ -189,7 +191,7 @@ export default {
     tableOptionsCheckbox(value, label) {
       this.$emit('col-visibility-change', {
         label,
-        value
+        value,
       });
     },
 
@@ -202,14 +204,14 @@ export default {
 
       return exists(col.tooltip) ? this.t(col.tooltip) : col.tooltip;
     },
-  }
+  },
 
 };
 </script>
 
 <template>
   <thead>
-    <tr :class="{'loading': loading, 'top-aligned': hasColumnWithSubLabel}">
+    <tr :class="{ loading, 'top-aligned': hasColumnWithSubLabel }">
       <th
         v-if="tableActions"
         :width="checkWidth"
@@ -232,7 +234,7 @@ export default {
         :key="col.name"
         :align="col.align || 'left'"
         :width="col.width"
-        :class="{ sortable: col.sort, [col.breakpoint]: !!col.breakpoint}"
+        :class="{ sortable: col.sort, [col.breakpoint]: !!col.breakpoint }"
         @click.prevent="changeSort($event, col)"
       >
         <div
@@ -321,7 +323,7 @@ export default {
                 v-for="(col, index) in tableColsOptions"
                 v-show="col.isTableOption"
                 :key="index"
-                :class="{ 'visible': !col.preventColToggle }"
+                :class="{ visible: !col.preventColToggle }"
               >
                 <Checkbox
                   v-show="!col.preventColToggle"

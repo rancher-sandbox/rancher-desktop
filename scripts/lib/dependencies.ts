@@ -11,60 +11,60 @@ export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
 export type GoPlatform = 'linux' | 'darwin' | 'windows';
 
-export type DownloadContext = {
-  versions: DependencyVersions;
+export interface DownloadContext {
+  versions:           DependencyVersions;
   dependencyPlatform: DependencyPlatform;
-  platform: Platform;
-  goPlatform: GoPlatform;
+  platform:           Platform;
+  goPlatform:         GoPlatform;
   // whether we are running on M1
-  isM1: boolean;
+  isM1:               boolean;
   // resourcesDir is the directory that external dependencies and the like go into
-  resourcesDir: string;
+  resourcesDir:       string;
   // binDir is for binaries that the user will execute
-  binDir: string;
+  binDir:             string;
   // internalDir is for binaries that RD will execute behind the scenes
-  internalDir: string;
+  internalDir:        string;
   // dockerPluginsDir is for docker CLI plugins.
-  dockerPluginsDir: string;
-};
+  dockerPluginsDir:   string;
+}
 
-export type AlpineLimaISOVersion = {
+export interface AlpineLimaISOVersion {
   // The version of the ISO build
-  isoVersion: string;
+  isoVersion:    string;
   // The version of Alpine Linux that the ISO is built on
   alpineVersion: string
-};
+}
 
 type Version = string | AlpineLimaISOVersion;
 
-export type DependencyVersions = {
-  lima: string;
-  qemu: string;
-  socketVMNet: string;
-  alpineLimaISO: AlpineLimaISOVersion;
-  WSLDistro: string;
-  kuberlr: string;
-  helm: string;
-  dockerCLI: string;
-  dockerBuildx: string;
-  dockerCompose: string;
-  'golangci-lint': string;
-  trivy: string;
-  steve: string;
-  guestAgent: string;
-  rancherDashboard: string;
+export interface DependencyVersions {
+  lima:                            string;
+  qemu:                            string;
+  socketVMNet:                     string;
+  alpineLimaISO:                   AlpineLimaISOVersion;
+  WSLDistro:                       string;
+  kuberlr:                         string;
+  helm:                            string;
+  dockerCLI:                       string;
+  dockerBuildx:                    string;
+  dockerCompose:                   string;
+  'golangci-lint':                 string;
+  trivy:                           string;
+  steve:                           string;
+  guestAgent:                      string;
+  rancherDashboard:                string;
   dockerProvidedCredentialHelpers: string;
-  ECRCredentialHelper: string;
-  mobyOpenAPISpec: string;
-  wix: string;
-  moproxy: string;
-  spinShim: string;
-  certManager: string;
-  spinOperator: string;
-  spinCLI: string;
-  spinKubePlugin: string;
-  'check-spelling': string;
-};
+  ECRCredentialHelper:             string;
+  mobyOpenAPISpec:                 string;
+  wix:                             string;
+  moproxy:                         string;
+  spinShim:                        string;
+  certManager:                     string;
+  spinOperator:                    string;
+  spinCLI:                         string;
+  spinKubePlugin:                  string;
+  'check-spelling':                string;
+}
 
 export const DEP_VERSIONS_PATH = 'pkg/rancher-desktop/assets/dependencies.yaml';
 
@@ -303,7 +303,7 @@ export abstract class GitHubDependency extends VersionedDependency {
   }
 }
 
-export type HasUnreleasedChangesResult = {latestReleaseTag: string, hasUnreleasedChanges: boolean};
+export interface HasUnreleasedChangesResult { latestReleaseTag: string, hasUnreleasedChanges: boolean }
 
 export type GitHubRelease = Awaited<ReturnType<Octokit['rest']['repos']['listReleases']>>['data'][0];
 
@@ -364,7 +364,7 @@ export function getOctokit(personalAccessToken?: string): Octokit {
 
 // Helper function to make iterating through Octokit pagination easier.
 // Pass in a pagination iterator, plus a function to convert one page to a list of results.
-export async function *iterateIterator<T, U>(input: AsyncIterable<T>, fn: (_: T) => U[]) {
+export async function * iterateIterator<T, U>(input: AsyncIterable<T>, fn: (_: T) => U[]) {
   for await (const list of input) {
     yield * fn(list);
   }
@@ -378,7 +378,7 @@ export type IssueOrPullRequest = Awaited<ReturnType<Octokit['rest']['search']['i
  */
 export class RancherDesktopRepository {
   owner: string;
-  repo: string;
+  repo:  string;
 
   constructor(owner: string, repo: string) {
     this.owner = owner;

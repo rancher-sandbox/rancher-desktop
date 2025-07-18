@@ -127,7 +127,7 @@ export default defineComponent({
     reloadPreferences() {
       window.location.reload();
     },
-    async navigateToTab(args: { name?: string, direction?: Direction}) {
+    async navigateToTab(args: { name?: string, direction?: Direction }) {
       const { name, direction } = args;
 
       if (name) {

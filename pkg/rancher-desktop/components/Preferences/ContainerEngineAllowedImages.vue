@@ -62,7 +62,11 @@ export default defineComponent({
 
 <template>
   <div class="container-engine-allowed-images">
-    <rd-fieldset data-test="allowedImages" :legend-text="t('allowedImages.label')" :is-experimental="true">
+    <rd-fieldset
+      data-test="allowedImages"
+      :legend-text="t('allowedImages.label')"
+      :is-experimental="true"
+    >
       <rd-checkbox
         data-testid="allowedImagesCheckbox"
         :label="t('allowedImages.enable')"

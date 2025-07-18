@@ -37,7 +37,7 @@ export enum ProtocolVersion {
 }
 
 export enum SecurityModel {
-  PASSTHROUGH ='passthrough',
+  PASSTHROUGH = 'passthrough',
   MAPPED_XATTR = 'mapped-xattr',
   MAPPED_FILE = 'mapped-file',
   NONE = 'none',
@@ -66,7 +66,7 @@ export const defaultSettings = {
     extensions:  {
       allowed: {
         enabled: false,
-        list:    [] as Array<string>,
+        list:    [] as string[],
       },
       /** Installed extensions, mapping to the installed version (tag). */
       installed: { } as Record<string, string>,
@@ -83,7 +83,7 @@ export const defaultSettings = {
   containerEngine: {
     allowedImages: {
       enabled:  false,
-      patterns: [] as Array<string>,
+      patterns: [] as string[],
     },
     name: ContainerEngine.MOBY,
   },
@@ -160,7 +160,7 @@ export type LockedSettingsType = Record<string, any>;
 
 export interface DeploymentProfileType {
   defaults: RecursivePartial<Settings>;
-  locked: RecursivePartial<Settings>;
+  locked:   RecursivePartial<Settings>;
 }
 
 // Imported from dashboard/config/settings.js

@@ -6,11 +6,11 @@ import type { NavItemName } from '@pkg/config/transientSettings';
 
 export type CompatiblePrefs = {
   /** title is the string to display to the user to describe the preference. */
-  title: string,
+  title:       string,
   /** navItemName is the nav item (top level navigation) to switch to. */
   navItemName: NavItemName;
   /** tabName is the tab to switch to, if any */
-  tabName?: string,
+  tabName?:    string,
 }[];
 
 export default defineComponent({

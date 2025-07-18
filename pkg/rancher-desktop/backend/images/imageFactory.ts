@@ -23,5 +23,5 @@ export function getImageProcessor(engineName: ContainerEngine, executor: VMExecu
     }
   }
 
-  return <ImageProcessor>cachedImageProcessors[engineName];
+  return cachedImageProcessors[engineName]!;
 }

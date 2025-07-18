@@ -1,6 +1,7 @@
 import { debounce } from 'lodash';
 import { PropType, defineComponent } from 'vue';
 import { ComputedOptions, MethodOptions } from 'vue/types/v3-component-options';
+
 import { LabelSelectPaginateFn, LABEL_SELECT_NOT_OPTION_KINDS, LABEL_SELECT_KINDS } from '@pkg/types/components/labeledSelect';
 
 interface Props {
@@ -9,11 +10,11 @@ interface Props {
 
 interface Data {
   currentPage: number,
-  search: string,
-  pageSize: number,
+  search:      string,
+  pageSize:    number,
 
-  page: any[],
-  pages: number,
+  page:         any[],
+  pages:        number,
   totalResults: number,
 
   paginating: boolean,
@@ -32,9 +33,9 @@ interface Computed extends ComputedOptions {
 }
 
 interface Methods extends MethodOptions {
-  loadMore: () => void
+  loadMore:            () => void
   setPaginationFilter: (filter: string) => void
-  requestPagination: () => Promise<any>;
+  requestPagination:   () => Promise<any>;
 }
 
 /**
@@ -95,9 +96,11 @@ export default defineComponent<Props, any, Data, Computed, Methods>({
 
     optionsInPage() {
       // Number of genuine options (not groups, dividers, etc)
-      return this.canPaginate ? this._options.filter((o: any) => {
-        return o.kind !== LABEL_SELECT_KINDS.NONE && !LABEL_SELECT_NOT_OPTION_KINDS.includes(o.kind);
-      }).length : 0;
+      return this.canPaginate
+        ? this._options.filter((o: any) => {
+          return o.kind !== LABEL_SELECT_KINDS.NONE && !LABEL_SELECT_NOT_OPTION_KINDS.includes(o.kind);
+        }).length
+        : 0;
     },
 
     optionCounts() {
@@ -107,7 +110,7 @@ export default defineComponent<Props, any, Data, Computed, Methods>({
 
       return this.$store.getters['i18n/t']('labelSelect.pagination.counts', {
         count:      this.optionsInPage,
-        totalCount: this.totalResults
+        totalCount: this.totalResults,
       });
     },
   },
@@ -132,7 +135,7 @@ export default defineComponent<Props, any, Data, Computed, Methods>({
       const {
         page,
         pages,
-        total
+        total,
       } = await paginate({
         resetPage,
         pageContent: this.page || [],
@@ -146,6 +149,6 @@ export default defineComponent<Props, any, Data, Computed, Methods>({
       this.totalResults = total || 0;
 
       this.paginating = false;
-    }
-  }
+    },
+  },
 });

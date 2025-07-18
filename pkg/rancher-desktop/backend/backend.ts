@@ -28,25 +28,25 @@ export class BackendError extends Error {
   readonly fatal: boolean;
 }
 
-export type BackendProgress = {
+export interface BackendProgress {
   /** The current progress; valid values are 0 to max. */
-  current: number,
+  current:         number,
   /** Maximum progress possible; if less than zero, the progress is indeterminate. */
-  max: number,
+  max:             number,
   /** Details on the current action. */
-  description?: string,
+  description?:    string,
   /** When we entered this progress state. */
   transitionTime?: Date,
-};
+}
 
 export type Architecture = 'x86_64' | 'aarch64';
 
-export type FailureDetails = {
+export interface FailureDetails {
   /** The last lima/wsl command run: */
-  lastCommand?: string,
+  lastCommand?:       string,
   lastCommandComment: string,
-  lastLogLines: Array<string>,
-};
+  lastLogLines:       string[],
+}
 
 /**
  * KubernetesBackendEvents describes the events that may be emitted by a
@@ -87,12 +87,12 @@ export type RestartReasons = Partial<Record<RecursiveKeys<Settings>, {
   /**
    * The currently active value.
    */
-  current: any;
+  current:  any;
   /**
    * The desired value (which must be different from the current value to
    * require a restart).
    */
-  desired: any;
+  desired:  any;
   /**
    * The severity of the restart; this may be set to `reset` for some values
    * indicating that there will be data loss.
@@ -179,8 +179,8 @@ export interface VMBackend extends EventEmitter<BackendEvents> {
    */
   noModalDialogs: boolean;
 
-  readonly executor: VMExecutor;
-  readonly kubeBackend: KubernetesBackend;
+  readonly executor:              VMExecutor;
+  readonly kubeBackend:           KubernetesBackend;
   readonly containerEngineClient: ContainerEngineClient;
 }
 
@@ -191,12 +191,12 @@ export type execOptions = childProcess.CommonOptions & {
   /** Expect the command to fail; do not log on error.  Exceptions are still thrown. */
   expectFailure?: boolean;
   /** A custom log stream to write to; must have a file descriptor. */
-  logStream?: stream.Writable;
+  logStream?:     stream.Writable;
   /**
    * If set, ensure that the command is run as the privileged user.
    * @note The command is always run as root on WSL.
    */
-  root?: boolean;
+  root?:          boolean;
 };
 
 /**

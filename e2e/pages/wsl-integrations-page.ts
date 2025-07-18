@@ -6,10 +6,10 @@ import type { Page, Locator } from '@playwright/test';
  * CheckboxLocator handles assertions dealing with a <Checkbox> Vue component.
  */
 class CheckboxLocator {
-  readonly locator: Locator;
+  readonly locator:  Locator;
   readonly checkbox: Locator;
-  readonly name: Locator;
-  readonly error: Locator;
+  readonly name:     Locator;
+  readonly error:    Locator;
   constructor(locator: Locator) {
     this.locator = locator;
     this.checkbox = locator.locator('input[type="checkbox"]');
@@ -22,7 +22,7 @@ class CheckboxLocator {
     return this.locator.click(...args);
   }
 
-  async assertEnabled(options?:{timeout?:number}) {
+  async assertEnabled(options?:{ timeout?: number }) {
     const elem = await this.locator.elementHandle();
 
     expect(elem).toBeTruthy();
@@ -31,7 +31,7 @@ class CheckboxLocator {
     expect(result).toBeTruthy();
   }
 
-  async assertDisabled(options?:{timeout?:number}) {
+  async assertDisabled(options?:{ timeout?: number }) {
     const elem = await this.locator.elementHandle();
 
     expect(elem).toBeTruthy();
@@ -42,9 +42,9 @@ class CheckboxLocator {
 }
 
 export class WSLIntegrationsPage {
-  readonly page: Page;
-  readonly description: Locator;
-  readonly mainTitle: Locator;
+  readonly page:         Page;
+  readonly description:  Locator;
+  readonly mainTitle:    Locator;
   readonly integrations: Locator;
 
   constructor(page: Page) {

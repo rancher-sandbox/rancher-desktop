@@ -20,26 +20,26 @@ export interface LabelSelectPaginateFnOptions<T = any> {
   /**
    * page number to fetch
    */
-  page: number,
+  page:        number,
   /**
    * number of items in the page to fetch
    */
-  pageSize: number,
+  pageSize:    number,
   /**
    * filter pagination filter. this is just a text string associated with user entered text
    */
-  filter: string,
+  filter:      string,
   /**
    * true if the result should only contain the fetched page, false if the result should be added to the pageContent
    */
-  resetPage: boolean,
+  resetPage:   boolean,
 }
 
 /**
  * Response that LabelSelect needs when it's requested a new page
  */
 export interface LabelSelectPaginateFnResponse<T = any> {
-  page: T[],
+  page:  T[],
   pages: number,
   total: number
 }
@@ -47,4 +47,4 @@ export interface LabelSelectPaginateFnResponse<T = any> {
 /**
  * Function called when LabelSelect needs a new page
  */
-export type LabelSelectPaginateFn<T = any> = (opts: LabelSelectPaginateFnOptions<T>) => Promise<LabelSelectPaginateFnResponse<T>>
+export type LabelSelectPaginateFn<T = any> = (opts: LabelSelectPaginateFnOptions<T>) => Promise<LabelSelectPaginateFnResponse<T>>;

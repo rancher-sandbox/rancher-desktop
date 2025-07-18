@@ -22,7 +22,7 @@
     <telemetry-opt-in
       :telemetry="settings.application.telemetry.enabled"
       :is-telemetry-locked="telemetryLocked"
-      @updateTelemetry="updateTelemetry"
+      @update-telemetry="updateTelemetry"
     />
     <hr>
     <div class="network-status">

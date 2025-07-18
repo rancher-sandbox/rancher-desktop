@@ -18,7 +18,7 @@ export default defineComponent({
       default: null,
     },
   },
-  emits: ['input'],
+  emits:    ['input'],
   computed: {
     selectedValue: {
       get(): string {
@@ -43,11 +43,14 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="rd-select-container" :class="$attrs.class">
+  <div
+    class="rd-select-container"
+    :class="$attrs.class"
+  >
     <select
       v-bind="$attrs"
       v-model="selectedValue"
-      :class="{ 'locked' : isLocked && !$attrs.disabled }"
+      :class="{ locked: isLocked && !$attrs.disabled }"
       :disabled="!!$attrs.disabled || isLocked"
       @input="overrideInput($event)"
     >
@@ -60,7 +63,7 @@ export default defineComponent({
         v-if="isLocked"
         v-tooltip="{
           content: tooltip || t('preferences.locked.tooltip'),
-          placement: 'right'
+          placement: 'right',
         }"
         class="icon icon-lock"
       />

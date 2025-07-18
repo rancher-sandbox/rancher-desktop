@@ -4,13 +4,13 @@ import { PropType, Component, defineComponent } from 'vue';
 import NetworkStatus from '@pkg/components/NetworkStatus.vue';
 import Version from '@pkg/components/Version.vue';
 
-export type StatusBarItemData = {
+export interface StatusBarItemData {
   value: string,
   label: {
     tooltip: string,
-    bar: string,
+    bar:     string,
   },
-};
+}
 
 export default defineComponent({
   name:  'status-bar-item',
@@ -86,7 +86,7 @@ export default defineComponent({
       v-if="subComponent"
       :icon="icon"
       :is-status-bar-item="true"
-    ></component>
+    />
   </div>
 </template>
 

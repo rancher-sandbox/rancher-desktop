@@ -2,7 +2,7 @@ import { _EDIT, _VIEW } from '@pkg/config/query-params';
 import { getWidth, setWidth } from '@pkg/utils/width';
 
 interface LabeledFormElement {
-  raised: boolean;
+  raised:  boolean;
   focused: boolean;
   blurred: number | null;
 }
@@ -18,22 +18,22 @@ export default {
 
     label: {
       type:    String,
-      default: null
+      default: null,
     },
 
     labelKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     placeholderKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     tooltip: {
       type:    [String, Object],
-      default: null
+      default: null,
     },
 
     hoverTooltip: {
@@ -43,7 +43,7 @@ export default {
 
     tooltipKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     required: {
@@ -58,40 +58,40 @@ export default {
 
     placeholder: {
       type:    [String, Number],
-      default: ''
+      default: '',
     },
 
     value: {
       type:    [String, Number, Object],
-      default: ''
+      default: '',
     },
 
     options: {
       default: null,
-      type:    Array
+      type:    Array,
     },
 
     searchable: {
       default: false,
-      type:    Boolean
+      type:    Boolean,
     },
 
     filterable: {
       default: true,
-      type:    Boolean
+      type:    Boolean,
     },
 
     rules: {
       default:   () => [],
       type:      Array,
       // we only want functions in the rules array
-      validator: (rules: any) => rules.every((rule: any) => ['function'].includes(typeof rule))
+      validator: (rules: any) => rules.every((rule: any) => ['function'].includes(typeof rule)),
     },
 
     requireDirty: {
       default: true,
-      type:    Boolean
-    }
+      type:    Boolean,
+    },
   },
 
   data(): LabeledFormElement {
@@ -153,7 +153,7 @@ export default {
       if (requiredRule && this.blurred && !this.focused) {
         const message = requiredRule(value);
 
-        if (!!message) {
+        if (message) {
           this.$emit('update:validation', false);
 
           return message;
@@ -176,7 +176,7 @@ export default {
 
         return undefined;
       }
-    }
+    },
   },
 
   methods: {
@@ -186,10 +186,10 @@ export default {
         const DD = (this.$refs.select as HTMLElement).querySelector('ul.vs__dropdown-menu');
 
         const selectWidth = getWidth(this.$refs.select as Element) || 0;
-        const dropWidth = getWidth(DD as Element) || 0;
+        const dropWidth = getWidth(DD!) || 0;
 
         if (dropWidth < selectWidth) {
-          setWidth(DD as Element, selectWidth);
+          setWidth(DD!, selectWidth);
         }
       });
     },
@@ -218,6 +218,6 @@ export default {
       }
 
       this.blurred = Date.now();
-    }
-  }
+    },
+  },
 };

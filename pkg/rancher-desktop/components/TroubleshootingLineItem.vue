@@ -13,16 +13,16 @@ export default defineComponent({
     :show-highlight-border="false"
   >
     <template #title>
-      <slot name="title"></slot>
+      <slot name="title" />
     </template>
     <template #body>
-      <slot name="description"></slot>
+      <slot name="description" />
       <span class="options">
-        <slot name="options"></slot>
+        <slot name="options" />
       </span>
     </template>
     <template #actions>
-      <slot name="actions"></slot>
+      <slot name="actions" />
     </template>
   </card>
 </template>

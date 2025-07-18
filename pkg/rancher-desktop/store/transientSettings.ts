@@ -17,12 +17,12 @@ interface CommitArgs extends ServerState {
 
 interface NavigatePrefsDialogArgs extends ServerState {
   navItem: NavItemName;
-  tab?: string;
+  tab?:    string;
 }
 
 type ExtendedTransientSettings = TransientSettings & {
   macOsVersion?: semver.SemVer;
-  isArm?: boolean;
+  isArm?:        boolean;
 };
 
 const uri = (port: number) => `http://localhost:${ port }/v1/transient_settings`;

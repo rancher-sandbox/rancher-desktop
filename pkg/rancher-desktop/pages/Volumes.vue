@@ -43,26 +43,26 @@
           </div>
         </div>
       </template>
-      <template #col:volumeName="{row}">
+      <template #col:volumeName="{ row }">
         <td data-testid="volume-name-cell">
           <span v-tooltip="getTooltipConfig(row.volumeName)">
             {{ shortSha(row.volumeName) }}
           </span>
         </td>
       </template>
-      <template #col:driver="{row}">
+      <template #col:driver="{ row }">
         <td data-testid="volume-driver-cell">
           {{ row.Driver }}
         </td>
       </template>
-      <template #col:mountpoint="{row}">
+      <template #col:mountpoint="{ row }">
         <td data-testid="volume-mountpoint-cell">
           <span v-tooltip="getTooltipConfig(row.mountpoint)">
             {{ shortPath(row.mountpoint) }}
           </span>
         </td>
       </template>
-      <template #col:created="{row}">
+      <template #col:created="{ row }">
         <td data-testid="volume-created-cell">
           {{ row.created }}
         </td>
@@ -72,30 +72,30 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue';
-import {mapGetters} from 'vuex';
+import { Banner } from '@rancher/components';
+import { defineComponent } from 'vue';
+import { mapGetters } from 'vuex';
 
-import {Banner} from '@rancher/components';
 import SortableTable from '@pkg/components/SortableTable';
-import {ContainerEngine} from '@pkg/config/settings';
-import {ipcRenderer} from '@pkg/utils/ipcRenderer';
+import { ContainerEngine } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 const MAX_PATH_LENGTH = 40;
 
 export default defineComponent({
   name:       'Volumes',
   title:      'Volumes',
-  components: {SortableTable, Banner},
+  components: { SortableTable, Banner },
   data() {
     return {
-      settings: undefined,
-      ddClient: null,
-      volumesList: null,
-      volumesNamespaces: [],
+      settings:            undefined,
+      ddClient:            null,
+      volumesList:         null,
+      volumesNamespaces:   [],
       // Interval to ensure the first fetch succeeds (instead of trying to stream in updates)
       volumeCheckInterval: null,
-      error: null,
-      headers:      [
+      error:               null,
+      headers:             [
         {
           name:  'volumeName',
           label: this.t('volumes.manage.table.header.volumeName'),
@@ -130,27 +130,27 @@ export default defineComponent({
       return this.volumesList.map((volume) => {
         return {
           ...volume,
-          volumeName: volume.Name,
-          created: volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
-          mountpoint: volume.Mountpoint || '',
-          driver: volume.Driver || '',
+          volumeName:       volume.Name,
+          created:          volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
+          mountpoint:       volume.Mountpoint || '',
+          driver:           volume.Driver || '',
           availableActions: [
             {
-              label: this.t('volumes.manager.table.action.browse'),
-              action: 'browseFiles',
-              enabled: true,
+              label:    this.t('volumes.manager.table.action.browse'),
+              action:   'browseFiles',
+              enabled:  true,
               bulkable: false,
             },
             {
-              label: this.t('volumes.manager.table.action.delete'),
-              action: 'deleteVolume',
-              enabled: true,
-              bulkable: true,
+              label:      this.t('volumes.manager.table.action.delete'),
+              action:     'deleteVolume',
+              enabled:    true,
+              bulkable:   true,
               bulkAction: 'deleteVolume',
             },
           ],
           deleteVolume: this.createDeleteVolumeHandler(volume),
-          browseFiles: this.createBrowseFilesHandler(volume),
+          browseFiles:  this.createBrowseFilesHandler(volume),
         };
       });
     },
@@ -189,7 +189,7 @@ export default defineComponent({
     this.checkVolumes().catch(console.error);
     this.volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 5_000);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.removeAllListeners('settings-update');
     clearInterval(this.volumeCheckInterval);
   },
@@ -203,7 +203,7 @@ export default defineComponent({
             await this.getNamespaces();
           }
         } catch (error) {
-          console.error('There was a problem fetching namespaces:', {error});
+          console.error('There was a problem fetching namespaces:', { error });
         }
         try {
           await this.getVolumes();
@@ -222,13 +222,13 @@ export default defineComponent({
         const defaultNamespace = this.volumesNamespaces.includes(K8S_NAMESPACE) ? K8S_NAMESPACE : this.volumesNamespaces[0];
 
         ipcRenderer.invoke('settings-write',
-          {containers: {namespace: defaultNamespace}});
+          { containers: { namespace: defaultNamespace } });
       }
     },
     async onChangeNamespace(value) {
       if (value !== this.selectedNamespace) {
         await ipcRenderer.invoke('settings-write',
-          {containers: {namespace: value.target.value}});
+          { containers: { namespace: value.target.value } });
         this.getVolumes();
       }
     },
@@ -261,12 +261,12 @@ export default defineComponent({
 
         console.info(`Executing command ${ command } on volume ${ ids }`);
 
-        const execOptions = {cwd: '/'};
+        const execOptions = { cwd: '/' };
         if (this.supportsNamespaces && this.selectedNamespace) {
           execOptions.namespace = this.selectedNamespace;
         }
 
-        const {stderr, stdout} = await this.ddClient.docker.cli.exec(
+        const { stderr, stdout } = await this.ddClient.docker.cli.exec(
           baseCommand,
           [...subCommands, ...ids],
           execOptions,
@@ -285,11 +285,11 @@ export default defineComponent({
           error?.stderr,
           error?.error,
           typeof error === 'string' ? error : null,
-          `Failed to execute command: ${command}`
+          `Failed to execute command: ${ command }`,
         ];
 
         this.error = errorSources.find(msg => msg);
-        console.error(`Error executing command ${command}`, error);
+        console.error(`Error executing command ${ command }`, error);
       }
     },
     createDeleteVolumeHandler(volume) {
@@ -299,21 +299,21 @@ export default defineComponent({
     },
     createBrowseFilesHandler(volume) {
       return () => {
-        this.$router.push({name: 'volumes-files-name', params: {name: volume.Name}});
+        this.$router.push({ name: 'volumes-files-name', params: { name: volume.Name } });
       };
     },
     shortSha(sha) {
       if (!sha?.startsWith('sha256:')) return sha || '';
 
       const hash = sha.replace('sha256:', '');
-      return `sha256:${hash.slice(0, 3)}..${hash.slice(-3)}`;
+      return `sha256:${ hash.slice(0, 3) }..${ hash.slice(-3) }`;
     },
     shortPath(path) {
       if (!path || path.length <= MAX_PATH_LENGTH) {
         return path || '';
       }
 
-      return `${path.slice(0, 20)}...${path.slice(-17)}`;
+      return `${ path.slice(0, 20) }...${ path.slice(-17) }`;
     },
     getTooltipConfig(text) {
       if (!text) {
@@ -322,10 +322,10 @@ export default defineComponent({
 
       // Show tooltip for sha256 hashes or long paths
       if (text.startsWith('sha256:') || text.length > MAX_PATH_LENGTH) {
-        return {content: text};
+        return { content: text };
       }
 
-      return {content: undefined};
+      return { content: undefined };
     },
   },
 });
@@ -342,7 +342,6 @@ export default defineComponent({
   max-width: 24rem;
   min-width: 8rem;
 }
-
 
 .volumesTable::v-deep .search-box {
   align-self: flex-end;

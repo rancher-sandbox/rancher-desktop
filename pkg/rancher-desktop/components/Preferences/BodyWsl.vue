@@ -73,7 +73,7 @@ export default defineComponent({
     </template>
     <div class="wsl-content">
       <component
-        :is="`preferences-wsl-${ activeTab }`"
+        :is="`preferences-wsl-${activeTab}`"
         :preferences="preferences"
       />
     </div>

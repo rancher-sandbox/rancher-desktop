@@ -23,11 +23,11 @@ const Shortcut = {
 
 export interface Shortcut {
   platform?: NodeJS.Platform | NodeJS.Platform[];
-  meta?: boolean;
-  shift?: boolean;
-  control?: boolean;
-  alt?: boolean;
-  key: string | number;
+  meta?:     boolean;
+  shift?:    boolean;
+  control?:  boolean;
+  alt?:      boolean;
+  key:       string | number;
 }
 
 interface ShortcutExt extends Shortcut {
@@ -48,7 +48,7 @@ export const CommandOrControl = {
 };
 
 class WindowShortcuts {
-  private window: BrowserWindow;
+  private window:    BrowserWindow;
   private shortcuts: Record<string, ShortcutExt> = {};
 
   constructor(window: BrowserWindow) {
@@ -119,7 +119,7 @@ class ShortcutsImpl {
    */
   register(window: BrowserWindow, _shortcuts: Shortcut | Shortcut[], callback: () => void, description?: string) {
     const id = window?.id;
-    const shortcuts = toArray(_shortcuts) as Shortcut[];
+    const shortcuts = toArray(_shortcuts);
 
     if (id === undefined) {
       log.warn('window is undefined; skip.');

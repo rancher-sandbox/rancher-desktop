@@ -9,7 +9,7 @@ export const state = function() {
 export const getters = {
   isTooManyItemsToAutoUpdate: (state) => state.isTooManyItemsToAutoUpdate,
   refreshFlag:                (state) => state.refreshFlag,
-  manualRefreshIsLoading:     (state) => state.manualRefreshIsLoading
+  manualRefreshIsLoading:     (state) => state.manualRefreshIsLoading,
 };
 
 export const mutations = {

@@ -5,7 +5,7 @@ interface CheckerRows {
 }
 
 export class DiagnosticsPage {
-  readonly page: Page;
+  readonly page:        Page;
   readonly diagnostics: Locator;
 
   constructor(page: Page) {

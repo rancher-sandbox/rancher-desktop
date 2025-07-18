@@ -4,12 +4,12 @@ import Logging from '@pkg/utils/logging';
 
 const console = Logging.background;
 
-type tokenCacheEntry = {
+interface tokenCacheEntry {
   /** The expiry of this token, as milliseconds since Unix epoch. */
   expiry: number;
   /** The raw token. */
-  token: string;
-};
+  token:  string;
+}
 
 /**
  * RegistryAuth handles HTTP authentication for the registries
@@ -191,7 +191,7 @@ class RegistryAuth {
     // separated parameters for that scheme.  Parameters may have quoted values
     // which may internally contain commas.
 
-    const results: { scheme: string, parameters: Record<string, string>}[] = [];
+    const results: { scheme: string, parameters: Record<string, string> }[] = [];
     let scheme = '';
     let parameters: Record<string, string> = {};
 

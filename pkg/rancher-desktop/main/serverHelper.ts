@@ -4,7 +4,7 @@ import Logging from '@pkg/utils/logging';
 
 const console = Logging.server;
 
-export function basicAuth(userdb: Record<string, string>, authString: string): string|false {
+export function basicAuth(userdb: Record<string, string>, authString: string): string | false {
   if (!authString) {
     console.log('Auth failure: no username+password given');
 

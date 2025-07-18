@@ -5,23 +5,23 @@ import path from 'path';
 
 import { jest } from '@jest/globals';
 
-import * as childProcess from '@pkg/utils/childProcess';
-import paths from '@pkg/utils/paths';
 import mockModules from '../testUtils/mockModules';
 
+import * as childProcess from '@pkg/utils/childProcess';
 import type DockerDirManager from '@pkg/utils/dockerDirManager';
+import paths from '@pkg/utils/paths';
 
 const spawnFile = childProcess.spawnFile;
 const modules = mockModules({
   '@pkg/utils/childProcess': {
     ...childProcess,
-    spawnFile: jest.fn<(command: string, args: string[], options: any) => Promise<{}>>(),
+    spawnFile: jest.fn<(command: string, args: string[], options: any) => Promise<unknown>>(),
   },
   '@pkg/utils/logging': {
     background: {
       debug: jest.fn(),
       /** Mocked console.log() to check messages. */
-      log: jest.fn(),
+      log:   jest.fn(),
     },
   },
   '@pkg/utils/paths': {
@@ -43,7 +43,7 @@ describe('DockerDirManager', () => {
   let workdir: string;
 
   beforeEach(async() => {
-    modules['@pkg/utils/childProcess'].spawnFile.mockImplementation(spawnFile)
+    modules['@pkg/utils/childProcess'].spawnFile.mockImplementation(spawnFile);
     await expect((async() => {
       workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-lima-test-'));
       subj = new DockerDirManagerCtor(path.join(workdir, '.docker'));
@@ -226,7 +226,7 @@ describe('DockerDirManager', () => {
     itUnix('should allow for existing invalid context configuration', async() => {
       const metaDir = path.join(workdir, '.docker', 'contexts', 'meta');
       const statMock = jest.spyOn(fs.promises, 'stat')
-        .mockImplementation((pathLike: fs.PathLike, opts?: fs.StatOptions | undefined) => {
+        .mockImplementation((pathLike: fs.PathLike, opts?: fs.StatOptions ) => {
           expect(pathLike).toEqual('/var/run/docker.sock');
 
           throw new Error(`ENOENT: no such file or directory, stat ${ pathLike }`);

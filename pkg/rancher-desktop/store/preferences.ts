@@ -10,21 +10,21 @@ import { RecursiveKeys, RecursivePartial, RecursiveTypes } from '@pkg/utils/type
 import type { GetterTree } from 'vuex';
 
 interface Severities {
-  reset: boolean;
+  reset:   boolean;
   restart: boolean;
-  error: boolean;
+  error:   boolean;
 }
 
 interface PreferencesState {
   initialPreferences: Settings;
-  preferences: Settings;
-  lockedPreferences: LockedSettingsType;
-  wslIntegrations: { [distribution: string]: string | boolean};
-  isPlatformWindows: boolean;
-  hasError: boolean;
-  severities: Severities;
-  preferencesError: string;
-  canApply: boolean;
+  preferences:        Settings;
+  lockedPreferences:  LockedSettingsType;
+  wslIntegrations:    Record<string, string | boolean>;
+  isPlatformWindows:  boolean;
+  hasError:           boolean;
+  severities:         Severities;
+  preferencesError:   string;
+  canApply:           boolean;
 }
 
 type Credentials = Omit<ServerState, 'pid'>;
@@ -122,7 +122,7 @@ export const mutations: MutationsType<PreferencesState> = {
 };
 
 type PrefActionContext = ActionContext<PreferencesState>;
-type ProposePreferencesPayload = { port: number, user: string, password: string, preferences?: Settings };
+interface ProposePreferencesPayload { port: number, user: string, password: string, preferences?: Settings }
 
 export const actions = {
   setPreferences({ commit }: PrefActionContext, preferences: Settings) {
@@ -207,7 +207,7 @@ export const actions = {
    */
   async updatePreferencesData<P extends RecursiveKeys<Settings>>({
     commit, dispatch, state, rootState,
-  }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}): Promise<void> {
+  }: PrefActionContext, args: { property: P, value: RecursiveTypes<Settings>[P] }): Promise<void> {
     const { property, value } = args;
 
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
@@ -218,7 +218,7 @@ export const actions = {
       { root: true },
     );
   },
-  setWslIntegrations({ commit, state }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
+  setWslIntegrations({ commit, state }: PrefActionContext, integrations: Record<string, string | boolean>) {
     /**
      * Merge integrations if they exist during initialization.
      *
@@ -229,7 +229,7 @@ export const actions = {
 
     commit('SET_WSL_INTEGRATIONS', updatedIntegrations);
   },
-  updateWslIntegrations({ commit, state }: PrefActionContext, args: {distribution: string, value: boolean}) {
+  updateWslIntegrations({ commit, state }: PrefActionContext, args: { distribution: string, value: boolean }) {
     const { distribution, value } = args;
 
     const integrations = _.set(_.cloneDeep(state.wslIntegrations), distribution, value);
@@ -277,7 +277,7 @@ export const actions = {
       return severities;
     }
 
-    const changes: Record<string, {severity: 'reset' | 'restart'}> = await result.json();
+    const changes: Record<string, { severity: 'reset' | 'restart' }> = await result.json();
     const values = Object.values(changes).map(v => v.severity);
     const severities: Severities = {
       reset:   values.includes('reset'),

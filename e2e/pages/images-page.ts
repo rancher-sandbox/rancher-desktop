@@ -1,10 +1,10 @@
 import type { Page, Locator } from '@playwright/test';
 
 export class ImagesPage {
-  readonly page: Page;
+  readonly page:        Page;
   readonly fixedHeader: Locator;
-  readonly table: Locator;
-  readonly rows: Locator;
+  readonly table:       Locator;
+  readonly rows:        Locator;
 
   constructor(page: Page) {
     this.page = page;

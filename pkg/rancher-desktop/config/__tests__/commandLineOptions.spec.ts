@@ -7,8 +7,8 @@ import _ from 'lodash';
 import * as settings from '@pkg/config/settings';
 import { TransientSettings } from '@pkg/config/transientSettings';
 import clone from '@pkg/utils/clone';
-import { RecursiveKeys } from '@pkg/utils/typeUtils';
 import mockModules from '@pkg/utils/testUtils/mockModules';
+import { RecursiveKeys } from '@pkg/utils/typeUtils';
 
 mockModules({ '@pkg/utils/logging': undefined });
 
@@ -120,7 +120,7 @@ describe('commandLineOptions', () => {
     });
 
     test('changes specified options', () => {
-      const optionsByPlatform: Record<string, Array<string | [string, string]>> = {
+      const optionsByPlatform: Record<string, (string | [string, string])[]> = {
         win32: [
           '--experimental.virtualMachine.proxy.enabled',
         ],
@@ -152,11 +152,11 @@ describe('commandLineOptions', () => {
       };
 
       for (const platform in optionsByPlatform) {
-        const options: Array<string | [string, string]> = optionsByPlatform[platform as 'win32'|'linux'|'darwin'|'*'];
+        const options: (string | [string, string])[] = optionsByPlatform[platform as 'win32' | 'linux' | 'darwin' | '*'];
 
         for (const entry of options) {
           let option: string;
-          let newValue: string|boolean|number|undefined;
+          let newValue: string | boolean | number | undefined;
 
           if (Array.isArray(entry)) {
             option = entry[0];
@@ -165,7 +165,7 @@ describe('commandLineOptions', () => {
             option = entry;
           }
           const accessor = option.substring(2);
-          const oldValue: string|boolean|number|undefined = _.get(origPrefs, accessor);
+          const oldValue: string | boolean | number | undefined = _.get(origPrefs, accessor);
 
           expect(oldValue).not.toBeUndefined();
           if (newValue === undefined) {

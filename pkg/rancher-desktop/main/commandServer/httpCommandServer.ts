@@ -22,20 +22,20 @@ import { RecursivePartial } from '@pkg/utils/typeUtils';
 /**
  * Represents the current or desired state of the backend/main process.
  */
-export type BackendState = {
+export interface BackendState {
   // The state of the VM/backend.
   vmState: State,
   // Whether the backend is locked. If true, changes cannot
   // be made by the user until it is unlocked.
-  locked: boolean,
-};
+  locked:  boolean,
+}
 
-export type ServerState = {
-  user: string;
+export interface ServerState {
+  user:     string;
   password: string;
-  port: number;
-  pid: number;
-};
+  port:     number;
+  pid:      number;
+}
 
 type DispatchFunctionType = (request: express.Request, response: express.Response, context: commandContext) => Promise<void>;
 type HttpMethod = 'get' | 'put' | 'post';
@@ -869,43 +869,43 @@ interface commandContext {
  * in order to carry out the business logic for the requests it receives.
  */
 export interface CommandWorkerInterface {
-  factoryReset: (keepSystemImages: boolean) => void;
-  getSettings: (context: commandContext) => string;
-  getLockedSettings: (context: commandContext) => string;
-  updateSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
-  proposeSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
-  requestShutdown: (context: commandContext) => void;
-  getDiagnosticCategories: (context: commandContext) => string[]|undefined;
-  getDiagnosticIdsByCategory: (category: string, context: commandContext) => string[]|undefined;
-  getDiagnosticChecks: (category: string|null, checkID: string|null, context: commandContext) => Promise<DiagnosticsResultCollection>;
-  runDiagnosticChecks: (context: commandContext) => Promise<DiagnosticsResultCollection>;
-  getTransientSettings: (context: commandContext) => string;
-  updateTransientSettings: (context: commandContext, newTransientSettings: RecursivePartial<TransientSettings>) => Promise<[string, string]>;
+  factoryReset:               (keepSystemImages: boolean) => void;
+  getSettings:                (context: commandContext) => string;
+  getLockedSettings:          (context: commandContext) => string;
+  updateSettings:             (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
+  proposeSettings:            (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
+  requestShutdown:            (context: commandContext) => void;
+  getDiagnosticCategories:    (context: commandContext) => string[] | undefined;
+  getDiagnosticIdsByCategory: (category: string, context: commandContext) => string[] | undefined;
+  getDiagnosticChecks:        (category: string | null, checkID: string | null, context: commandContext) => Promise<DiagnosticsResultCollection>;
+  runDiagnosticChecks:        (context: commandContext) => Promise<DiagnosticsResultCollection>;
+  getTransientSettings:       (context: commandContext) => string;
+  updateTransientSettings:    (context: commandContext, newTransientSettings: RecursivePartial<TransientSettings>) => Promise<[string, string]>;
   /** Get the state of the backend */
-  getBackendState: () => Promise<BackendState>;
+  getBackendState:            () => Promise<BackendState>;
   /** Set the desired state of the backend */
-  setBackendState: (state: BackendState) => Promise<void>;
+  setBackendState:            (state: BackendState) => Promise<void>;
 
   // #region extensions
   /**
    * List the installed extensions with their versions.
    * If the extension manager is not ready, returns undefined.
    */
-  listExtensions(): Promise<Record<string, {version: string, metadata: ExtensionMetadata, labels: Record<string, string>}> | undefined>;
+  listExtensions(): Promise<Record<string, { version: string, metadata: ExtensionMetadata, labels: Record<string, string> }> | undefined>;
   /**
    * Install or uninstall the given extension, returning an appropriate HTTP status code.
    * @param state Whether to install or uninstall the extension.
    * @returns The HTTP status code, possibly with arbitrary response body data.
    */
-  installExtension(id: string, state: 'install' | 'uninstall'): Promise<{status: number, data?: any}>;
+  installExtension(id: string, state: 'install' | 'uninstall'): Promise<{ status: number, data?: any }>;
   // #endregion
-  listSnapshots: (context: commandContext) => Promise<Snapshot[]>;
-  createSnapshot: (context: commandContext, snapshot: Snapshot) => Promise<void>;
-  deleteSnapshot: (context: commandContext, name: string) => Promise<void>;
+  listSnapshots:   (context: commandContext) => Promise<Snapshot[]>;
+  createSnapshot:  (context: commandContext, snapshot: Snapshot) => Promise<void>;
+  deleteSnapshot:  (context: commandContext, name: string) => Promise<void>;
   restoreSnapshot: (context: commandContext, name: string) => Promise<void>;
-  cancelSnapshot: () => Promise<void>;
+  cancelSnapshot:  () => Promise<void>;
 
-  forwardPort: (namespace: string, service: string, k8sPort: string | number, hostPort: number) => Promise<number | undefined>;
+  forwardPort:   (namespace: string, service: string, k8sPort: string | number, hostPort: number) => Promise<number | undefined>;
   cancelForward: (namespace: string, service: string, k8sPort: string | number) => Promise<void>;
 }
 

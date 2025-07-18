@@ -91,7 +91,7 @@ export default class BackendHelper {
 
       // no special cases for 'localhost' and 'host-without-dot:port'; they won't work within the VM
       if (repo[0].includes('.')) {
-        host = repo.shift() as string;
+        host = repo.shift()!;
         if (host === 'docker.io') {
           host = 'registry-1.docker.io';
           // 'docker.io/busybox' means 'registry-1.docker.io/library/busybox'
@@ -115,7 +115,7 @@ export default class BackendHelper {
       }
 
       // match for "image:tag@digest" (tag and digest are both optional)
-      const match = repo[repo.length - 1].match(/^(?<image>.*?)(:(?<tag>.*?))?(@(?<digest>.*))?$/);
+      const match = /^(?<image>.*?)(:(?<tag>.*?))?(@(?<digest>.*))?$/.exec(repo[repo.length - 1]);
       let tag = '[^/]+';
 
       // Strip tag and digest from last fragment of the image name.
@@ -166,7 +166,7 @@ export default class BackendHelper {
     const [, errors] = sv.validateSettings(cfg as Settings, { kubernetes: { version: newVersion.raw } }, settingsImpl.getLockedSettings());
 
     if (errors.length > 0) {
-      if (errors.some(err => err.match(/field ".*" is locked/))) {
+      if (errors.some(err => /field ".*" is locked/.exec(err))) {
         throw new LockedFieldError(`Error in deployment profiles:\n${ errors.join('\n') }`);
       } else {
         throw new Error(`Validation errors for requested version ${ newVersion }: ${ errors.join('\n') }`);
@@ -272,7 +272,7 @@ export default class BackendHelper {
       const files = await vmx.execCommand({ capture: true }, '/bin/ls', '-1', '-p', '/usr/local/bin');
 
       for (const file of files.split(/\n/)) {
-        const match = file.match(/^containerd-shim-([-a-z]+)-v\d+$/);
+        const match = /^containerd-shim-([-a-z]+)-v\d+$/.exec(file);
 
         if (match) {
           shims[match[1]] = file;

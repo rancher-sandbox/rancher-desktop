@@ -4,17 +4,17 @@
 import fs from 'fs';
 import path from 'path';
 
+import { jest } from '@jest/globals';
 import _ from 'lodash';
 import plist from 'plist';
-import { jest } from '@jest/globals';
 
 import * as settings from '../settings';
 import * as settingsImpl from '../settingsImpl';
 
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import paths from '@pkg/utils/paths';
-import { RecursivePartial } from '@pkg/utils/typeUtils';
 import mockModules from '@pkg/utils/testUtils/mockModules';
+import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 class FakeFSError extends Error {
   public message = '';
@@ -29,7 +29,7 @@ class FakeFSError extends Error {
 enum ProfileTypes {
   None = 'none',
   Unlocked = 'unlocked',
-  Locked = 'locked'
+  Locked = 'locked',
 }
 
 const actualSyncReader = fs.readFileSync;
@@ -37,7 +37,7 @@ const modules = mockModules({
   fs: {
     ...fs,
     readFileSync: jest.spyOn(fs, 'readFileSync'),
-  }
+  },
 });
 
 const { readDeploymentProfiles } = await import('@pkg/main/deploymentProfiles');
@@ -227,7 +227,7 @@ describe('settings', () => {
      * @param typeToCorrupt: if 'defaults', when a defaults profile is requested, just return the first half of the text.
      *                       ... similar if it's 'locked'
      */
-    function createMocker(useSystemProfile: ProfileTypes, usePersonalProfile: ProfileTypes, typeToCorrupt?: 'defaults'|'locked'): (inputPath: any, unused: any) => any {
+    function createMocker(useSystemProfile: ProfileTypes, usePersonalProfile: ProfileTypes, typeToCorrupt?: 'defaults' | 'locked'): (inputPath: any, unused: any) => any {
       return (inputPath: any, unused: any): any => {
         if (!inputPath.startsWith(paths.deploymentProfileUser) && !inputPath.startsWith(paths.deploymentProfileSystem)) {
           return actualSyncReader(inputPath, unused);
@@ -319,7 +319,7 @@ describe('settings', () => {
       });
       describe('when there is a profile', () => {
         describe('all possible situations of (system,user) x (locked,unlocked)', () => {
-          const testCases: {system: ProfileTypes, user: ProfileTypes, shouldLock: boolean, msg: string}[] = [];
+          const testCases: { system: ProfileTypes, user: ProfileTypes, shouldLock: boolean, msg: string }[] = [];
 
           for (const system of Object.values(ProfileTypes)) {
             for (const user of Object.values(ProfileTypes)) {

@@ -212,7 +212,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       'Waiting for services',
       50,
       async() => {
-        const client = this.client as KubeClient;
+        const client = this.client!;
 
         await client.waitForServiceWatcher();
         client.on('service-changed', (services) => {
@@ -290,8 +290,8 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
 
   cfg: BackendSettings | undefined;
 
-  protected readonly arch: Architecture;
-  protected readonly vm: LimaBackend;
+  protected readonly arch:  Architecture;
+  protected readonly vm:    LimaBackend;
   protected activeVersion?: semver.SemVer;
 
   /** The port Kubernetes is actively listening on. */
@@ -331,7 +331,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
         availableVersions = await this.k3sHelper.availableVersions;
 
         return await BackendHelper.getDesiredVersion(
-          this.cfg as BackendSettings,
+          this.cfg!,
           availableVersions,
           this.vm.noModalDialogs,
           this.vm.writeSetting.bind(this.vm));
@@ -457,8 +457,8 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   }
 
   // #region Events
-  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
-    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  eventNames(): (keyof K8s.KubernetesBackendEvents)[] {
+    return super.eventNames() as (keyof K8s.KubernetesBackendEvents)[];
   }
 
   listeners<eventName extends keyof K8s.KubernetesBackendEvents>(

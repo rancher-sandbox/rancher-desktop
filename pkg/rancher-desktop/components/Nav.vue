@@ -7,7 +7,7 @@
         :item="item.route"
       >
         <RouterLink
-          :class="{'rd-link-active': isRouteActive(item.route) }"
+          :class="{ 'rd-link-active': isRouteActive(item.route) }"
           :to="item.route"
         >
           {{ routes[item.route].name }}
@@ -33,7 +33,7 @@
       <RouterLink
         v-for="extension in extensionsWithUI"
         :key="extension.id"
-        :data-test="`extension-nav-${ extension.metadata.ui['dashboard-tab'].title.toLowerCase() }`"
+        :data-test="`extension-nav-${extension.metadata.ui['dashboard-tab'].title.toLowerCase()}`"
         :to="extensionRoute(extension)"
       >
         <nav-item :id="`extension:${extension.id}`">
@@ -90,9 +90,9 @@ export default defineComponent({
   },
   props: {
     items: {
-      type:      Array as PropType<{route: string; error?: number; experimental?: boolean}[]>,
+      type:      Array as PropType<{ route: string; error?: number; experimental?: boolean }[]>,
       required:  true,
-      validator: (value: {route: string, error?: number}[]) => {
+      validator: (value: { route: string, error?: number }[]) => {
         const routes = router.getRoutes().reduce((paths: Record<string, RouteRecordPublic>, route) => {
           paths[route.path] = route;
 

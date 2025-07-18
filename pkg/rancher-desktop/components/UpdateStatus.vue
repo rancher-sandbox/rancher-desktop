@@ -53,7 +53,7 @@
         >
           {{ applyMessage }}
         </button>
-        <span v-else></span>
+        <span v-else />
       </template>
     </card>
     <card
@@ -76,7 +76,7 @@
         </p>
       </template>
       <template #actions>
-        <div></div>
+        <div />
       </template>
     </card>
   </div>

@@ -15,7 +15,7 @@ import type { Page } from '@playwright/test';
 
 interface ScreenshotsOptions {
   directory: string;
-  log: Log;
+  log:       Log;
 }
 
 export class Screenshots {
@@ -24,9 +24,9 @@ export class Screenshots {
 
   protected windowTitle = '';
   private static screenshotIndex = 0;
-  readonly page: Page;
+  readonly page:      Page;
   readonly directory: string;
-  readonly log: Log;
+  readonly log:       Log;
 
   constructor(page: Page, opt: ScreenshotsOptions) {
     this.page = page;

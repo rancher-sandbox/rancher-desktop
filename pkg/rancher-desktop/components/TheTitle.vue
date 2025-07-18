@@ -2,7 +2,7 @@
 import { defineComponent, markRaw } from 'vue';
 import { mapState } from 'vuex';
 
-const componentCache: { [key: string]: any } = {};
+const componentCache: Record<string, any> = {};
 
 export default defineComponent({
   name: 'the-title',

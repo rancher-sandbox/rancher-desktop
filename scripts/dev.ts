@@ -15,7 +15,7 @@ import psTree from 'ps-tree';
 import buildUtils from './lib/build-utils';
 
 interface RendererEnv {
-  home: string;
+  home:   string;
   agent?: https.Agent | undefined;
 }
 
@@ -219,7 +219,7 @@ class DevRunner extends events.EventEmitter {
         this.on('error', reject);
       });
     } catch (err: any) {
-      if (typeof err === 'string' && /Main process error: Process exited with code 201/.test(err)) {
+      if (typeof err === 'string' && err.includes('Main process error: Process exited with code 201')) {
         // do nothing
       } else {
         console.error(err);

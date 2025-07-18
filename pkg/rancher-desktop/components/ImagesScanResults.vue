@@ -168,14 +168,14 @@ export default {
         />
       </div>
     </template>
-    <template #col:VulnerabilityID="{row}">
+    <template #col:VulnerabilityID="{ row }">
       <td>
         <span>
           <a :href="row.PrimaryURL">{{ row.VulnerabilityID }}</a>
         </span>
       </td>
     </template>
-    <template #col:Severity="{row}">
+    <template #col:Severity="{ row }">
       <td>
         <badge-state
           :label="row.Severity"
@@ -183,7 +183,7 @@ export default {
         />
       </td>
     </template>
-    <template #sub-row="{row, fullColspan}">
+    <template #sub-row="{ row, fullColspan }">
       <td
         :colspan="fullColspan"
         class="sub-row"

@@ -21,17 +21,17 @@ import yaml from 'yaml';
 import { executable } from '@pkg/utils/resources';
 
 interface Cluster {
-  readonly name: string;
-  readonly caData?: string;
-  caFile?: string;
-  readonly server: string;
-  readonly skipTLSVerify: boolean;
+  readonly name:           string;
+  readonly caData?:        string;
+  caFile?:                 string;
+  readonly server:         string;
+  readonly skipTLSVerify:  boolean;
   readonly tlsServerName?: string;
-  readonly proxyUrl?: string;
+  readonly proxyUrl?:      string;
 }
 
 export function loadFromString(kubeConfig : KubeConfig, config: string, opts?: Partial<ConfigOptions>): void {
-  const obj = yaml.parse(config) as any;
+  const obj = yaml.parse(config);
 
   kubeConfig.clusters = newClusters(obj.clusters, opts);
   kubeConfig.contexts = newContexts(obj.contexts, opts);

@@ -17,7 +17,7 @@ const modules = mockModules({
     app: {
       isPackaged: false,
       getAppPath: () => appDir,
-    }
+    },
   },
   // Mock fs.promises.readdir() for the default export.
   fs: {
@@ -35,7 +35,7 @@ const modules = mockModules({
   '@pkg/utils/paths': {
     ...paths,
     resources: '',
-  }
+  },
 });
 
 const { CheckerDockerCLISymlink } = await import('../dockerCliSymlinks');

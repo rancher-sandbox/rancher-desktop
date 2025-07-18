@@ -14,8 +14,8 @@ export type RecursiveReadonly<T> = {
   readonly [P in keyof T]:
   T[P] extends (infer U)[] ? readonly RecursiveReadonly<U>[] :
 
-  T[P] extends Record<string, unknown> ? RecursiveReadonly<T[P]> :
-  T[P];
+    T[P] extends Record<string, unknown> ? RecursiveReadonly<T[P]> :
+      T[P];
 };
 
 export type ReadWrite<T> = {
@@ -32,10 +32,10 @@ type Alpha<T> = T extends UpperAlpha ? T : T extends Lowercase<UpperAlpha> ? T :
 
 type UpperSnakeCaseInner<T extends string> =
   T extends '' ? never :
-  T extends UpperAlpha ? `_${ T }` :
-  T extends Alpha<T> ? Uppercase<T> :
-  T extends `${ infer C }${ infer U }` ? `${ UpperSnakeCaseInner<C> }${ UpperSnakeCaseInner<U> }` :
-  never;
+    T extends UpperAlpha ? `_${ T }` :
+      T extends Alpha<T> ? Uppercase<T> :
+        T extends `${ infer C }${ infer U }` ? `${ UpperSnakeCaseInner<C> }${ UpperSnakeCaseInner<U> }` :
+          never;
 
 /**
  * UpperSnakeCase transforms a string into upper snake case (all upper case,
@@ -46,9 +46,9 @@ type UpperSnakeCaseInner<T extends string> =
  */
 export type UpperSnakeCase<T extends string | symbol | number > =
   T extends symbol | number ? never :
-  T extends Alpha<T> ? Uppercase<T> :
-  T extends `${ infer C }${ infer U }` ? `${ Uppercase<C> }${ UpperSnakeCaseInner<U> }`
-  : T;
+    T extends Alpha<T> ? Uppercase<T> :
+      T extends `${ infer C }${ infer U }` ? `${ Uppercase<C> }${ UpperSnakeCaseInner<U> }`
+        : T;
 
 /**
  * RecursiveKeys returns the set of all keys of a type, recursively, separated
@@ -58,9 +58,9 @@ export type UpperSnakeCase<T extends string | symbol | number > =
  */
 export type RecursiveKeys<T> =
   Record<string, unknown> extends T ? string :
-  T extends readonly unknown[] ? RecursiveKeys<T[number]> :
-  T extends Record<string, unknown> ? keyof T & string | RecursiveKeysInner<T, keyof T & string> :
-  never;
+    T extends readonly unknown[] ? RecursiveKeys<T[number]> :
+      T extends Record<string, unknown> ? keyof T & string | RecursiveKeysInner<T, keyof T & string> :
+        never;
 
 type RecursiveKeysInner<T, K extends string> = K extends keyof T ? `${ K }.${ RecursiveKeys<T[K]> }` : never;
 
@@ -70,22 +70,22 @@ type RecursiveKeysInner<T, K extends string> = K extends keyof T ? `${ K }.${ Re
  */
 export type RecursiveTypes<T extends Record<string, any>> =
   Record<string, unknown> extends T ? never :
-  {
-    [P in RecursiveKeys<T>]:
+    {
+      [P in RecursiveKeys<T>]:
       P extends keyof T ?
         T[P] :
-      P extends `${ infer K }.${ infer R }` ?
-        (
-          K extends keyof T ?
-            (
-              T[K] extends Record<string, unknown> ?
-                ( R extends keyof RecursiveTypes<T[K]> ? RecursiveTypes<T[K]>[R] : never ) :
-                never
-            ) :
-            never
-        ) :
-      never;
-  };
+        P extends `${ infer K }.${ infer R }` ?
+          (
+            K extends keyof T ?
+              (
+                T[K] extends Record<string, unknown> ?
+                  ( R extends keyof RecursiveTypes<T[K]> ? RecursiveTypes<T[K]>[R] : never ) :
+                  never
+              ) :
+              never
+          ) :
+          never;
+    };
 
 /**
  * Check if a given object is defined (i.e. not undefined, and not null).

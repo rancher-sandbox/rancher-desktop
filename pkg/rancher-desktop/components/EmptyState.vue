@@ -34,7 +34,7 @@ export default defineComponent({
         <span
           class="icon"
           :class="icon"
-        ></span>
+        />
       </slot>
     </div>
     <div class="empty-state-heading">
@@ -54,7 +54,7 @@ export default defineComponent({
       v-if="hasPrimaryActionSlot"
       class="empty-state-primary-action"
     >
-      <slot name="primary-action"></slot>
+      <slot name="primary-action" />
     </div>
   </div>
 </template>

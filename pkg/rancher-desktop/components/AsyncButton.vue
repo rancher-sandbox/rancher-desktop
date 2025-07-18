@@ -1,5 +1,6 @@
 <script lang="ts">
 import { defineComponent, PropType, inject } from 'vue';
+
 import typeHelper from '@pkg/utils/type-helpers';
 
 export const ASYNC_BUTTON_STATES = {
@@ -45,7 +46,7 @@ export default defineComponent({
     },
     type: {
       type:    String as PropType<'button' | 'submit' | 'reset' | undefined>,
-      default: 'button'
+      default: 'button',
     },
     tabIndex: {
       type:    Number,
@@ -110,7 +111,7 @@ export default defineComponent({
      */
     componentTestid: {
       type:    String,
-      default: 'action-button'
+      default: 'action-button',
     },
 
     manual: {
@@ -135,11 +136,11 @@ export default defineComponent({
   watch: {
     currentPhase(neu) {
       this.phase = neu;
-    }
+    },
   },
 
   computed: {
-    classes(): {btn: boolean, [color: string]: boolean} {
+    classes(): { btn: boolean, [color: string]: boolean } {
       const key = `${ this.phase }Color`;
       const color = typeHelper.memberOfComponent(this, key);
 
@@ -208,16 +209,16 @@ export default defineComponent({
       return this.disabled || this.phase === ASYNC_BUTTON_STATES.WAITING;
     },
 
-    tooltip(): { content: string, hideOnTargetClick: boolean} | null {
+    tooltip(): { content: string, hideOnTargetClick: boolean } | null {
       if ( this.labelAs === TOOLTIP ) {
         return {
           content:           this.displayLabel,
-          hideOnTargetClick: false
+          hideOnTargetClick: false,
         };
       }
 
       return null;
-    }
+    },
   },
 
   beforeUnmount() {
@@ -267,8 +268,8 @@ export default defineComponent({
 
     focus() {
       (this.$refs.btn as HTMLElement).focus();
-    }
-  }
+    },
+  },
 });
 </script>
 
@@ -287,7 +288,7 @@ export default defineComponent({
     <i
       v-if="displayIcon"
       v-clean-tooltip="tooltip"
-      :class="{icon: true, 'icon-lg': true, [displayIcon]: true}"
+      :class="{ icon: true, 'icon-lg': true, [displayIcon]: true }"
     />
     <span
       v-if="labelAs === 'text' && displayLabel"

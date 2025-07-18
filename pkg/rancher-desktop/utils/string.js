@@ -51,7 +51,7 @@ const entityMap = {
   '>': '&gt;',
   '"': '&quot;',
   "'": '&#39;',
-  '/': '&#x2F;'
+  '/': '&#x2F;',
 };
 
 export function escapeHtml(html) {

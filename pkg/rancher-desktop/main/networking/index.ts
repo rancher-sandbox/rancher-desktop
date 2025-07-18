@@ -119,7 +119,7 @@ export default async function setupNetworking() {
 /**
  * Get the system certificates in PEM format.
  */
-export async function *getSystemCertificates(): AsyncIterable<string> {
+export async function * getSystemCertificates(): AsyncIterable<string> {
   const platform = os.platform();
 
   if (platform.startsWith('win')) {

@@ -6,14 +6,14 @@ import Logging from '@pkg/utils/logging';
 
 const console = Logging.background;
 
-type BackgroundProcessConstructorOptions = {
+interface BackgroundProcessConstructorOptions {
   /** A function to create the underlying child process. */
-  spawn: () => Promise<childProcess.ChildProcess>;
+  spawn:      () => Promise<childProcess.ChildProcess>;
   /** Optional function to stop the underlying child process. */
-  destroy?: (child: childProcess.ChildProcess | null) => Promise<void>;
+  destroy?:   (child: childProcess.ChildProcess | null) => Promise<void>;
   /** Additional checks to see if the process should be started. */
   shouldRun?: () => Promise<boolean>;
-};
+}
 
 /**
  * This manages a given persistent background process that must be kept running

@@ -10,7 +10,7 @@ export default {
      */
     group: {
       type:    String,
-      default: () => ''
+      default: () => '',
     },
     /**
      * Group options
@@ -18,28 +18,28 @@ export default {
      */
     groupOptions: {
       type:    Array,
-      default: () => []
+      default: () => [],
     },
     /**
      * Flag that controls visibility of advanced filtering feature
      */
     hasAdvancedFiltering: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     /**
      * Flag that controls visibility of labels as possible toggleable cols to be displayed on the Sortable Table
      */
     advFilterHideLabelsAsCols: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     /**
      * Flag that prevents filtering by labels
      */
     advFilterPreventFilteringLabels: {
       type:    Boolean,
-      default: false
+      default: false,
     },
   },
   data() {
@@ -78,7 +78,7 @@ export default {
         // unregister click event
         window.removeEventListener('click', this.onClickOutside);
       }
-    }
+    },
   },
 
   computed: {
@@ -90,7 +90,7 @@ export default {
       return this.groupOptions.map((item) => {
         return {
           label: this.t(item.tooltipKey),
-          value: item.value
+          value: item.value,
         };
       });
     },
@@ -165,7 +165,7 @@ export default {
           value,
           isFilter,
           isTableOption: true,
-          isColVisible
+          isColVisible,
         });
       });
 
@@ -183,7 +183,7 @@ export default {
                 isColVisible:     false,
                 isLabel:          true,
                 preventFiltering: this.advFilterPreventFilteringLabels,
-                preventColToggle: this.advFilterHideLabelsAsCols
+                preventColToggle: this.advFilterHideLabelsAsCols,
               };
 
               // maintain current visibility of cols if they exist already
@@ -212,7 +212,7 @@ export default {
           label:         ADV_FILTER_ALL_COLS_LABEL,
           value:         ADV_FILTER_ALL_COLS_VALUE,
           isFilter:      true,
-          isTableOption: false
+          isTableOption: false,
         });
       }
 
@@ -224,7 +224,7 @@ export default {
         this.advancedFilteringValues.push({
           prop:  this.advFilterSelectedProp,
           value: this.advFilterSearchTerm,
-          label: this.advFilterSelectedLabel
+          label: this.advFilterSelectedLabel,
         });
 
         this.eventualSearchQuery = this.advancedFilteringValues;

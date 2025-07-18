@@ -58,7 +58,7 @@ export default defineComponent({
 
   computed: {
     integrationsList() {
-      const results: {name: string, value: boolean, disabled: boolean, description: string}[] = [];
+      const results: { name: string, value: boolean, disabled: boolean, description: string }[] = [];
 
       for (const [name, value] of Object.entries(this.integrations)) {
         if (typeof value === 'boolean') {

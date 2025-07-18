@@ -23,11 +23,11 @@ const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
 const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-desktop';
 
-type VersionComparison = {
-  dependency: VersionedDependency;
+interface VersionComparison {
+  dependency:     VersionedDependency;
   currentVersion: string | AlpineLimaISOVersion;
-  latestVersion: string | AlpineLimaISOVersion;
-};
+  latestVersion:  string | AlpineLimaISOVersion;
+}
 
 const dependencies: VersionedDependency[] = [
   new tools.KuberlrAndKubectl(),

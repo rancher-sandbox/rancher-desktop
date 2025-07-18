@@ -1,14 +1,15 @@
-import cloneDeep from 'lodash/cloneDeep.js';
-import flattenDeep from 'lodash/flattenDeep.js';
-import compact from 'lodash/compact.js';
 import { JSONPath } from 'jsonpath-plus';
-import transform from 'lodash/transform.js';
-import isObject from 'lodash/isObject.js';
+import cloneDeep from 'lodash/cloneDeep.js';
+import compact from 'lodash/compact.js';
+import difference from 'lodash/difference.js';
+import flattenDeep from 'lodash/flattenDeep.js';
 import isArray from 'lodash/isArray.js';
 import isEqual from 'lodash/isEqual.js';
-import difference from 'lodash/difference.js';
-import { splitObjectPath, joinObjectPath } from '@pkg/utils/string';
+import isObject from 'lodash/isObject.js';
+import transform from 'lodash/transform.js';
+
 import { addObject } from '@pkg/utils/array';
+import { splitObjectPath, joinObjectPath } from '@pkg/utils/string';
 
 export function set(obj, path, value) {
   let ptr = obj;
@@ -66,7 +67,7 @@ export function get(obj, path) {
         wrap: false,
       });
     } catch (e) {
-      console.log('JSON Path error', e, path, obj); // eslint-disable-line no-console
+      console.log('JSON Path error', e, path, obj);
 
       return '(JSON Path err)';
     }
@@ -281,7 +282,7 @@ export function changeset(from, to, parentPath = []) {
       out = { ...out, ...changeset(from[k], to[k], [...parentPath, k]) };
     } else if ( !isEqual(from[k], to[k]) ) {
       out[path] = {
-        op: 'change', from: from[k], value: to[k]
+        op: 'change', from: from[k], value: to[k],
       };
     }
   }
@@ -422,7 +423,7 @@ export function pickBy(obj = {}, predicate = (value, key) => false) {
  * @returns
  */
 export const toDictionary = (array, callback) => Object.assign(
-  {}, ...array.map((item) => ({ [item]: callback(item) }))
+  {}, ...array.map((item) => ({ [item]: callback(item) })),
 );
 
 export function dropKeys(obj, keys) {
