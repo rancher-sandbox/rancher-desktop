@@ -247,14 +247,6 @@ export default defineComponent({
                     this.terminal.scrollToBottom();
                     this.waitingForInitialLogs = false;
                   }, 200);
-                } else {
-                  const buffer = this.terminal.buffer.active;
-                  const viewport = this.terminal.rows;
-                  const isAtBottom = buffer.viewportY >= buffer.length - viewport;
-
-                  if (isAtBottom) {
-                    this.terminal.scrollToBottom();
-                  }
                 }
               }
             },
