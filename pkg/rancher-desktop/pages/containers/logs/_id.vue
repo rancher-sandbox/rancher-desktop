@@ -56,7 +56,7 @@
     </div>
 
     <loading-indicator
-        v-if="isLoading"
+        v-if="isLoading || waitingForInitialLogs"
         class="content-state"
         data-testid="loading-indicator"
     >
@@ -64,7 +64,7 @@
     </loading-indicator>
 
     <banner
-        v-else-if="error"
+        v-if="error && !waitingForInitialLogs"
         class="content-state"
         color="error"
         data-testid="error-message"
@@ -74,9 +74,9 @@
     </banner>
 
     <div
-        v-else
+        v-if="!isLoading"
         ref="terminalContainer"
-        class="terminal-container"
+        :class="['terminal-container', { 'terminal-hidden': waitingForInitialLogs }]"
         data-testid="terminal"
     />
   </div>
@@ -122,6 +122,9 @@ export default defineComponent({
       maxReconnectAttempts: 5,
       searchDebounceTimer: null,
       containerCheckInterval: null,
+      waitingForInitialLogs: true,
+      revealTimeout: null,
+      hasReceivedLogs: false,
     };
   },
   computed: {
@@ -162,6 +165,9 @@ export default defineComponent({
     }
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
+    }
+    if (this.revealTimeout) {
+      clearTimeout(this.revealTimeout);
     }
   },
   methods: {
@@ -211,6 +217,8 @@ export default defineComponent({
     async startStreaming() {
       try {
         this.error = null;
+        this.waitingForInitialLogs = true;
+        this.hasReceivedLogs = false;
 
         if (!this.terminal) {
           await this.initializeTerminal();
@@ -223,14 +231,27 @@ export default defineComponent({
               if (this.terminal && (data.stdout || data.stderr)) {
                 const output = data.stdout || data.stderr;
 
-                const buffer = this.terminal.buffer.active;
-                const viewport = this.terminal.rows;
-                const isAtBottom = buffer.viewportY >= buffer.length - viewport;
+                this.hasReceivedLogs = true;
 
                 this.terminal.write(output);
 
-                if (isAtBottom) {
-                  this.terminal.scrollToBottom();
+                if (this.waitingForInitialLogs) {
+                  if (this.revealTimeout) {
+                    clearTimeout(this.revealTimeout);
+                  }
+
+                  this.revealTimeout = setTimeout(() => {
+                    this.terminal.scrollToBottom();
+                    this.waitingForInitialLogs = false;
+                  }, 200);
+                } else {
+                  const buffer = this.terminal.buffer.active;
+                  const viewport = this.terminal.rows;
+                  const isAtBottom = buffer.viewportY >= buffer.length - viewport;
+
+                  if (isAtBottom) {
+                    this.terminal.scrollToBottom();
+                  }
                 }
               }
             },
@@ -258,9 +279,17 @@ export default defineComponent({
 
         this.reconnectAttempts = 0;
 
+        setTimeout(() => {
+          if (this.waitingForInitialLogs && !this.hasReceivedLogs) {
+            this.waitingForInitialLogs = false;
+          }
+        }, 500);
+
 
       } catch (error) {
         console.error('Error starting log stream:', error);
+
+        this.waitingForInitialLogs = false;
 
         const errorMessages = {
           'No such container': 'Container not found. It may have been removed.',
@@ -505,6 +534,11 @@ export default defineComponent({
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  opacity: 1;
+
+  &.terminal-hidden {
+    opacity: 0;
+  }
 
   :deep(.xterm) {
     padding: 1rem;
