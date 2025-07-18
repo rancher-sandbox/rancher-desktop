@@ -83,22 +83,22 @@ describe('manageLinesInFile', () => {
     testUnix('Preserves extended attributes', async() => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
       // @ts-ignore // fs-xattr is not available on Windows.
-      const { get, list, set } = await import('fs-xattr');
+      const { listAttributes, getAttribute, setAttribute } = await import('fs-xattr');
 
       const unmanagedContents = 'existing lines\n';
       const attributeKey = 'user.io.rancherdesktop.test';
       const attributeValue = 'sample attribute contents';
 
       await fs.promises.writeFile(rcFilePath, unmanagedContents);
-      await set(rcFilePath, attributeKey, attributeValue);
+      await setAttribute(rcFilePath, attributeKey, attributeValue);
       await expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], true)).resolves.not.toThrow();
 
-      const allAttrs: string[] = await list(rcFilePath);
+      const allAttrs: string[] = await listAttributes(rcFilePath);
       // filter out attributes like com.apple.provenance that the OS might add
       const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.'));
 
       expect(filteredAttrs).toEqual([attributeKey]);
-      await expect(get(rcFilePath, attributeKey)).resolves.toEqual(Buffer.from(attributeValue, 'utf-8'));
+      await expect(getAttribute(rcFilePath, attributeKey)).resolves.toEqual(Buffer.from(attributeValue, 'utf-8'));
     });
 
     test('Delete file when false and it contains only the managed lines', async() => {
@@ -123,8 +123,8 @@ describe('manageLinesInFile', () => {
       if (process.platform !== 'win32') {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
         // @ts-ignore // fs-xattr is not available on Windows.
-        const { list } = await import('fs-xattr');
-        const allAttrs: string[] = await list(rcFilePath);
+        const { listAttributes } = await import('fs-xattr');
+        const allAttrs: string[] = await listAttributes(rcFilePath);
         // filter out attributes like com.apple.provenance that the OS might add
         const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.'));
 
