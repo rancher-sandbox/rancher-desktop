@@ -92,7 +92,6 @@ export default defineComponent({
       ddClient: null,
       volumesList: null,
       volumesNamespaces: [],
-      // Interval to ensure the first fetch succeeds (instead of trying to stream in updates)
       volumeCheckInterval: null,
       error: null,
       headers:      [
@@ -187,7 +186,7 @@ export default defineComponent({
     });
 
     this.checkVolumes().catch(console.error);
-    this.volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 5_000);
+    this.volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 1_000);
   },
   beforeDestroy() {
     ipcRenderer.removeAllListeners('settings-update');
@@ -207,7 +206,6 @@ export default defineComponent({
         }
         try {
           await this.getVolumes();
-          clearInterval(this.volumeCheckInterval);
         } catch (error) {
           console.error('There was a problem fetching volumes:', { error });
         }

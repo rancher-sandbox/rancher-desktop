@@ -114,8 +114,6 @@ import SortableTable from '@pkg/components/SortableTable';
 import {ContainerEngine} from '@pkg/config/settings';
 import {ipcRenderer} from '@pkg/utils/ipcRenderer';
 
-let containerCheckInterval = null;
-
 /**
  * @typedef Container {Object} The return type of ddClient.docker.listContainers
  * @property Id {string} The container id
@@ -133,6 +131,7 @@ export default defineComponent({
       containersList:       null,
       showRunning:          false,
       containersNamespaces: [],
+      containerCheckInterval: null,
       error: null,
       headers:              [
         // INFO: Disable for now since we can only get the running containers.
@@ -283,13 +282,13 @@ export default defineComponent({
     });
 
     this.checkContainers().catch(console.error);
-    containerCheckInterval = setInterval(this.checkContainers.bind(this), 1_000);
+    this.containerCheckInterval = setInterval(this.checkContainers.bind(this), 1_000);
   },
   beforeUnmount() {
     ipcRenderer.removeAllListeners('settings-update');
     ipcRenderer.removeAllListeners('containers-namespaces');
     ipcRenderer.removeAllListeners('containers-namespaces-containers');
-    clearInterval(containerCheckInterval);
+    clearInterval(this.containerCheckInterval);
   },
   methods: {
     async checkContainers() {
@@ -305,7 +304,6 @@ export default defineComponent({
         }
         try {
           await this.getContainers();
-          clearInterval(containerCheckInterval);
         } catch (error) {
           console.error('There was a problem fetching containers:', { error });
         }
