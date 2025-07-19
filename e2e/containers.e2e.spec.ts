@@ -2,11 +2,12 @@ import {expect, test, ElectronApplication, Page} from '@playwright/test';
 
 import {NavPage} from './pages/nav-page';
 import {ContainerLogsPage} from './pages/container-logs-page';
+import {ContainersPage} from './pages/containers-page';
 import {startSlowerDesktop, teardown, tool} from './utils/TestUtils';
 
 let page: Page;
 
-test.describe.serial('Container Logs Tests', () => {
+test.describe.serial('Containers Tests', () => {
   let electronApp: ElectronApplication;
   let testContainerId: string;
   let testContainerName: string;
@@ -204,6 +205,34 @@ test.describe.serial('Container Logs Tests', () => {
           await tool('docker', 'rm', '-f', longRunningContainerId);
         } catch (cleanupError) {
         }
+      }
+    }
+  });
+
+  test('should auto-refresh containers list', async () => {
+    const containersPage = new ContainersPage(page);
+    const autoRefreshContainerName = `auto-refresh-test-${Date.now()}`;
+    let autoRefreshContainerId: string;
+
+    try {
+      const navPage = new NavPage(page);
+      await navPage.navigateTo('Containers');
+      await containersPage.waitForTableToLoad();
+
+      const output = await tool('docker', 'run', '--detach', '--name', autoRefreshContainerName,
+        'alpine', 'sleep', '30');
+      autoRefreshContainerId = output.trim();
+
+      await containersPage.waitForContainerToAppear(autoRefreshContainerId);
+
+      await tool('docker', 'rm', '-f', autoRefreshContainerId);
+
+      await expect(containersPage.getContainerRow(autoRefreshContainerId)).toBeHidden();
+
+    } finally {
+      try {
+        await tool('docker', 'rm', '-f', autoRefreshContainerId);
+      } catch (cleanupError) {
       }
     }
   });
