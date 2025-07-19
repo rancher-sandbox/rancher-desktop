@@ -106,6 +106,7 @@
 
 <script>
 import { BadgeState, Banner } from '@rancher/components';
+import _ from 'lodash';
 import { shell } from 'electron';
 import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
@@ -113,8 +114,6 @@ import { mapGetters } from 'vuex';
 import SortableTable from '@pkg/components/SortableTable';
 import { ContainerEngine } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
-
-let containerCheckInterval = null;
 
 /**
  * @typedef Container {Object} The return type of ddClient.docker.listContainers
@@ -133,7 +132,8 @@ export default defineComponent({
       containersList:       null,
       showRunning:          false,
       containersNamespaces: [],
-      error:                null,
+      containerCheckInterval: null,
+      error: null,
       headers:              [
         // INFO: Disable for now since we can only get the running containers.
         {
@@ -167,91 +167,7 @@ export default defineComponent({
   computed: {
     ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     rows() {
-      if (!this.containersList) {
-        return [];
-      }
-
-      // `this.containersList` is a Proxy; so we can't use structedClone.
-      const containers = JSON.parse(JSON.stringify(this.containersList));
-
-      return containers.map((container) => {
-        const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
-        const name = names[0];
-
-        container.state = container.State;
-        container.containerName = name.replace(
-          /_[a-z0-9-]{36}_[0-9]+/,
-          '',
-        );
-        container.started = container.State === 'running' ? container.Status : '';
-        container.imageName = container.Image;
-        container.containerState = container.State ?? container.Status;
-
-        if (this.isNerdCtl) {
-          container.started = container.containerState;
-          if (container.Status.match(/exited/i)) {
-            container.State = 'exited';
-          } else {
-            container.State = container.Status.toLowerCase();
-          }
-        }
-
-        container.availableActions = [
-          {
-            label:      'Logs',
-            action:     'viewLogs',
-            enabled:    true,
-            bulkable:   false,
-          },
-          {
-            label:      'Stop',
-            action:     'stopContainer',
-            enabled:    this.isRunning(container),
-            bulkable:   true,
-            bulkAction: 'stopContainer',
-          },
-          {
-            label:      'Start',
-            action:     'startContainer',
-            enabled:    this.isStopped(container),
-            bulkable:   true,
-            bulkAction: 'startContainer',
-          },
-          {
-            label:      this.t('images.manager.table.action.delete'),
-            action:     'deleteContainer',
-            enabled:    this.isStopped(container),
-            bulkable:   true,
-            bulkAction: 'deleteContainer',
-          },
-        ];
-
-        if (!container.stopContainer) {
-          container.stopContainer = (...args) => {
-            this.stopContainer(...(args?.length > 0 ? args : [container]));
-          };
-        }
-
-        if (!container.startContainer) {
-          container.startContainer = (...args) => {
-            this.startContainer(...(args?.length > 0 ? args : [container]));
-          };
-        }
-
-        if (!container.deleteContainer) {
-          container.deleteContainer = (...args) => {
-            this.deleteContainer(...(args?.length > 0 ? args : [container]));
-          };
-        }
-
-        if (!container.viewLogs) {
-          container.viewLogs = () => {
-            this.viewLogs(container);
-          };
-        }
-
-        return container;
-      });
+      return this.containersList || [];
     },
     isNerdCtl() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -283,13 +199,13 @@ export default defineComponent({
     });
 
     this.checkContainers().catch(console.error);
-    containerCheckInterval = setInterval(this.checkContainers.bind(this), 1_000);
+    this.containerCheckInterval = setInterval(this.checkContainers.bind(this), 1_000);
   },
   beforeUnmount() {
     ipcRenderer.removeAllListeners('settings-update');
     ipcRenderer.removeAllListeners('containers-namespaces');
     ipcRenderer.removeAllListeners('containers-namespaces-containers');
-    clearInterval(containerCheckInterval);
+    clearInterval(this.containerCheckInterval);
   },
   methods: {
     async checkContainers() {
@@ -305,7 +221,6 @@ export default defineComponent({
         }
         try {
           await this.getContainers();
-          clearInterval(containerCheckInterval);
         } catch (error) {
           console.error('There was a problem fetching containers:', { error });
         }
@@ -365,11 +280,128 @@ export default defineComponent({
       this.containersNamespaces = await this.ddClient?.docker.listNamespaces();
       this.checkSelectedNamespace();
     },
+    getContainerActions(container) {
+      return [
+        {
+          label:      'Logs',
+          action:     'viewLogs',
+          enabled:    true,
+          bulkable:   false,
+        },
+        {
+          label:      'Stop',
+          action:     'stopContainer',
+          enabled:    this.isRunning(container),
+          bulkable:   true,
+          bulkAction: 'stopContainers',
+        },
+        {
+          label:      'Start',
+          action:     'startContainer',
+          enabled:    this.isStopped(container),
+          bulkable:   true,
+          bulkAction: 'startContainers',
+        },
+        {
+          label:      this.t('images.manager.table.action.delete'),
+          action:     'deleteContainer',
+          enabled:    this.isStopped(container),
+          bulkable:   true,
+          bulkAction: 'deleteContainers',
+        },
+      ];
+    },
+    processContainer(container) {
+      const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
+      const name = names[0];
+
+      container.state = container.State;
+      container.containerName = name.replace(/_[a-z0-9-]{36}_[0-9]+/, '');
+      container.started = container.State === 'running' ? container.Status : '';
+      container.imageName = container.Image;
+      container.containerState = container.State ?? container.Status;
+
+      if (this.isNerdCtl) {
+        container.started = container.containerState;
+        if (container.Status.match(/exited/i)) {
+          container.State = 'exited';
+        } else {
+          container.State = container.Status.toLowerCase();
+        }
+      }
+
+      const actions = this.getContainerActions(container);
+
+      if (!container.availableActions || !_.isEqual(container.availableActions, actions)) {
+        container.availableActions = actions;
+      }
+
+      if (!container.stopContainer) {
+        container.stopContainer = this.stopContainer.bind(this, container);
+      }
+      if (!container.startContainer) {
+        container.startContainer = this.startContainer.bind(this, container);
+      }
+      if (!container.deleteContainer) {
+        container.deleteContainer = this.deleteContainer.bind(this, container);
+      }
+      if (!container.stopContainers) {
+        container.stopContainers = this.stopContainers.bind(this);
+      }
+      if (!container.startContainers) {
+        container.startContainers = this.startContainers.bind(this);
+      }
+      if (!container.deleteContainers) {
+        container.deleteContainers = this.deleteContainers.bind(this);
+      }
+      if (!container.viewLogs) {
+        container.viewLogs = this.viewLogs.bind(this, container);
+      }
+
+      return container;
+    },
     async getContainers() {
       const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.selectedNamespace });
 
-      // Sorts by status, showing running first.
-      this.containersList = containers.sort((a, b) => {
+      const filteredContainers = containers
+        .filter((container) => {
+          return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
+        });
+
+      if (!this.containersList) {
+        this.containersList = filteredContainers.map(c => this.processContainer(c));
+        this.containersList.sort((a, b) => {
+          if (a.State === 'running' && b.State !== 'running') {
+            return -1;
+          } else if (a.State !== 'running' && b.State === 'running') {
+            return 1;
+          } else {
+            return a.State.localeCompare(b.State);
+          }
+        });
+        return;
+      }
+
+      const existingMap = new Map(this.containersList.map(c => [c.Id, c]));
+      const newIds = new Set(filteredContainers.map(c => c.Id));
+
+      for (let i = this.containersList.length - 1; i >= 0; i--) {
+        if (!newIds.has(this.containersList[i].Id)) {
+          this.containersList.splice(i, 1);
+        }
+      }
+
+      filteredContainers.forEach(newContainer => {
+        const existing = existingMap.get(newContainer.Id);
+        if (existing) {
+          Object.assign(existing, newContainer);
+          this.processContainer(existing);
+        } else {
+          this.containersList.push(this.processContainer(newContainer));
+        }
+      });
+
+      this.containersList.sort((a, b) => {
         if (a.State === 'running' && b.State !== 'running') {
           return -1;
         } else if (a.State !== 'running' && b.State === 'running') {
@@ -377,11 +409,6 @@ export default defineComponent({
         } else {
           return a.State.localeCompare(b.State);
         }
-      });
-
-      // Filter out images from "kube-system" namespace
-      this.containersList = this.containersList.filter((container) => {
-        return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
       });
     },
     async stopContainer(container) {
@@ -392,6 +419,15 @@ export default defineComponent({
     },
     async deleteContainer(container) {
       await this.execCommand('rm', container);
+    },
+    async stopContainers(containers) {
+      await this.execCommand('stop', containers);
+    },
+    async startContainers(containers) {
+      await this.execCommand('start', containers);
+    },
+    async deleteContainers(containers) {
+      await this.execCommand('rm', containers);
     },
     viewLogs(container) {
       this.$router.push(`/containers/logs/${ container.Id }`);

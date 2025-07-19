@@ -72,6 +72,7 @@
 </template>
 
 <script lang="ts">
+import _ from 'lodash';
 import { Banner } from '@rancher/components';
 import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
@@ -88,11 +89,10 @@ export default defineComponent({
   components: { SortableTable, Banner },
   data() {
     return {
-      settings:            undefined,
-      ddClient:            null,
-      volumesList:         null,
-      volumesNamespaces:   [],
-      // Interval to ensure the first fetch succeeds (instead of trying to stream in updates)
+      settings: undefined,
+      ddClient: null,
+      volumesList: null,
+      volumesNamespaces: [],
       volumeCheckInterval: null,
       error:               null,
       headers:             [
@@ -123,36 +123,7 @@ export default defineComponent({
   computed: {
     ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     rows() {
-      if (!this.volumesList) {
-        return [];
-      }
-
-      return this.volumesList.map((volume) => {
-        return {
-          ...volume,
-          volumeName:       volume.Name,
-          created:          volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
-          mountpoint:       volume.Mountpoint || '',
-          driver:           volume.Driver || '',
-          availableActions: [
-            {
-              label:    this.t('volumes.manager.table.action.browse'),
-              action:   'browseFiles',
-              enabled:  true,
-              bulkable: false,
-            },
-            {
-              label:      this.t('volumes.manager.table.action.delete'),
-              action:     'deleteVolume',
-              enabled:    true,
-              bulkable:   true,
-              bulkAction: 'deleteVolume',
-            },
-          ],
-          deleteVolume: this.createDeleteVolumeHandler(volume),
-          browseFiles:  this.createBrowseFilesHandler(volume),
-        };
-      });
+      return this.volumesList || [];
     },
     isContainerdEngine() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -187,7 +158,7 @@ export default defineComponent({
     });
 
     this.checkVolumes().catch(console.error);
-    this.volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 5_000);
+    this.volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 1_000);
   },
   beforeUnmount() {
     ipcRenderer.removeAllListeners('settings-update');
@@ -207,7 +178,6 @@ export default defineComponent({
         }
         try {
           await this.getVolumes();
-          clearInterval(this.volumeCheckInterval);
         } catch (error) {
           console.error('There was a problem fetching volumes:', { error });
         }
@@ -236,6 +206,47 @@ export default defineComponent({
       this.volumesNamespaces = await this.ddClient?.docker.listNamespaces();
       this.checkSelectedNamespace();
     },
+    getVolumeActions(volume) {
+      return [
+        {
+          label: this.t('volumes.manager.table.action.browse'),
+          action: 'browseFiles',
+          enabled: true,
+          bulkable: false,
+        },
+        {
+          label: this.t('volumes.manager.table.action.delete'),
+          action: 'deleteVolume',
+          enabled: true,
+          bulkable: true,
+          bulkAction: 'deleteVolumes',
+        },
+      ];
+    },
+    processVolume(volume) {
+      volume.volumeName = volume.Name;
+      volume.created = volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '';
+      volume.mountpoint = volume.Mountpoint || '';
+      volume.driver = volume.Driver || '';
+
+      const actions = this.getVolumeActions(volume);
+
+      if (!volume.availableActions || !_.isEqual(volume.availableActions, actions)) {
+        volume.availableActions = actions;
+      }
+
+      if (!volume.deleteVolume) {
+        volume.deleteVolume = this.deleteVolume.bind(this, volume);
+      }
+      if (!volume.deleteVolumes) {
+        volume.deleteVolumes = this.deleteVolumes.bind(this);
+      }
+      if (!volume.browseFiles) {
+        volume.browseFiles = () => this.$router.push({name: 'volumes-files-name', params: {name: volume.Name}});
+      }
+
+      return volume;
+    },
     async getVolumes() {
       try {
         const options = {};
@@ -245,14 +256,44 @@ export default defineComponent({
         }
 
         const volumes = await this.ddClient?.docker.rdListVolumes(options);
-        this.volumesList = volumes || [];
+        const fetchedVolumes = volumes || [];
+
+        if (!this.volumesList) {
+          this.volumesList = fetchedVolumes.map(v => this.processVolume(v));
+          return;
+        }
+
+        const existingMap = new Map(this.volumesList.map(v => [v.Name, v]));
+        const newNames = new Set(fetchedVolumes.map(v => v.Name));
+
+        for (let i = this.volumesList.length - 1; i >= 0; i--) {
+          if (!newNames.has(this.volumesList[i].Name)) {
+            this.volumesList.splice(i, 1);
+          }
+        }
+
+        fetchedVolumes.forEach(newVolume => {
+          const existing = existingMap.get(newVolume.Name);
+          if (existing) {
+            Object.assign(existing, newVolume);
+            this.processVolume(existing);
+          } else {
+            this.volumesList.push(this.processVolume(newVolume));
+          }
+        });
       } catch (error) {
         console.error('Failed to fetch volumes:', error);
-        this.volumesList = [];
+        if (!this.volumesList) {
+          this.volumesList = [];
+        }
       }
     },
     async deleteVolume(volume) {
       await this.execCommand('volume rm', volume);
+    },
+    async deleteVolumes(volumes) {
+      // Handle bulk deletion
+      await this.execCommand('volume rm', volumes);
     },
     async execCommand(command, volumes) {
       try {
