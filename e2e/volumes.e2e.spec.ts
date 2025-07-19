@@ -197,4 +197,31 @@ test.describe.serial('Volumes Tests', () => {
       }
     }
   });
+
+  test('should auto-refresh volumes list', async () => {
+    const volumesPage = new VolumesPage(page);
+    const autoRefreshVolumeName = `auto-refresh-test-${Date.now()}`;
+
+    try {
+      await volumesPage.waitForTableToLoad();
+
+      await tool('docker', 'volume', 'create', autoRefreshVolumeName);
+
+      await volumesPage.waitForVolumeToAppear(autoRefreshVolumeName);
+
+      const volumeInfo = volumesPage.getVolumeInfo(autoRefreshVolumeName);
+      await expect(volumeInfo.name).not.toBeEmpty();
+      await expect(volumeInfo.driver).not.toBeEmpty();
+
+      await tool('docker', 'volume', 'rm', autoRefreshVolumeName);
+
+      await expect(volumesPage.getVolumeRow(autoRefreshVolumeName)).toBeHidden();
+
+    } finally {
+      try {
+        await tool('docker', 'volume', 'rm', autoRefreshVolumeName);
+      } catch (cleanupError) {
+      }
+    }
+  });
 });
