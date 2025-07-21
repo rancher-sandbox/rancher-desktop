@@ -6,7 +6,7 @@ export interface VersionEntry {
    * This must be a valid semver-parsable string, without any pre-release
    * versions or build metadata.
    */
-  version: string;
+  version:   string;
   /**
    * An array of strings describing the channels that include this version,
    * if any.

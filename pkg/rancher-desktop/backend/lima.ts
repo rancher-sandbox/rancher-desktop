@@ -83,39 +83,39 @@ enum SLIRP {
 /**
  * Lima mount
  */
-export type LimaMount = {
-  location: string;
+export interface LimaMount {
+  location:  string;
   writable?: boolean;
   '9p'?: {
-    securityModel: string;
+    securityModel:   string;
     protocolVersion: string;
-    msize: string;
-    cache: string;
+    msize:           string;
+    cache:           string;
   }
-};
+}
 
 /**
  * Lima configuration
  */
-export type LimaConfiguration = {
-  vmType?: 'qemu' | 'vz';
+export interface LimaConfiguration {
+  vmType?:  'qemu' | 'vz';
   rosetta?: {
     enabled?: boolean;
-    binfmt?: boolean;
+    binfmt?:  boolean;
   },
-  arch?: 'x86_64' | 'aarch64';
+  arch?:  'x86_64' | 'aarch64';
   images: {
     location: string;
-    arch?: 'x86_64' | 'aarch64';
-    digest?: string;
+    arch?:    'x86_64' | 'aarch64';
+    digest?:  string;
   }[];
-  cpus?: number;
-  memory?: number;
-  disk?: number;
-  mounts?: LimaMount[];
+  cpus?:     number;
+  memory?:   number;
+  disk?:     number;
+  mounts?:   LimaMount[];
   mountType: 'reverse-sshfs' | '9p' | 'virtiofs';
   ssh: {
-    localPort: number;
+    localPort:          number;
     loadDotSSHPubKeys?: boolean;
   }
   firmware?: {
@@ -125,26 +125,26 @@ export type LimaConfiguration = {
     display?: string;
   }
   provision?: {
-    mode: 'system' | 'user';
+    mode:   'system' | 'user';
     script: string;
   }[]
   containerd?: {
     system?: boolean;
-    user?: boolean;
+    user?:   boolean;
   }
   probes?: {
-    mode: 'readiness';
+    mode:        'readiness';
     description: string;
-    script: string;
-    hint: string;
+    script:      string;
+    hint:        string;
   }[];
   hostResolver?: {
     hosts?: Record<string, string>;
   }
-  portForwards?: Array<Record<string, any>>;
-  networks?: Array<Record<string, string | boolean>>;
-  env?: Record<string, string>;
-};
+  portForwards?: Record<string, any>[];
+  networks?:     Record<string, string | boolean>[];
+  env?:          Record<string, string>;
+}
 
 /**
  * QEMU Image formats
@@ -157,18 +157,18 @@ enum ImageFormat {
 /**
  * QEMU Image Information as returned by `qemu-img info --output=json ...`
  */
-type QEMUImageInfo = {
+interface QEMUImageInfo {
   format: string;
-};
+}
 
 /**
  * Options passed to spawnWithCapture method
  */
-type SpawnOptions = {
+interface SpawnOptions {
   expectFailure?: boolean,
-  stderr?: boolean,
-  env?: NodeJS.ProcessEnv,
-};
+  stderr?:        boolean,
+  env?:           NodeJS.ProcessEnv,
+}
 
 /**
  * Lima networking configuration.
@@ -177,17 +177,17 @@ type SpawnOptions = {
 interface LimaNetworkConfiguration {
   paths: {
     socketVMNet: string;
-    varRun: string;
-    sudoers?: string;
+    varRun:      string;
+    sudoers?:    string;
   }
-  group?: string;
+  group?:   string;
   networks: Record<string, {
-    mode: 'host' | 'shared';
+    mode:    'host' | 'shared';
     gateway: string;
     dhcpEnd: string;
     netmask: string;
   } | {
-    mode: 'bridged';
+    mode:      'bridged';
     interface: string;
   }>;
 }
@@ -196,22 +196,22 @@ interface LimaNetworkConfiguration {
  * One entry from `limactl list --json`
  */
 interface LimaListResult {
-  name: string;
-  status: 'Broken' | 'Stopped' | 'Running';
-  dir: string;
-  arch: 'x86_64' | 'aarch64';
-  vmType?: 'qemu' | 'vz';
+  name:          string;
+  status:        'Broken' | 'Stopped' | 'Running';
+  dir:           string;
+  arch:          'x86_64' | 'aarch64';
+  vmType?:       'qemu' | 'vz';
   sshLocalPort?: number;
   hostAgentPID?: number;
-  qemuPID?: number;
-  errors?: string[];
+  qemuPID?:      number;
+  errors?:       string[];
 }
 
 /** SPNetworkDataType is output from /usr/sbin/system_profiler on darwin. */
 interface SPNetworkDataType {
-  _name: string;
+  _name:     string;
   interface: string;
-  dhcp?: unknown;
+  dhcp?:     unknown;
   IPv4?: {
     Addresses?: string[];
   };
@@ -226,11 +226,11 @@ type SudoReason = 'networking' | 'docker-socket';
  */
 interface SudoCommand {
   /** Reason why we want sudo access, */
-  reason: SudoReason;
+  reason:   SudoReason;
   /** Commands that will need to be executed. */
   commands: string[];
   /** Paths that will be affected by this command. */
-  paths: string[];
+  paths:    string[];
 }
 
 const console = Logging.lima;
@@ -291,7 +291,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
   }
 
-  readonly kubeBackend: K8s.KubernetesBackend;
+  readonly kubeBackend:   K8s.KubernetesBackend;
   readonly executor = this;
   #containerEngineClient: ContainerEngineClient | undefined;
 
@@ -654,8 +654,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     // RD used to store additional keys in lima.yaml that are not supported by lima (and no longer used by RD).
     // They must be removed because lima intends to switch to strict YAML parsing, so typos can be detected.
-    delete (config as Record<string, unknown>).k3s;
-    delete (config as Record<string, unknown>).paths;
+    delete (config as unknown as Record<string, unknown>).k3s;
+    delete (config as unknown as Record<string, unknown>).paths;
 
     if (os.platform() === 'darwin') {
       if (allowRoot) {
@@ -714,7 +714,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected updateConfigPortForwards(config: LimaConfiguration) {
-    let allPortForwards: Array<Record<string, any>> | undefined = config.portForwards;
+    let allPortForwards: Record<string, any>[] | undefined = config.portForwards;
 
     if (!allPortForwards) {
       // This shouldn't happen, but fix it anyway
@@ -815,9 +815,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   /**
    * Run `limactl` with the given arguments, and return stdout.
    */
-  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<{stdout: string, stderr: string}>;
-  protected async limaWithCapture(this: Readonly<this>, options: SpawnOptions, ...args: string[]): Promise<{stdout: string, stderr: string}>;
-  protected async limaWithCapture(this: Readonly<this>, argOrOptions: string | SpawnOptions, ...args: string[]): Promise<{stdout: string, stderr: string}> {
+  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<{ stdout: string, stderr: string }>;
+  protected async limaWithCapture(this: Readonly<this>, options: SpawnOptions, ...args: string[]): Promise<{ stdout: string, stderr: string }>;
+  protected async limaWithCapture(this: Readonly<this>, argOrOptions: string | SpawnOptions, ...args: string[]): Promise<{ stdout: string, stderr: string }> {
     let options: SpawnOptions = {};
 
     if (typeof argOrOptions === 'string') {
@@ -833,7 +833,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     return await this.spawnWithCapture(LimaBackend.limactl, options, ...args);
   }
 
-  async spawnWithCapture(this: Readonly<this>, cmd: string, argOrOptions: string | SpawnOptions = {}, ...args: string[]): Promise<{stdout: string, stderr: string}> {
+  async spawnWithCapture(this: Readonly<this>, cmd: string, argOrOptions: string | SpawnOptions = {}, ...args: string[]): Promise<{ stdout: string, stderr: string }> {
     let options: SpawnOptions = {};
 
     if (typeof argOrOptions === 'string') {
@@ -1020,7 +1020,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    */
   protected async installToolsWithSudo(): Promise<boolean> {
     const randomTag = LimaBackend.calcRandomTag(8);
-    const commands: Array<string> = [];
+    const commands: string[] = [];
     const explanations: Partial<Record<SudoReason, string[]>> = {};
 
     const processCommand = (cmd: SudoCommand | undefined) => {
@@ -1635,7 +1635,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     try {
       const ipAddr = await this.execCommand({ capture: true },
         'ip', '--family', 'inet', 'addr', 'show', iface);
-      const match = ipAddr.match(' inet ([0-9.]+)');
+      const match = / inet ([0-9.]+)/.exec(ipAddr);
 
       return match ? match[1] : '';
     } catch (ex: any) {
@@ -1712,7 +1712,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     try {
       const limaEnv = await this.execCommand({ capture: true, root: true },
         'grep', 'LIMA_CIDATA_SLIRP_DNS', '/mnt/lima-cidata/lima.env');
-      const match = limaEnv.match('LIMA_CIDATA_SLIRP_DNS=([0-9.]+)');
+      const match = /LIMA_CIDATA_SLIRP_DNS=([0-9.]+)/.exec(limaEnv);
 
       return match ? match[1] : SLIRP.DNS;
     } catch (ex: any) {
@@ -2179,8 +2179,8 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
   }
 
   // #region Events
-  eventNames(): Array<keyof BackendEvents> {
-    return super.eventNames() as Array<keyof BackendEvents>;
+  eventNames(): (keyof BackendEvents)[] {
+    return super.eventNames() as (keyof BackendEvents)[];
   }
 
   listeners<eventName extends keyof BackendEvents>(

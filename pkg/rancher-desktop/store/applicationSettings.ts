@@ -9,9 +9,9 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 /**
  * State is the type of the state we are maintaining in this store.
  */
-type State = {
+interface State {
   pathManagementStrategy: PathManagementStrategy;
-};
+}
 
 const cfg = _.cloneDeep(defaultSettings);
 

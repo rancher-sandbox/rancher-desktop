@@ -2,7 +2,7 @@
 import { defineComponent } from 'vue';
 import { mapState } from 'vuex';
 
-type AlertMap = Record<'reset'|'restart'|'error', string>;
+type AlertMap = Record<'reset' | 'restart' | 'error', string>;
 
 const alertMap: AlertMap = {
   reset:   'preferences.actions.banner.reset',

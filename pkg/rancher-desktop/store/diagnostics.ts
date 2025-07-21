@@ -11,9 +11,9 @@ import type { DiagnosticsResult, DiagnosticsResultCollection } from '@pkg/main/d
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 interface DiagnosticsState {
-  diagnostics: Array<DiagnosticsResult>,
+  diagnostics: DiagnosticsResult[],
   timeLastRun: Date;
-  inError: boolean;
+  inError:     boolean;
 }
 
 type Credentials = Omit<ServerState, 'pid'>;

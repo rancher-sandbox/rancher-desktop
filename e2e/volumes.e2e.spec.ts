@@ -1,8 +1,8 @@
-import {ElectronApplication, Page, expect, test} from '@playwright/test';
+import { ElectronApplication, Page, expect, test } from '@playwright/test';
 
-import {NavPage} from './pages/nav-page';
-import {VolumesPage} from './pages/volumes-page';
-import {startSlowerDesktop, teardown, tool} from './utils/TestUtils';
+import { NavPage } from './pages/nav-page';
+import { VolumesPage } from './pages/volumes-page';
+import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
 
 let page: Page;
 
@@ -10,17 +10,17 @@ test.describe.serial('Volumes Tests', () => {
   let electronApp: ElectronApplication;
   let testVolumeName: string;
 
-  test.beforeAll(async ({}, testInfo) => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     [electronApp, page] = await startSlowerDesktop(testInfo, {
-      kubernetes: {enabled: false},
-      containerEngine: {allowedImages: {enabled: false}}
+      kubernetes:      { enabled: false },
+      containerEngine: { allowedImages: { enabled: false } },
     });
 
     const navPage = new NavPage(page);
     await navPage.progressBecomesReady();
   });
 
-  test.afterAll(async ({}, testInfo) => {
+  test.afterAll(async({ colorScheme }, testInfo) => {
     if (testVolumeName) {
       try {
         await tool('docker', 'volume', 'rm', testVolumeName);
@@ -30,7 +30,7 @@ test.describe.serial('Volumes Tests', () => {
     await teardown(electronApp, testInfo);
   });
 
-  test('should navigate to volumes page', async () => {
+  test('should navigate to volumes page', async() => {
     const navPage = new NavPage(page);
     const volumesPage = await navPage.navigateTo('Volumes');
 
@@ -38,10 +38,10 @@ test.describe.serial('Volumes Tests', () => {
     await volumesPage.waitForTableToLoad();
   });
 
-  test('should display volume in the list', async () => {
+  test('should display volume in the list', async() => {
     const volumesPage = new VolumesPage(page);
 
-    testVolumeName = `test-volume-${Date.now()}`;
+    testVolumeName = `test-volume-${ Date.now() }`;
 
     try {
       await tool('docker', 'volume', 'create', testVolumeName);
@@ -56,7 +56,7 @@ test.describe.serial('Volumes Tests', () => {
     await volumesPage.waitForVolumeToAppear(testVolumeName);
   });
 
-  test('should show volume information', async () => {
+  test('should show volume information', async() => {
     const volumesPage = new VolumesPage(page);
 
     await volumesPage.waitForVolumeToAppear(testVolumeName);
@@ -68,18 +68,18 @@ test.describe.serial('Volumes Tests', () => {
     await expect(volumeInfo.mountpoint).not.toBeEmpty();
   });
 
-  test('should browse volume files', async () => {
+  test('should browse volume files', async() => {
     const volumesPage = new VolumesPage(page);
 
     await volumesPage.browseVolumeFiles(testVolumeName);
 
-    await page.waitForURL(`**/volumes/files/${testVolumeName}`, {timeout: 10_000});
+    await page.waitForURL(`**/volumes/files/${ testVolumeName }`, { timeout: 10_000 });
 
     await page.goBack();
     await volumesPage.waitForTableToLoad();
   });
 
-  test('should delete volume', async () => {
+  test('should delete volume', async() => {
     const volumesPage = new VolumesPage(page);
 
     await volumesPage.waitForVolumeToAppear(testVolumeName);
@@ -91,11 +91,11 @@ test.describe.serial('Volumes Tests', () => {
     testVolumeName = '';
   });
 
-  test('should create multiple volumes for bulk operations', async () => {
+  test('should create multiple volumes for bulk operations', async() => {
     const volumeNames = [
-      `test-bulk-volume-1-${Date.now()}`,
-      `test-bulk-volume-2-${Date.now()}`,
-      `test-bulk-volume-3-${Date.now()}`
+      `test-bulk-volume-1-${ Date.now() }`,
+      `test-bulk-volume-2-${ Date.now() }`,
+      `test-bulk-volume-3-${ Date.now() }`,
     ];
 
     try {
@@ -135,10 +135,10 @@ test.describe.serial('Volumes Tests', () => {
     }
   });
 
-  test('should handle search functionality', async () => {
+  test('should handle search functionality', async() => {
     const volumesPage = new VolumesPage(page);
 
-    const searchVolumeName = `search-test-volume-${Date.now()}`;
+    const searchVolumeName = `search-test-volume-${ Date.now() }`;
 
     try {
       await tool('docker', 'volume', 'create', searchVolumeName);
@@ -163,18 +163,17 @@ test.describe.serial('Volumes Tests', () => {
     }
   });
 
-
-  test('should display error message in banner', async () => {
+  test('should display error message in banner', async() => {
     const volumesPage = new VolumesPage(page);
-    const volumeName = `test-volume-in-use-${Date.now()}`;
-    const containerName = `test-container-${Date.now()}`;
+    const volumeName = `test-volume-in-use-${ Date.now() }`;
+    const containerName = `test-container-${ Date.now() }`;
 
     try {
       await tool('docker', 'volume', 'create', volumeName);
 
       // Create container that uses volume above
       await tool('docker', 'run', '--detach', '--name', containerName,
-        '-v', `${volumeName}:/data`, 'alpine', 'sleep', '300');
+        '-v', `${ volumeName }:/data`, 'alpine', 'sleep', '300');
 
       await page.reload();
       await volumesPage.waitForTableToLoad();
@@ -188,7 +187,6 @@ test.describe.serial('Volumes Tests', () => {
       await expect(volumesPage.errorBanner).toContainText(/volume is in use/i);
 
       await expect(volumesPage.getVolumeRow(volumeName)).toBeVisible();
-
     } finally {
       try {
         await tool('docker', 'rm', '-f', containerName);

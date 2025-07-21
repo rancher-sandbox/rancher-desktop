@@ -5,16 +5,16 @@ import path from 'path';
 import { IntegrationManager } from '@pkg/integrations/integrationManager';
 import Logging from '@pkg/utils/logging';
 
-type UnixIntegrationManagerOptions = {
+interface UnixIntegrationManagerOptions {
   /** Directory containing tools shipped with Rancher Desktop. */
-  binDir: string;
+  binDir:                string;
   /** Directory to place tools the user can use. */
-  integrationDir: string;
+  integrationDir:        string;
   /** Directory containing docker CLI plugins shipped with Rancher Desktop. */
   dockerCLIPluginSource: string;
   /** Directory to place docker CLI plugins for with the docker CLI. */
-  dockerCLIPluginDest: string;
-};
+  dockerCLIPluginDest:   string;
+}
 
 const console = Logging.integrations;
 
@@ -26,10 +26,10 @@ const console = Logging.integrations;
  * docker looks in for CLI plugins.
  */
 export default class UnixIntegrationManager implements IntegrationManager {
-  protected binDir: string;
-  protected integrationDir: string;
+  protected binDir:                string;
+  protected integrationDir:        string;
   protected dockerCLIPluginSource: string;
-  protected dockerCLIPluginDest: string;
+  protected dockerCLIPluginDest:   string;
 
   constructor(options: UnixIntegrationManagerOptions) {
     this.binDir = options.binDir;

@@ -1,12 +1,15 @@
-import deepmerge from 'deepmerge';
 import { mount } from '@vue/test-utils';
+import deepmerge from 'deepmerge';
 
 import SystemPreferences from '../SystemPreferences.vue';
 
 function createWrappedPage(props) {
-  return mount(SystemPreferences, { props, global: {
-    directives: { tooltip: {} },
-  } });
+  return mount(SystemPreferences, {
+    props,
+    global: {
+      directives: { tooltip: {} },
+    },
+  });
 }
 
 const baseProps = {
@@ -147,7 +150,7 @@ describe('SystemPreferences.vue', () => {
       const wrapper = createWrappedPage(baseProps);
 
       const div1 = wrapper.getComponent('#memoryInGBWrapper');
-      const slider1 = div1.getComponent({ref: 'slider'});
+      const slider1 = div1.getComponent({ ref: 'slider' });
       const span1 = slider1.get('div.vue-slider-dot');
       const slider1vm = slider1.vm;
 
@@ -165,7 +168,7 @@ describe('SystemPreferences.vue', () => {
       }, '[VueSlider error]: The "value" must be less than or equal to the "max".');
 
       const div2 = wrapper.getComponent('#numCPUWrapper');
-      const slider2 = div2.getComponent({ref: 'slider'});
+      const slider2 = div2.getComponent({ ref: 'slider' });
       const slider2vm = slider2.vm;
       const span2 = slider2.get('div.vue-slider-dot');
 
@@ -189,7 +192,7 @@ describe('SystemPreferences.vue', () => {
     const wrapper = createWrappedPage(baseProps);
 
     const div1 = wrapper.getComponent('#memoryInGBWrapper');
-    const slider1 = div1.getComponent({ref: 'slider'});
+    const slider1 = div1.getComponent({ ref: 'slider' });
     const slider1vm = slider1.vm;
 
     await slider1vm.setValue(3);
@@ -204,7 +207,7 @@ describe('SystemPreferences.vue', () => {
     expect(updateMemoryEmitter[1]).toEqual([5]);
 
     const div2 = wrapper.getComponent('#numCPUWrapper');
-    const slider2 = div2.getComponent({ref: 'slider'});
+    const slider2 = div2.getComponent({ ref: 'slider' });
     const slider2vm = slider2.vm;
 
     await slider2vm.setValue(2);

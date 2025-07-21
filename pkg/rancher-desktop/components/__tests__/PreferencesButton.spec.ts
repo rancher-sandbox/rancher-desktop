@@ -9,7 +9,7 @@ describe('Preferences/ButtonOpen.vue', () => {
     expect(wrapper.find('button').classes()).toStrictEqual(['btn', 'role-secondary', 'btn-icon-text']);
   });
 
-  it(`emits 'open-preferences' on click`, async () => {
+  it(`emits 'open-preferences' on click`, async() => {
     const wrapper = shallowMount(PreferencesButton);
 
     await wrapper.get('button').trigger('click');

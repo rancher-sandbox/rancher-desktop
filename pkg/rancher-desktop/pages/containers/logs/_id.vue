@@ -1,57 +1,77 @@
 <template>
   <div class="container-logs">
-
-    <div class="container-info" data-testid="container-info">
-      <span class="container-name" data-testid="container-name">{{ containerName }}</span>
+    <div
+      class="container-info"
+      data-testid="container-info"
+    >
+      <span
+        class="container-name"
+        data-testid="container-name"
+      >{{ containerName }}</span>
       <badge-state
-          :color="isContainerRunning ? 'bg-success' : 'bg-darker'"
-          :label="containerState"
-          data-testid="container-state"
+        :color="isContainerRunning ? 'bg-success' : 'bg-darker'"
+        :label="containerState"
+        data-testid="container-state"
       />
     </div>
 
-    <div class="search-widget" data-testid="search-widget">
-      <i aria-hidden="true" class="icon icon-search search-icon"/>
-      <input
-          ref="searchInput"
-          v-model="searchTerm"
-          aria-label="Search in logs"
-          class="search-input"
-          data-testid="search-input"
-          placeholder="Search logs..."
-          type="search"
-          @input="performSearch"
-          @keydown="handleSearchKeydown"
+    <div
+      class="search-widget"
+      data-testid="search-widget"
+    >
+      <i
+        aria-hidden="true"
+        class="icon icon-search search-icon"
       />
-      <button
-          :disabled="!searchTerm"
-          aria-label="Previous match"
-          class="search-btn role-tertiary"
-          data-testid="search-prev-btn"
-          title="Previous match"
-          @click="searchPrevious"
+      <input
+        ref="searchInput"
+        v-model="searchTerm"
+        aria-label="Search in logs"
+        class="search-input"
+        data-testid="search-input"
+        placeholder="Search logs..."
+        type="search"
+        @input="performSearch"
+        @keydown="handleSearchKeydown"
       >
-        <i aria-hidden="true" class="icon icon-chevron-up"/>
+      <button
+        :disabled="!searchTerm"
+        aria-label="Previous match"
+        class="search-btn role-tertiary"
+        data-testid="search-prev-btn"
+        title="Previous match"
+        @click="searchPrevious"
+      >
+        <i
+          aria-hidden="true"
+          class="icon icon-chevron-up"
+        />
       </button>
       <button
-          :disabled="!searchTerm"
-          aria-label="Next match"
-          class="search-btn role-tertiary"
-          data-testid="search-next-btn"
-          title="Next match"
-          @click="searchNext"
+        :disabled="!searchTerm"
+        aria-label="Next match"
+        class="search-btn role-tertiary"
+        data-testid="search-next-btn"
+        title="Next match"
+        @click="searchNext"
       >
-        <i aria-hidden="true" class="icon icon-chevron-down"/>
+        <i
+          aria-hidden="true"
+          class="icon icon-chevron-down"
+        />
       </button>
       <button
-          :disabled="!searchTerm"
-          aria-label="Clear search"
-          class="search-close-btn role-tertiary"
-          data-testid="search-clear-btn"
-          title="Clear search"
-          @click="clearSearch"
+        :disabled="!searchTerm"
+        aria-label="Clear search"
+        class="search-close-btn role-tertiary"
+        data-testid="search-clear-btn"
+        title="Clear search"
+        @click="clearSearch"
       >
-        <i aria-hidden="true" class="icon icon-x"/>
+        <i
+          aria-hidden="true"
+          class="icon icon-x"
+        />
       </button>
     </div>
 
@@ -69,7 +89,7 @@
         color="error"
         data-testid="error-message"
     >
-      <span class="icon icon-info-circle icon-lg"/>
+      <span class="icon icon-info-circle icon-lg" />
       {{ error }}
     </banner>
 
@@ -83,21 +103,21 @@
 </template>
 
 <script>
-import {BadgeState, Banner} from '@rancher/components';
-import {defineComponent} from 'vue';
-import {mapGetters} from 'vuex';
-import {Terminal} from '@xterm/xterm';
-import {FitAddon} from '@xterm/addon-fit';
-import {WebLinksAddon} from '@xterm/addon-web-links';
-import {SearchAddon} from '@xterm/addon-search';
+import { BadgeState, Banner } from '@rancher/components';
+import { FitAddon } from '@xterm/addon-fit';
+import { SearchAddon } from '@xterm/addon-search';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+import { Terminal } from '@xterm/xterm';
+import { defineComponent } from 'vue';
+import { mapGetters } from 'vuex';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
-import {ContainerEngine} from '@pkg/config/settings';
-import {ipcRenderer} from '@pkg/utils/ipcRenderer';
+import { ContainerEngine } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default defineComponent({
-  name: 'ContainerLogs',
-  title: 'Container Logs',
+  name:       'ContainerLogs',
+  title:      'Container Logs',
   components: {
     BadgeState,
     Banner,
@@ -105,22 +125,22 @@ export default defineComponent({
   },
   data() {
     return {
-      settings: undefined,
-      ddClient: null,
-      isLoading: true,
-      error: null,
-      containerName: '',
-      containerState: '',
-      isContainerRunning: false,
-      terminal: null,
-      fitAddon: null,
-      searchAddon: null,
-      streamProcess: null,
-      searchTerm: '',
-      resizeHandler: null,
-      reconnectAttempts: 0,
-      maxReconnectAttempts: 5,
-      searchDebounceTimer: null,
+      settings:               undefined,
+      ddClient:               null,
+      isLoading:              true,
+      error:                  null,
+      containerName:          '',
+      containerState:         '',
+      isContainerRunning:     false,
+      terminal:               null,
+      fitAddon:               null,
+      searchAddon:            null,
+      streamProcess:          null,
+      searchTerm:             '',
+      resizeHandler:          null,
+      reconnectAttempts:      0,
+      maxReconnectAttempts:   5,
+      searchDebounceTimer:    null,
       containerCheckInterval: null,
       /** Controls terminal visibility - true hides terminal until logs arrive to prevent fast scroll */
       waitingForInitialLogs: true,
@@ -131,7 +151,7 @@ export default defineComponent({
     };
   },
   computed: {
-    ...mapGetters('k8sManager', {isK8sReady: 'isReady'}),
+    ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     containerId() {
       const id = this.$route.params.id;
       // Validate container ID format (alphanumeric + hyphens/underscores only)
@@ -146,7 +166,7 @@ export default defineComponent({
   },
   mounted() {
     this.$store.dispatch('page/setHeader', {
-      title: this.t('containers.logs.title'),
+      title:       this.t('containers.logs.title'),
       description: '',
     });
 
@@ -157,7 +177,7 @@ export default defineComponent({
 
     window.addEventListener('keydown', this.handleGlobalKeydown);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.stopStreaming();
     this.stopContainerChecking();
     this.terminal?.dispose();
@@ -189,8 +209,8 @@ export default defineComponent({
     async getContainerInfo() {
       try {
         const listOptions = {
-          all: true,
-          filters: `id=${this.containerId}`,
+          all:     true,
+          filters: `id=${ this.containerId }`,
         };
 
         if (this.hasNamespaceSelected) {
@@ -228,7 +248,7 @@ export default defineComponent({
         }
 
         const streamOptions = {
-          cwd: '/',
+          cwd:    '/',
           stream: {
             onOutput: (data) => {
               if (this.terminal && (data.stdout || data.stderr)) {
@@ -257,7 +277,7 @@ export default defineComponent({
             onClose: (code) => {
               this.streamProcess = null;
               if (code !== 0 && this.isContainerRunning) {
-                this.handleStreamError(new Error(`Stream closed with code ${code}`));
+                this.handleStreamError(new Error(`Stream closed with code ${ code }`));
               }
             },
             splitOutputLines: false,
@@ -280,21 +300,19 @@ export default defineComponent({
           }
         }, 500);
 
-
       } catch (error) {
         console.error('Error starting log stream:', error);
 
         this.waitingForInitialLogs = false;
 
         const errorMessages = {
-          'No such container': 'Container not found. It may have been removed.',
-          'permission denied': 'Permission denied. Check Docker access permissions.',
-          'connection refused': 'Cannot connect to Docker. Is Docker running?'
+          'No such container':  'Container not found. It may have been removed.',
+          'permission denied':  'Permission denied. Check Docker access permissions.',
+          'connection refused': 'Cannot connect to Docker. Is Docker running?',
         };
 
         const errorKey = Object.keys(errorMessages).find(key => error.message.includes(key));
         this.error = errorKey ? errorMessages[errorKey] : (error.message || this.t('containers.logs.fetchError'));
-
       }
     },
     stopStreaming() {
@@ -335,34 +353,34 @@ export default defineComponent({
       if (this.$refs.terminalContainer) {
         this.terminal = new Terminal({
           theme: {
-            background: '#1a1a1a',
-            foreground: '#e0e0e0',
-            cursor: '#8be9fd',
-            selection: 'rgba(139, 233, 253, 0.3)',
-            black: '#000000',
-            red: '#ff5555',
-            green: '#50fa7b',
-            yellow: '#f1fa8c',
-            blue: '#8be9fd',
-            magenta: '#ff79c6',
-            cyan: '#8be9fd',
-            white: '#f8f8f2',
-            brightBlack: '#6272a4',
-            brightRed: '#ff6e6e',
-            brightGreen: '#69ff94',
-            brightYellow: '#ffffa5',
-            brightBlue: '#d6acff',
+            background:    '#1a1a1a',
+            foreground:    '#e0e0e0',
+            cursor:        '#8be9fd',
+            selection:     'rgba(139, 233, 253, 0.3)',
+            black:         '#000000',
+            red:           '#ff5555',
+            green:         '#50fa7b',
+            yellow:        '#f1fa8c',
+            blue:          '#8be9fd',
+            magenta:       '#ff79c6',
+            cyan:          '#8be9fd',
+            white:         '#f8f8f2',
+            brightBlack:   '#6272a4',
+            brightRed:     '#ff6e6e',
+            brightGreen:   '#69ff94',
+            brightYellow:  '#ffffa5',
+            brightBlue:    '#d6acff',
             brightMagenta: '#ff92df',
-            brightCyan: '#a4ffff',
-            brightWhite: '#ffffff'
+            brightCyan:    '#a4ffff',
+            brightWhite:   '#ffffff',
           },
-          fontSize: 14,
-          fontFamily: '\'Courier New\', \'Monaco\', monospace',
-          cursorBlink: false,
+          fontSize:     14,
+          fontFamily:   '\'Courier New\', \'Monaco\', monospace',
+          cursorBlink:  false,
           disableStdin: true,
-          convertEol: true,
-          scrollback: 50000,
-          wordWrap: true
+          convertEol:   true,
+          scrollback:   50000,
+          wordWrap:     true,
         });
 
         this.fitAddon = new FitAddon();
@@ -497,7 +515,6 @@ export default defineComponent({
   }
 }
 
-
 .container-info {
   grid-area: info;
   display: flex;
@@ -544,7 +561,6 @@ export default defineComponent({
   }
 }
 
-
 .search-widget {
   grid-area: search;
   display: flex;
@@ -589,7 +605,6 @@ export default defineComponent({
     background: var(--body-bg);
   }
 }
-
 
 .search-btn,
 .search-close-btn {

@@ -25,7 +25,7 @@ describe('StatusBar.vue', () => {
   });
 
   it('should contain Rancher Desktop version item', () => {
-    const props = wrapper.getComponent({ref: "version" }).props();
+    const props = wrapper.getComponent({ ref: 'version' }).props();
 
     expect(props.data).toBeFalsy();
     expect(props.icon).toBeTruthy();
@@ -33,7 +33,7 @@ describe('StatusBar.vue', () => {
   });
 
   it('should contain network status item', () => {
-    const props = wrapper.getComponent({ref: "network"}).props();
+    const props = wrapper.getComponent({ ref: 'network' }).props();
 
     expect(props.data).toBeFalsy();
     expect(props.icon).toBeTruthy();
@@ -41,7 +41,7 @@ describe('StatusBar.vue', () => {
   });
 
   it('should contain kubernetes version item', () => {
-    const props = wrapper.getComponent({ref: "kubernetesVersion"}).props();
+    const props = wrapper.getComponent({ ref: 'kubernetesVersion' }).props();
 
     expect(props.data.label.bar).toBe('product.kubernetesVersion');
     expect(props.data.value).toBe('1.27.7');
@@ -50,7 +50,7 @@ describe('StatusBar.vue', () => {
   });
 
   it('should contain container engine item', () => {
-    const props = wrapper.getComponent({ref: "containerEngine"}).props();
+    const props = wrapper.getComponent({ ref: 'containerEngine' }).props();
 
     expect(props.data.label.bar).toBe('product.containerEngine.abbreviation');
     expect(props.data.value).toBe('containerd');

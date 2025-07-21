@@ -41,7 +41,7 @@ export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
       owner: this.githubOwner, repo: this.githubRepo, path: githubPath,
     };
     const response = await getOctokit().rest.repos.getContent(args);
-    const fileObjs = response.data as Partial<{name: string}>[];
+    const fileObjs = response.data as Partial<{ name: string }>[];
     const allFiles = fileObjs.map(fileObj => fileObj.name);
 
     // extract versions from file names and convert to valid semver format

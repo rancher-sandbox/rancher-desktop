@@ -4,7 +4,7 @@
  * be a function where the arguments are the event parameters, and the return
  * value is the return value of the event (most likely void).
  */
-export default interface EventEmitter<T extends { [P in keyof T]: (...args: any) => void}> {
+export default interface EventEmitter<T extends { [P in keyof T]: (...args: any) => void }> {
   addListener<eventName extends keyof T>(
     event: eventName,
     listener: T[eventName]
@@ -15,7 +15,7 @@ export default interface EventEmitter<T extends { [P in keyof T]: (...args: any)
     ...args: globalThis.Parameters<T[eventName]>
   ): boolean;
 
-  eventNames(): Array<keyof T>;
+  eventNames(): (keyof T)[];
 
   getMaxListeners(): number;
 

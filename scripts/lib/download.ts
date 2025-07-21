@@ -13,16 +13,16 @@ import { simpleSpawn } from 'scripts/simple_process';
 
 type ChecksumAlgorithm = 'sha1' | 'sha256' | 'sha512';
 
-export type DownloadOptions = {
-  expectedChecksum?: string;
+export interface DownloadOptions {
+  expectedChecksum?:  string;
   checksumAlgorithm?: ChecksumAlgorithm;
   // Whether to re-download files that already exist.
-  overwrite?: boolean;
+  overwrite?:         boolean;
   // The file mode required.
-  access?: number;
+  access?:            number;
   // The file needs a new ad-hoc signature.
-  codesign?: boolean;
-};
+  codesign?:          boolean;
+}
 
 export type ArchiveDownloadOptions = DownloadOptions & {
   // The name in the archive of the file; defaults to base name of the destination.

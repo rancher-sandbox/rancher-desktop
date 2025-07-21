@@ -125,7 +125,7 @@ describe('runCommand', () => {
 });
 
 describe('list', () => {
-  let config: { credsStore: string, credHelpers?: Record<string, string>} = { credsStore: 'unset' };
+  let config: { credsStore: string, credHelpers?: Record<string, string> } = { credsStore: 'unset' };
   let helpers: Record<string, any> = {};
 
   beforeEach(() => {

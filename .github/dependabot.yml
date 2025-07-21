@@ -20,12 +20,6 @@ updates:
   - # Needs to be updated along with NodeJS version.
     dependency-name: "@types/node"
     update-types: [version-update:semver-major]
-  - # Need to migrate to Vue 3 before moving beyond 2.7.x.
-    dependency-name: "vue"
-    versions: [">2"]
-  - # @vue/test-utils v2 is for Vue 3; we're on Vue 2 for now
-    dependency-name: "@vue/test-utils"
-    versions: [">1"]
   - # node-fetch 3+ requires ECMAScript modules; we still have issues with them.
     dependency-name: "node-fetch"
     versions: [">2"]
@@ -36,9 +30,6 @@ updates:
     # ignore until we arrive a solution that uses it.
     dependency-name: "@rancher/shell"
     versions: [">0.1"]
-  - # fs-xattr 0.4.0 later are esm-only.
-    dependency-name: "fs-xattr"
-    versions: [">0.3"]
 
 # Maintain dependencies for Golang
 - package-ecosystem: "gomod"

@@ -29,5 +29,5 @@ export default defineComponent({
   <diagnostics-body
     :rows="diagnostics"
     :time-last-run="timeLastRun"
-  ></diagnostics-body>
+  />
 </template>

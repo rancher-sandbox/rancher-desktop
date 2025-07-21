@@ -17,22 +17,22 @@ import yaml from 'yaml';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 
-type SigningConfig = {
+interface SigningConfig {
   entitlements: {
-    default: string[];
+    default:   string[];
     overrides: {
-      paths: string[];
+      paths:        string[];
       entitlements: string[];
     }[];
   }
   constraints: {
-    paths: string[];
-    self?: Record<string, any>;
-    parent?: Record<string, any>;
+    paths:        string[];
+    self?:        Record<string, any>;
+    parent?:      Record<string, any>;
     responsible?: Record<string, any>;
   }[]
   remove: string[];
-};
+}
 
 export async function sign(workDir: string): Promise<string[]> {
   const certFingerprint = process.env.CSC_FINGERPRINT ?? '';
@@ -187,7 +187,7 @@ export async function sign(workDir: string): Promise<string[]> {
 /**
  * Recursively walk the given directory and locate files to sign.
  */
-async function *findFilesToSign(dir: string): AsyncIterable<string> {
+async function * findFilesToSign(dir: string): AsyncIterable<string> {
   // When doing code signing, the children must be signed before their parents
   // (so that their signatures can be incorporated into the parent signature,
   // Merkle tree style).
@@ -316,7 +316,7 @@ function evaluateConstraints(constraint: Record<string, any>): Record<string, an
  * CustomPackager overrides MacPackager to avoid building blockmap files
  */
 class CustomPackager extends MacPackager {
-  override pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
+  override pack(outDir: string, arch: Arch, targets: Target[], taskManager: AsyncTaskManager): Promise<any> {
     for (const target of targets) {
       if ('isWriteUpdateInfo' in target) {
         (target as any).isWriteUpdateInfo = false;

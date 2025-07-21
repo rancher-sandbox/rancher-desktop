@@ -6,9 +6,9 @@ import util from 'util';
 
 import _fetch from 'node-fetch';
 
-export { Headers } from 'node-fetch';
-
 import type { RequestInit } from 'node-fetch';
+
+export { Headers } from 'node-fetch';
 export type { RequestInit } from 'node-fetch';
 
 /**
@@ -42,7 +42,7 @@ export class CertificateVerificationError extends Error {
     return `Certificate validation error: ${ this.error }`;
   }
 
-  error: string;
+  error:     string;
   certChain: Partial<tls.PeerCertificate>[];
 }
 

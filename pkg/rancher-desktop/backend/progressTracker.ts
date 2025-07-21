@@ -51,7 +51,7 @@ export default class ProgressTracker {
    * A list of pending actions. The currently running action with
    * the highest priority will be passed to this.notify.
    */
-  protected actionProgress: {priority: number, id: number, progress: BackendProgress}[] = [];
+  protected actionProgress: { priority: number, id: number, progress: BackendProgress }[] = [];
 
   /**
    * Provides the ID of the next action.

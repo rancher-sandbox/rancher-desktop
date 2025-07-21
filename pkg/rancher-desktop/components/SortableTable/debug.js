@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 // =========================================================================================
 // Debug helper
 // Adds a bunch of watches to help diagnose computed properties bring re-evaluated
@@ -112,6 +110,5 @@ export default {
       console.log(neu);
       console.log(old);
     },
-  }
+  },
 };
-/* eslint-enable no-console */

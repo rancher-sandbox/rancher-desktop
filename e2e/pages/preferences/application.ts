@@ -1,18 +1,18 @@
 import type { Page, Locator } from '@playwright/test';
 export class ApplicationNav {
-  readonly page: Page;
-  readonly nav: Locator;
-  readonly tabBehavior: Locator;
-  readonly tabEnvironment: Locator;
-  readonly tabGeneral: Locator;
-  readonly administrativeAccess: Locator;
-  readonly automaticUpdates: Locator;
+  readonly page:                     Page;
+  readonly nav:                      Locator;
+  readonly tabBehavior:              Locator;
+  readonly tabEnvironment:           Locator;
+  readonly tabGeneral:               Locator;
+  readonly administrativeAccess:     Locator;
+  readonly automaticUpdates:         Locator;
   readonly automaticUpdatesCheckbox: Locator;
-  readonly statistics: Locator;
-  readonly autoStart: Locator;
-  readonly background: Locator;
-  readonly notificationIcon: Locator;
-  readonly pathManagement: Locator;
+  readonly statistics:               Locator;
+  readonly autoStart:                Locator;
+  readonly background:               Locator;
+  readonly notificationIcon:         Locator;
+  readonly pathManagement:           Locator;
 
   constructor(page: Page) {
     this.page = page;

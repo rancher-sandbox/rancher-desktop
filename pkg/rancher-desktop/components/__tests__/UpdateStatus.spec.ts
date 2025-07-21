@@ -21,9 +21,9 @@ function wrap(props: typeof UpdateStatus['$props']) {
     global: {
       mocks:   { t: jest.fn() },
       stubs:   {
-        T: { template: '<span> {{ k }} </span>' },
+        T:          { template: '<span> {{ k }} </span>' },
         RdCheckbox: { template: '<input type="checkbox">' },
-        Version: { template: '<span />'},
+        Version:    { template: '<span />' },
       },
     },
     plugins: [FloatingVue],

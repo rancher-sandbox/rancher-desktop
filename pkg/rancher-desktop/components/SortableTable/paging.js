@@ -57,7 +57,7 @@ export default {
       } else {
         return this.filteredRows;
       }
-    }
+    },
   },
 
   data() {
@@ -142,6 +142,6 @@ export default {
       }
 
       return Math.ceil(pos / this.perPage);
-    }
-  }
+    },
+  },
 };

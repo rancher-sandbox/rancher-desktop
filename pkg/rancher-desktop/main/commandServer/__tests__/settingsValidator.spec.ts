@@ -772,7 +772,7 @@ describe('SettingsValidator', () => {
 
     expect({ needToUpdate, errors, isFatal }).toEqual({
       needToUpdate: false,
-      errors:       expect.objectContaining({ length: 1 }),
+      errors:       [expect.anything()],
       isFatal:      false,
     });
   });

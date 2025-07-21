@@ -1,9 +1,9 @@
 import os from 'os';
 import path from 'path';
 
+import mockModules from '../testUtils/mockModules';
 
 import type { Paths } from '../paths';
-import mockModules from '../testUtils/mockModules';
 
 const RESOURCES_PATH = path.join(process.cwd(), 'resources');
 
@@ -15,8 +15,8 @@ mockModules({
     app: {
       isPackaged: false,
       getAppPath: () => process.cwd(),
-    }
-  }
+    },
+  },
 });
 
 const { default: paths } = await import('../paths');
@@ -101,7 +101,7 @@ describe('paths', () => {
   };
 
   const table = Object.entries(cases).flatMap(
-    ([prop, data]) => Object.entries(data).map<[string, Platform, string|Error]>(
+    ([prop, data]) => Object.entries(data).map<[string, Platform, string | Error]>(
       ([platform, expected]) => [prop, platform as Platform, expected],
     ),
   ).filter(([_, platform]) => platform === process.platform);

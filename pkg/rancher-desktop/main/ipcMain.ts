@@ -71,7 +71,7 @@ class IpcMainProxyImpl implements IpcMainProxy {
     this.ipcMain = ipcMain ?? Electron.ipcMain;
   }
 
-  protected logger: Log;
+  protected logger:  Log;
   protected ipcMain: Electron.IpcMain;
 
   // Bijective weak maps between the user-provided listener and the wrapper that
