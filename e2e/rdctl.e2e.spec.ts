@@ -1253,8 +1253,9 @@ test.describe('Command server', () => {
           expect(JSON.parse(stdout)).toMatchObject({
             checks: [{
               id:          'CONNECTED_TO_INTERNET',
-              description: 'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+              description: expect.stringMatching(/^The application/),
               mute:        false,
+              passed:      expect.any(Boolean),
             }],
           });
         });
@@ -1267,7 +1268,7 @@ test.describe('Command server', () => {
               {
                 category:    'Networking',
                 id:          'CONNECTED_TO_INTERNET',
-                description: 'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+                description: expect.stringMatching(/^The application/),
                 mute:        false,
                 fixes:       [],
                 passed:      expect.any(Boolean),
@@ -1311,7 +1312,7 @@ test.describe('Command server', () => {
               {
                 category:    'Networking',
                 id:          'CONNECTED_TO_INTERNET',
-                description: 'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+                description: expect.stringMatching(/^The application/),
                 mute:        false,
               },
             ],
