@@ -186,10 +186,16 @@ export default defineComponent({
         :is-experimental="true"
         @update:value="onChange('experimental.kubernetes.options.spinkube', $event)"
       >
-        <template v-if="spinOperatorIncompatible" #below>
+        <template
+          v-if="spinOperatorIncompatible"
+          #below
+        >
           <banner color="warning">
             Spin operator requires
-            <a href="#" @click.prevent="$root.navigate('Container Engine', 'general')">WebAssembly</a>
+            <a
+              href="#"
+              @click.prevent="$root.navigate('Container Engine', 'general')"
+            >WebAssembly</a>
             to be enabled.
           </banner>
         </template>

@@ -16,10 +16,10 @@ import {
 } from 'scripts/lib/dependencies';
 import { simpleSpawn } from 'scripts/simple_process';
 
-type DependencyWithContext = {
+interface DependencyWithContext {
   dependency: Dependency;
-  context: DownloadContext;
-};
+  context:    DownloadContext;
+}
 
 /**
  * The amount of time we allow the post-install script to run, in milliseconds.

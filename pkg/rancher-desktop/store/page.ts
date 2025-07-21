@@ -1,10 +1,10 @@
 import { ActionContext, MutationsType } from './ts-helpers';
 
 interface PageState {
-  title: string;
+  title:       string;
   description: string;
-  action: string;
-  icon: string;
+  action:      string;
+  icon:        string;
 }
 
 export const state: () => PageState = () => ({
@@ -42,7 +42,7 @@ export const actions = {
     commit('SET_ACTION', action ?? '');
     commit('SET_ICON', icon ?? '');
   },
-  setAction({ commit }: PageActionContext, args: { action: string}) {
+  setAction({ commit }: PageActionContext, args: { action: string }) {
     const { action } = args;
 
     commit('SET_ACTION', action);

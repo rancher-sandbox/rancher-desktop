@@ -13,14 +13,14 @@ const defaultOverrides = {
     return ({
       __esModule: true,
       Log,
-      default: new Proxy({}, {
+      default:    new Proxy({}, {
         get: (target, prop, receiver) => {
           return new Log();
-        }
+        },
       }),
     });
-  }
-}
+  },
+};
 
 type defaultOverrideModuleType = { [key in keyof typeof defaultOverrides]: undefined };
 type explicitModuleType = Record<string, any>;

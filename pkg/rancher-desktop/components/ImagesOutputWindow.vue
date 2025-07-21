@@ -192,7 +192,7 @@ export default {
       v-model="imageManagerOutput"
       :class="{
         success: imageManagerProcessFinishedWithSuccess,
-        failure: imageManagerProcessFinishedWithFailure
+        failure: imageManagerProcessFinishedWithFailure,
       }"
       rows="10"
       readonly="true"

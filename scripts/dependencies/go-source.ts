@@ -3,7 +3,7 @@ import path from 'path';
 import { Dependency, DownloadContext } from 'scripts/lib/dependencies';
 import { simpleSpawn } from 'scripts/simple_process';
 
-type GoDependencyOptions = {
+interface GoDependencyOptions {
   /**
    * The output file name, relative to the platform-specific resources directory.
    * If this does not contain any directory separators ('/'), it is assumed to
@@ -14,7 +14,7 @@ type GoDependencyOptions = {
   /**
    * Additional environment for the go compiler; e.g. for GOARCH overrides.
    */
-  env?: NodeJS.ProcessEnv;
+  env?:       NodeJS.ProcessEnv;
 
   /**
    * The version string to be stamped into the binary at build time.
@@ -28,7 +28,7 @@ type GoDependencyOptions = {
    * import path of the module (e.g., `github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper`).
    */
   modulePath?: string;
-};
+}
 
 /**
  * GoDependency represents a golang binary that is built from the local source
@@ -55,7 +55,7 @@ export class GoDependency implements Dependency {
   }
 
   sourcePath: string;
-  options: GoDependencyOptions;
+  options:    GoDependencyOptions;
 
   async download(context: DownloadContext): Promise<void> {
     // Rather than actually downloading anything, this builds the source code.

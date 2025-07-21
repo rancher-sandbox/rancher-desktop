@@ -1,5 +1,5 @@
-import { sortBy } from '@pkg/utils/sort';
 import { uniq } from '@pkg/utils/array';
+import { sortBy } from '@pkg/utils/sort';
 
 /**
  * Always sort by something, this is the best guess on properties
@@ -116,6 +116,6 @@ export default {
 
     descending() {
       this.debouncedPaginationChanged();
-    }
-  }
+    },
+  },
 };

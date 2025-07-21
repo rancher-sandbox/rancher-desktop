@@ -36,7 +36,7 @@ const DISTRO_BLACKLIST = [
  * Represents a WSL distro, as output by `wsl.exe --list --verbose`.
  */
 export class WSLDistro {
-  name: string;
+  name:    string;
   version: number;
 
   constructor(name: string, version: number) {
@@ -251,7 +251,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    * Helper function to trigger a diagnostic report.  If a diagnostic should be
    * cleared, call this with the error unset.
    */
-  protected diagnostic(input: {key: DiagnosticKey, distro?: string, error?: unknown}) {
+  protected diagnostic(input: { key: DiagnosticKey, distro?: string, error?: unknown }) {
     const error = input.error instanceof Error ? input.error : input.error ? new Error(`${ input.error }`) : undefined;
 
     mainEvents.emit('diagnostics-event', {
@@ -292,7 +292,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    * Execute the given command line in the given WSL distribution.
    * Output is logged to the log file.
    */
-  protected async execCommand(opts: {distro?: string, encoding?:BufferEncoding, root?: boolean, env?: Record<string, string>}, ...command: string[]):Promise<void> {
+  protected async execCommand(opts: { distro?: string, encoding?: BufferEncoding, root?: boolean, env?: Record<string, string> }, ...command: string[]):Promise<void> {
     const logStream = opts.distro ? Logging[`wsl-helper.${ opts.distro }`] : console;
     const args = [];
 
@@ -323,7 +323,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    * WSL distro. Returns whatever it prints to stdout, and logs whatever
    * it prints to stderr.
    */
-  protected async captureCommand(opts: {distro?: string, encoding?: BufferEncoding, env?: Record<string, string>}, ...command: string[]):Promise<string> {
+  protected async captureCommand(opts: { distro?: string, encoding?: BufferEncoding, env?: Record<string, string> }, ...command: string[]):Promise<string> {
     const logStream = opts.distro ? Logging[`wsl-helper.${ opts.distro }`] : console;
     const args = [];
 
@@ -626,7 +626,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       return wslOutput.trim()
         .split(/[\r\n]+/)
         .slice(1) // drop the title row
-        .map(line => line.match(parser)?.groups)
+        .map(line => (parser.exec(line))?.groups)
         .filter(defined)
         .map(group => new WSLDistro(group.name, parseInt(group.version)))
         .filter((distro: WSLDistro) => !DISTRO_BLACKLIST.includes(distro.name));
@@ -665,7 +665,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    * Tells the caller what the state of a distro is. For more information see
    * the comment on `IntegrationManager.listIntegrations`.
    */
-  protected async getStateForIntegration(distro: WSLDistro): Promise<boolean|string> {
+  protected async getStateForIntegration(distro: WSLDistro): Promise<boolean | string> {
     if (distro.version !== 2) {
       console.log(`WSL distro "${ distro.name }": is version ${ distro.version }`);
 

@@ -65,18 +65,18 @@ async function getInputFile(name: string) {
 /**
  * assetInfo describes information we need about one asset.
  */
-type assetInfo = {
+interface assetInfo {
   /** filepath is the (full) path to the asset file. */
-  filepath: string;
+  filepath:     string;
   /** filename is the base name of the asset. */
-  filename: string;
+  filename:     string;
   /** length of the file */
-  length: number;
+  length:       number;
   /** checksum is the checksum file contents of the file. */
-  checksum: string;
+  checksum:     string;
   /** checksumName is the base name of the checksum. */
   checksumName: string;
-};
+}
 
 /**
  * Given environment name, write checksum contents for the file.

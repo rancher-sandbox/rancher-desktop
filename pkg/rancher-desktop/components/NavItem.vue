@@ -16,13 +16,12 @@ export default defineComponent({
       v-if="$slots.before"
       class="before"
     >
-      <slot name="before">
-      </slot>
+      <slot name="before" />
     </div>
     <slot name="default">
       Extensions
     </slot>
-    <slot name="after"></slot>
+    <slot name="after" />
   </div>
 </template>
 

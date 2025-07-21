@@ -1,11 +1,11 @@
 import type { Page, Locator } from '@playwright/test';
 export class K8sPage {
-  readonly page: Page;
-  readonly engineRuntime: Locator;
-  readonly memorySlider: Locator;
-  readonly resetButton: Locator;
-  readonly cpuSlider: Locator;
-  readonly port: Locator;
+  readonly page:             Page;
+  readonly engineRuntime:    Locator;
+  readonly memorySlider:     Locator;
+  readonly resetButton:      Locator;
+  readonly cpuSlider:        Locator;
+  readonly port:             Locator;
   readonly enableKubernetes: Locator;
 
   constructor(page: Page) {

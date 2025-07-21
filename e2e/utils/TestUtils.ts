@@ -19,16 +19,16 @@ import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 
 let currentTest: undefined | {
-  file: string,
+  file:      string,
   startTime: number,
-  options: startRancherDesktopOptions,
+  options:   startRancherDesktopOptions,
 };
 
 /**
  * Remove any existing user profiles, and set it to the given settings.  If
  * either is `null`, then it is not re-added.
  */
-export async function setUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+export async function setUserProfile(userProfile: RecursivePartial<Settings> | null, lockedFields:LockedSettingsType | null) {
   const platform = os.platform() as 'win32' | 'darwin' | 'linux';
 
   if (platform === 'win32') {
@@ -40,7 +40,7 @@ export async function setUserProfile(userProfile: RecursivePartial<Settings>|nul
   }
 }
 
-async function setLinuxUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+async function setLinuxUserProfile(userProfile: RecursivePartial<Settings> | null, lockedFields:LockedSettingsType | null) {
   const userProfilePath = path.join(paths.deploymentProfileUser, 'rancher-desktop.defaults.json');
   const userLocksPath = path.join(paths.deploymentProfileUser, 'rancher-desktop.locked.json');
 
@@ -61,7 +61,7 @@ function convertToRegistryLegacy(s: string) {
     .replace('SOFTWARE\\Policies]', 'SOFTWARE\\Rancher Desktop]');
 }
 
-async function setWindowsUserLegacyProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+async function setWindowsUserLegacyProfile(userProfile: RecursivePartial<Settings> | null, lockedFields:LockedSettingsType | null) {
   const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-profiles'));
 
   try {
@@ -96,7 +96,7 @@ async function setWindowsUserLegacyProfile(userProfile: RecursivePartial<Setting
   }
 }
 
-async function setDarwinUserProfile(userProfile: RecursivePartial<Settings>|null, lockedFields:LockedSettingsType|null) {
+async function setDarwinUserProfile(userProfile: RecursivePartial<Settings> | null, lockedFields:LockedSettingsType | null) {
   const userProfilePath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.defaults.plist');
   const userLocksPath = path.join(paths.deploymentProfileUser, 'io.rancherdesktop.profile.locked.plist');
 
@@ -334,15 +334,15 @@ export async function retry<T>(proc: () => Promise<T>, options?: { delay?: numbe
 
 export interface startRancherDesktopOptions {
   /** Whether to use the mock backend; defaults to true. */
-  mock?: boolean;
+  mock?:           boolean;
   /** The environment to use. */
-  env?: Record<string, string>;
+  env?:            Record<string, string>;
   /** Set to false if we want to see the first-run dialog (defaults to true). */
   noModalDialogs?: boolean;
   /** Maximum time in milliseconds to wait for the app to launch. */
-  timeout?: number;
+  timeout?:        number;
   /** A suffix to be added to the log file, for variants. */
-  logVariant?: string;
+  logVariant?:     string;
 }
 
 /**

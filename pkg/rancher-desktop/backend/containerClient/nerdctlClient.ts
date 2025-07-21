@@ -39,7 +39,7 @@ export class NerdctlClient implements ContainerEngineClient {
    * Run nerdctl with the given arguments, returning the standard output.
    */
   protected async nerdctl(...args: string[]): Promise<string>;
-  protected async nerdctl(options: { env?: Record<string, string>}, ...args: string[]): Promise<string>;
+  protected async nerdctl(options: { env?: Record<string, string> }, ...args: string[]): Promise<string>;
   protected async nerdctl(optionOrArg: any, ...args: string[]): Promise<string> {
     const finalArgs = args.concat();
     const options: { env?: Record<string, string> } = {};
@@ -391,8 +391,8 @@ export class NerdctlClient implements ContainerEngineClient {
    */
   protected async composePrep(options: ContainerComposeOptions): Promise<{
     projectDir: string,
-    envFile: string,
-    cleanups: (() => Promise<void>)[],
+    envFile:    string,
+    cleanups:   (() => Promise<void>)[],
   }> {
     const cleanups: (() => Promise<void>)[] = [];
     const envData = Object.entries(options.env ?? {})

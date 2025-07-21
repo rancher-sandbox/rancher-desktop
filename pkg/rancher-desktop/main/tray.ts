@@ -29,17 +29,17 @@ const ipcMainProxy = getIpcMainProxy(console);
  * Tray is a class to manage the tray icon for rancher-desktop.
  */
 export class Tray {
-  protected trayMenu: Electron.Tray;
+  protected trayMenu:              Electron.Tray;
   protected backendIsLocked = '';
   protected kubernetesState = State.STOPPED;
-  private settings: Settings;
-  private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
-  private static instance: Tray;
-  private networkState: boolean | undefined;
-  private networkInterval: NodeJS.Timeout;
+  private settings:                Settings;
+  private currentNetworkStatus:    networkStatus = networkStatus.CHECKING;
+  private static instance:         Tray;
+  private networkState:            boolean | undefined;
+  private networkInterval:         NodeJS.Timeout;
   private runBuildFromConfigTimer: NodeJS.Timeout | null = null;
-  private kubeConfigWatchers: fs.FSWatcher[] = [];
-  private fsWatcherInterval: NodeJS.Timeout;
+  private kubeConfigWatchers:      fs.FSWatcher[] = [];
+  private fsWatcherInterval:       NodeJS.Timeout;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {

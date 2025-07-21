@@ -65,7 +65,7 @@ export default defineComponent({
     browseExtensions() {
       this.$emit('click:browse');
     },
-    extensionTitle(ext: {id: string, labels: Record<string, string>}): string {
+    extensionTitle(ext: { id: string, labels: Record<string, string> }): string {
       return ext.labels?.['org.opencontainers.image.title'] ?? ext.id;
     },
     async uninstall(installed: ExtensionState) {
@@ -123,17 +123,17 @@ export default defineComponent({
           </empty-state>
         </td>
       </template>
-      <template #col:icon="{row}">
+      <template #col:icon="{ row }">
         <td>
           <nav-icon-extension :extension-id="row.id" />
         </td>
       </template>
-      <template #col:id="{row}">
+      <template #col:id="{ row }">
         <td>
           {{ extensionTitle(row) }}
         </td>
       </template>
-      <template #col:actions="{row}">
+      <template #col:actions="{ row }">
         <td>
           <div class="actions">
             <span
@@ -141,7 +141,7 @@ export default defineComponent({
               name="busy"
               :is-loading="busy"
             >
-              <loading-indicator></loading-indicator>
+              <loading-indicator />
             </span>
             <button
               v-if="!busy[row.id] && row.canUpgrade"

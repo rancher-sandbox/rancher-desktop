@@ -8,7 +8,7 @@ import ExtensionsUninstalled from '@pkg/components/ExtensionsUninstalled.vue';
 import { hexDecode } from '@pkg/utils/string-encode';
 
 interface ExtensionsData {
-  error: Error | undefined;
+  error:           Error | undefined;
   isExtensionGone: boolean;
 }
 

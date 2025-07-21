@@ -14,7 +14,7 @@ export default {
 
       hiddenActions: [],
 
-      updateHiddenBulkActions: debounce(this.protectedUpdateHiddenBulkActions, 10)
+      updateHiddenBulkActions: debounce(this.protectedUpdateHiddenBulkActions, 10),
     };
   },
 
@@ -148,6 +148,6 @@ export default {
       if (!showActionsDropdown) {
         actionsDropdown.style.display = 'none';
       }
-    }
-  }
+    },
+  },
 };

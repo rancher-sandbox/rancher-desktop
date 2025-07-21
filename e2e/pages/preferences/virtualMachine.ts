@@ -1,25 +1,25 @@
 import type { Page, Locator } from '@playwright/test';
 
 export class VirtualMachineNav {
-  readonly page: Page;
-  readonly nav: Locator;
-  readonly memory: Locator;
-  readonly cpus: Locator;
-  readonly mountType: Locator;
-  readonly reverseSshFs: Locator;
-  readonly ninep: Locator;
-  readonly virtiofs: Locator;
-  readonly cacheMode: Locator;
-  readonly msizeInKib: Locator;
+  readonly page:            Page;
+  readonly nav:             Locator;
+  readonly memory:          Locator;
+  readonly cpus:            Locator;
+  readonly mountType:       Locator;
+  readonly reverseSshFs:    Locator;
+  readonly ninep:           Locator;
+  readonly virtiofs:        Locator;
+  readonly cacheMode:       Locator;
+  readonly msizeInKib:      Locator;
   readonly protocolVersion: Locator;
-  readonly securityModel: Locator;
-  readonly vmType: Locator;
-  readonly qemu: Locator;
-  readonly vz: Locator;
-  readonly useRosetta: Locator;
-  readonly tabHardware: Locator;
-  readonly tabVolumes: Locator;
-  readonly tabEmulation: Locator;
+  readonly securityModel:   Locator;
+  readonly vmType:          Locator;
+  readonly qemu:            Locator;
+  readonly vz:              Locator;
+  readonly useRosetta:      Locator;
+  readonly tabHardware:     Locator;
+  readonly tabVolumes:      Locator;
+  readonly tabEmulation:    Locator;
 
   constructor(page: Page) {
     this.page = page;

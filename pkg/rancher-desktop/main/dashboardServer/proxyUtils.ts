@@ -12,7 +12,7 @@ const console = Logging.dashboardServer;
 const onProxyReq: ProxyReqCallback = (clientReq, req) => {
   const actualClientReq: ClientRequest | undefined = (clientReq as any)._currentRequest;
 
-  if (!actualClientReq || !actualClientReq.headersSent) {
+  if (!actualClientReq?.headersSent) {
     if (req.headers.host) {
       clientReq.setHeader('x-api-host', req.headers.host);
     }

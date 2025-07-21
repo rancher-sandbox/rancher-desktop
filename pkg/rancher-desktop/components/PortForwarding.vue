@@ -33,7 +33,7 @@
           />
         </div>
       </template>
-      <template #col:listenPort="{row}">
+      <template #col:listenPort="{ row }">
         <div
           v-if="serviceBeingEditedIs(row)"
           class="listen-port-div"
@@ -53,7 +53,7 @@
           </p>
         </div>
       </template>
-      <template #row-actions="{row}">
+      <template #row-actions="{ row }">
         <div
           v-if="row.listenPort === undefined && !serviceBeingEditedIs(row)"
           class="action-div"

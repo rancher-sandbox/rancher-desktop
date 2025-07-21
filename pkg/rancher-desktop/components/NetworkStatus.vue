@@ -81,7 +81,7 @@ export default defineComponent({
       v-if="isStatusBarItem"
       class="icon icon-dot"
       :class="networkStatus ? 'online' : 'offline'"
-    ></i>
+    />
   </span>
 </template>
 

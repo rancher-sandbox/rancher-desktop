@@ -13,9 +13,9 @@ export class imageInfo {
    * The image name (e.g. `opensuse/leap`).
    * For Docker Hub images, `library/` will be added if there is no org.
    */
-  name: string;
+  name:     string;
   /** Any tags (e.g. `latest`, `15.4`) */
-  tag?: string;
+  tag?:     string;
 
   constructor(registry: URL, name: string, tag?: string) {
     this.registry = registry;

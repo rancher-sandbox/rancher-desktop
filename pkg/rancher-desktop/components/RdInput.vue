@@ -22,19 +22,22 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="rd-input-container" :class="$attrs.class">
+  <div
+    class="rd-input-container"
+    :class="$attrs.class"
+  >
     <input
       v-bind="$attrs"
       :value="value"
-      :class="{ 'locked' : isLocked && !$attrs.disabled }"
+      :class="{ locked: isLocked && !$attrs.disabled }"
       :disabled="!!$attrs.disabled || isLocked"
-    />
+    >
     <slot name="after">
       <i
         v-if="isLocked"
         v-tooltip="{
           content: tooltip || t('preferences.locked.tooltip'),
-          placement: 'right'
+          placement: 'right',
         }"
         class="icon icon-lock"
       />

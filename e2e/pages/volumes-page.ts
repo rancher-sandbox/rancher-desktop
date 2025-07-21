@@ -1,21 +1,22 @@
-import type {Locator, Page} from '@playwright/test';
-import {expect} from '@playwright/test';
+import { expect } from '@playwright/test';
+
+import type { Locator, Page } from '@playwright/test';
 
 type ActionString = 'browse' | 'delete';
 
 const VOLUME_CELL_TEST_IDS = {
-  name: 'volume-name-cell',
-  driver: 'volume-driver-cell',
+  name:       'volume-name-cell',
+  driver:     'volume-driver-cell',
   mountpoint: 'volume-mountpoint-cell',
-  created: 'volume-created-cell',
+  created:    'volume-created-cell',
 } as const;
 
 export class VolumesPage {
-  readonly page: Page;
-  readonly table: Locator;
+  readonly page:              Page;
+  readonly table:             Locator;
   readonly namespaceSelector: Locator;
-  readonly searchBox: Locator;
-  readonly errorBanner: Locator;
+  readonly searchBox:         Locator;
+  readonly errorBanner:       Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -26,7 +27,7 @@ export class VolumesPage {
   }
 
   getVolumeRow(volumeName: string) {
-    return this.page.locator(`tr.main-row[data-node-id="${volumeName}"]`);
+    return this.page.locator(`tr.main-row[data-node-id="${ volumeName }"]`);
   }
 
   async waitForVolumeToAppear(volumeName: string) {
@@ -45,7 +46,7 @@ export class VolumesPage {
     }[action];
 
     const actionMenu = this.page.getByTestId('actionmenu');
-    const actionLocator = actionMenu.getByText(actionText, {exact: true});
+    const actionLocator = actionMenu.getByText(actionText, { exact: true });
     await actionLocator.click();
   }
 
@@ -79,11 +80,11 @@ export class VolumesPage {
     const volumeRow = this.getVolumeRow(volumeName);
 
     return {
-      row: volumeRow,
-      name: volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.name),
-      driver: volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.driver),
+      row:        volumeRow,
+      name:       volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.name),
+      driver:     volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.driver),
       mountpoint: volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.mountpoint),
-      created: volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.created),
+      created:    volumeRow.getByTestId(VOLUME_CELL_TEST_IDS.created),
     };
   }
 
@@ -99,7 +100,7 @@ export class VolumesPage {
 
   async clickBulkDelete() {
     // Use the direct delete button that appears when items are selected
-    const deleteButton = this.page.getByRole('button', {name: 'Delete'}).first();
+    const deleteButton = this.page.getByRole('button', { name: 'Delete' }).first();
     await deleteButton.click();
   }
 

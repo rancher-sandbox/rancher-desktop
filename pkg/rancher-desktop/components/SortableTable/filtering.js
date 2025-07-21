@@ -1,5 +1,5 @@
-import { get } from '@pkg/utils/object';
 import { addObject, addObjects, isArray, removeAt } from '@pkg/utils/array';
+import { get } from '@pkg/utils/object';
 
 export const ADV_FILTER_ALL_COLS_VALUE = 'allcols';
 export const ADV_FILTER_ALL_COLS_LABEL = 'All Columns';
@@ -133,7 +133,7 @@ export default {
       const subFields = this.subFields;
       const subMatches = {};
 
-      for ( let i = out.length - 1 ; i >= 0 ; i-- ) {
+      for ( let i = out.length - 1; i >= 0; i-- ) {
         const row = out[i];
         let hits = 0;
         let mainFound = true;
@@ -143,7 +143,7 @@ export default {
         if ( subFields && subSearch) {
           const subRows = row[subSearch] || [];
 
-          for ( let k = subRows.length - 1 ; k >= 0 ; k-- ) {
+          for ( let k = subRows.length - 1; k >= 0; k-- ) {
             let subFound = true;
 
             subFound = handleStringSearch(subFields, searchTokens, row);
@@ -165,7 +165,7 @@ export default {
       this.previousResult = out;
 
       return out;
-    }
+    },
   },
 
   watch: {
@@ -206,7 +206,7 @@ function columnsToSearchField(columns) {
 const ipLike = /^[0-9a-f\.:]+$/i;
 
 function handleStringSearch(searchFields, searchTokens, row) {
-  for ( let j = 0 ; j < searchTokens.length ; j++ ) {
+  for ( let j = 0; j < searchTokens.length; j++ ) {
     let expect = true;
     let token = searchTokens[j];
 

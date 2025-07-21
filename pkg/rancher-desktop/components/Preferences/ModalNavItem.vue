@@ -18,7 +18,7 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ['click'],
+  emits:   ['click'],
   methods: {
     navClicked() {
       this.$emit('click', this.name);

@@ -2,7 +2,7 @@
 // @vue/vue3-jest forces CommonJS which breaks with dependencies that are now
 // ESM-only.
 
-//@ts-check
+// @ts-check
 
 import crypto from 'crypto';
 
@@ -22,13 +22,13 @@ import { compileTemplate, parse } from 'vue/compiler-sfc';
  * @property babel {BabelTransformOptions}
  */
 
-const babelTransformer = function() {
+const babelTransformer = (function() {
   const result = babelJest.createTransformer();
   if ('then' in result) {
     throw new Error('babel transformer creation should be synchronous');
   }
   return result;
-}();
+}());
 
 /** @type (source: string, fileName: string) => string */
 function compileTypeScript(source, fileName) {
@@ -79,12 +79,12 @@ function processTemplate(descriptor) {
   const lang = descriptor.scriptSetup?.lang ?? descriptor.script?.lang ?? 'js';
   const isTS = /typescript|^ts/.test(lang);
   const results = compileTemplate({
-    source: template.content,
-    ast: template.ast,
-    filename: descriptor.filename,
-    id: descriptor.filename,
+    source:          template.content,
+    ast:             template.ast,
+    filename:        descriptor.filename,
+    id:              descriptor.filename,
     compilerOptions: { mode: 'module', isTS },
-    preprocessLang: template.lang,
+    preprocessLang:  template.lang,
   });
 
   if (isTS) {

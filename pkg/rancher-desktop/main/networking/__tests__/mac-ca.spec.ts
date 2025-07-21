@@ -20,9 +20,9 @@ const modules = mockModules({
  * indicate whether we expect this certificate to be accepted.
  */
 interface testCertMock {
-  ca: boolean;
-  issuer: string;
-  subject: string;
+  ca:         boolean;
+  issuer:     string;
+  subject:    string;
   acceptable: boolean;
 }
 
@@ -75,7 +75,7 @@ testDarwin('getMacCertificates', async() => {
     }
   }
 
-  async function mockSpawnFile(command: string, args: string[], opts: {stdio?:any[]}): Promise<{stdout: string}> {
+  async function mockSpawnFile(command: string, args: string[], opts: { stdio?: any[] }): Promise<{ stdout: string }> {
     let stdout = '';
     const handlers: Record<string, () => Promise<void>> = {
       'list-keychains': () => {

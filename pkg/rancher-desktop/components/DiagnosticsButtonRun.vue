@@ -55,7 +55,7 @@ export default defineComponent({
       class="btn btn-xs role-secondary"
       @click="onClick"
     >
-      <span class="icon icon-refresh icon-diagnostics"></span>
+      <span class="icon icon-refresh icon-diagnostics" />
       Rerun
     </button>
     <div class="diagnostics-status-history">

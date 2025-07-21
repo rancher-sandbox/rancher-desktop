@@ -18,7 +18,7 @@ export default defineComponent({
     ...mapGetters('preferences', ['getPreferences']),
     ...mapGetters('extensions', ['installedExtensions', 'marketData']) as {
       installedExtensions: () => ExtensionState[],
-      marketData: () => MarketplaceData[],
+      marketData:          () => MarketplaceData[],
     },
     containerEngine(): string {
       return this.getPreferences.containerEngine.name;
@@ -73,7 +73,7 @@ export default defineComponent({
       v-model="searchValue"
       type="text"
       placeholder="Search"
-    />
+    >
     <div
       v-if="filteredExtensions.length === 0"
       class="extensions-content-missing"

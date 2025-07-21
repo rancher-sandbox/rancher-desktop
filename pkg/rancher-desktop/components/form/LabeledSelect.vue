@@ -1,12 +1,13 @@
 <script>
+import { LabeledTooltip } from '@rancher/components';
+
+import LabeledSelectPagination from '@pkg/components/form/labeled-select-utils/labeled-select-pagination';
 import CompactInput from '@pkg/mixins/compact-input';
 import LabeledFormElement from '@pkg/mixins/labeled-form-element';
-import { get } from '@pkg/utils/object';
-import { LabeledTooltip } from '@rancher/components';
 import VueSelectOverrides from '@pkg/mixins/vue-select-overrides';
-import { onClickOption, calculatePosition } from '@pkg/utils/select';
-import LabeledSelectPagination from '@pkg/components/form/labeled-select-utils/labeled-select-pagination';
 import { LABEL_SELECT_NOT_OPTION_KINDS } from '@pkg/types/components/labeledSelect';
+import { get } from '@pkg/utils/object';
+import { onClickOption, calculatePosition } from '@pkg/utils/select';
 
 // In theory this would be nicer as LabeledSelect/index.vue, however that would break a lot of places where we import this (which includes extensions)
 
@@ -18,7 +19,7 @@ export default {
     CompactInput,
     LabeledFormElement,
     VueSelectOverrides,
-    LabeledSelectPagination
+    LabeledSelectPagination,
   ],
 
   emits: ['on-open', 'on-close', 'selecting', 'update:validation'],
@@ -30,39 +31,39 @@ export default {
     },
     clearable: {
       default: false,
-      type:    Boolean
+      type:    Boolean,
     },
     disabled: {
       default: false,
-      type:    Boolean
+      type:    Boolean,
     },
     required: {
       default: false,
-      type:    Boolean
+      type:    Boolean,
     },
     hoverTooltip: {
       default: true,
-      type:    Boolean
+      type:    Boolean,
     },
     loading: {
       default: false,
-      type:    Boolean
+      type:    Boolean,
     },
     localizedLabel: {
       default: false,
-      type:    Boolean
+      type:    Boolean,
     },
     optionKey: {
       default: null,
-      type:    String
+      type:    String,
     },
     optionLabel: {
       default: 'label',
-      type:    String
+      type:    String,
     },
     placement: {
       default: null,
-      type:    String
+      type:    String,
     },
     reduce: {
       default: (e) => {
@@ -72,7 +73,7 @@ export default {
 
         return e;
       },
-      type: Function
+      type: Function,
     },
     selectable: {
       default: (opt) => {
@@ -84,38 +85,38 @@ export default {
 
         return true;
       },
-      type: Function
+      type: Function,
     },
     status: {
       default: null,
-      type:    String
+      type:    String,
     },
     tooltip: {
       default: null,
-      type:    [String, Object]
+      type:    [String, Object],
     },
     value: {
       default: null,
-      type:    [String, Object, Number, Array, Boolean]
+      type:    [String, Object, Number, Array, Boolean],
     },
     options: {
       type:    Array,
-      default: () => ([])
+      default: () => ([]),
     },
     closeOnSelect: {
       type:    Boolean,
-      default: true
+      default: true,
     },
     noOptionsLabelKey: {
       type:    String,
-      default: 'labelSelect.noOptions.empty'
-    }
+      default: 'labelSelect.noOptions.empty',
+    },
   },
 
   data() {
     return {
       selectedVisibility: 'visible',
-      shouldOpen:         true
+      shouldOpen:         true,
     };
   },
 
@@ -132,7 +133,7 @@ export default {
     _options() {
       // If we're paginated show the page as provided by `paginate`. See label-select-pagination mixin
       return this.canPaginate ? this.page : this.options;
-    }
+    },
   },
 
   methods: {
@@ -238,7 +239,7 @@ export default {
       }
 
       return this.getOptionLabel(opt);
-    }
+    },
   },
 };
 </script>
@@ -284,7 +285,7 @@ export default {
       class="inline"
       :append-to-body="appendToBody"
       :calculate-position="positionDropdown"
-      :class="{ 'no-label': !(label || '').length}"
+      :class="{ 'no-label': !(label || '').length }"
       :clearable="clearable"
       :disabled="isView || disabled || loading"
       :get-option-key="getOptionKey"
@@ -297,10 +298,10 @@ export default {
       :filterable="isFilterable"
       :searchable="isSearchable"
       :selectable="selectable"
-      :modelValue="value != null && !loading ? value : ''"
+      :model-value="value != null && !loading ? value : ''"
       :dropdown-should-open="dropdownShouldOpen"
 
-      @update:modelValue="$emit('selecting', $event); $emit('update:value', $event)"
+      @update:model-value="$emit('selecting', $event); $emit('update:value', $event)"
       @search:blur="onBlur"
       @search:focus="onFocus"
       @search="onSearch"
@@ -314,7 +315,7 @@ export default {
             <i
               v-if="option.icon"
               class="icon"
-              :class="{ [option.icon]: true}"
+              :class="{ [option.icon]: true }"
             />
             <b>{{ getOptionLabel(option) }}</b>
             <div v-if="option.badge">
@@ -333,7 +334,7 @@ export default {
         <div
           v-else
           class="vs__option-kind"
-          :class="{ 'has-icon' : hasGroupIcon}"
+          :class="{ 'has-icon': hasGroupIcon }"
           @mousedown="(e) => onClickOption(option, e)"
         >
           {{ getOptionLabel(option) }}

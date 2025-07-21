@@ -161,7 +161,7 @@ test.describe.serial('Extensions', () => {
               }
             }
           }
-        }) as JSHandle<WebContentsView|undefined>;
+        }) as JSHandle<WebContentsView | undefined>;
 
         // Check that the result evaluated to the view, and not undefined.
         if (await (result).evaluate(v => typeof v) === 'undefined') {

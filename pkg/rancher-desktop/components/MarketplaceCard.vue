@@ -5,7 +5,7 @@
         <img
           :src="extension.logo"
           alt=""
-        />
+        >
         <div class="extensions-card-header-top">
           <span class="extensions-card-header-title">{{ extension.title }}</span>
           <span class="extensions-card-header-subtitle">{{
@@ -68,7 +68,10 @@
         class="role-primary btn btn-xs"
         disabled="true"
       >
-        <span name="loading" is-loading="true">
+        <span
+          name="loading"
+          is-loading="true"
+        >
           <loading-indicator>{{ loadingLabel }}</loading-indicator>
         </span>
       </button>

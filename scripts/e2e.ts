@@ -186,6 +186,6 @@ function processArgsForPlaywright(args: string[]): string[] {
   }
 
   return args.map((s) => {
-    return s[0] === '-' ? s : escapeUnescapedBackslashes(s);
+    return s.startsWith('-') ? s : escapeUnescapedBackslashes(s);
   });
 }

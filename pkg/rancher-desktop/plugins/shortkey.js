@@ -262,7 +262,7 @@ const mappingFunctions = ({
       focus,
       key,
       propagate: propagated || propagate,
-      el:       elm,
+      el:        elm,
     };
   }
 };

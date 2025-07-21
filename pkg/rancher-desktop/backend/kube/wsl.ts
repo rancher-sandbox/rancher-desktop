@@ -39,8 +39,8 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     mainEvents.on('network-ready', () => this.k3sHelper.networkReady());
   }
 
-  protected cfg: BackendSettings | undefined;
-  protected vm: WSLBackend;
+  protected cfg:    BackendSettings | undefined;
+  protected vm:     WSLBackend;
   /** Helper object to manage available K3s versions. */
   readonly k3sHelper = new K3sHelper('x86_64');
   protected client: KubeClient | null = null;
@@ -84,7 +84,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         availableVersions = await this.k3sHelper.availableVersions;
 
         return await BackendHelper.getDesiredVersion(
-          this.cfg as BackendSettings,
+          this.cfg!,
           availableVersions,
           this.vm.noModalDialogs,
           this.vm.writeSetting.bind(this.vm));
@@ -299,7 +299,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         ]));
     }
 
-    await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion as semver.SemVer);
+    await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion);
     if (config.kubernetes.options.flannel) {
       await this.progressTracker.action(
         'Waiting for nodes',
@@ -371,8 +371,8 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
   }
 
   // #region Events
-  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
-    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  eventNames(): (keyof K8s.KubernetesBackendEvents)[] {
+    return super.eventNames() as (keyof K8s.KubernetesBackendEvents)[];
   }
 
   listeners<eventName extends keyof K8s.KubernetesBackendEvents>(

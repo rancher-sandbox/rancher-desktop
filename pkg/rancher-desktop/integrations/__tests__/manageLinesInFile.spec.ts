@@ -5,15 +5,15 @@ import path from 'path';
 import { jest } from '@jest/globals';
 
 import * as childProcess from '@pkg/utils/childProcess';
-import { withResource } from '@pkg/utils/testUtils/mockResources';
 import mockModules from '@pkg/utils/testUtils/mockModules';
+import { withResource } from '@pkg/utils/testUtils/mockResources';
 
 const modules = mockModules({
   fs: {
     ...fs,
-    promises:{
+    promises: {
       ...fs.promises,
-      rename: jest.fn(fs.promises.rename),
+      rename:    jest.fn(fs.promises.rename),
       writeFile: jest.fn(fs.promises.writeFile),
     },
   },
@@ -33,7 +33,7 @@ let rcFilePath: string;
 let backupFilePath: string;
 let tempFilePath: string;
 let symlinkPath: string;
-let SystemError: new (key: string, context: {code: string, syscall: string, message: string}) => NodeJS.ErrnoException;
+let SystemError: new (key: string, context: { code: string, syscall: string, message: string }) => NodeJS.ErrnoException;
 
 beforeEach(async() => {
   testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdtest-'));

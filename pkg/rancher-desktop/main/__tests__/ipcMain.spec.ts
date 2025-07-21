@@ -14,7 +14,7 @@ describe('IpcMainProxy', () => {
   let subject: ReturnType<typeof getIpcMainProxy>;
 
   class E extends events.EventEmitter implements Electron.IpcMain {
-    protected handlers: Record<string, {once: boolean, handler: Handler}> = {};
+    protected handlers: Record<string, { once: boolean, handler: Handler }> = {};
 
     handle(channel: string, handler: Handler) {
       this.handleInternal(channel, handler, false);

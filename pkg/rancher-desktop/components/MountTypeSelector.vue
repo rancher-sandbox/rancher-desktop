@@ -37,8 +37,14 @@ export default defineComponent({
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
     ...mapState('transientSettings', ['macOsVersion', 'isArm']),
-    options(): { label: string, value: MountType, description: string, experimental: boolean, disabled: boolean,
-      compatiblePrefs: CompatiblePrefs | [] }[] {
+    options(): {
+      label:           string,
+      value:           MountType,
+      description:     string,
+      experimental:    boolean,
+      disabled:        boolean,
+      compatiblePrefs: CompatiblePrefs | []
+    }[] {
       const defaultOption = MountType.REVERSE_SSHFS;
 
       return Object.values(MountType)
@@ -156,14 +162,14 @@ export default defineComponent({
               :name="groupName"
               :options="options"
               :disabled="isLocked"
-              :class="{ 'locked-radio' : isLocked }"
+              :class="{ 'locked-radio': isLocked }"
             >
               <template
                 v-for="(option, index) in options"
                 #[index]="{ isDisabled }"
               >
                 <radio-button
-                  :key="groupName+'-'+index"
+                  :key="groupName + '-' + index"
                   v-tooltip="disabledVirtIoFsTooltip(option.disabled)"
                   :name="groupName"
                   :value="preferences.virtualMachine.mount.type"

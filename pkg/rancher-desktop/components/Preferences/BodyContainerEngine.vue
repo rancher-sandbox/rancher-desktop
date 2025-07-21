@@ -77,7 +77,7 @@ export default defineComponent({
     <div class="container-engine-content">
       <component
         v-bind="$attrs"
-        :is="`preferences-container-engine-${ activeTab }`"
+        :is="`preferences-container-engine-${activeTab}`"
         :preferences="preferences"
       />
     </div>

@@ -49,8 +49,8 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PROF
     defaults: {},
     locked:   {},
   };
-  let defaults: undefined|RecursivePartial<settings.Settings>;
-  let locked: undefined|RecursivePartial<settings.Settings>;
+  let defaults: undefined | RecursivePartial<settings.Settings>;
+  let locked: undefined | RecursivePartial<settings.Settings>;
   let fullDefaultPath = '';
   let fullLockedPath = '';
 
@@ -108,7 +108,7 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PROF
 // So read the text into a string variable, and have `plutil` read it via stdin.
 // It's no error if a deployment profile doesn't exist.
 // Any other error needs to show up in a dialog box and terminate processing.
-async function convertAndParsePlist(inputPath: string): Promise<undefined|RecursivePartial<settings.Settings>> {
+async function convertAndParsePlist(inputPath: string): Promise<undefined | RecursivePartial<settings.Settings>> {
   let plutilResult: { stdout?: string, stderr?: string };
   let body: stream.Readable;
   const args = ['-convert', 'json', '-r', '-o', '-', '-'];
@@ -149,7 +149,7 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined|Recurs
  *          throws an exception if there is an error parsing the locked file.
  */
 
-async function parseJsonFromPlists(rootPath: string, defaultsPath: string, lockedPath: string): Promise<Array<undefined|RecursivePartial<settings.Settings>>> {
+async function parseJsonFromPlists(rootPath: string, defaultsPath: string, lockedPath: string): Promise<(undefined | RecursivePartial<settings.Settings>)[]> {
   return [
     await convertAndParsePlist(join(rootPath, defaultsPath)),
     await convertAndParsePlist(join(rootPath, lockedPath)),
@@ -164,7 +164,7 @@ async function parseJsonFromPlists(rootPath: string, defaultsPath: string, locke
  * @returns the defaults and/or locked objects if they exist, or
  *          throws an exception if there is an error parsing the locked file.
  */
-function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: string): Array<undefined|RecursivePartial<settings.Settings>> {
+function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: string): (undefined | RecursivePartial<settings.Settings>)[] {
   return [defaultsPath, lockedPath].map((configPath) => {
     const fullPath = join(rootPath, configPath);
 
@@ -183,9 +183,9 @@ function parseJsonFiles(rootPath: string, defaultsPath: string, lockedPath: stri
  */
 class Win32DeploymentReader {
   protected registryPathProfiles: string[][];
-  protected registryPathCurrent: string[];
+  protected registryPathCurrent:  string[];
   protected keyName = '';
-  protected errors: string[] = [];
+  protected errors:               string[] = [];
 
   constructor(registryPathProfiles: string[][]) {
     this.registryPathProfiles = registryPathProfiles;
@@ -277,9 +277,9 @@ class Win32DeploymentReader {
   protected readRegistryUsingSchema(schemaObj: Record<string, any>, regKey: nativeReg.HKEY, pathParts: string[]): Record<string, any> {
     const newObject: Record<string, any> = {};
     const schemaKeys = Object.keys(schemaObj);
-    const commonKeys: Array<{schemaKey: string, registryKey: string}> = [];
+    const commonKeys: { schemaKey: string, registryKey: string }[] = [];
     const unknownKeys: string[] = [];
-    const userDefinedObjectKeys: Array<{schemaKey: string, registryKey: string}> = [];
+    const userDefinedObjectKeys: { schemaKey: string, registryKey: string }[] = [];
     let regValue: any;
 
     // Drop the initial 'defaults' or 'locked' field
@@ -573,7 +573,7 @@ function isEquivalentIgnoreCase(a: string, b: string): boolean {
   return caseInsensitiveComparator.compare(a, b) === 0;
 }
 
-function fixProfileKeyCase(key: string, schemaKeys: string[]): string|null {
+function fixProfileKeyCase(key: string, schemaKeys: string[]): string | null {
   return schemaKeys.find(val => isEquivalentIgnoreCase(key, val)) ?? null;
 }
 

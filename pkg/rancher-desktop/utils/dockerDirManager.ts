@@ -16,40 +16,40 @@ const console = Logging.background;
 /**
  * Goes under the `auths` key in docker config.json.
  */
-type AuthConfig = {
-  username?: string,
-  password?: string,
-  auth?: string,
-  email?: string,
+interface AuthConfig {
+  username?:      string,
+  password?:      string,
+  auth?:          string,
+  email?:         string,
   serveraddress?: string,
   identitytoken?: string,
   registrytoken?: string,
-};
+}
 
 /**
  * The parts of a docker config.json file that concern Rancher Desktop.
  */
-type PartialDockerConfig = {
-  auths?: Record<string, AuthConfig>,
-  credsStore?: string,
-  credHelpers?: Record<string, string>,
+interface PartialDockerConfig {
+  auths?:          Record<string, AuthConfig>,
+  credsStore?:     string,
+  credHelpers?:    Record<string, string>,
   currentContext?: string,
-};
+}
 
 /**
  * Manages everything under the docker CLI config directory (except, at
  * the time of writing, docker CLI plugins).
  */
 export default class DockerDirManager {
-  protected readonly dockerDirPath: string;
+  protected readonly dockerDirPath:        string;
   protected readonly dockerContextDirPath: string;
   /**
    * Path to the 'rancher-desktop' docker context file.  The parent directory
    * is the SHA256 hash of the docker context name ('rancher-desktop'), per the
    * docker convention.
    */
-  protected readonly dockerContextPath: string;
-  protected readonly dockerConfigPath: string;
+  protected readonly dockerContextPath:    string;
+  protected readonly dockerConfigPath:     string;
   protected readonly defaultDockerSockPath = '/var/run/docker.sock';
   protected readonly contextName = 'rancher-desktop';
 

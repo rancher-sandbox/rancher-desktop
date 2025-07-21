@@ -1,6 +1,6 @@
 <script lang="ts">
-import VueSlider from 'vue-3-slider-component';
 import { defineComponent } from 'vue';
+import VueSlider from 'vue-3-slider-component';
 
 import RdInput from '@pkg/components/RdInput.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
@@ -76,7 +76,7 @@ export default defineComponent({
       <vue-slider
         ref="slider"
         class="rd-slider-rail"
-        :modelValue="value"
+        :model-value="value"
         :min="min"
         :max="max"
         :interval="interval"

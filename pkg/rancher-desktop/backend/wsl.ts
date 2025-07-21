@@ -100,7 +100,7 @@ type wslExecOptions = execOptions & {
   /** Output encoding; defaults to utf16le. */
   encoding?: BufferEncoding;
   /** The distribution to execute within. */
-  distro?: string;
+  distro?:   string;
 };
 
 export default class WSLBackend extends events.EventEmitter implements VMBackend, VMExecutor {
@@ -187,7 +187,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    */
   protected hostSwitchProcess: BackgroundProcess;
 
-  readonly kubeBackend: KubernetesBackend;
+  readonly kubeBackend:   KubernetesBackend;
   readonly executor = this;
   #containerEngineClient: ContainerEngineClient | undefined;
 
@@ -289,7 +289,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const result = stdout.trim()
       .split(/[\r\n]+/)
       .slice(1) // drop the title row
-      .map(line => line.match(parser))
+      .map(line => parser.exec(line))
       .filter(defined)
       .filter(result => result.groups?.version === '2')
       .map(result => result.groups?.name)
@@ -617,7 +617,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    * @param [options.encoding='utf-8'] The encoding to use for the result.
    */
   async readFile(filePath: string, options?: Partial<{
-    distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME,
+    distro:   typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME,
     encoding: BufferEncoding,
   }>) {
     const distro = options?.distro ?? INSTANCE_NAME;
@@ -1139,7 +1139,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const confFields = conf.split(/\r?\n/) // Splits config in array of k/v-pairs (["key1:"value1"", "key2:"value2""])
       // Maps the array into [["key1:"value1"", "key1", ""value1""], ["key2:"value2"", "key2", ""value2""]]
       .map(line => confRegex.exec(line))
-      .filter(defined) as Array<RegExpExecArray>;
+      .filter(defined);
 
     return confFields.reduce((res, curr) => {
       const key = curr[1];
@@ -1719,8 +1719,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   // #region Events
-  eventNames(): Array<keyof BackendEvents> {
-    return super.eventNames() as Array<keyof BackendEvents>;
+  eventNames(): (keyof BackendEvents)[] {
+    return super.eventNames() as (keyof BackendEvents)[];
   }
 
   listeners<eventName extends keyof BackendEvents>(

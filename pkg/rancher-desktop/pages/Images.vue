@@ -11,8 +11,8 @@
       :selected-namespace="settings.images.namespace"
       :supports-namespaces="supportsNamespaces"
       :protected-images="protectedImages"
-      @toggledShowAll="onShowAllImagesChanged"
-      @switchNamespace="onChangeNamespace"
+      @toggled-show-all="onShowAllImagesChanged"
+      @switch-namespace="onChangeNamespace"
     />
   </div>
 </template>

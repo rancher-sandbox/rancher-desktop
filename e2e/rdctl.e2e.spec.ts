@@ -91,7 +91,7 @@ test.describe('Command server', () => {
     }
   }
 
-  async function rdctlWithStdin(inputFile: string, commandArgs: string[]): Promise< { stdout: string, stderr: string, error?: any}> {
+  async function rdctlWithStdin(inputFile: string, commandArgs: string[]): Promise< { stdout: string, stderr: string, error?: any }> {
     let stream: fs.ReadStream | null = null;
 
     try {
@@ -550,7 +550,7 @@ test.describe('Command server', () => {
 
     test('should no longer work', async() => {
       for (const method in endpoints) {
-        for (const endpoint of endpoints[method as 'GET'|'PUT']) {
+        for (const endpoint of endpoints[method as 'GET' | 'PUT']) {
           const resp = await doRequest(`/v0/${ endpoint }`, '', method);
 
           expect({
@@ -679,7 +679,7 @@ test.describe('Command server', () => {
     });
 
     test.describe('set', () => {
-      const unsupportedPrefsByPlatform: {[x in NodeJS.Platform] ?: [string, any][]} = {
+      const unsupportedPrefsByPlatform: Partial<Record<NodeJS.Platform, [string, any][]>> = {
         win32: [
           ['application.admin-access', true],
           ['application.path-management-strategy', 'rcfiles'],
@@ -851,12 +851,14 @@ test.describe('Command server', () => {
         test('accepts new settings', async() => {
           const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
           const body: RecursivePartial<Settings> = {
-            ...(os.platform() === 'win32' ? {} : {
-              virtualMachine: {
-                memoryInGB: oldSettings.virtualMachine.memoryInGB + 1,
-                numberCPUs: oldSettings.virtualMachine.numberCPUs + 1,
-              },
-            }),
+            ...(os.platform() === 'win32'
+              ? {}
+              : {
+                virtualMachine: {
+                  memoryInGB: oldSettings.virtualMachine.memoryInGB + 1,
+                  numberCPUs: oldSettings.virtualMachine.numberCPUs + 1,
+                },
+              }),
             version:     CURRENT_SETTINGS_VERSION,
             application: {
               // XXX: Can't change adminAccess until we can process the sudo-request dialog (and decline it)
