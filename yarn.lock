@@ -2520,10 +2520,10 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@pkgr/core@^0.2.4":
-  version "0.2.8"
-  resolved "https://registry.yarnpkg.com/@pkgr/core/-/core-0.2.8.tgz#3e7a998d8dbb4ac9e212437ea865248e85b1dfc1"
-  integrity sha512-Yd820OqLNN/Rpyod/2uGB+SdiFXVDfI/bylOMvtvpl0nIjRRovXIfek65CwWUewOhTi+m2jjRruPbttcbkd1VA==
+"@pkgr/core@^0.2.9":
+  version "0.2.9"
+  resolved "https://registry.yarnpkg.com/@pkgr/core/-/core-0.2.9.tgz#d229a7b7f9dac167a156992ef23c7f023653f53b"
+  integrity sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==
 
 "@playwright/test@1.54.1":
   version "1.54.1"
@@ -11313,11 +11313,11 @@ symbol-tree@^3.2.4:
   integrity sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==
 
 synckit@^0.11.8:
-  version "0.11.9"
-  resolved "https://registry.yarnpkg.com/synckit/-/synckit-0.11.9.tgz#0d0c794f7827cd98a7ad8f551f070072cfbeaa12"
-  integrity sha512-02JE2dOputr8ku4SNqAnqhGo0FaHcvSvAuzXMLdvygH4dqu3PXyUdePefNozFcCznNtQwf6Wn98ZSLa+ArRqZQ==
+  version "0.11.11"
+  resolved "https://registry.yarnpkg.com/synckit/-/synckit-0.11.11.tgz#c0b619cf258a97faa209155d9cd1699b5c998cb0"
+  integrity sha512-MeQTA1r0litLUf0Rp/iisCaL8761lKAZHaimlbGK4j0HysC4PLfqygQj9srcs0m2RdtDYnF8UuYyKpbjHYp7Jw==
   dependencies:
-    "@pkgr/core" "^0.2.4"
+    "@pkgr/core" "^0.2.9"
 
 tapable@^2.0.0, tapable@^2.1.1, tapable@^2.2.0, tapable@^2.2.1:
   version "2.2.1"
@@ -12236,6 +12236,7 @@ word-wrap@^1.2.5, word-wrap@~1.2.3:
   integrity sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==
 
 "wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
+  name wrap-ansi-cjs
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
