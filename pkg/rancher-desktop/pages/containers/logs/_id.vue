@@ -76,28 +76,28 @@
     </div>
 
     <loading-indicator
-        v-if="isLoading || waitingForInitialLogs"
-        class="content-state"
-        data-testid="loading-indicator"
+      v-if="isLoading || waitingForInitialLogs"
+      class="content-state"
+      data-testid="loading-indicator"
     >
       {{ t('containers.logs.loading') }}
     </loading-indicator>
 
     <banner
-        v-if="error && !waitingForInitialLogs"
-        class="content-state"
-        color="error"
-        data-testid="error-message"
+      v-if="error && !waitingForInitialLogs"
+      class="content-state"
+      color="error"
+      data-testid="error-message"
     >
       <span class="icon icon-info-circle icon-lg" />
       {{ error }}
     </banner>
 
     <div
-        v-if="!isLoading"
-        ref="terminalContainer"
-        :class="['terminal-container', { 'terminal-hidden': waitingForInitialLogs }]"
-        data-testid="terminal"
+      v-if="!isLoading"
+      ref="terminalContainer"
+      :class="['terminal-container', { 'terminal-hidden': waitingForInitialLogs }]"
+      data-testid="terminal"
     />
   </div>
 </template>
@@ -143,11 +143,11 @@ export default defineComponent({
       searchDebounceTimer:    null,
       containerCheckInterval: null,
       /** Controls terminal visibility - true hides terminal until logs arrive to prevent fast scroll */
-      waitingForInitialLogs: true,
+      waitingForInitialLogs:  true,
       /** Timeout ID for 200ms delay before revealing terminal after initial logs */
-      revealTimeout: null,
+      revealTimeout:          null,
       /** Tracks if any log output has been received - used with fallback timer to ensure terminal reveals even without logs */
-      hasReceivedLogs: false,
+      hasReceivedLogs:        false,
     };
   },
   computed: {
@@ -173,7 +173,6 @@ export default defineComponent({
     ipcRenderer.on('settings-read', this.onSettingsRead);
 
     ipcRenderer.send('settings-read');
-    // Don't call initializeLogs here - wait for settings to load
 
     window.addEventListener('keydown', this.handleGlobalKeydown);
   },
@@ -299,7 +298,6 @@ export default defineComponent({
             this.waitingForInitialLogs = false;
           }
         }, 500);
-
       } catch (error) {
         console.error('Error starting log stream:', error);
 
