@@ -63,7 +63,6 @@
     "@xterm/xterm": "5.5.0",
     "async-mutex": "^0.5.0",
     "cookie-universal": "2.2.2",
-    "core-js": "3.25.3",
     "cross-spawn": "7.0.6",
     "dayjs": "1.11.13",
     "dompurify": "3.2.6",
