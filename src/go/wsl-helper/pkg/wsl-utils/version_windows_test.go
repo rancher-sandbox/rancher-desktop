@@ -257,9 +257,9 @@ func TestGetInboxWSLInfo(t *testing.T) {
 			io.WriteString(runner.stdout, "Hello world\r\n")
 			return nil
 		})
-		// Use the upgrade code for "Microsoft Update Health Tools", which is
-		// automatically installed from Windows Update.
-		ctx = context.WithValue(ctx, &kUpgradeCodeOverride, "{2E5106FD-42A1-4BBE-9C29-7E1D34CB79A1}")
+		// Use the upgrade code for "Windows Subsystem for Linux", which is the
+		// version installed from the MS Store.
+		ctx = context.WithValue(ctx, &kUpgradeCodeOverride, "{6D5B792B-1EDC-4DE9-8EAD-201B820F8E82}")
 		hasWSL, kernelVersion, err := getInboxWSLInfo(ctx, logrus.NewEntry(logger))
 		assert.NoError(t, err)
 		assert.True(t, hasWSL, "WSL should be installed")
