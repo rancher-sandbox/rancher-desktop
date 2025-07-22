@@ -1,9 +1,9 @@
 import { expect, test, ElectronApplication, Page } from '@playwright/test';
 
-import {NavPage} from './pages/nav-page';
-import {ContainerLogsPage} from './pages/container-logs-page';
-import {ContainersPage} from './pages/containers-page';
-import {startSlowerDesktop, teardown, tool} from './utils/TestUtils';
+import { ContainerLogsPage } from './pages/container-logs-page';
+import { ContainersPage } from './pages/containers-page';
+import { NavPage } from './pages/nav-page';
+import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
 
 let page: Page;
 
@@ -209,10 +209,9 @@ test.describe.serial('Containers Tests', () => {
     }
   });
 
-  test('should auto-refresh containers list', async () => {
+  test('should auto-refresh containers list', async() => {
     const containersPage = new ContainersPage(page);
-    const autoRefreshContainerName = `auto-refresh-test-${Date.now()}`;
-    let autoRefreshContainerId: string;
+    const autoRefreshContainerName = `auto-refresh-test-${ Date.now() }`;
 
     const navPage = new NavPage(page);
     await navPage.navigateTo('Containers');
@@ -220,7 +219,7 @@ test.describe.serial('Containers Tests', () => {
 
     const output = await tool('docker', 'run', '--detach', '--name', autoRefreshContainerName,
       'alpine', 'sleep', '30');
-    autoRefreshContainerId = output.trim();
+    const autoRefreshContainerId = output.trim();
 
     await containersPage.waitForContainerToAppear(autoRefreshContainerId);
 

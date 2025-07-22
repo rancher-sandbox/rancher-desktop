@@ -59,17 +59,17 @@ type DockerEventCallback = (event: DockerEvent) => void;
  * DockerEvent represents a Docker event
  */
 interface DockerEvent {
-  Type: string;    // container, volume, network, etc.
+  Type:   string;    // container, volume, network, etc.
   Action: string;  // create, start, stop, destroy, etc.
   Actor: {
-    ID: string;
+    ID:         string;
     Attributes: Record<string, string>;
   };
-  time: number;
+  time:     number;
   timeNano: number;
-  status?: string;
-  id?: string;
-  from?: string;
+  status?:  string;
+  id?:      string;
+  from?:    string;
 }
 
 /**
@@ -77,10 +77,10 @@ interface DockerEvent {
  */
 interface DockerEventSubscriptionOptions {
   filters?: {
-    type?: string[];
-    event?: string[];
+    type?:      string[];
+    event?:     string[];
     container?: string[];
-    label?: string[];
+    label?:     string[];
   };
   namespace?: string;
 }
@@ -648,27 +648,27 @@ class Client implements v1.DockerDesktopClient {
       if (options.filters) {
         if (options.filters.type) {
           options.filters.type.forEach(type => {
-            eventArgs.push('--filter', `type=${type}`);
+            eventArgs.push('--filter', `type=${ type }`);
           });
         }
         if (options.filters.event) {
           options.filters.event.forEach(event => {
-            eventArgs.push('--filter', `event=${event}`);
+            eventArgs.push('--filter', `event=${ event }`);
           });
         }
         if (options.filters.container) {
           options.filters.container.forEach(container => {
-            eventArgs.push('--filter', `container=${container}`);
+            eventArgs.push('--filter', `container=${ container }`);
           });
         }
         if (options.filters.label) {
           options.filters.label.forEach(label => {
-            eventArgs.push('--filter', `label=${label}`);
+            eventArgs.push('--filter', `label=${ label }`);
           });
         }
       }
 
-      const subscriptionId = `events-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const subscriptionId = `events-${ Date.now() }-${ Math.random().toString(36).substring(2, 11) }`;
 
       const eventProcess = this.docker.cli.exec('system', eventArgs, {
         stream: {
@@ -689,11 +689,11 @@ class Client implements v1.DockerDesktopClient {
             console.error('Docker events stream error:', error);
           },
           onClose: (code: number) => {
-            console.debug(`Docker events stream closed with code ${code}`);
+            console.debug(`Docker events stream closed with code ${ code }`);
           },
           splitOutputLines: true,
         },
-      }) as v1.ExecProcess;
+      });
 
       eventSubscriptions.set(subscriptionId, eventProcess);
 
@@ -701,7 +701,7 @@ class Client implements v1.DockerDesktopClient {
         unsubscribe: () => {
           const proc = eventSubscriptions.get(subscriptionId);
           if (proc) {
-            proc.kill();
+            proc.close();
             eventSubscriptions.delete(subscriptionId);
           }
         },
@@ -754,7 +754,7 @@ export default function initExtensions(): void {
     // Clean up event subscriptions
     for (const [id, proc] of eventSubscriptions) {
       try {
-        proc.kill();
+        proc.close();
       } catch (ex) {
         console.debug(`failed to kill event subscription ${ id }:`, ex);
       }

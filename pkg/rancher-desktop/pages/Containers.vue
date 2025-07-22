@@ -114,7 +114,6 @@ import SortableTable from '@pkg/components/SortableTable';
 import { ContainerEngine } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-
 /**
  * @typedef Container {Object} The return type of ddClient.docker.listContainers
  * @property Id {string} The container id
@@ -127,14 +126,16 @@ export default defineComponent({
   data() {
     return {
       /** @type import('@pkg/config/settings').Settings | undefined */
-      settings:             undefined,
-      ddClient:             null,
-      containersList:       null,
-      showRunning:          false,
-      containersNamespaces: [],
+      settings:                   undefined,
+      ddClient:                   null,
+      containersList:             null,
+      showRunning:                false,
+      containersNamespaces:       [],
       containerEventSubscription: null,
-      error:                null,
-      headers:              [
+      error:                      null,
+      isComponentMounted:         false,
+      setupTimeoutId:             null,
+      headers:                    [
         // INFO: Disable for now since we can only get the running containers.
         {
           name:  'containerState',
@@ -264,6 +265,7 @@ export default defineComponent({
     },
   },
   mounted() {
+    this.isComponentMounted = true;
     this.$store.dispatch('page/setHeader', {
       title:       this.t('containers.title'),
       description: '',
@@ -284,8 +286,19 @@ export default defineComponent({
 
     this.checkContainers().catch(console.error);
     this.setupEventSubscriptions();
+
+    setTimeout(() => {
+      if (this.isComponentMounted) {
+        this.getContainers().catch(console.error);
+      }
+    }, 1500);
   },
   beforeUnmount() {
+    this.isComponentMounted = false;
+    if (this.setupTimeoutId) {
+      clearTimeout(this.setupTimeoutId);
+      this.setupTimeoutId = null;
+    }
     ipcRenderer.removeAllListeners('settings-update');
     ipcRenderer.removeAllListeners('containers-namespaces');
     ipcRenderer.removeAllListeners('containers-namespaces-containers');
@@ -294,12 +307,16 @@ export default defineComponent({
   methods: {
     setupEventSubscriptions() {
       if (!window.ddClient || !this.isK8sReady || !this.settings) {
-        setTimeout(() => this.setupEventSubscriptions(), 1000);
+        this.setupTimeoutId = setTimeout(() => {
+          if (this.isComponentMounted) {
+            this.setupEventSubscriptions();
+          }
+        }, 1000);
         return;
       }
 
       if (this.isNerdCtl) {
-        // TODO: Implement event subscriptions for containerd backend
+        this.setupNerdctlEventSubscription();
         return;
       }
 
@@ -308,7 +325,7 @@ export default defineComponent({
       this.containerEventSubscription = this.ddClient.docker.subscribeToEvents(
         {
           filters: {
-            type: ['container'],
+            type:  ['container'],
             event: ['create', 'start', 'stop', 'die', 'kill', 'pause', 'unpause', 'rename', 'update', 'destroy', 'remove'],
           },
           namespace: this.selectedNamespace,
@@ -316,7 +333,27 @@ export default defineComponent({
         (event) => {
           console.debug('Container event received:', event);
           this.getContainers().catch(console.error);
-        }
+        },
+      );
+    },
+
+    setupNerdctlEventSubscription() {
+      this.ddClient = window.ddClient;
+
+      this.containerEventSubscription = this.ddClient.docker.subscribeToEvents(
+        {
+          namespace: this.selectedNamespace,
+        },
+        (event) => {
+          if (!this.isComponentMounted) {
+            return;
+          }
+          console.debug('Nerdctl event received:', event);
+          if (event.Type === 'container' || !event.Type) {
+            console.debug('Processing container event:', event);
+            this.getContainers().catch(console.error);
+          }
+        },
       );
     },
 

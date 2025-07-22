@@ -72,7 +72,6 @@
 </template>
 
 <script lang="ts">
-import _ from 'lodash';
 import { Banner } from '@rancher/components';
 import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
@@ -89,13 +88,15 @@ export default defineComponent({
   components: { SortableTable, Banner },
   data() {
     return {
-      settings: undefined,
-      ddClient: null,
-      volumesList: null,
-      volumesNamespaces: [],
-      volumeCheckInterval: null,
-      error:               null,
-      headers:             [
+      settings:                undefined,
+      ddClient:                null,
+      volumesList:             null,
+      volumesNamespaces:       [],
+      volumeEventSubscription: null,
+      volumePollingInterval:   null,
+      error:                   null,
+      isComponentMounted:      false,
+      headers:                 [
         {
           name:  'volumeName',
           label: this.t('volumes.manage.table.header.volumeName'),
@@ -168,6 +169,8 @@ export default defineComponent({
     },
   },
   mounted() {
+    this.isComponentMounted = true;
+
     this.$store.dispatch('page/setHeader', {
       title:       this.t('volumes.title'),
       description: '',
@@ -188,8 +191,16 @@ export default defineComponent({
 
     this.checkVolumes().catch(console.error);
     this.setupEventSubscriptions();
+
+    setTimeout(() => {
+      if (this.isComponentMounted) {
+        this.getVolumes().catch(console.error);
+      }
+    }, 1500);
   },
   beforeUnmount() {
+    this.isComponentMounted = false;
+    this.cleanupEventSubscriptions();
     ipcRenderer.removeAllListeners('settings-update');
     this.cleanupEventSubscriptions();
   },
@@ -201,7 +212,7 @@ export default defineComponent({
       }
 
       if (this.isNerdCtl) {
-        // TODO: Implement event subscriptions for containerd backend
+        this.setupContainerdVolumePolling();
         return;
       }
 
@@ -210,7 +221,7 @@ export default defineComponent({
       this.volumeEventSubscription = this.ddClient.docker.subscribeToEvents(
         {
           filters: {
-            type: ['volume'],
+            type:  ['volume'],
             event: ['create', 'destroy', 'mount', 'unmount'],
           },
           namespace: this.selectedNamespace,
@@ -218,14 +229,29 @@ export default defineComponent({
         (event) => {
           console.debug('Volume event received:', event);
           this.getVolumes().catch(console.error);
-        }
+        },
       );
+    },
+
+    setupContainerdVolumePolling() {
+      this.volumePollingInterval = setInterval(() => {
+        if (!this.isComponentMounted) {
+          return;
+        }
+
+        this.getVolumes().catch(console.error);
+      }, 2000);
     },
 
     cleanupEventSubscriptions() {
       if (this.volumeEventSubscription) {
         this.volumeEventSubscription.unsubscribe();
         this.volumeEventSubscription = null;
+      }
+
+      if (this.volumePollingInterval) {
+        clearInterval(this.volumePollingInterval);
+        this.volumePollingInterval = null;
       }
     },
 

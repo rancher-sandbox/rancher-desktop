@@ -196,9 +196,9 @@ test.describe.serial('Volumes Tests', () => {
     }
   });
 
-  test('should auto-refresh volumes list', async () => {
+  test('should auto-refresh volumes list', async() => {
     const volumesPage = new VolumesPage(page);
-    const autoRefreshVolumeName = `auto-refresh-test-${Date.now()}`;
+    const autoRefreshVolumeName = `auto-refresh-test-${ Date.now() }`;
 
     await volumesPage.waitForTableToLoad();
 
