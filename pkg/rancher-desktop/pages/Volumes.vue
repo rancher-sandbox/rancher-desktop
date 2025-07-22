@@ -123,7 +123,36 @@ export default defineComponent({
   computed: {
     ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     rows() {
-      return this.volumesList || [];
+      if (!this.volumesList) {
+        return [];
+      }
+
+      return this.volumesList.map((volume) => {
+        return {
+          ...volume,
+          volumeName:       volume.Name,
+          created:          volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
+          mountpoint:       volume.Mountpoint || '',
+          driver:           volume.Driver || '',
+          availableActions: [
+            {
+              label:    this.t('volumes.manager.table.action.browse'),
+              action:   'browseFiles',
+              enabled:  true,
+              bulkable: false,
+            },
+            {
+              label:      this.t('volumes.manager.table.action.delete'),
+              action:     'deleteVolume',
+              enabled:    true,
+              bulkable:   true,
+              bulkAction: 'deleteVolume',
+            },
+          ],
+          deleteVolume: this.createDeleteVolumeHandler(volume),
+          browseFiles:  this.createBrowseFilesHandler(volume),
+        };
+      });
     },
     isContainerdEngine() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -158,13 +187,48 @@ export default defineComponent({
     });
 
     this.checkVolumes().catch(console.error);
-    this.volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 1_000);
+    this.setupEventSubscriptions();
   },
   beforeUnmount() {
     ipcRenderer.removeAllListeners('settings-update');
-    clearInterval(this.volumeCheckInterval);
+    this.cleanupEventSubscriptions();
   },
   methods: {
+    setupEventSubscriptions() {
+      if (!window.ddClient || !this.isK8sReady || !this.settings) {
+        setTimeout(() => this.setupEventSubscriptions(), 1000);
+        return;
+      }
+
+      if (this.isNerdCtl) {
+        // TODO: Implement event subscriptions for containerd backend
+        return;
+      }
+
+      this.ddClient = window.ddClient;
+
+      this.volumeEventSubscription = this.ddClient.docker.subscribeToEvents(
+        {
+          filters: {
+            type: ['volume'],
+            event: ['create', 'destroy', 'mount', 'unmount'],
+          },
+          namespace: this.selectedNamespace,
+        },
+        (event) => {
+          console.debug('Volume event received:', event);
+          this.getVolumes().catch(console.error);
+        }
+      );
+    },
+
+    cleanupEventSubscriptions() {
+      if (this.volumeEventSubscription) {
+        this.volumeEventSubscription.unsubscribe();
+        this.volumeEventSubscription = null;
+      }
+    },
+
     async checkVolumes() {
       if (window.ddClient && this.isK8sReady && this.settings) {
         this.ddClient = window.ddClient;
@@ -199,53 +263,14 @@ export default defineComponent({
       if (value !== this.selectedNamespace) {
         await ipcRenderer.invoke('settings-write',
           { containers: { namespace: value.target.value } });
+        this.cleanupEventSubscriptions();
+        this.setupEventSubscriptions();
         this.getVolumes();
       }
     },
     async getNamespaces() {
       this.volumesNamespaces = await this.ddClient?.docker.listNamespaces();
       this.checkSelectedNamespace();
-    },
-    getVolumeActions(volume) {
-      return [
-        {
-          label: this.t('volumes.manager.table.action.browse'),
-          action: 'browseFiles',
-          enabled: true,
-          bulkable: false,
-        },
-        {
-          label: this.t('volumes.manager.table.action.delete'),
-          action: 'deleteVolume',
-          enabled: true,
-          bulkable: true,
-          bulkAction: 'deleteVolumes',
-        },
-      ];
-    },
-    processVolume(volume) {
-      volume.volumeName = volume.Name;
-      volume.created = volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '';
-      volume.mountpoint = volume.Mountpoint || '';
-      volume.driver = volume.Driver || '';
-
-      const actions = this.getVolumeActions(volume);
-
-      if (!volume.availableActions || !_.isEqual(volume.availableActions, actions)) {
-        volume.availableActions = actions;
-      }
-
-      if (!volume.deleteVolume) {
-        volume.deleteVolume = this.deleteVolume.bind(this, volume);
-      }
-      if (!volume.deleteVolumes) {
-        volume.deleteVolumes = this.deleteVolumes.bind(this);
-      }
-      if (!volume.browseFiles) {
-        volume.browseFiles = () => this.$router.push({name: 'volumes-files-name', params: {name: volume.Name}});
-      }
-
-      return volume;
     },
     async getVolumes() {
       try {
@@ -256,44 +281,14 @@ export default defineComponent({
         }
 
         const volumes = await this.ddClient?.docker.rdListVolumes(options);
-        const fetchedVolumes = volumes || [];
-
-        if (!this.volumesList) {
-          this.volumesList = fetchedVolumes.map(v => this.processVolume(v));
-          return;
-        }
-
-        const existingMap = new Map(this.volumesList.map(v => [v.Name, v]));
-        const newNames = new Set(fetchedVolumes.map(v => v.Name));
-
-        for (let i = this.volumesList.length - 1; i >= 0; i--) {
-          if (!newNames.has(this.volumesList[i].Name)) {
-            this.volumesList.splice(i, 1);
-          }
-        }
-
-        fetchedVolumes.forEach(newVolume => {
-          const existing = existingMap.get(newVolume.Name);
-          if (existing) {
-            Object.assign(existing, newVolume);
-            this.processVolume(existing);
-          } else {
-            this.volumesList.push(this.processVolume(newVolume));
-          }
-        });
+        this.volumesList = volumes || [];
       } catch (error) {
         console.error('Failed to fetch volumes:', error);
-        if (!this.volumesList) {
-          this.volumesList = [];
-        }
+        this.volumesList = [];
       }
     },
     async deleteVolume(volume) {
       await this.execCommand('volume rm', volume);
-    },
-    async deleteVolumes(volumes) {
-      // Handle bulk deletion
-      await this.execCommand('volume rm', volumes);
     },
     async execCommand(command, volumes) {
       try {
