@@ -335,6 +335,9 @@ export default defineComponent({
           this.getContainers().catch(console.error);
         },
       );
+      
+      // Fetch initial container list after setting up event subscription
+      this.getContainers().catch(console.error);
     },
 
     setupNerdctlEventSubscription() {
@@ -355,6 +358,9 @@ export default defineComponent({
           }
         },
       );
+      
+      // Fetch initial container list after setting up event subscription
+      this.getContainers().catch(console.error);
     },
 
     cleanupEventSubscriptions() {

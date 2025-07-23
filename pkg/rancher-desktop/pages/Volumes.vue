@@ -231,9 +231,16 @@ export default defineComponent({
           this.getVolumes().catch(console.error);
         },
       );
+      
+      // Fetch initial volume list after setting up event subscription
+      this.getVolumes().catch(console.error);
     },
 
     setupContainerdVolumePolling() {
+      // Fetch initial volume list immediately
+      this.getVolumes().catch(console.error);
+      
+      // Then poll for changes
       this.volumePollingInterval = setInterval(() => {
         if (!this.isComponentMounted) {
           return;

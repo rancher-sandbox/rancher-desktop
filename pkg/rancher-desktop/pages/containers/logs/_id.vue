@@ -203,10 +203,11 @@ export default defineComponent({
     }
     ipcRenderer.off('settings-read', this.onSettingsRead);
     window.removeEventListener('keydown', this.handleGlobalKeydown);
-    
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
-      this.searchDebounceTimer = null;
     }
     if (this.revealTimeout) {
       clearTimeout(this.revealTimeout);
