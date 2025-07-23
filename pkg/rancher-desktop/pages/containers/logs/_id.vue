@@ -185,16 +185,16 @@ export default defineComponent({
           window.removeEventListener('resize', this.resizeHandler);
           this.resizeHandler = null;
         }
-        
+
         if (this.searchAddon) {
           this.searchAddon.clearDecorations();
           this.searchAddon = null;
         }
-        
+
         if (this.fitAddon) {
           this.fitAddon = null;
         }
-        
+
         this.terminal.dispose();
         this.terminal = null;
       } catch (error) {
