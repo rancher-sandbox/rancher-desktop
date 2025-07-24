@@ -132,7 +132,7 @@
     "cross-env": "7.0.3",
     "css-loader": "7.1.2",
     "ejs": "3.1.10",
-    "electron": "37.2.3",
+    "electron": "37.2.4",
     "electron-builder": "26.0.12",
     "eslint": "9.31.0",
     "eslint-plugin-vue": "10.3.0",
