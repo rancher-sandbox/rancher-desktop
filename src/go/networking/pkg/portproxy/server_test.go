@@ -75,7 +75,7 @@ func TestNewPortProxyUDP(t *testing.T) {
 		},
 	}
 	t.Logf("sending the following portMapping to portProxy: %+v", portMapping)
-	err = marshalAndSend(localListener, portMapping)
+	err = marshalAndSend(t.Context(), localListener, portMapping)
 	require.NoError(t, err)
 
 	// indicate when UDP mappings are ready
@@ -163,7 +163,7 @@ func TestNewPortProxyTCP(t *testing.T) {
 		},
 	}
 	t.Logf("sending the following portMapping to portProxy: %+v", portMapping)
-	err = marshalAndSend(localListener, portMapping)
+	err = marshalAndSend(t.Context(), localListener, portMapping)
 	require.NoError(t, err)
 
 	resp, err = httpGetRequest(t.Context(), getURL)
@@ -185,7 +185,7 @@ func TestNewPortProxyTCP(t *testing.T) {
 			},
 		},
 	}
-	err = marshalAndSend(localListener, portMapping)
+	err = marshalAndSend(t.Context(), localListener, portMapping)
 	require.NoError(t, err)
 
 	resp, err = httpGetRequest(t.Context(), getURL)
@@ -212,7 +212,7 @@ func httpGetRequest(ctx context.Context, url string) (*http.Response, error) {
 	return resp, nil
 }
 
-func marshalAndSend(listener net.Listener, portMapping types.PortMapping) error {
+func marshalAndSend(ctx context.Context, listener net.Listener, portMapping types.PortMapping) error {
 	b, err := json.Marshal(portMapping)
 	if err != nil {
 		return err
@@ -220,7 +220,7 @@ func marshalAndSend(listener net.Listener, portMapping types.PortMapping) error 
 	testDialer := net.Dialer{
 		Timeout: 5 * time.Second,
 	}
-	c, err := testDialer.DialContext(context.Background(), listener.Addr().Network(), listener.Addr().String())
+	c, err := testDialer.DialContext(ctx, listener.Addr().Network(), listener.Addr().String())
 	if err != nil {
 		return err
 	}
