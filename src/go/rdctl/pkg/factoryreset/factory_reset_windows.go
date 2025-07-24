@@ -39,8 +39,8 @@ import (
 //
 // It does this by calling `tasklist`, the Windows answer to ps(1)
 
-func CheckProcessWindows() (bool, error) {
-	cmd := exec.Command("tasklist", "/NH", "/FI", "IMAGENAME eq Rancher Desktop.exe", "/FO", "CSV")
+func CheckProcessWindows(ctx context.Context) (bool, error) {
+	cmd := exec.CommandContext(ctx, "tasklist", "/NH", "/FI", "IMAGENAME eq Rancher Desktop.exe", "/FO", "CSV")
 	cmd.SysProcAttr = &windows.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 	allOutput, err := cmd.CombinedOutput()
 	if err != nil {

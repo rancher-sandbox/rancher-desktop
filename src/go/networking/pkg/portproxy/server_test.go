@@ -54,7 +54,7 @@ func TestNewPortProxyUDP(t *testing.T) {
 		UpstreamAddress: testServerIP,
 		UDPBufferSize:   1024,
 	}
-	portProxy := portproxy.NewPortProxy(localListener, proxyConfig)
+	portProxy := portproxy.NewPortProxy(context.Background(), localListener, proxyConfig)
 	go portProxy.Start()
 
 	_, testPort, err := net.SplitHostPort(targetConn.LocalAddr().String())
@@ -138,7 +138,7 @@ func TestNewPortProxyTCP(t *testing.T) {
 	proxyConfig := &portproxy.ProxyConfig{
 		UpstreamAddress: testServerIP,
 	}
-	portProxy := portproxy.NewPortProxy(localListener, proxyConfig)
+	portProxy := portproxy.NewPortProxy(context.Background(), localListener, proxyConfig)
 	go portProxy.Start()
 
 	getURL := fmt.Sprintf("http://localhost:%s", testPort)
@@ -217,7 +217,10 @@ func marshalAndSend(listener net.Listener, portMapping types.PortMapping) error 
 	if err != nil {
 		return err
 	}
-	c, err := net.Dial(listener.Addr().Network(), listener.Addr().String())
+	testDialer := net.Dialer{
+		Timeout: 5 * time.Second,
+	}
+	c, err := testDialer.DialContext(context.Background(), listener.Addr().Network(), listener.Addr().String())
 	if err != nil {
 		return err
 	}
