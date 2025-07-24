@@ -315,50 +315,37 @@ export default defineComponent({
         return;
       }
 
-      if (this.isNerdCtl) {
-        this.setupNerdctlEventSubscription();
-        return;
-      }
-
       this.ddClient = window.ddClient;
 
-      this.containerEventSubscription = this.ddClient.docker.subscribeToEvents(
-        {
+      // For nerdctl, we can't use filters because it has limited support
+      const eventOptions = this.isNerdCtl
+        ? { namespace: this.selectedNamespace }
+        : {
           filters: {
             type:  ['container'],
             event: ['create', 'start', 'stop', 'die', 'kill', 'pause', 'unpause', 'rename', 'update', 'destroy', 'remove'],
           },
           namespace: this.selectedNamespace,
-        },
-        (event) => {
-          console.debug('Container event received:', event);
-          this.getContainers().catch(console.error);
-        },
-      );
-      
-      // Fetch initial container list after setting up event subscription
-      this.getContainers().catch(console.error);
-    },
+        };
 
-    setupNerdctlEventSubscription() {
-      this.ddClient = window.ddClient;
-
-      this.containerEventSubscription = this.ddClient.docker.subscribeToEvents(
-        {
-          namespace: this.selectedNamespace,
-        },
+      this.containerEventSubscription = this.ddClient.docker.rdSubscribeToEvents(
         (event) => {
           if (!this.isComponentMounted) {
             return;
           }
-          console.debug('Nerdctl event received:', event);
-          if (event.Type === 'container' || !event.Type) {
-            console.debug('Processing container event:', event);
-            this.getContainers().catch(console.error);
+
+          console.debug('Container event received:', event);
+
+          // For nerdctl, we need to filter client-side since server-side filtering is limited
+          if (this.isNerdCtl && event.Type !== 'container' && event.Type) {
+            return;
           }
+
+          this.getContainers().catch(console.error);
         },
+        eventOptions,
       );
-      
+
       // Fetch initial container list after setting up event subscription
       this.getContainers().catch(console.error);
     },

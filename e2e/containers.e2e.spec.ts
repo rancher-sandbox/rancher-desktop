@@ -212,19 +212,38 @@ test.describe.serial('Containers Tests', () => {
   test('should auto-refresh containers list', async() => {
     const containersPage = new ContainersPage(page);
     const autoRefreshContainerName = `auto-refresh-test-${ Date.now() }`;
+    let autoRefreshContainerId: string;
 
-    const navPage = new NavPage(page);
-    await navPage.navigateTo('Containers');
-    await containersPage.waitForTableToLoad();
+    try {
+      const navPage = new NavPage(page);
+      await navPage.navigateTo('Containers');
+      await containersPage.waitForTableToLoad();
 
-    const output = await tool('docker', 'run', '--detach', '--name', autoRefreshContainerName,
-      'alpine', 'sleep', '30');
-    const autoRefreshContainerId = output.trim();
+      // Remove all existing containers to ensure clean state
+      try {
+        await tool('docker', 'rm', '-f', '$(docker ps -aq)');
+      } catch {
+      }
 
-    await containersPage.waitForContainerToAppear(autoRefreshContainerId);
+      const containerCount = await containersPage.getContainerCount();
+      expect(containerCount).toBe(0);
 
-    await tool('docker', 'rm', '--force', autoRefreshContainerId);
+      const output = await tool('docker', 'run', '--detach', '--name', autoRefreshContainerName,
+        'alpine', 'sleep', '30');
+      autoRefreshContainerId = output.trim();
 
-    await expect(containersPage.getContainerRow(autoRefreshContainerId)).toBeHidden();
+      await containersPage.waitForContainerToAppear(autoRefreshContainerId);
+
+      await tool('docker', 'rm', '--force', autoRefreshContainerId);
+
+      await expect(containersPage.getContainerRow(autoRefreshContainerId)).toBeHidden();
+    } finally {
+      if (autoRefreshContainerId) {
+        try {
+          await tool('docker', 'rm', '-f', autoRefreshContainerId);
+        } catch {
+        }
+      }
+    }
   });
 });

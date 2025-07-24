@@ -200,18 +200,33 @@ test.describe.serial('Volumes Tests', () => {
     const volumesPage = new VolumesPage(page);
     const autoRefreshVolumeName = `auto-refresh-test-${ Date.now() }`;
 
-    await volumesPage.waitForTableToLoad();
+    try {
+      await volumesPage.waitForTableToLoad();
 
-    await tool('docker', 'volume', 'create', autoRefreshVolumeName);
+      try {
+        await tool('docker', 'volume', 'prune', '-f');
+      } catch {
+      }
 
-    await volumesPage.waitForVolumeToAppear(autoRefreshVolumeName);
+      const volumeCount = await volumesPage.getVolumeCount();
+      expect(volumeCount).toBe(0);
 
-    const volumeInfo = volumesPage.getVolumeInfo(autoRefreshVolumeName);
-    await expect(volumeInfo.name).not.toBeEmpty();
-    await expect(volumeInfo.driver).not.toBeEmpty();
+      await tool('docker', 'volume', 'create', autoRefreshVolumeName);
 
-    await tool('docker', 'volume', 'rm', autoRefreshVolumeName);
+      await volumesPage.waitForVolumeToAppear(autoRefreshVolumeName);
 
-    await expect(volumesPage.getVolumeRow(autoRefreshVolumeName)).toBeHidden();
+      const volumeInfo = volumesPage.getVolumeInfo(autoRefreshVolumeName);
+      await expect(volumeInfo.name).not.toBeEmpty();
+      await expect(volumeInfo.driver).not.toBeEmpty();
+
+      await tool('docker', 'volume', 'rm', autoRefreshVolumeName);
+
+      await expect(volumesPage.getVolumeRow(autoRefreshVolumeName)).toBeHidden();
+    } finally {
+      try {
+        await tool('docker', 'volume', 'rm', autoRefreshVolumeName);
+      } catch {
+      }
+    }
   });
 });

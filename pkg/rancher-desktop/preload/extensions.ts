@@ -642,47 +642,37 @@ class Client implements v1.DockerDesktopClient {
         };
       });
     },
-    subscribeToEvents: (options: DockerEventSubscriptionOptions = {}, callback: DockerEventCallback): DockerEventSubscription => {
+    rdSubscribeToEvents: (callback: DockerEventCallback, options: DockerEventSubscriptionOptions = {}): DockerEventSubscription => {
       const eventArgs = ['events', '--format', '{{json .}}'];
 
-      if (options.filters) {
-        if (options.filters.type) {
-          options.filters.type.forEach(type => {
-            eventArgs.push('--filter', `type=${ type }`);
-          });
-        }
-        if (options.filters.event) {
-          options.filters.event.forEach(event => {
-            eventArgs.push('--filter', `event=${ event }`);
-          });
-        }
-        if (options.filters.container) {
-          options.filters.container.forEach(container => {
-            eventArgs.push('--filter', `container=${ container }`);
-          });
-        }
-        if (options.filters.label) {
-          options.filters.label.forEach(label => {
-            eventArgs.push('--filter', `label=${ label }`);
-          });
-        }
-      }
+      options.filters?.type?.forEach(type => {
+        eventArgs.push('--filter', `type=${ type }`);
+      });
+      options.filters?.event?.forEach(event => {
+        eventArgs.push('--filter', `event=${ event }`);
+      });
+      options.filters?.container?.forEach(container => {
+        eventArgs.push('--filter', `container=${ container }`);
+      });
+      options.filters?.label?.forEach(label => {
+        eventArgs.push('--filter', `label=${ label }`);
+      });
 
       const subscriptionId = `events-${ Date.now() }-${ Math.random().toString(36).substring(2, 11) }`;
 
       const eventProcess = this.docker.cli.exec('system', eventArgs, {
         stream: {
-          onOutput: (data: { stdout?: string; stderr?: string }) => {
-            if (data.stdout) {
+          onOutput: ({ stdout, stderr }) => {
+            if (stdout) {
               try {
-                const event = JSON.parse(data.stdout) as DockerEvent;
+                const event = JSON.parse(stdout) as DockerEvent;
                 callback(event);
               } catch (error) {
-                console.error('Failed to parse Docker event:', error, data.stdout);
+                console.error('Failed to parse Docker event:', error, stdout);
               }
             }
-            if (data.stderr) {
-              console.error('Docker events stderr:', data.stderr);
+            if (stderr) {
+              console.error('Docker events stderr:', stderr);
             }
           },
           onError: (error: any) => {
@@ -699,11 +689,8 @@ class Client implements v1.DockerDesktopClient {
 
       return {
         unsubscribe: () => {
-          const proc = eventSubscriptions.get(subscriptionId);
-          if (proc) {
-            proc.close();
-            eventSubscriptions.delete(subscriptionId);
-          }
+          eventSubscriptions.get(subscriptionId)?.close();
+          eventSubscriptions.delete(subscriptionId);
         },
       };
     },

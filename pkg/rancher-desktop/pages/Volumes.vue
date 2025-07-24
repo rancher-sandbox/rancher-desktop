@@ -202,7 +202,6 @@ export default defineComponent({
     this.isComponentMounted = false;
     this.cleanupEventSubscriptions();
     ipcRenderer.removeAllListeners('settings-update');
-    this.cleanupEventSubscriptions();
   },
   methods: {
     setupEventSubscriptions() {
@@ -218,7 +217,11 @@ export default defineComponent({
 
       this.ddClient = window.ddClient;
 
-      this.volumeEventSubscription = this.ddClient.docker.subscribeToEvents(
+      this.volumeEventSubscription = this.ddClient.docker.rdSubscribeToEvents(
+        (event) => {
+          console.debug('Volume event received:', event);
+          this.getVolumes().catch(console.error);
+        },
         {
           filters: {
             type:  ['volume'],
@@ -226,12 +229,8 @@ export default defineComponent({
           },
           namespace: this.selectedNamespace,
         },
-        (event) => {
-          console.debug('Volume event received:', event);
-          this.getVolumes().catch(console.error);
-        },
       );
-      
+
       // Fetch initial volume list after setting up event subscription
       this.getVolumes().catch(console.error);
     },
@@ -239,7 +238,7 @@ export default defineComponent({
     setupContainerdVolumePolling() {
       // Fetch initial volume list immediately
       this.getVolumes().catch(console.error);
-      
+
       // Then poll for changes
       this.volumePollingInterval = setInterval(() => {
         if (!this.isComponentMounted) {
