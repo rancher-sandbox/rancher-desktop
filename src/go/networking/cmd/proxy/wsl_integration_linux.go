@@ -15,6 +15,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"net"
 	"os"
@@ -53,6 +54,9 @@ func main() {
 
 	setupLogging(logFile)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	socket, err := net.Listen("unix", socketFile)
 	if err != nil {
 		logrus.Fatalf("failed to create listener for published ports: %s", err)
@@ -62,7 +66,7 @@ func main() {
 		UpstreamAddress: upstreamAddr,
 		UDPBufferSize:   udpBuffer,
 	}
-	proxy := portproxy.NewPortProxy(socket, proxyConfig)
+	proxy := portproxy.NewPortProxy(ctx, socket, proxyConfig)
 
 	// Handle graceful shutdown
 	sigCh := make(chan os.Signal, 1)

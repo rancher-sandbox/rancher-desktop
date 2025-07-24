@@ -15,6 +15,7 @@ limitations under the License.
 package portproxy
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,9 +37,11 @@ type ProxyConfig struct {
 }
 
 type PortProxy struct {
-	config   *ProxyConfig
-	listener net.Listener
-	quit     chan struct{}
+	ctx            context.Context
+	config         *ProxyConfig
+	listener       net.Listener
+	quit           chan struct{}
+	listenerConfig net.ListenConfig
 	// map of TCP port number as a key to associated listener
 	activeListeners map[int]net.Listener
 	listenerMutex   sync.Mutex
@@ -48,11 +51,13 @@ type PortProxy struct {
 	wg             sync.WaitGroup
 }
 
-func NewPortProxy(listener net.Listener, cfg *ProxyConfig) *PortProxy {
+func NewPortProxy(ctx context.Context, listener net.Listener, cfg *ProxyConfig) *PortProxy {
 	portProxy := &PortProxy{
+		ctx:             ctx,
 		config:          cfg,
 		listener:        listener,
 		quit:            make(chan struct{}),
+		listenerConfig:  net.ListenConfig{},
 		activeListeners: make(map[int]net.Listener),
 		activeUDPConns:  make(map[int]*net.UDPConn),
 	}
@@ -215,7 +220,7 @@ func (p *PortProxy) handleTCP(portBindings []nat.PortBinding, remove bool) {
 			continue
 		}
 		addr := net.JoinHostPort(portBinding.HostIP, portBinding.HostPort)
-		l, err := net.Listen("tcp", addr)
+		l, err := p.listenerConfig.Listen(p.ctx, "tcp", addr)
 		if err != nil {
 			logrus.Errorf("failed creating listener for published port [%s]: %s", portBinding.HostPort, err)
 			continue
@@ -246,7 +251,7 @@ func (p *PortProxy) acceptTraffic(listener net.Listener, port string) {
 		go func(conn net.Conn) {
 			defer p.wg.Done()
 			defer conn.Close()
-			utils.Pipe(conn, forwardAddr)
+			utils.Pipe(p.ctx, conn, forwardAddr)
 		}(conn)
 	}
 }

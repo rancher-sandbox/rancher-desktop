@@ -54,7 +54,7 @@ func TestNewPortProxyUDP(t *testing.T) {
 		UpstreamAddress: testServerIP,
 		UDPBufferSize:   1024,
 	}
-	portProxy := portproxy.NewPortProxy(localListener, proxyConfig)
+	portProxy := portproxy.NewPortProxy(t.Context(), localListener, proxyConfig)
 	go portProxy.Start()
 
 	_, testPort, err := net.SplitHostPort(targetConn.LocalAddr().String())
@@ -138,11 +138,11 @@ func TestNewPortProxyTCP(t *testing.T) {
 	proxyConfig := &portproxy.ProxyConfig{
 		UpstreamAddress: testServerIP,
 	}
-	portProxy := portproxy.NewPortProxy(localListener, proxyConfig)
+	portProxy := portproxy.NewPortProxy(t.Context(), localListener, proxyConfig)
 	go portProxy.Start()
 
 	getURL := fmt.Sprintf("http://localhost:%s", testPort)
-	resp, err := httpGetRequest(context.Background(), getURL)
+	resp, err := httpGetRequest(t.Context(), getURL)
 	require.ErrorIsf(t, err, syscall.ECONNREFUSED, "no listener should be available for port: %s", testPort)
 	if resp != nil {
 		resp.Body.Close()
@@ -166,7 +166,7 @@ func TestNewPortProxyTCP(t *testing.T) {
 	err = marshalAndSend(localListener, portMapping)
 	require.NoError(t, err)
 
-	resp, err = httpGetRequest(context.Background(), getURL)
+	resp, err = httpGetRequest(t.Context(), getURL)
 	require.NoError(t, err)
 	require.Equal(t, resp.StatusCode, http.StatusOK)
 	defer resp.Body.Close()
@@ -188,7 +188,7 @@ func TestNewPortProxyTCP(t *testing.T) {
 	err = marshalAndSend(localListener, portMapping)
 	require.NoError(t, err)
 
-	resp, err = httpGetRequest(context.Background(), getURL)
+	resp, err = httpGetRequest(t.Context(), getURL)
 	require.Errorf(t, err, "the listener for port: %s should already be closed", testPort)
 	require.ErrorIs(t, err, syscall.ECONNREFUSED)
 	if resp != nil {
@@ -217,7 +217,10 @@ func marshalAndSend(listener net.Listener, portMapping types.PortMapping) error 
 	if err != nil {
 		return err
 	}
-	c, err := net.Dial(listener.Addr().Network(), listener.Addr().String())
+	testDialer := net.Dialer{
+		Timeout: 5 * time.Second,
+	}
+	c, err := testDialer.DialContext(context.Background(), listener.Addr().Network(), listener.Addr().String())
 	if err != nil {
 		return err
 	}

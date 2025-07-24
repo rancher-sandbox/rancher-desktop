@@ -131,13 +131,13 @@ func FinishShutdown(ctx context.Context, waitForShutdown bool, initiatingCommand
 // appKillWaitInterval for appKillRetryCount times.  After all the checks have
 // expired, run killFunc to terminate the application forcefully.  If skipRetry
 // is true, do not wait at all and just kill immediately.
-func (s *shutdownData) waitForAppToDieOrKillIt(ctx context.Context, checkFunc func() (bool, error), killFunc func(context.Context) error, skipRetry bool, description string) error {
+func (s *shutdownData) waitForAppToDieOrKillIt(ctx context.Context, checkFunc func(context.Context) (bool, error), killFunc func(context.Context) error, skipRetry bool, description string) error {
 	for iter := 0; s.waitForShutdown && iter < appKillRetryCount; iter++ {
 		if iter > 0 {
 			logrus.Debugf("checking %s showed it's still running; sleeping for %s\n", description, appKillWaitInterval)
 			time.Sleep(appKillWaitInterval)
 		}
-		status, err := checkFunc()
+		status, err := checkFunc(ctx)
 		if err != nil {
 			return fmt.Errorf("while checking %s, found error: %w", description, err)
 		}
@@ -185,8 +185,8 @@ func getQemuExecutable() (string, error) {
 	return p.FindFirstExecutable(candidates...)
 }
 
-func isExecutableRunningFunc(executablePath string) func() (bool, error) {
-	return func() (bool, error) {
+func isExecutableRunningFunc(executablePath string) func(context.Context) (bool, error) {
+	return func(ctx context.Context) (bool, error) {
 		pid, err := process.FindPidOfProcess(executablePath)
 		if err != nil {
 			return false, err
@@ -214,8 +214,8 @@ func terminateExecutableFunc(executablePath string) func(context.Context) error 
 	}
 }
 
-func checkLima() (bool, error) {
-	cmd := exec.Command(limaCtlPath, "ls", "--format", "{{.Status}}", "0")
+func checkLima(ctx context.Context) (bool, error) {
+	cmd := exec.CommandContext(ctx, limaCtlPath, "ls", "--format", "{{.Status}}", "0")
 	cmd.Stderr = os.Stderr
 	result, err := cmd.Output()
 	if err != nil {

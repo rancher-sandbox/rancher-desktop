@@ -19,6 +19,7 @@ package config
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -57,7 +58,7 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 	var configDir string
 	var err error
 	if runtime.GOOS == "linux" && isWSLDistro() {
-		if configDir, err = wslifyConfigDir(); err != nil {
+		if configDir, err = wslifyConfigDir(rootCmd.Context()); err != nil {
 			log.Fatalf("Can't get WSL config-dir: %v", err)
 		}
 		configDir = filepath.Join(configDir, "rancher-desktop")
@@ -138,11 +139,11 @@ func isWSLDistro() bool {
 	return fi.Mode()&os.ModeSymlink == os.ModeSymlink
 }
 
-func getLocalAppDataPath() (string, error) {
+func getLocalAppDataPath(ctx context.Context) (string, error) {
 	var outBuf bytes.Buffer
 	// changes the codepage to 65001 which is UTF-8
 	subCommand := `chcp 65001 >nul & echo %LOCALAPPDATA%`
-	cmd := exec.Command("cmd.exe", "/c", subCommand)
+	cmd := exec.CommandContext(ctx, "cmd.exe", "/c", subCommand)
 	cmd.Stdout = &outBuf
 	// We are intentionally not using CombinedOutput and
 	// excluding the stderr since it could contain some
@@ -153,13 +154,13 @@ func getLocalAppDataPath() (string, error) {
 	return strings.TrimRight(outBuf.String(), "\r\n"), nil
 }
 
-func wslifyConfigDir() (string, error) {
-	path, err := getLocalAppDataPath()
+func wslifyConfigDir(ctx context.Context) (string, error) {
+	path, err := getLocalAppDataPath(ctx)
 	if err != nil {
 		return "", err
 	}
 	var outBuf bytes.Buffer
-	cmd := exec.Command("/bin/wslpath", path)
+	cmd := exec.CommandContext(ctx, "/bin/wslpath", path)
 	cmd.Stdout = &outBuf
 	if err := cmd.Run(); err != nil {
 		return "", err
