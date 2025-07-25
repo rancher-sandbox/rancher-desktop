@@ -59,7 +59,7 @@ export class DiagnosticsManager {
           import('./pathManagement'),
           import('./rdBinInShell'),
           import('./testCheckers'),
-          import('./wslFromStore'),
+          import('./wslInfo'),
         ])).map(obj => obj.default);
 
         return (await Promise.all(imports)).flat();
