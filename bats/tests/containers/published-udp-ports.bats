@@ -5,7 +5,7 @@ load '../helpers/load'
 }
 
 build_alpine_socat_image() {
-    cat <<EOF | docker build -t socat-udp-test -f- .
+    cat <<EOF | ctrctl build -t socat-udp-test -f- .
 FROM ${IMAGE_ALPINE}
 RUN apk add --no-cache socat
 CMD ["sh", "-c", "socat -v -T1 UDP-RECVFROM:\${PORT},fork STDOUT"]
