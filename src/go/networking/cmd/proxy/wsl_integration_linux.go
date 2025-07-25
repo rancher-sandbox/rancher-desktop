@@ -57,7 +57,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	socket, err := net.Listen("unix", socketFile)
+	listenerConfig := net.ListenConfig{}
+	socket, err := listenerConfig.Listen(ctx, "unix", socketFile)
 	if err != nil {
 		logrus.Fatalf("failed to create listener for published ports: %s", err)
 		return

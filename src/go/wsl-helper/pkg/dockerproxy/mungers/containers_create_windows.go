@@ -50,7 +50,7 @@ func mungeContainersCreate(req *http.Request, contextValue *dockerproxy.RequestC
 		logrus.WithField(fmt.Sprintf("bind %d", bindIndex), bind).Debug("got bind")
 		host, container, options, isPath := platform.ParseBindString(bind)
 		if isPath {
-			translated, err := platform.TranslatePathFromClient(host)
+			translated, err := platform.TranslatePathFromClient(req.Context(), host)
 			if err != nil {
 				return fmt.Errorf("could not translate bind path %s: %w", host, err)
 			}
@@ -78,7 +78,7 @@ func mungeContainersCreate(req *http.Request, contextValue *dockerproxy.RequestC
 		if !platform.IsAbsolutePath(mount.Source) {
 			continue
 		}
-		translated, err := platform.TranslatePathFromClient(mount.Source)
+		translated, err := platform.TranslatePathFromClient(req.Context(), mount.Source)
 		if err != nil {
 			return fmt.Errorf("could not translate mount path %s: %w", mount.Source, err)
 		}

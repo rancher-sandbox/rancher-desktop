@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 )
@@ -44,7 +45,7 @@ func main() {
 			// The top-level function handles the error
 		}()
 
-		err = spawn(opts)
+		err = spawn(context.Background(), opts)
 		if err != nil {
 			return err
 		}

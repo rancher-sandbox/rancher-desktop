@@ -21,7 +21,7 @@ func DeleteData(ctx context.Context, appPaths *paths.Paths, removeKubernetesCach
 		logrus.Errorf("Failed to delete Lima VM: %s", err)
 	}
 	w := wsl.WSLImpl{}
-	if err := w.UnregisterDistros(); err != nil {
+	if err := w.UnregisterDistros(ctx); err != nil {
 		logrus.Errorf("could not unregister WSL: %s", err)
 		return err
 	}

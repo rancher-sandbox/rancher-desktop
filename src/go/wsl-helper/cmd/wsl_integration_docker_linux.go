@@ -44,7 +44,7 @@ var wslIntegrationDockerCmd = &cobra.Command{
 			return fmt.Errorf("failed to locate home directory: %w", err)
 		}
 
-		if err := integration.UpdateDockerConfig(homeDir, pluginDir, state); err != nil {
+		if err := integration.UpdateDockerConfig(cmd.Context(), homeDir, pluginDir, state); err != nil {
 			return err
 		}
 

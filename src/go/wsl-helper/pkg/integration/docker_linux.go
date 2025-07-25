@@ -17,6 +17,7 @@ limitations under the License.
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -40,7 +41,7 @@ const (
 
 // UpdateDockerConfig configures docker CLI to load plugins from the directory
 // given. It also sets the credential helper to wincred.exe.
-func UpdateDockerConfig(homeDir, pluginPath string, enabled bool) error {
+func UpdateDockerConfig(ctx context.Context, homeDir, pluginPath string, enabled bool) error {
 	configPath := filepath.Join(homeDir, ".docker", "config.json")
 	config := make(map[string]any)
 
@@ -61,7 +62,7 @@ func UpdateDockerConfig(homeDir, pluginPath string, enabled bool) error {
 	replaceCredsStore := true
 	if credsStoreRaw, ok := config[credsStoreKey]; ok {
 		if credsStore, ok := credsStoreRaw.(string); ok {
-			replaceCredsStore = !isCredHelperWorking(credsStore)
+			replaceCredsStore = !isCredHelperWorking(ctx, credsStore)
 		}
 	}
 	if replaceCredsStore {
@@ -126,13 +127,13 @@ func UpdateDockerConfig(homeDir, pluginPath string, enabled bool) error {
 }
 
 // isCredHelperWorking verifies that the credential helper can be called, and doesn't need to be replaced.
-func isCredHelperWorking(credsStore string) bool {
+func isCredHelperWorking(ctx context.Context, credsStore string) bool {
 	// The proprietary "desktop" helper is always replaced with the default helper.
 	if credsStore == "" || credsStore == "desktop" || credsStore == "desktop.exe" {
 		return false
 	}
 	credHelper := fmt.Sprintf("docker-credential-%s", credsStore)
-	return exec.Command(credHelper, "list").Run() == nil
+	return exec.CommandContext(ctx, credHelper, "list").Run() == nil
 }
 
 // RemoveObsoletePluginSymlinks removes symlinks in the docker CLI plugin

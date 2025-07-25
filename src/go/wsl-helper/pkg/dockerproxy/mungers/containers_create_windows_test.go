@@ -59,7 +59,7 @@ func TestContainersCreate(t *testing.T) {
 
 		err = readRequestBodyJSON(req, &body)
 		assert.NoError(t, err)
-		slashPath, err := platform.TranslatePathFromClient(bindPath)
+		slashPath, err := platform.TranslatePathFromClient(t.Context(), bindPath)
 		assert.NoError(t, err)
 		expectedBind := fmt.Sprintf("%s:/host", slashPath)
 		assert.Equal(t, []string{expectedBind}, body.HostConfig.Binds)
@@ -95,7 +95,7 @@ func TestContainersCreate(t *testing.T) {
 		err = readRequestBodyJSON(req, &body)
 		assert.NoError(t, err)
 		expected := mount
-		slashPath, err := platform.TranslatePathFromClient(bindPath)
+		slashPath, err := platform.TranslatePathFromClient(t.Context(), bindPath)
 		expected.Source = slashPath
 		assert.NoError(t, err)
 		require.NotEmpty(t, body.HostConfig.Mounts)

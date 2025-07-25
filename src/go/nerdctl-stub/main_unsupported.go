@@ -2,6 +2,8 @@
 
 package main
 
+import "context"
+
 // This file is a stub for unsupported platforms to make IDEs happy.
 
 // unhandledArgHandler is a handler for unsupported arguments.
@@ -18,7 +20,7 @@ var argHandlers = argHandlersType{
 	builderCacheArgHandler: unhandledArgHandler,
 }
 
-func spawn(opts spawnOptions) error {
+func spawn(ctx context.Context, opts spawnOptions) error {
 	panic("Platform is unsupported")
 }
 

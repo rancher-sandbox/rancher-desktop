@@ -335,7 +335,7 @@ func execIptablesRules(ctx context.Context, portMappings nat.PortMap, containerI
 //
 //	DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
 func createLoopbackIPtablesRules(ctx context.Context, networks []string, containerID, namespace, pid, port, protocol, destinationPort string) error {
-	eth0IP, err := extractIPAddress(pid)
+	eth0IP, err := extractIPAddress(ctx, pid)
 	if err != nil {
 		return err
 	}
@@ -417,9 +417,9 @@ func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 	return portMap, nil
 }
 
-func extractIPAddress(pid string) (string, error) {
+func extractIPAddress(ctx context.Context, pid string) (string, error) {
 	// retrieve the eth0 IP address from the container
-	nsenterInfIPCmd := exec.Command("nsenter", "-t", pid, "-n", "ip", "-o", "-4", "addr", "show", "dev", "eth0")
+	nsenterInfIPCmd := exec.CommandContext(ctx, "nsenter", "-t", pid, "-n", "ip", "-o", "-4", "addr", "show", "dev", "eth0")
 	output, err := nsenterInfIPCmd.CombinedOutput()
 	if err != nil {
 		return "", err

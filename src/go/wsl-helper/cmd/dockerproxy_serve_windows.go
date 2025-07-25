@@ -42,7 +42,7 @@ var dockerproxyServeCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = dockerproxy.Serve(endpoint, dialer)
+		err = dockerproxy.Serve(cmd.Context(), endpoint, dialer)
 		if err != nil {
 			return err
 		}

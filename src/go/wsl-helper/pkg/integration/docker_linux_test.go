@@ -35,7 +35,7 @@ func TestUpdateDockerConfig(t *testing.T) {
 		homeDir := t.TempDir()
 		pluginPath := t.TempDir()
 
-		assert.NoError(t, integration.UpdateDockerConfig(homeDir, pluginPath, true))
+		assert.NoError(t, integration.UpdateDockerConfig(t.Context(), homeDir, pluginPath, true))
 
 		bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
 		require.NoError(t, err, "error reading docker CLI config")
@@ -56,7 +56,7 @@ func TestUpdateDockerConfig(t *testing.T) {
 		existingContents := []byte(`{"credsStore": "nothing"}`)
 		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-		require.NoError(t, integration.UpdateDockerConfig(homeDir, pluginPath, true))
+		require.NoError(t, integration.UpdateDockerConfig(t.Context(), homeDir, pluginPath, true))
 
 		bytes, err := os.ReadFile(path.Join(homeDir, ".docker", "config.json"))
 		require.NoError(t, err, "error reading docker CLI config")
@@ -79,7 +79,7 @@ func TestUpdateDockerConfig(t *testing.T) {
 		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 		config = make(map[string]any)
 
-		require.NoError(t, integration.UpdateDockerConfig(homeDir, pluginPath, true))
+		require.NoError(t, integration.UpdateDockerConfig(t.Context(), homeDir, pluginPath, true))
 
 		bytes, err := os.ReadFile(configPath)
 		require.NoError(t, err, "error reading docker CLI config")
@@ -99,7 +99,7 @@ func TestUpdateDockerConfig(t *testing.T) {
 		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 		config = make(map[string]any)
 
-		require.NoError(t, integration.UpdateDockerConfig(homeDir, pluginPath, false))
+		require.NoError(t, integration.UpdateDockerConfig(t.Context(), homeDir, pluginPath, false))
 
 		bytes, err := os.ReadFile(configPath)
 		require.NoError(t, err, "error reading docker CLI config")
@@ -117,7 +117,7 @@ func TestUpdateDockerConfig(t *testing.T) {
 			existingContents := []byte(`this is not JSON`)
 			require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-			assert.Error(t, integration.UpdateDockerConfig(homeDir, pluginPath, true))
+			assert.Error(t, integration.UpdateDockerConfig(t.Context(), homeDir, pluginPath, true))
 
 			bytes, err := os.ReadFile(configPath)
 			require.NoError(t, err, "error reading docker CLI config")
@@ -134,7 +134,7 @@ func TestUpdateDockerConfig(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-			require.Error(t, integration.UpdateDockerConfig(homeDir, pluginPath, false))
+			require.Error(t, integration.UpdateDockerConfig(t.Context(), homeDir, pluginPath, false))
 
 			bytes, err := os.ReadFile(configPath)
 			require.NoError(t, err, "error reading docker CLI config")
@@ -154,7 +154,7 @@ func TestUpdateDockerConfig(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, os.WriteFile(configPath, existingContents, 0o644))
 
-		require.Error(t, integration.UpdateDockerConfig(homeDir, pluginPath, false))
+		require.Error(t, integration.UpdateDockerConfig(t.Context(), homeDir, pluginPath, false))
 
 		bytes, err := os.ReadFile(configPath)
 		require.NoError(t, err, "error reading docker CLI config")
