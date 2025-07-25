@@ -259,9 +259,9 @@ export class KubeClient extends events.EventEmitter {
     // watcher needs more time to start up. When this call returns at least one
     // service, it's ready.
     try {
-      const { body } = await this.coreV1API.listServiceForAllNamespaces();
+      const { items } = await this.coreV1API.listServiceForAllNamespaces();
 
-      if (!(body.items.length > 0)) {
+      if (!(items.length > 0)) {
         return null;
       }
     } catch (ex) {
@@ -283,14 +283,14 @@ export class KubeClient extends events.EventEmitter {
    * Wait for at least one node in the cluster to become ready.  This is taken
    * as an indication that the cluster is ready to be used.
    */
-  async waitForReadyNodes() {
+  async waitForReadyNodes(): Promise<void> {
     while (true) {
-      const { body: nodes } = await this.coreV1API.listNode();
-      const conditions = nodes?.items?.flatMap(node => node.status?.conditions ?? []);
+      const { items } = await this.coreV1API.listNode();
+      const conditions = items.flatMap(node => node.status?.conditions ?? []);
       const ready = conditions.some(condition => condition.type === 'Ready' && condition.status === 'True');
 
       if (ready) {
-        return nodes;
+        return;
       }
       await util.promisify(setTimeout)(1_000);
     }
@@ -314,18 +314,17 @@ export class KubeClient extends events.EventEmitter {
 
     // TODO: switch this to using watch.
     while (!this.shutdown) {
-      const endpoints = await this.coreV1API.listNamespacedEndpoints(
-        namespace, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
-        undefined, undefined, undefined, { headers: { name: endpointName } });
-
-      const body = endpoints?.body;
-      const items = (body?.items || []).filter(item => item.metadata?.name === endpointName);
+      const endpoints = await this.coreV1API.listNamespacedEndpoints({
+        namespace,
+        fieldSelector: `metadata.name == ${ endpointName }`,
+      });
+      const items = endpoints.items.filter(item => item.metadata?.name === endpointName);
 
       target = items.flatMap(item => item.subsets).filter(defined);
       if (target.length > 0 || this.shutdown) {
         break;
       }
-      console.log(`Could not find ${ endpointName } endpoint (${ body ? 'did' : 'did not' } get endpoints), retrying...`);
+      console.log(`Could not find ${ endpointName } endpoint (${ endpoints ? 'did' : 'did not' } get endpoints), retrying...`);
       await util.promisify(setTimeout)(1000);
     }
 
@@ -342,9 +341,17 @@ export class KubeClient extends events.EventEmitter {
     }
 
     // Fetch the pod
-    const resp = await this.coreV1API.readNamespacedPod(target.name, target.namespace);
-
-    return resp?.body;
+    try {
+      return await this.coreV1API.readNamespacedPod({
+        name:      target.name,
+        namespace: target.namespace,
+      });
+    } catch (ex) {
+      if (ex instanceof k8s.ApiException && ex.code === 404) {
+        return null;
+      }
+      throw ex;
+    }
   }
 
   /**

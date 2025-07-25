@@ -8,7 +8,7 @@ import tls from 'tls';
 import util from 'util';
 
 import {
-  CustomObjectsApi, KubeConfig, V1ObjectMeta, findHomeDir, HttpError,
+  CustomObjectsApi, KubeConfig, V1ObjectMeta, findHomeDir, ApiException,
 } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import _ from 'lodash';
@@ -1080,8 +1080,13 @@ export default class K3sHelper extends events.EventEmitter {
     while (Date.now() < deadline) {
       try {
         const customApi = client.k8sClient.makeApiClient(CustomObjectsApi);
-        const { body: response } = await customApi.listNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts');
-        const charts: V1HelmChart[] = (response as any)?.items ?? [];
+        const response = await customApi.listNamespacedCustomObject({
+          group:     'helm.cattle.io',
+          version:   'v1',
+          namespace: 'kube-system',
+          plural:    'helmcharts',
+        });
+        const charts: V1HelmChart[] = response?.items ?? [];
 
         await Promise.all(charts.filter((chart) => {
           const annotations = chart.metadata?.annotations ?? {};
@@ -1093,13 +1098,19 @@ export default class K3sHelper extends events.EventEmitter {
           if (name) {
             console.debug(`Will delete helm chart ${ name }`);
 
-            return customApi.deleteNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts', name);
+            return customApi.deleteNamespacedCustomObject({
+              group:     'helm.cattle.io',
+              version:   'v1',
+              namespace: 'kube-system',
+              plural:    'helmcharts',
+              name,
+            });
           }
         }));
 
         return;
       } catch (ex) {
-        if (ex instanceof HttpError && ex.statusCode === 503) {
+        if (ex instanceof ApiException && ex.code === 503) {
           console.debug(`Got Service Unavailable (${ ex.body.message }), retrying...`);
           await util.promisify(setTimeout)(1_000);
           continue;
