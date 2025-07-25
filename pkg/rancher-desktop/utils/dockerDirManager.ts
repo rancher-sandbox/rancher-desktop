@@ -6,6 +6,7 @@ import yaml from 'yaml';
 
 import paths from './paths';
 
+import mainEvents from '@pkg/main/mainEvents';
 import { spawnFile } from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
@@ -40,7 +41,7 @@ interface PartialDockerConfig {
  * Manages everything under the docker CLI config directory (except, at
  * the time of writing, docker CLI plugins).
  */
-export default class DockerDirManager {
+export class DockerDirManager {
   protected readonly dockerDirPath:        string;
   protected readonly dockerContextDirPath: string;
   /**
@@ -143,7 +144,7 @@ export default class DockerDirManager {
    * @param currentContext The current context.
    * @returns Undefined for default context; string containing context name for other contexts.
    */
-  protected async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
+  async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
     if (weOwnDefaultSocket) {
       return undefined;
     }
@@ -318,6 +319,13 @@ export default class DockerDirManager {
   }
 
   /**
+   * Return the current docker context.
+   */
+  get currentDockerContext(): Promise<string | undefined> {
+    return this.readDockerConfig().then(cfg => cfg.currentContext);
+  }
+
+  /**
    * Clear the docker context if we changed it for running without admin privileges
    */
   async clearDockerContext(): Promise<void> {
@@ -364,6 +372,9 @@ export default class DockerDirManager {
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
       await this.writeDockerConfig(newConfig);
     }
+
+    // Trigger diagnostics, ignoring results.
+    mainEvents.invoke('diagnostics-trigger', 'DOCKER_CONTEXT').catch(e => console.error(e));
   }
 
   /**
@@ -385,3 +396,8 @@ export default class DockerDirManager {
     }
   }
 }
+
+/**
+ * Export a singleton instance of the docker dir manager by default.
+ */
+export default new DockerDirManager(path.join(os.homedir(), '.docker'));
