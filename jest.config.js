@@ -12,7 +12,7 @@ export default {
   moduleFileExtensions:    [
     'js',
     'json',
-    'node', // For native modules, e.g. fs-xattr
+    'node', // For native modules, e.g. @napi-rs/xattr
     'ts',
     'vue',
   ],
