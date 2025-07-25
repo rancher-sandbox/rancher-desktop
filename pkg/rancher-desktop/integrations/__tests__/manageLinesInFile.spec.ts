@@ -81,10 +81,7 @@ describe('manageLinesInFile', () => {
 
   describe('Target exists as a plain file', () => {
     testUnix('Preserves extended attributes', async() => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
-      // @ts-ignore // fs-xattr is not available on Windows.
-      const { listAttributes, getAttribute, setAttribute } = await import('fs-xattr');
-
+      const { listAttributes, getAttribute, setAttribute } = await import('@napi-rs/xattr');
       const unmanagedContents = 'existing lines\n';
       const attributeKey = 'user.io.rancherdesktop.test';
       const attributeValue = 'sample attribute contents';
@@ -113,6 +110,7 @@ describe('manageLinesInFile', () => {
     });
 
     test('Put lines in file that exists and has content', async() => {
+      const { listAttributes } = await import('@napi-rs/xattr');
       const data = 'this is already present in the file\n';
       const expectedContents = [data, START_LINE, TEST_LINE_1, END_LINE, ''].join('\n');
 
@@ -121,9 +119,6 @@ describe('manageLinesInFile', () => {
 
       await expect(fs.promises.readFile(rcFilePath, 'utf8')).resolves.toEqual(expectedContents);
       if (process.platform !== 'win32') {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
-        // @ts-ignore // fs-xattr is not available on Windows.
-        const { listAttributes } = await import('fs-xattr');
         const allAttrs: string[] = await listAttributes(rcFilePath);
         // filter out attributes like com.apple.provenance that the OS might add
         const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.'));

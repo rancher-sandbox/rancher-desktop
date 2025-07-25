@@ -2081,6 +2081,72 @@
     "@emnapi/runtime" "^1.4.3"
     "@tybys/wasm-util" "^0.9.0"
 
+"@napi-rs/xattr-android-arm-eabi@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-android-arm-eabi/-/xattr-android-arm-eabi-1.0.2.tgz#c511c087fa811ac812f651a6dea5c505fb7065c7"
+  integrity sha512-Y5Gq5i6KeetLfsJJF7fFtSpe99wsKlAh01c6OA3sfVm+i9KdO3PZjZnHqoJ4vKkH1UC1HBQV4q4ZzcGKNqvhYw==
+
+"@napi-rs/xattr-android-arm64@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-android-arm64/-/xattr-android-arm64-1.0.2.tgz#9c7d273863c3ee0da5416bdcc84ee057a7e82ae1"
+  integrity sha512-fdNEX19h1oxSuOU5+BX+n0Pmy+tTZHm/xnZ1bhWEmYFhsvr3+J/W7yveZ6wT5YXAoeyM0sDHzdlhWijIiiuU9w==
+
+"@napi-rs/xattr-darwin-arm64@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-darwin-arm64/-/xattr-darwin-arm64-1.0.2.tgz#4942c8574e90fd459fa0e538858cdf1c94ece112"
+  integrity sha512-5rHKlrlpOrH4UQ8bbBNK3ftSVjg5GFMvBCqfJU8qcoVl1iW8KM7qk1SW39BxHuLADUE5KCLOre1sEdIlJaeQxA==
+
+"@napi-rs/xattr-darwin-x64@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-darwin-x64/-/xattr-darwin-x64-1.0.2.tgz#3e4a6b463e3e9ebdb4adb78a6ff3c65efe1d68a4"
+  integrity sha512-UgRPKk9NpHzR1NtGj7ZI9L79IV2bC4Sak5+tOd1u5nR40xSFzxzkMqDwT8dLR1TlGvBjQtlXK/qiFZIOZ4GFfQ==
+
+"@napi-rs/xattr-freebsd-x64@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-freebsd-x64/-/xattr-freebsd-x64-1.0.2.tgz#eb0a31841a0b33e7d6b1379f14b5017aa0e23f08"
+  integrity sha512-q6dgVr5Y4t7zq0obCUclckAnOAggd7TQvBZifyTEUkphuwfpKDUu26xJf+QRvTHNtGoq3BEE/EtcX6pgJl2FRQ==
+
+"@napi-rs/xattr-linux-arm-gnueabihf@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-linux-arm-gnueabihf/-/xattr-linux-arm-gnueabihf-1.0.2.tgz#d3e3bb0397ab8fda3ebaaaea4d6f910f726d9830"
+  integrity sha512-j5UhwontcGZmeDqc3Cfx5dYi7ML2X0DD6qT+l8qUKFYl/dMU+WLCnIZHtnz4opX4cobMCu+pX4WL8VlkNvXWww==
+
+"@napi-rs/xattr-linux-arm64-gnu@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-linux-arm64-gnu/-/xattr-linux-arm64-gnu-1.0.2.tgz#eb10174b6466872dd794bb6de27d91d367bcc1a1"
+  integrity sha512-Zgm8OAfdAIo2RT+w/iTHS0hQsJpCA8ON0JXDTzBrOusQmXiWjNpHuQWl66MD5PL7la8lw/HE942m9ftitvv7tQ==
+
+"@napi-rs/xattr-linux-arm64-musl@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-linux-arm64-musl/-/xattr-linux-arm64-musl-1.0.2.tgz#6bf3072580950a4456aba98f866c6b4b3241f046"
+  integrity sha512-9eUpAcwtURoq/OSG5z6CcC5OutznMIC734oN7vI0dxQQUpseh2E11cKlo90vfp2thxQ/m6x0alk5AMkYOMV24g==
+
+"@napi-rs/xattr-linux-x64-gnu@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-linux-x64-gnu/-/xattr-linux-x64-gnu-1.0.2.tgz#7f21170afe41c7a9fc0151138d8d3ed91c9b8fd8"
+  integrity sha512-x+8YzvmTE7/g/02CoXX2F3lPVggya30WhtNndMZJlaUiuixEetLg+bXLbLKEH9NSxWFZ1aHG+e4v3If+JZfxKg==
+
+"@napi-rs/xattr-linux-x64-musl@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr-linux-x64-musl/-/xattr-linux-x64-musl-1.0.2.tgz#8f4c688f17579a71bcfcf22305132cc63a39e036"
+  integrity sha512-hZAp3I3WPdI2p9XRR03q3bZ5aS2C9h2n/q9wACJ6atb7MD2njnEAQj387OsnIx+MWjXQGQzviSe0AzcBZRb8BQ==
+
+"@napi-rs/xattr@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@napi-rs/xattr/-/xattr-1.0.2.tgz#4deb784f4f43d2c78737d6d43d65d6be5790e31e"
+  integrity sha512-aCpejQ48F0vqVWiWAjdNDeFVXCaP7hGhE9skkYpGya2BM6apHuRDfSN4pE2wW2jAeq00Fi7O9njBzqIKEdIlWA==
+  optionalDependencies:
+    "@napi-rs/xattr-android-arm-eabi" "1.0.2"
+    "@napi-rs/xattr-android-arm64" "1.0.2"
+    "@napi-rs/xattr-darwin-arm64" "1.0.2"
+    "@napi-rs/xattr-darwin-x64" "1.0.2"
+    "@napi-rs/xattr-freebsd-x64" "1.0.2"
+    "@napi-rs/xattr-linux-arm-gnueabihf" "1.0.2"
+    "@napi-rs/xattr-linux-arm64-gnu" "1.0.2"
+    "@napi-rs/xattr-linux-arm64-musl" "1.0.2"
+    "@napi-rs/xattr-linux-x64-gnu" "1.0.2"
+    "@napi-rs/xattr-linux-x64-musl" "1.0.2"
+
 "@nicolo-ribaudo/eslint-scope-5-internals@5.1.1-v1":
   version "5.1.1-v1"
   resolved "https://registry.yarnpkg.com/@nicolo-ribaudo/eslint-scope-5-internals/-/eslint-scope-5-internals-5.1.1-v1.tgz#dbf733a965ca47b1973177dc0bb6c889edcfb129"
@@ -6737,11 +6803,6 @@ fs-monkey@^1.0.4:
   resolved "https://registry.yarnpkg.com/fs-monkey/-/fs-monkey-1.0.6.tgz#8ead082953e88d992cf3ff844faa907b26756da2"
   integrity sha512-b1FMfwetIKymC0eioW7mTywihSQE4oLzQn1dB6rZB5fx/3NpNEdAWeCSMB+60/AeT0TCXsxzAlcYVEFCTAksWg==
 
-fs-xattr@0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/fs-xattr/-/fs-xattr-0.4.0.tgz#30797399631287b740994a0bfab7822295e5f482"
-  integrity sha512-Lw90zx483YTGiHfR67IPtrbrZ+yBr1/W98v/iyTeSkUbixg/wrHfX5x9oMUOnirC5P7SZ5HlrpnIRMMqt8Ej0A==
-
 fs.realpath@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
@@ -11040,16 +11101,7 @@ string-length@^4.0.2:
     char-regex "^1.0.2"
     strip-ansi "^6.0.0"
 
-"string-width-cjs@npm:string-width@^4.2.0":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
-  integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
-  dependencies:
-    emoji-regex "^8.0.0"
-    is-fullwidth-code-point "^3.0.0"
-    strip-ansi "^6.0.1"
-
-string-width@^2.1.1, string-width@^4, string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.3, string-width@^5.0.1, string-width@^5.1.2:
+"string-width-cjs@npm:string-width@^4.2.0", string-width@^2.1.1, string-width@^4, string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.3, string-width@^5.0.1, string-width@^5.1.2:
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -11072,7 +11124,7 @@ string_decoder@~1.1.1:
   dependencies:
     safe-buffer "~5.1.0"
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
@@ -11085,13 +11137,6 @@ strip-ansi@^4.0.0:
   integrity sha512-4XaJ2zQdCzROZDivEVIDPkcQn8LMFSa8kj8Gxb/Lnwzv9A8VctNZ+lfivC/sV3ivW8ElJTERXZoPBRrZKkNKow==
   dependencies:
     ansi-regex "^3.0.0"
-
-strip-ansi@^6.0.0, strip-ansi@^6.0.1:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
-  integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
-  dependencies:
-    ansi-regex "^5.0.1"
 
 strip-ansi@^7.0.1:
   version "7.1.0"
@@ -12112,7 +12157,8 @@ word-wrap@^1.2.5, word-wrap@~1.2.3:
   resolved "https://registry.yarnpkg.com/word-wrap/-/word-wrap-1.2.5.tgz#d2c45c6dd4fbce621a66f136cbe328afd0410b34"
   integrity sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==
 
-"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0":
+"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
+  name wrap-ansi-cjs
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
@@ -12128,15 +12174,6 @@ wrap-ansi@^3.0.1:
   dependencies:
     string-width "^2.1.1"
     strip-ansi "^4.0.0"
-
-wrap-ansi@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
-  integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
-  dependencies:
-    ansi-styles "^4.0.0"
-    string-width "^4.1.0"
-    strip-ansi "^6.0.0"
 
 wrap-ansi@^8.1.0:
   version "8.1.0"

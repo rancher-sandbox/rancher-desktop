@@ -152,15 +152,16 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
  * files must already exist.
  */
 async function copyFileExtendedAttributes(fromPath: string, toPath: string): Promise<void> {
+  const { listAttributes, getAttribute, removeAttribute, setAttribute } = await import('@napi-rs/xattr');
   try {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
-    // @ts-ignore // fs-xattr is not available on Windows
-    const { listAttributes, getAttribute, setAttribute } = await import('fs-xattr');
-
     for (const attr of await listAttributes(fromPath)) {
       const value = await getAttribute(fromPath, attr);
 
-      await setAttribute(toPath, attr, value);
+      if (value === null) {
+        await removeAttribute(toPath, attr);
+      } else {
+        await setAttribute(toPath, attr, value);
+      }
     }
   } catch (cause) {
     if (process.env.NODE_ENV === 'test' && process.env.RD_TEST !== 'e2e') {
