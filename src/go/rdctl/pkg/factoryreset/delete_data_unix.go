@@ -19,6 +19,7 @@ limitations under the License.
 package factoryreset
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -76,8 +77,8 @@ func appHomeDirectories(appPaths *paths.Paths) []string {
 // because there isn't really a dependency graph here.
 // For example, if we can't delete the Lima VM, that doesn't mean we can't remove docker files
 // or pull the path settings out of the shell profile files.
-func deleteUnixLikeData(appPaths *paths.Paths, pathList []string) error {
-	if err := deleteLimaVM(); err != nil {
+func deleteUnixLikeData(ctx context.Context, appPaths *paths.Paths, pathList []string) error {
+	if err := deleteLimaVM(ctx); err != nil {
 		logrus.Errorf("Error trying to delete the Lima VM: %s\n", err)
 	}
 	for _, currentPath := range pathList {

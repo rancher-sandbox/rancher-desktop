@@ -43,7 +43,7 @@ var snapshotCreateCmd = &cobra.Command{
 			}
 			snapshotDescription = string(bytes)
 		}
-		return exitWithJSONOrErrorCondition(createSnapshot(args))
+		return exitWithJSONOrErrorCondition(createSnapshot(cmd.Context(), args))
 	},
 }
 
@@ -54,7 +54,7 @@ func init() {
 	snapshotCreateCmd.Flags().StringVar(&snapshotDescriptionFrom, "description-from", "", "snapshot description from a file (or - for stdin)")
 }
 
-func createSnapshot(args []string) error {
+func createSnapshot(ctx context.Context, args []string) error {
 	name := args[0]
 	manager, err := snapshot.NewManager()
 	if err != nil {
@@ -68,15 +68,15 @@ func createSnapshot(args []string) error {
 	// Ideally we would not use the deprecated syscall package,
 	// but it works well with all expected scenarios and allows us
 	// to avoid platform-specific signal handling code.
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
+	notifyCtx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM)
 	defer stop()
-	stopAfterFunc := context.AfterFunc(ctx, func() {
+	stopAfterFunc := context.AfterFunc(notifyCtx, func() {
 		if !outputJSONFormat {
 			fmt.Println("Cancelling snapshot creation...")
 		}
 	})
 	defer stopAfterFunc()
-	_, err = manager.Create(ctx, name, snapshotDescription)
+	_, err = manager.Create(notifyCtx, name, snapshotDescription)
 	if err != nil && !errors.Is(err, runner.ErrContextDone) {
 		return fmt.Errorf("failed to create snapshot: %w", err)
 	}
@@ -86,7 +86,7 @@ func createSnapshot(args []string) error {
 		return nil
 	}
 	//nolint:gosec // manager.Snapshots is not a user input
-	execCmd := exec.Command("tmutil", "addexclusion", manager.Snapshots)
+	execCmd := exec.CommandContext(ctx, "tmutil", "addexclusion", manager.Snapshots)
 	output, err := execCmd.CombinedOutput()
 	if err != nil {
 		msg := fmt.Errorf("`tmutil addexclusion` failed to add exclusion to TimeMachine: %w: %s", err, output)
