@@ -242,6 +242,8 @@ export default defineComponent({
       // Then poll for changes
       this.volumePollingInterval = setInterval(() => {
         if (!this.isComponentMounted) {
+          clearInterval(this.volumePollingInterval);
+          this.volumePollingInterval = null;
           return;
         }
 

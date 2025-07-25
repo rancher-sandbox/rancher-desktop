@@ -204,12 +204,15 @@ test.describe.serial('Volumes Tests', () => {
       await volumesPage.waitForTableToLoad();
 
       try {
-        await tool('docker', 'volume', 'prune', '-f');
+        await tool('docker', 'volume', 'prune', '--force');
       } catch {
       }
 
-      const volumeCount = await volumesPage.getVolumeCount();
-      expect(volumeCount).toBe(0);
+      // this has to be done like this because docker volume actions take a longer time than containers.
+      await expect(async() => {
+        const volumeCount = await volumesPage.getVolumeCount();
+        expect(volumeCount).toBe(0);
+      }).toPass({ timeout: 5000 });
 
       await tool('docker', 'volume', 'create', autoRefreshVolumeName);
 

@@ -32,7 +32,7 @@ export class VolumesPage {
 
   async waitForVolumeToAppear(volumeName: string) {
     const volumeRow = this.getVolumeRow(volumeName);
-    await expect(volumeRow).toBeVisible();
+    await expect(volumeRow).toBeVisible({ timeout: 15000 });
   }
 
   async clickVolumeAction(volumeName: string, action: ActionString) {

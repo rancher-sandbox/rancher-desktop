@@ -317,16 +317,14 @@ export default defineComponent({
 
       this.ddClient = window.ddClient;
 
-      // For nerdctl, we can't use filters because it has limited support
-      const eventOptions = this.isNerdCtl
-        ? { namespace: this.selectedNamespace }
-        : {
-          filters: {
-            type:  ['container'],
-            event: ['create', 'start', 'stop', 'die', 'kill', 'pause', 'unpause', 'rename', 'update', 'destroy', 'remove'],
-          },
-          namespace: this.selectedNamespace,
+      const eventOptions = { namespace: this.selectedNamespace };
+
+      if (!this.isNerdCtl) {
+        eventOptions.filters = {
+          type:  ['container'],
+          event: ['create', 'start', 'stop', 'die', 'kill', 'pause', 'unpause', 'rename', 'update', 'destroy', 'remove'],
         };
+      }
 
       this.containerEventSubscription = this.ddClient.docker.rdSubscribeToEvents(
         (event) => {
