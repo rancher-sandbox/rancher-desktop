@@ -19,6 +19,7 @@ limitations under the License.
 package dockerproxy
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -88,7 +89,7 @@ func GetDefaultProxyEndpoint() (string, error) {
 // passed to dockerd as-is.
 //
 // This function returns after dockerd has exited.
-func Start(port uint32, dockerSocket string, args []string) error {
+func Start(ctx context.Context, port uint32, dockerSocket string, args []string) error {
 	dockerd, err := exec.LookPath("dockerd")
 	if err != nil {
 		return fmt.Errorf("could not find dockerd: %w", err)
@@ -107,7 +108,7 @@ func Start(port uint32, dockerSocket string, args []string) error {
 		fmt.Sprintf("--host=unix://%s", dockerSocket),
 		"--host=unix:///var/run/docker.sock.raw",
 		"--host=unix:///var/run/docker.sock")
-	cmd := exec.Command(dockerd, args...)
+	cmd := exec.CommandContext(ctx, dockerd, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
@@ -131,7 +132,7 @@ func Start(port uint32, dockerSocket string, args []string) error {
 	}
 
 	for {
-		err := listenOnVsock(port, dockerSocket)
+		err := listenOnVsock(ctx, port, dockerSocket)
 		if err != nil {
 			logrus.Fatalf("docker-proxy: error listening on vsock: %s", err)
 			break
@@ -140,7 +141,7 @@ func Start(port uint32, dockerSocket string, args []string) error {
 	return nil
 }
 
-func listenOnVsock(port uint32, dockerSocket string) error {
+func listenOnVsock(ctx context.Context, port uint32, dockerSocket string) error {
 	listener, err := platform.ListenVsockNonBlocking(vsock.CIDAny, port)
 	if err != nil {
 		return fmt.Errorf("could not listen on vsock port %08x: %w", port, err)
@@ -165,14 +166,15 @@ func listenOnVsock(port uint32, dockerSocket string) error {
 			}
 			continue
 		}
-		go handleConnection(conn, dockerSocket)
+		go handleConnection(ctx, conn, dockerSocket)
 	}
 }
 
 // handleConnection handles piping the connection from the client to the docker
 // socket.
-func handleConnection(conn net.Conn, dockerPath string) {
-	dockerConn, err := net.Dial("unix", dockerPath)
+func handleConnection(ctx context.Context, conn net.Conn, dockerPath string) {
+	dialer := net.Dialer{}
+	dockerConn, err := dialer.DialContext(ctx, "unix", dockerPath)
 	if err != nil {
 		logrus.Errorf("could not connect to docker: %s", err)
 		return

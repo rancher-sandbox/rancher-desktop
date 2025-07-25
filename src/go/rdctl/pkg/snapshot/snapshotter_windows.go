@@ -75,7 +75,7 @@ func (snapshotter SnapshotterImpl) CreateFiles(ctx context.Context, appPaths *pa
 	for _, distro := range snapshotter.WSLDistros(appPaths) {
 		taskRunner.Add(func() error {
 			snapshotDistroPath := filepath.Join(snapshotDir, distro.Name+".tar")
-			if err := snapshotter.ExportDistro(distro.Name, snapshotDistroPath); err != nil {
+			if err := snapshotter.ExportDistro(ctx, distro.Name, snapshotDistroPath); err != nil {
 				return fmt.Errorf("failed to export WSL distro %q: %w", distro.Name, err)
 			}
 			return nil
@@ -110,7 +110,7 @@ func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths *p
 
 	// unregister WSL distros
 	tr.Add(func() error {
-		if err := snapshotter.UnregisterDistros(); err != nil {
+		if err := snapshotter.UnregisterDistros(ctx); err != nil {
 			return fmt.Errorf("failed to unregister WSL distros: %w", err)
 		}
 		return nil
@@ -123,7 +123,7 @@ func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths *p
 			if err := os.MkdirAll(distro.WorkingDirPath, 0o755); err != nil {
 				return fmt.Errorf("failed to create install directory for distro %q: %w", distro.Name, err)
 			}
-			if err := snapshotter.ImportDistro(distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
+			if err := snapshotter.ImportDistro(ctx, distro.Name, distro.WorkingDirPath, snapshotDistroPath); err != nil {
 				return fmt.Errorf("failed to import WSL distro %q: %w", distro.Name, err)
 			}
 			return nil
@@ -141,7 +141,7 @@ func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths *p
 	})
 	if err := tr.Wait(); err != nil {
 		_ = os.Remove(workingSettingsPath)
-		_ = snapshotter.UnregisterDistros()
+		_ = snapshotter.UnregisterDistros(ctx)
 		return fmt.Errorf("%w: %w", ErrDataReset, err)
 	}
 	return nil

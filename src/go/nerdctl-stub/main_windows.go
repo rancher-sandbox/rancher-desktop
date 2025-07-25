@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/csv"
 	"fmt"
 	"log"
@@ -12,10 +13,10 @@ import (
 	"strings"
 )
 
-func spawn(opts spawnOptions) error {
+func spawn(ctx context.Context, opts spawnOptions) error {
 	args := []string{"--distribution", opts.distro, "--exec", "/usr/local/bin/wsl-exec", opts.nerdctl, "--address", opts.containerdSocket}
 	args = append(args, opts.args.args...)
-	cmd := exec.Command("wsl.exe", args...)
+	cmd := exec.CommandContext(ctx, "wsl.exe", args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
