@@ -29,6 +29,7 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	cnutils "github.com/containernetworking/plugins/pkg/utils"
 	"github.com/docker/go-connections/nat"
@@ -176,16 +177,31 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 				container, err := e.containerdClient.LoadContainer(ctx, exitTask.ContainerID)
 				if err != nil {
+					if errdefs.IsNotFound(err) {
+						log.Debugf("container: %s in namespace: %s not found, deleting port mapping", exitTask.ContainerID, envelope.Namespace)
+						portMapToDelete := e.portTracker.Get(exitTask.ContainerID)
+						if portMapToDelete != nil {
+							err = e.portTracker.Remove(exitTask.ContainerID)
+							if err != nil {
+								log.Errorf("removing port mapping from tracker failed: %v", err)
+							}
+						}
+
+						continue
+					}
 					log.Errorf("failed to get the container %s from namespace %s: %s", exitTask.ContainerID, envelope.Namespace, err)
+					continue
 				}
 
 				tsk, err := container.Task(ctx, nil)
 				if err != nil {
 					log.Errorf("failed to get the task for container %s: %s", exitTask.ContainerID, err)
+					continue
 				}
 				status, err := tsk.Status(ctx)
 				if err != nil {
 					log.Errorf("failed to get the task status for container %s: %s", exitTask.ContainerID, err)
+					continue
 				}
 
 				if status.Status == containerd.Running {
