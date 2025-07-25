@@ -79,6 +79,7 @@ export class HttpCommandServer {
       post: { '/v1/diagnostic_checks': [0, this.diagnosticRunChecks] },
       put:  {
         '/v1/factory_reset':      [0, this.factoryReset],
+        '/v1/k8s_reset':          [0, this.k8sReset],
         '/v1/propose_settings':   [0, this.proposeSettings],
         '/v1/settings':           [0, this.updateSettings],
         '/v1/shutdown':           [0, this.wrapShutdown],
@@ -537,6 +538,36 @@ export class HttpCommandServer {
     }
   }
 
+  async k8sReset(request: express.Request, response: express.Response, context: commandContext): Promise<void> {
+    let values: Record<string, any> = {};
+    const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
+    let error = '';
+    let mode: 'fast' | 'wipe' = 'fast';
+
+    if (!payloadError) {
+      try {
+        console.debug(`Request data: ${ data }`);
+        values = JSON.parse(data);
+        if ('mode' in values && typeof values.mode === 'string' && (values.mode === 'fast' || values.mode === 'wipe')) {
+          mode = values.mode;
+        }
+      } catch (err) {
+        console.log(`k8sReset: error processing JSON request block\n${ data }\n`, err);
+        error = 'error processing JSON request block';
+      }
+    } else {
+      error = payloadError;
+    }
+    if (!error) {
+      console.debug('k8sReset: succeeded 202');
+      await this.commandWorker.k8sReset(context, mode);
+      response.status(202).type('txt').send('K8s cluster successfully reset');
+    } else {
+      console.debug(`k8sReset: write back status 400, error: ${ error }`);
+      response.status(400).type('txt').send(error);
+    }
+  }
+
   protected async createPortForwarding(request: express.Request, response: express.Response, _: commandContext): Promise<void> {
     let values: Record<string, any> = {};
     const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
@@ -870,6 +901,7 @@ interface commandContext {
  */
 export interface CommandWorkerInterface {
   factoryReset:               (keepSystemImages: boolean) => void;
+  k8sReset:                   (context: commandContext, mode: 'fast' | 'wipe') => Promise<void>;
   getSettings:                (context: commandContext) => string;
   getLockedSettings:          (context: commandContext) => string;
   updateSettings:             (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
