@@ -303,6 +303,7 @@ func execIptablesRules(ctx context.Context, portMappings nat.PortMap, containerI
 					namespace,
 					pid,
 					portProto.Port(),
+					portProto.Proto(),
 					portBinding.HostPort)
 				if err != nil {
 					errs = append(errs, err)
@@ -333,7 +334,7 @@ func execIptablesRules(ctx context.Context, portMappings nat.PortMap, containerI
 // After the existing rule, the following new rule is added:
 //
 //	DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
-func createLoopbackIPtablesRules(ctx context.Context, networks []string, containerID, namespace, pid, port, destinationPort string) error {
+func createLoopbackIPtablesRules(ctx context.Context, networks []string, containerID, namespace, pid, port, protocol, destinationPort string) error {
 	eth0IP, err := extractIPAddress(pid)
 	if err != nil {
 		return err
@@ -363,7 +364,7 @@ func createLoopbackIPtablesRules(ctx context.Context, networks []string, contain
 			"iptables",
 			"--table", "nat",
 			"--append", chainName,
-			"--protocol", "tcp",
+			"--protocol", protocol,
 			"--destination", "0.0.0.0/0",
 			"--jump", "DNAT",
 			"--dport", destinationPort,
