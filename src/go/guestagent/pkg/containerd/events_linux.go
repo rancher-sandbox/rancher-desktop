@@ -174,6 +174,25 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					log.Errorf("failed to unmarshal container's exit task: %v", err)
 				}
 
+				container, err := e.containerdClient.LoadContainer(ctx, exitTask.ContainerID)
+				if err != nil {
+					log.Errorf("failed to get the container %s from namespace %s: %s", exitTask.ContainerID, envelope.Namespace, err)
+				}
+
+				tsk, err := container.Task(ctx, nil)
+				if err != nil {
+					log.Errorf("failed to get the task for container %s: %s", exitTask.ContainerID, err)
+				}
+				status, err := tsk.Status(ctx)
+				if err != nil {
+					log.Errorf("failed to get the task status for container %s: %s", exitTask.ContainerID, err)
+				}
+
+				if status.Status == containerd.Running {
+					log.Debugf("container %s is still running, but received exit event with status %d", exitTask.ContainerID, exitTask.ExitStatus)
+					continue
+				}
+
 				portMapToDelete := e.portTracker.Get(exitTask.ContainerID)
 				if portMapToDelete != nil {
 					err = e.portTracker.Remove(exitTask.ContainerID)
