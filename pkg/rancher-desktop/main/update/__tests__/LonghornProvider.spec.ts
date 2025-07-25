@@ -2,7 +2,6 @@ import { jest } from '@jest/globals';
 import semver from 'semver';
 
 import type { spawnFile as spawnFileType } from '@pkg/utils/childProcess';
-import type fetchType from '@pkg/utils/fetch';
 import mockModules from '@pkg/utils/testUtils/mockModules';
 import type getWSLVersionType from '@pkg/utils/wslVersion';
 import type { WSLVersionInfo } from '@pkg/utils/wslVersion';
@@ -32,14 +31,18 @@ const standardMockedVersion: WSLVersionInfo = {
 };
 
 const modules = mockModules({
-  '@pkg/utils/fetch':        { default: jest.fn<(...args: Parameters<typeof fetchType>) => Promise<Partial<Awaited<ReturnType<typeof fetchType>>>>>() },
   '@pkg/utils/childProcess': { spawnFile: jest.fn<typeof spawnFileType>() },
   '@pkg/utils/osVersion':    { getMacOsVersion: jest.fn(() => new semver.SemVer('12.0.0')) },
   '@pkg/utils/wslVersion':   { default: jest.fn<typeof getWSLVersionType>() },
+  electron:                  {
+    net: {
+      // We only return a subset of the values, so we need a complicated type here.
+      fetch: jest.fn<(...args: Parameters<typeof fetch>) => Promise<Partial<Awaited<ReturnType<typeof fetch>>>>>(),
+    },
+  },
 });
 
 describe('queryUpgradeResponder', () => {
-  const fetch = modules['@pkg/utils/fetch'].default;
   let queryUpgradeResponder: typeof queryUpgradeResponderType;
 
   beforeAll(async() => {
@@ -47,12 +50,12 @@ describe('queryUpgradeResponder', () => {
   });
   afterEach(() => {
     modules['@pkg/utils/childProcess'].spawnFile.mockReset();
-    fetch.mockReset();
+    modules.electron.net.fetch.mockReset();
   });
 
   it('should return the latest version', async() => {
     modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
-    fetch.mockResolvedValueOnce({
+    modules.electron.net.fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -84,7 +87,7 @@ describe('queryUpgradeResponder', () => {
 
   it('should set unsupportedUpdateAvailable to true when a newer-than-latest version is unsupported', async() => {
     modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
-    fetch.mockResolvedValueOnce({
+    modules.electron.net.fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -117,7 +120,7 @@ describe('queryUpgradeResponder', () => {
 
   it('should set unsupportedUpdateAvailable to false when no newer-than-latest versions are unsupported', async() => {
     modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
-    fetch.mockResolvedValueOnce({
+    modules.electron.net.fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -150,7 +153,7 @@ describe('queryUpgradeResponder', () => {
 
   it('should throw an error if no versions are supported', async() => {
     modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
-    fetch.mockResolvedValueOnce({
+    modules.electron.net.fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -182,7 +185,7 @@ describe('queryUpgradeResponder', () => {
 
   it('should treat all versions as supported when server does not include Supported key', async() => {
     modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
-    fetch.mockResolvedValueOnce({
+    modules.electron.net.fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -211,7 +214,7 @@ describe('queryUpgradeResponder', () => {
   });
 
   it('should format the current app version properly and include it in request to Upgrade Responder', async() => {
-    fetch.mockResolvedValueOnce({
+    modules.electron.net.fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -226,8 +229,8 @@ describe('queryUpgradeResponder', () => {
     const appVersion = '1.2.3';
 
     await queryUpgradeResponder('testurl', new semver.SemVer(appVersion));
-    expect(fetch.mock.calls.length).toBe(1);
-    const rawBody = fetch.mock.calls[0][1]?.body;
+    expect(modules.electron.net.fetch.mock.calls.length).toBe(1);
+    const rawBody = modules.electron.net.fetch.mock.calls[0][1]?.body;
 
     expect(typeof rawBody).toBe('string');
     const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);
@@ -238,7 +241,7 @@ describe('queryUpgradeResponder', () => {
   describeWindows('when we can get WSL version', () => {
     it('should include wslVersion when using store WSL', async() => {
       modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
-      fetch.mockResolvedValueOnce({
+      modules.electron.net.fetch.mockResolvedValueOnce({
         json: () => Promise.resolve({
           requestIntervalInMinutes: 100,
           versions:                 [
@@ -251,8 +254,8 @@ describe('queryUpgradeResponder', () => {
         }),
       });
       await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
-      expect(fetch.mock.calls.length).toBe(1);
-      const rawBody = fetch.mock.calls[0][1]?.body;
+      expect(modules.electron.net.fetch.mock.calls.length).toBe(1);
+      const rawBody = modules.electron.net.fetch.mock.calls[0][1]?.body;
 
       expect(typeof rawBody).toBe('string');
       const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);
@@ -261,7 +264,7 @@ describe('queryUpgradeResponder', () => {
     });
     it('should include wslVersion when using inbox WSL', async() => {
       modules['@pkg/utils/wslVersion'].default.mockResolvedValue({ ...standardMockedVersion, inbox: true });
-      fetch.mockResolvedValueOnce({
+      modules.electron.net.fetch.mockResolvedValueOnce({
         json: () => Promise.resolve({
           requestIntervalInMinutes: 100,
           versions:                 [
@@ -274,8 +277,8 @@ describe('queryUpgradeResponder', () => {
         }),
       });
       await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
-      expect(fetch.mock.calls.length).toBe(1);
-      const rawBody = fetch.mock.calls[0][1]?.body;
+      expect(modules.electron.net.fetch.mock.calls.length).toBe(1);
+      const rawBody = modules.electron.net.fetch.mock.calls[0][1]?.body;
 
       expect(typeof rawBody).toBe('string');
       const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);
@@ -286,7 +289,7 @@ describe('queryUpgradeResponder', () => {
 
   itWindows('should not include wslVersion in request to Upgrade Responder when wsl --version is unsuccessful', async() => {
     modules['@pkg/utils/wslVersion'].default.mockRejectedValue('test rejected value');
-    fetch.mockResolvedValueOnce({
+    modules.electron.net.fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -299,8 +302,8 @@ describe('queryUpgradeResponder', () => {
       }),
     });
     await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
-    expect(fetch.mock.calls.length).toBe(1);
-    const rawBody = fetch.mock.calls[0][1]?.body;
+    expect(modules.electron.net.fetch.mock.calls.length).toBe(1);
+    const rawBody = modules.electron.net.fetch.mock.calls[0][1]?.body;
 
     expect(typeof rawBody).toBe('string');
     const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);
@@ -309,7 +312,7 @@ describe('queryUpgradeResponder', () => {
   });
 
   itUnix('should not check wsl.exe --version or include wslVersion if not on Windows', async() => {
-    fetch.mockResolvedValueOnce({
+    modules.electron.net.fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -323,8 +326,8 @@ describe('queryUpgradeResponder', () => {
     });
     await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
     expect(modules['@pkg/utils/childProcess'].spawnFile.mock.calls.length).toBe(0);
-    expect(fetch.mock.calls.length).toBe(1);
-    const rawBody = fetch.mock.calls[0][1]?.body;
+    expect(modules.electron.net.fetch.mock.calls.length).toBe(1);
+    const rawBody = modules.electron.net.fetch.mock.calls[0][1]?.body;
 
     expect(typeof rawBody).toBe('string');
     const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);

@@ -2,11 +2,15 @@
 
 import { jest } from '@jest/globals';
 
-import WindowsIntegrationManager, { WSLDistro } from '@pkg/integrations/windowsIntegrationManager';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+
+mockModules({ electron: undefined });
+
+const { default: WindowsIntegrationManager, WSLDistro } = await import('@pkg/integrations/windowsIntegrationManager');
 
 describe('WindowsIntegrationManager', () => {
-  let integrationManager: WindowsIntegrationManager;
-  let captureCommandMock: jest.Spied<WindowsIntegrationManager['captureCommand']>;
+  let integrationManager: InstanceType<typeof WindowsIntegrationManager>;
+  let captureCommandMock: jest.Spied<InstanceType<typeof WindowsIntegrationManager>['captureCommand']>;
   const wslOutput = `  NAME                    STATE           VERSION
 * Ubuntu                  Stopped         2
   OtherDistro             Running         1

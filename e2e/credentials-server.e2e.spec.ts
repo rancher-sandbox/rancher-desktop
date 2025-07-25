@@ -28,7 +28,6 @@ import stream from 'stream';
 
 import { findHomeDir } from '@kubernetes/client-node';
 import { expect, test } from '@playwright/test';
-import fetch from 'node-fetch';
 
 import { NavPage } from './pages/nav-page';
 import { getFullPathForTool, startSlowerDesktop, teardown, tool } from './utils/TestUtils';

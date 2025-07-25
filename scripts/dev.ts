@@ -9,7 +9,6 @@ import events from 'events';
 import https from 'https';
 import util from 'util';
 
-import fetch from 'node-fetch';
 import psTree from 'ps-tree';
 
 import buildUtils from './lib/build-utils';
@@ -146,7 +145,7 @@ class DevRunner extends events.EventEmitter {
         throw startError;
       }
       try {
-        const response = await fetch(rendererEnv.home, { agent: rendererEnv.agent });
+        const response = await fetch(rendererEnv.home);
 
         if (response.ok && !startError) {
           console.info('Renderer process: dev server started');
