@@ -128,7 +128,7 @@ export default defineComponent({
       /** @type import('@pkg/config/settings').Settings | undefined */
       settings:                   undefined,
       ddClient:                   null,
-      containersList:             null,
+      containersList:             [],
       showRunning:                false,
       containersNamespaces:       [],
       containerEventSubscription: null,
@@ -172,10 +172,8 @@ export default defineComponent({
         return [];
       }
 
-      // `this.containersList` is a Proxy; so we can't use structedClone.
-      const containers = JSON.parse(JSON.stringify(this.containersList));
-
-      return containers.map((container) => {
+      // Process containers in place to preserve object references
+      this.containersList.forEach((container) => {
         const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
         const name = names[0];
 
@@ -251,8 +249,9 @@ export default defineComponent({
           };
         }
 
-        return container;
       });
+
+      return this.containersList;
     },
     isNerdCtl() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -286,12 +285,7 @@ export default defineComponent({
 
     this.checkContainers().catch(console.error);
     this.setupEventSubscriptions();
-
-    setTimeout(() => {
-      if (this.isComponentMounted) {
-        this.getContainers().catch(console.error);
-      }
-    }, 1500);
+    this.getContainers().catch(console.error);
   },
   beforeUnmount() {
     this.isComponentMounted = false;
@@ -429,11 +423,19 @@ export default defineComponent({
       this.containersNamespaces = await this.ddClient?.docker.listNamespaces();
       this.checkSelectedNamespace();
     },
-    async getContainers() {
-      const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.selectedNamespace });
+    updateContainersList(newContainers) {
+      if (!newContainers) {
+        this.containersList = [];
+        return;
+      }
+
+      // Filter out images from "kube-system" namespace first
+      const filtered = newContainers.filter((container) => {
+        return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
+      });
 
       // Sorts by status, showing running first.
-      this.containersList = containers.sort((a, b) => {
+      const sorted = filtered.sort((a, b) => {
         if (a.State === 'running' && b.State !== 'running') {
           return -1;
         } else if (a.State !== 'running' && b.State === 'running') {
@@ -443,10 +445,29 @@ export default defineComponent({
         }
       });
 
-      // Filter out images from "kube-system" namespace
-      this.containersList = this.containersList.filter((container) => {
-        return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
+      // Create a map of existing containers by ID for efficient lookup
+      const existingMap = new Map();
+      if (this.containersList) {
+        this.containersList.forEach((container) => {
+          existingMap.set(container.Id, container);
+        });
+      }
+
+      // Update the list while preserving object references where possible
+      this.containersList = sorted.map((newContainer) => {
+        const existing = existingMap.get(newContainer.Id);
+        if (existing) {
+          // Update existing object properties to preserve selection
+          Object.assign(existing, newContainer);
+          return existing;
+        }
+        return newContainer;
       });
+    },
+
+    async getContainers() {
+      const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.selectedNamespace });
+      this.updateContainersList(containers);
     },
     async stopContainer(container) {
       await this.execCommand('stop', container);

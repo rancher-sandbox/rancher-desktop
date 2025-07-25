@@ -90,7 +90,7 @@ export default defineComponent({
     return {
       settings:                undefined,
       ddClient:                null,
-      volumesList:             null,
+      volumesList:             [],
       volumesNamespaces:       [],
       volumeEventSubscription: null,
       volumePollingInterval:   null,
@@ -128,32 +128,32 @@ export default defineComponent({
         return [];
       }
 
-      return this.volumesList.map((volume) => {
-        return {
-          ...volume,
-          volumeName:       volume.Name,
-          created:          volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
-          mountpoint:       volume.Mountpoint || '',
-          driver:           volume.Driver || '',
-          availableActions: [
-            {
-              label:    this.t('volumes.manager.table.action.browse'),
-              action:   'browseFiles',
-              enabled:  true,
-              bulkable: false,
-            },
-            {
-              label:      this.t('volumes.manager.table.action.delete'),
-              action:     'deleteVolume',
-              enabled:    true,
-              bulkable:   true,
-              bulkAction: 'deleteVolume',
-            },
-          ],
-          deleteVolume: this.createDeleteVolumeHandler(volume),
-          browseFiles:  this.createBrowseFilesHandler(volume),
-        };
+      // Process volumes in place to preserve object references
+      this.volumesList.forEach((volume) => {
+        volume.volumeName = volume.Name;
+        volume.created = volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '';
+        volume.mountpoint = volume.Mountpoint || '';
+        volume.driver = volume.Driver || '';
+        volume.availableActions = [
+          {
+            label:    this.t('volumes.manager.table.action.browse'),
+            action:   'browseFiles',
+            enabled:  true,
+            bulkable: false,
+          },
+          {
+            label:      this.t('volumes.manager.table.action.delete'),
+            action:     'deleteVolume',
+            enabled:    true,
+            bulkable:   true,
+            bulkAction: 'deleteVolume',
+          },
+        ];
+        volume.deleteVolume = this.createDeleteVolumeHandler(volume);
+        volume.browseFiles = this.createBrowseFilesHandler(volume);
       });
+
+      return this.volumesList;
     },
     isContainerdEngine() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -191,12 +191,7 @@ export default defineComponent({
 
     this.checkVolumes().catch(console.error);
     this.setupEventSubscriptions();
-
-    setTimeout(() => {
-      if (this.isComponentMounted) {
-        this.getVolumes().catch(console.error);
-      }
-    }, 1500);
+    this.getVolumes().catch(console.error);
   },
   beforeUnmount() {
     this.isComponentMounted = false;
@@ -306,6 +301,29 @@ export default defineComponent({
       this.volumesNamespaces = await this.ddClient?.docker.listNamespaces();
       this.checkSelectedNamespace();
     },
+    updateVolumesList(newVolumes) {
+      if (!newVolumes) {
+        this.volumesList = [];
+        return;
+      }
+
+      const existingMap = new Map();
+      if (this.volumesList && this.volumesList.length > 0) {
+        this.volumesList.forEach((volume) => {
+          existingMap.set(volume.Name, volume);
+        });
+      }
+
+      this.volumesList = newVolumes.map((newVolume) => {
+        const existing = existingMap.get(newVolume.Name);
+        if (existing) {
+          Object.assign(existing, newVolume);
+          return existing;
+        }
+        return newVolume;
+      });
+    },
+
     async getVolumes() {
       try {
         const options = {};
@@ -315,7 +333,11 @@ export default defineComponent({
         }
 
         const volumes = await this.ddClient?.docker.rdListVolumes(options);
-        this.volumesList = volumes || [];
+        if (volumes) {
+          this.updateVolumesList(volumes);
+        } else {
+          this.volumesList = [];
+        }
       } catch (error) {
         console.error('Failed to fetch volumes:', error);
         this.volumesList = [];
