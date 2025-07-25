@@ -115,7 +115,8 @@ func TestNewPortProxyTCP(t *testing.T) {
 	testServerIP, err := availableIP()
 	require.NoError(t, err, "cannot continue with the test since there are no available IP addresses")
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:", testServerIP))
+	listenerConfig := &net.ListenConfig{}
+	listener, err := listenerConfig.Listen(t.Context(), "tcp", fmt.Sprintf("%s:", testServerIP))
 	require.NoError(t, err)
 	defer listener.Close()
 

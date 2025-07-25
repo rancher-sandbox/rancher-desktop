@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -28,7 +29,7 @@ func main() {
 		panic(fmt.Errorf("failed to get executable path: %w", err))
 	}
 	spin := filepath.Join(filepath.Dir(filepath.Dir(exe)), "internal", "spin.exe")
-	command := exec.Command(spin, os.Args[1:]...)
+	command := exec.CommandContext(context.Background(), spin, os.Args[1:]...)
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr

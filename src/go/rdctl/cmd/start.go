@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -89,10 +90,10 @@ func doStartCommand(cmd *cobra.Command) error {
 	if noModalDialogs {
 		commandLineArgs = append(commandLineArgs, "--no-modal-dialogs")
 	}
-	return launchApp(applicationPath, commandLineArgs)
+	return launchApp(cmd.Context(), applicationPath, commandLineArgs)
 }
 
-func launchApp(applicationPath string, commandLineArgs []string) error {
+func launchApp(ctx context.Context, applicationPath string, commandLineArgs []string) error {
 	var commandName string
 	var args []string
 
@@ -110,7 +111,7 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 	// Include this output because there's a delay before the UI comes up.
 	// Without this line, it might look like the command doesn't work.
 	logrus.Infof("About to launch %s %s ...\n", commandName, strings.Join(args, " "))
-	cmd := exec.Command(commandName, args...)
+	cmd := exec.CommandContext(ctx, commandName, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Start()

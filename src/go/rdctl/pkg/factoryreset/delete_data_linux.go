@@ -49,5 +49,5 @@ func DeleteData(ctx context.Context, appPaths *paths.Paths, removeKubernetesCach
 		pathList = append(pathList, filepath.Join(appPaths.Cache, "updater-longhorn.json"))
 	}
 	pathList = append(pathList, appHomeDirectories(appPaths)...)
-	return deleteUnixLikeData(appPaths, pathList)
+	return deleteUnixLikeData(ctx, appPaths, pathList)
 }
