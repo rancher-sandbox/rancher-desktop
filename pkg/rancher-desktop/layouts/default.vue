@@ -159,7 +159,7 @@ export default {
         return;
       }
       await this.$store.dispatch('preferences/fetchPreferences', this.credentials);
-      await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials);
+      await this.$store.dispatch('diagnostics/fetchDiagnostics');
     },
 
     openDashboard() {
