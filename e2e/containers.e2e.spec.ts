@@ -1,12 +1,13 @@
 import { expect, test, ElectronApplication, Page } from '@playwright/test';
 
 import { ContainerLogsPage } from './pages/container-logs-page';
+import { ContainersPage } from './pages/containers-page';
 import { NavPage } from './pages/nav-page';
 import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
 
 let page: Page;
 
-test.describe.serial('Container Logs Tests', () => {
+test.describe.serial('Containers Tests', () => {
   let electronApp: ElectronApplication;
   let testContainerId: string;
   let testContainerName: string;
@@ -203,6 +204,54 @@ test.describe.serial('Container Logs Tests', () => {
         try {
           await tool('docker', 'rm', '-f', longRunningContainerId);
         } catch (cleanupError) {
+        }
+      }
+    }
+  });
+
+  test('should auto-refresh containers list', async() => {
+    const containersPage = new ContainersPage(page);
+    const autoRefreshContainerName = `auto-refresh-test-${ Date.now() }`;
+    let autoRefreshContainerId: string;
+
+    try {
+      const navPage = new NavPage(page);
+      await navPage.navigateTo('Containers');
+      await containersPage.waitForTableToLoad();
+
+      // Remove all existing containers to ensure clean state
+      try {
+        const existingContainers = await tool('docker', 'ps', '-aq');
+
+        if (existingContainers.trim()) {
+          const containerIds = existingContainers.trim().split('\n');
+
+          for (const containerId of containerIds) {
+            await tool('docker', 'rm', '--force', containerId);
+          }
+        }
+      } catch {
+      }
+
+      await expect(async() => {
+        const count = await containersPage.getContainerCount();
+        expect(count).toBe(0);
+      }).toPass({ timeout: 5_000 });
+
+      const output = await tool('docker', 'run', '--detach', '--name', autoRefreshContainerName,
+        'alpine', 'sleep', '30');
+      autoRefreshContainerId = output.trim();
+
+      await containersPage.waitForContainerToAppear(autoRefreshContainerId);
+
+      await tool('docker', 'rm', '--force', autoRefreshContainerId);
+
+      await expect(containersPage.getContainerRow(autoRefreshContainerId)).toBeHidden();
+    } finally {
+      if (autoRefreshContainerId) {
+        try {
+          await tool('docker', 'rm', '-f', autoRefreshContainerId);
+        } catch {
         }
       }
     }

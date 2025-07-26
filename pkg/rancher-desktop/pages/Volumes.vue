@@ -88,14 +88,15 @@ export default defineComponent({
   components: { SortableTable, Banner },
   data() {
     return {
-      settings:            undefined,
-      ddClient:            null,
-      volumesList:         null,
-      volumesNamespaces:   [],
-      // Interval to ensure the first fetch succeeds (instead of trying to stream in updates)
-      volumeCheckInterval: null,
-      error:               null,
-      headers:             [
+      settings:                undefined,
+      ddClient:                null,
+      volumesList:             [],
+      volumesNamespaces:       [],
+      volumeEventSubscription: null,
+      volumePollingInterval:   null,
+      error:                   null,
+      isComponentMounted:      false,
+      headers:                 [
         {
           name:  'volumeName',
           label: this.t('volumes.manage.table.header.volumeName'),
@@ -127,32 +128,32 @@ export default defineComponent({
         return [];
       }
 
-      return this.volumesList.map((volume) => {
-        return {
-          ...volume,
-          volumeName:       volume.Name,
-          created:          volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
-          mountpoint:       volume.Mountpoint || '',
-          driver:           volume.Driver || '',
-          availableActions: [
-            {
-              label:    this.t('volumes.manager.table.action.browse'),
-              action:   'browseFiles',
-              enabled:  true,
-              bulkable: false,
-            },
-            {
-              label:      this.t('volumes.manager.table.action.delete'),
-              action:     'deleteVolume',
-              enabled:    true,
-              bulkable:   true,
-              bulkAction: 'deleteVolume',
-            },
-          ],
-          deleteVolume: this.createDeleteVolumeHandler(volume),
-          browseFiles:  this.createBrowseFilesHandler(volume),
-        };
+      // Process volumes in place to preserve object references
+      this.volumesList.forEach((volume) => {
+        volume.volumeName = volume.Name;
+        volume.created = volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '';
+        volume.mountpoint = volume.Mountpoint || '';
+        volume.driver = volume.Driver || '';
+        volume.availableActions = [
+          {
+            label:    this.t('volumes.manager.table.action.browse'),
+            action:   'browseFiles',
+            enabled:  true,
+            bulkable: false,
+          },
+          {
+            label:      this.t('volumes.manager.table.action.delete'),
+            action:     'deleteVolume',
+            enabled:    true,
+            bulkable:   true,
+            bulkAction: 'deleteVolume',
+          },
+        ];
+        volume.deleteVolume = this.createDeleteVolumeHandler(volume);
+        volume.browseFiles = this.createBrowseFilesHandler(volume);
       });
+
+      return this.volumesList;
     },
     isContainerdEngine() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -168,6 +169,8 @@ export default defineComponent({
     },
   },
   mounted() {
+    this.isComponentMounted = true;
+
     this.$store.dispatch('page/setHeader', {
       title:       this.t('volumes.title'),
       description: '',
@@ -187,13 +190,74 @@ export default defineComponent({
     });
 
     this.checkVolumes().catch(console.error);
-    this.volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 5_000);
+    this.setupEventSubscriptions();
+    this.getVolumes().catch(console.error);
   },
   beforeUnmount() {
+    this.isComponentMounted = false;
+    this.cleanupEventSubscriptions();
     ipcRenderer.removeAllListeners('settings-update');
-    clearInterval(this.volumeCheckInterval);
   },
   methods: {
+    setupEventSubscriptions() {
+      if (!window.ddClient || !this.isK8sReady || !this.settings) {
+        setTimeout(() => this.setupEventSubscriptions(), 1000);
+        return;
+      }
+
+      if (this.isNerdCtl) {
+        this.setupContainerdVolumePolling();
+        return;
+      }
+
+      this.ddClient = window.ddClient;
+
+      this.volumeEventSubscription = this.ddClient.docker.rdSubscribeToEvents(
+        (event) => {
+          console.debug('Volume event received:', event);
+          this.getVolumes().catch(console.error);
+        },
+        {
+          filters: {
+            type:  ['volume'],
+            event: ['create', 'destroy', 'mount', 'unmount'],
+          },
+          namespace: this.selectedNamespace,
+        },
+      );
+
+      // Fetch initial volume list after setting up event subscription
+      this.getVolumes().catch(console.error);
+    },
+
+    setupContainerdVolumePolling() {
+      // Fetch initial volume list immediately
+      this.getVolumes().catch(console.error);
+
+      // Then poll for changes
+      this.volumePollingInterval = setInterval(() => {
+        if (!this.isComponentMounted) {
+          clearInterval(this.volumePollingInterval);
+          this.volumePollingInterval = null;
+          return;
+        }
+
+        this.getVolumes().catch(console.error);
+      }, 2000);
+    },
+
+    cleanupEventSubscriptions() {
+      if (this.volumeEventSubscription) {
+        this.volumeEventSubscription.unsubscribe();
+        this.volumeEventSubscription = null;
+      }
+
+      if (this.volumePollingInterval) {
+        clearInterval(this.volumePollingInterval);
+        this.volumePollingInterval = null;
+      }
+    },
+
     async checkVolumes() {
       if (window.ddClient && this.isK8sReady && this.settings) {
         this.ddClient = window.ddClient;
@@ -207,7 +271,6 @@ export default defineComponent({
         }
         try {
           await this.getVolumes();
-          clearInterval(this.volumeCheckInterval);
         } catch (error) {
           console.error('There was a problem fetching volumes:', { error });
         }
@@ -229,6 +292,8 @@ export default defineComponent({
       if (value !== this.selectedNamespace) {
         await ipcRenderer.invoke('settings-write',
           { containers: { namespace: value.target.value } });
+        this.cleanupEventSubscriptions();
+        this.setupEventSubscriptions();
         this.getVolumes();
       }
     },
@@ -236,6 +301,29 @@ export default defineComponent({
       this.volumesNamespaces = await this.ddClient?.docker.listNamespaces();
       this.checkSelectedNamespace();
     },
+    updateVolumesList(newVolumes) {
+      if (!newVolumes) {
+        this.volumesList = [];
+        return;
+      }
+
+      const existingMap = new Map();
+      if (this.volumesList && this.volumesList.length > 0) {
+        this.volumesList.forEach((volume) => {
+          existingMap.set(volume.Name, volume);
+        });
+      }
+
+      this.volumesList = newVolumes.map((newVolume) => {
+        const existing = existingMap.get(newVolume.Name);
+        if (existing) {
+          Object.assign(existing, newVolume);
+          return existing;
+        }
+        return newVolume;
+      });
+    },
+
     async getVolumes() {
       try {
         const options = {};
@@ -245,7 +333,11 @@ export default defineComponent({
         }
 
         const volumes = await this.ddClient?.docker.rdListVolumes(options);
-        this.volumesList = volumes || [];
+        if (volumes) {
+          this.updateVolumesList(volumes);
+        } else {
+          this.volumesList = [];
+        }
       } catch (error) {
         console.error('Failed to fetch volumes:', error);
         this.volumesList = [];

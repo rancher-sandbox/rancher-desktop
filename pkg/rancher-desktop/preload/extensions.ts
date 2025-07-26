@@ -50,6 +50,48 @@ interface DockerListVolumesOptions {
   namespace?: string;
 }
 
+/**
+ * DockerEventCallback is the callback function for Docker events
+ */
+type DockerEventCallback = (event: DockerEvent) => void;
+
+/**
+ * DockerEvent represents a Docker event
+ */
+interface DockerEvent {
+  Type:   string;    // container, volume, network, etc.
+  Action: string;  // create, start, stop, destroy, etc.
+  Actor: {
+    ID:         string;
+    Attributes: Record<string, string>;
+  };
+  time:     number;
+  timeNano: number;
+  status?:  string;
+  id?:      string;
+  from?:    string;
+}
+
+/**
+ * DockerEventSubscriptionOptions for subscribing to Docker events
+ */
+interface DockerEventSubscriptionOptions {
+  filters?: {
+    type?:      string[];
+    event?:     string[];
+    container?: string[];
+    label?:     string[];
+  };
+  namespace?: string;
+}
+
+/**
+ * DockerEventSubscription represents an active event subscription
+ */
+interface DockerEventSubscription {
+  unsubscribe(): void;
+}
+
 /** execProcess holds the state associated with a v1.ExecProcess. */
 interface execProcess {
   /** The identifier for this process. */
@@ -83,6 +125,11 @@ const outstandingProcesses: Record<string, execProcess> = {};
  * we don't end up reusing processes from previous loads.
  */
 const pageLoadId = Array.from(window.crypto.getRandomValues(new Uint8Array(16))).map(v => `00${ v.toString(16) }`.slice(-2)).join('');
+
+/**
+ * Store for active event subscriptions
+ */
+const eventSubscriptions = new Map<string, v1.ExecProcess>();
 
 /**
  * Construct a TypeError message that is similar to what the browser would
@@ -595,6 +642,58 @@ class Client implements v1.DockerDesktopClient {
         };
       });
     },
+    rdSubscribeToEvents: (callback: DockerEventCallback, options: DockerEventSubscriptionOptions = {}): DockerEventSubscription => {
+      const eventArgs = ['events', '--format', '{{json .}}'];
+
+      options.filters?.type?.forEach(type => {
+        eventArgs.push('--filter', `type=${ type }`);
+      });
+      options.filters?.event?.forEach(event => {
+        eventArgs.push('--filter', `event=${ event }`);
+      });
+      options.filters?.container?.forEach(container => {
+        eventArgs.push('--filter', `container=${ container }`);
+      });
+      options.filters?.label?.forEach(label => {
+        eventArgs.push('--filter', `label=${ label }`);
+      });
+
+      const subscriptionId = `events-${ Date.now() }-${ Math.random().toString(36).substring(2, 11) }`;
+
+      const eventProcess = this.docker.cli.exec('system', eventArgs, {
+        stream: {
+          onOutput: ({ stdout, stderr }) => {
+            if (stdout) {
+              try {
+                const event = JSON.parse(stdout) as DockerEvent;
+                callback(event);
+              } catch (error) {
+                console.error('Failed to parse Docker event:', error, stdout);
+              }
+            }
+            if (stderr) {
+              console.error('Docker events stderr:', stderr);
+            }
+          },
+          onError: (error: any) => {
+            console.error('Docker events stream error:', error);
+          },
+          onClose: (code: number) => {
+            console.debug(`Docker events stream closed with code ${ code }`);
+          },
+          splitOutputLines: true,
+        },
+      });
+
+      eventSubscriptions.set(subscriptionId, eventProcess);
+
+      return {
+        unsubscribe: () => {
+          eventSubscriptions.get(subscriptionId)?.close();
+          eventSubscriptions.delete(subscriptionId);
+        },
+      };
+    },
   };
 }
 
@@ -638,5 +737,15 @@ export default function initExtensions(): void {
         }
       }
     }
+
+    // Clean up event subscriptions
+    for (const [id, proc] of eventSubscriptions) {
+      try {
+        proc.close();
+      } catch (ex) {
+        console.debug(`failed to kill event subscription ${ id }:`, ex);
+      }
+    }
+    eventSubscriptions.clear();
   });
 }

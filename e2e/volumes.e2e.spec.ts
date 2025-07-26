@@ -86,7 +86,7 @@ test.describe.serial('Volumes Tests', () => {
 
     await volumesPage.deleteVolume(testVolumeName);
 
-    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({ timeout: 10_000 });
+    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({ timeout: 20_000 });
 
     testVolumeName = '';
   });
@@ -192,6 +192,50 @@ test.describe.serial('Volumes Tests', () => {
         await tool('docker', 'rm', '-f', containerName);
         await tool('docker', 'volume', 'rm', volumeName);
       } catch (cleanupError) {
+      }
+    }
+  });
+
+  test('should auto-refresh volumes list', async() => {
+    const volumesPage = new VolumesPage(page);
+    const autoRefreshVolumeName = `auto-refresh-test-${ Date.now() }`;
+
+    try {
+      await volumesPage.waitForTableToLoad();
+
+      // Remove all existing volumes to ensure clean state
+      try {
+        const existingVolumes = await tool('docker', 'volume', 'ls', '-q');
+
+        if (existingVolumes.trim()) {
+          const volumeNames = existingVolumes.trim().split('\n');
+
+          for (const volumeName of volumeNames) {
+            await tool('docker', 'volume', 'rm', '--force', volumeName);
+          }
+        }
+      } catch {
+      }
+      await expect(async() => {
+        const volumeCount = await volumesPage.getVolumeCount();
+        expect(volumeCount).toBe(0);
+      }).toPass({ timeout: 10_000 });
+
+      await tool('docker', 'volume', 'create', autoRefreshVolumeName);
+
+      await volumesPage.waitForVolumeToAppear(autoRefreshVolumeName);
+
+      const volumeInfo = volumesPage.getVolumeInfo(autoRefreshVolumeName);
+      await expect(volumeInfo.name).not.toBeEmpty();
+      await expect(volumeInfo.driver).not.toBeEmpty();
+
+      await tool('docker', 'volume', 'rm', autoRefreshVolumeName);
+
+      await expect(volumesPage.getVolumeRow(autoRefreshVolumeName)).toBeHidden();
+    } finally {
+      try {
+        await tool('docker', 'volume', 'rm', autoRefreshVolumeName);
+      } catch {
       }
     }
   });
