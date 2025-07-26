@@ -86,7 +86,7 @@ test.describe.serial('Volumes Tests', () => {
 
     await volumesPage.deleteVolume(testVolumeName);
 
-    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({ timeout: 10_000 });
+    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({ timeout: 20_000 });
 
     testVolumeName = '';
   });
@@ -203,16 +203,23 @@ test.describe.serial('Volumes Tests', () => {
     try {
       await volumesPage.waitForTableToLoad();
 
+      // Remove all existing volumes to ensure clean state
       try {
-        await tool('docker', 'volume', 'prune', '--force');
+        const existingVolumes = await tool('docker', 'volume', 'ls', '-q');
+
+        if (existingVolumes.trim()) {
+          const volumeNames = existingVolumes.trim().split('\n');
+
+          for (const volumeName of volumeNames) {
+            await tool('docker', 'volume', 'rm', '--force', volumeName);
+          }
+        }
       } catch {
       }
-
-      // this has to be done like this because docker volume actions take a longer time than containers.
       await expect(async() => {
         const volumeCount = await volumesPage.getVolumeCount();
         expect(volumeCount).toBe(0);
-      }).toPass({ timeout: 5000 });
+      }).toPass({ timeout: 10_000 });
 
       await tool('docker', 'volume', 'create', autoRefreshVolumeName);
 

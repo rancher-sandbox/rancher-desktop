@@ -248,7 +248,6 @@ export default defineComponent({
             this.viewLogs(container);
           };
         }
-
       });
 
       return this.containersList;

@@ -221,12 +221,22 @@ test.describe.serial('Containers Tests', () => {
 
       // Remove all existing containers to ensure clean state
       try {
-        await tool('docker', 'rm', '-f', '$(docker ps -aq)');
+        const existingContainers = await tool('docker', 'ps', '-aq');
+
+        if (existingContainers.trim()) {
+          const containerIds = existingContainers.trim().split('\n');
+
+          for (const containerId of containerIds) {
+            await tool('docker', 'rm', '--force', containerId);
+          }
+        }
       } catch {
       }
 
-      const containerCount = await containersPage.getContainerCount();
-      expect(containerCount).toBe(0);
+      await expect(async() => {
+        const count = await containersPage.getContainerCount();
+        expect(count).toBe(0);
+      }).toPass({ timeout: 5_000 });
 
       const output = await tool('docker', 'run', '--detach', '--name', autoRefreshContainerName,
         'alpine', 'sleep', '30');
