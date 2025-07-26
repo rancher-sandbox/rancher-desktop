@@ -1,13 +1,14 @@
 import DOMPurify from 'dompurify';
 import _ from 'lodash';
 import { marked } from 'marked';
-import { GetterTree } from 'vuex';
+import { GetterTree, Plugin } from 'vuex';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
 import { CURRENT_SETTINGS_VERSION, Settings } from '@pkg/config/settings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import type { DiagnosticsResult, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
+import ipcRenderer from '@pkg/utils/ipcRenderer';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 interface DiagnosticsState {
@@ -86,12 +87,8 @@ export const mutations: MutationsType<DiagnosticsState> = {
 type DiagActionContext = ActionContext<DiagnosticsState>;
 
 export const actions = {
-  async fetchDiagnostics({ commit, rootState }: DiagActionContext, args: Credentials) {
-    const {
-      port,
-      user,
-      password,
-    } = args;
+  async fetchDiagnostics({ commit, rootState }: DiagActionContext) {
+    const { port, user, password } = rootState.credentials.credentials;
     const response = await fetch(
       uri(port, 'diagnostic_checks'),
       {
@@ -115,8 +112,8 @@ export const actions = {
     commit('SET_DIAGNOSTICS', await mapMarkdownToDiagnostics(checks));
     commit('SET_TIME_LAST_RUN', new Date(result.last_update));
   },
-  async runDiagnostics({ commit, rootState }:DiagActionContext, credentials: Credentials) {
-    const { port, user, password } = credentials;
+  async runDiagnostics({ commit, rootState }:DiagActionContext) {
+    const { port, user, password } = rootState.credentials.credentials;
     const response = await fetch(
       uri(port, 'diagnostic_checks'),
       {
@@ -177,3 +174,12 @@ export const getters: GetterTree<DiagnosticsState, DiagnosticsState> = {
     return state.timeLastRun;
   },
 };
+
+export const plugins: Plugin<DiagnosticsState>[] = [
+  // Vuex plugin used to refresh diagnostics on command from the backend.
+  function(store) {
+    ipcRenderer.on('diagnostics/update', () => {
+      store.dispatch('diagnostics/fetchDiagnostics');
+    });
+  },
+];

@@ -1,4 +1,4 @@
-import { createStore } from 'vuex';
+import { createStore, ModuleTree, Plugin } from 'vuex';
 
 import * as ActionMenu from '../store/action-menu';
 import * as ApplicationSettings from '../store/applicationSettings';
@@ -15,21 +15,24 @@ import * as ResourceFetch from '../store/resource-fetch';
 import * as Snapshots from '../store/snapshots';
 import * as TransientSettings from '../store/transientSettings';
 
+const modules: Record<string, ModuleTree<any> & { plugins?: Plugin<any>[] }> = {
+  'action-menu':       ActionMenu,
+  applicationSettings: ApplicationSettings,
+  credentials:         Credentials,
+  diagnostics:         Diagnostics,
+  extensions:          Extensions,
+  i18n:                I18n,
+  imageManager:        ImageManager,
+  k8sManager:          K8sManager,
+  page:                Page,
+  preferences:         Preferences,
+  prefs:               Prefs,
+  'resource-fetch':    ResourceFetch,
+  snapshots:           Snapshots,
+  transientSettings:   TransientSettings,
+};
+
 export default createStore<any>({
-  modules: {
-    'action-menu':       { namespaced: true, ...ActionMenu },
-    applicationSettings: { namespaced: true, ...ApplicationSettings },
-    credentials:         { namespaced: true, ...Credentials },
-    diagnostics:         { namespaced: true, ...Diagnostics },
-    extensions:          { namespaced: true, ...Extensions },
-    i18n:                { namespaced: true, ...I18n },
-    imageManager:        { namespaced: true, ...ImageManager },
-    k8sManager:          { namespaced: true, ...K8sManager },
-    page:                { namespaced: true, ...Page },
-    preferences:         { namespaced: true, ...Preferences },
-    prefs:               { namespaced: true, ...Prefs },
-    'resource-fetch':    { namespaced: true, ...ResourceFetch },
-    snapshots:           { namespaced: true, ...Snapshots },
-    transientSettings:   { namespaced: true, ...TransientSettings },
-  },
+  modules: Object.fromEntries(Object.entries(modules).map(([k, v]) => [k, { namespaced: true, ...v }])),
+  plugins: Object.values(modules).flatMap(v => v.plugins ?? []),
 });
