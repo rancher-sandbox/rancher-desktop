@@ -19,6 +19,8 @@
       :rows-per-page="10"
       :has-advanced-filtering="false"
       :loading="!containersList"
+      group-by="projectGroup"
+      :group-sort="['projectGroup']"
     >
       <template #header-middle>
         <div class="header-middle">
@@ -99,6 +101,15 @@
             </div>
           </div>
         </td>
+      </template>
+      <template #group-row="{ group }">
+        <tr class="group-row">
+          <td :colspan="headers.length + 1">
+            <div class="group-tab">
+              {{ group.ref }}
+            </div>
+          </td>
+        </tr>
       </template>
     </SortableTable>
   </div>
@@ -194,6 +205,14 @@ export default defineComponent({
           } else {
             container.State = container.Status.toLowerCase();
           }
+        }
+
+        const composeProject = container.Labels?.['com.docker.compose.project'];
+
+        if (composeProject) {
+          container.projectGroup = `${composeProject}`;
+        } else {
+          container.projectGroup = 'Standalone Containers';
         }
 
         container.availableActions = [
