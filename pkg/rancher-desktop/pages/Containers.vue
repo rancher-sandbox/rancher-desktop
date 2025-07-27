@@ -207,10 +207,14 @@ export default defineComponent({
           }
         }
 
+        const k8sPodName = container.Labels?.['io.kubernetes.pod.name'];
+        const k8sNamespace = container.Labels?.['io.kubernetes.pod.namespace'];
         const composeProject = container.Labels?.['com.docker.compose.project'];
 
-        if (composeProject) {
-          container.projectGroup = `${composeProject}`;
+        if (k8sPodName && k8sNamespace) {
+          container.projectGroup = `${ k8sNamespace }/${ k8sPodName }`;
+        } else if (composeProject) {
+          container.projectGroup = composeProject;
         } else {
           container.projectGroup = 'Standalone Containers';
         }
