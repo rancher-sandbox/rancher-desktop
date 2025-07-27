@@ -175,7 +175,7 @@ export default defineComponent({
                 }"
                 @click.stop="toggleExpand(group.ref)"
               />
-              {{ group.ref }}
+              {{ group.ref }} ({{ group.rows.length }})
             </div>
           </td>
           <td
