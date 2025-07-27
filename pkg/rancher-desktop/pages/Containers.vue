@@ -128,7 +128,7 @@ export default defineComponent({
       /** @type import('@pkg/config/settings').Settings | undefined */
       settings:                   undefined,
       ddClient:                   null,
-      containersList:             [],
+      containersList:             null,
       showRunning:                false,
       containersNamespaces:       [],
       containerEventSubscription: null,
@@ -278,7 +278,7 @@ export default defineComponent({
 
     ipcRenderer.on('settings-update', (_event, settings) => {
       this.settings = settings;
-      this.containersList = [];
+      this.containersList = null;
       this.checkSelectedNamespace();
     });
 
@@ -424,7 +424,7 @@ export default defineComponent({
     },
     updateContainersList(newContainers) {
       if (!newContainers) {
-        this.containersList = [];
+        this.containersList = null;
         return;
       }
 

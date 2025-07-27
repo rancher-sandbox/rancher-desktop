@@ -90,7 +90,7 @@ export default defineComponent({
     return {
       settings:                undefined,
       ddClient:                null,
-      volumesList:             [],
+      volumesList:             null,
       volumesNamespaces:       [],
       volumeEventSubscription: null,
       volumePollingInterval:   null,
@@ -185,7 +185,7 @@ export default defineComponent({
 
     ipcRenderer.on('settings-update', (_event, settings) => {
       this.settings = settings;
-      this.volumesList = [];
+      this.volumesList = null;
       this.checkSelectedNamespace();
     });
 
@@ -303,7 +303,7 @@ export default defineComponent({
     },
     updateVolumesList(newVolumes) {
       if (!newVolumes) {
-        this.volumesList = [];
+        this.volumesList = null;
         return;
       }
 
@@ -336,11 +336,11 @@ export default defineComponent({
         if (volumes) {
           this.updateVolumesList(volumes);
         } else {
-          this.volumesList = [];
+          this.volumesList = null;
         }
       } catch (error) {
         console.error('Failed to fetch volumes:', error);
-        this.volumesList = [];
+        this.volumesList = null;
       }
     },
     async deleteVolume(volume) {
