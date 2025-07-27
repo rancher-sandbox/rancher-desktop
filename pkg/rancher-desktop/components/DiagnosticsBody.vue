@@ -280,7 +280,7 @@ export default defineComponent({
         }
       }
 
-      &:not([aria-expanded]) {
+      &[aria-expanded="false"] {
         :deep(~ .main-row) {
           visibility: collapse;
           .toggle-container {
