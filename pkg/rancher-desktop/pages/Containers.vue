@@ -106,7 +106,7 @@
         <tr class="group-row">
           <td :colspan="headers.length + 1">
             <div class="group-tab">
-              {{ group.ref }}
+              {{ group.ref }} ({{ group.rows.length }})
             </div>
           </td>
         </tr>
