@@ -32,6 +32,10 @@ type ReverseProxy struct {
 	// Dial provides a custom connection establishment method
 	Dial func(network, addr string) (net.Conn, error)
 
+	// DialContext provides a custom dial function with context support.
+	// It overrides Dial if both are set.
+	DialContext func(ctx context.Context, _, _ string) (net.Conn, error)
+
 	// Director allows modification of the outgoing request before forwarding
 	Director func(*http.Request)
 
@@ -77,8 +81,15 @@ func (proxy *ReverseProxy) forwardRequest(w http.ResponseWriter, r *http.Request
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// Establish a connection to the backend using a custom Dial method
-	backendConn, err := proxy.Dial("", "")
+	var backendConn net.Conn
+	var err error
+	if proxy.DialContext != nil {
+		// Establish a connection to the backend using a custom DialContext if provided
+		backendConn, err = proxy.DialContext(ctx, "", "")
+	} else {
+		// Fallback to the custom Dial method if DialContext is not set
+		backendConn, err = proxy.Dial("", "")
+	}
 	if err != nil {
 		proxy.sendError(w, "failed to connect to the backend: "+err.Error(), http.StatusBadGateway)
 		return

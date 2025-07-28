@@ -78,7 +78,7 @@ func Serve(ctx context.Context, endpoint string, dialer func(ctx context.Context
 	defer logWriter.Close()
 	munger := newRequestMunger()
 	proxy := &util.ReverseProxy{
-		Dial: func(string, string) (net.Conn, error) {
+		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
 			return dialer(ctx)
 		},
 		Director: func(req *http.Request) {
