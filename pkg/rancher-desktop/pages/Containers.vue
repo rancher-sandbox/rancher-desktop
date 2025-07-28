@@ -173,7 +173,7 @@ export default defineComponent({
       }
 
       // Process containers in place to preserve object references
-      this.containersList.forEach((container) => {
+      for (const container of this.containersList) {
         const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
         const name = names[0];
 
@@ -248,7 +248,7 @@ export default defineComponent({
             this.viewLogs(container);
           };
         }
-      });
+      }
 
       return this.containersList;
     },
@@ -385,7 +385,7 @@ export default defineComponent({
           { containers: { namespace: value.target.value } } );
         this.cleanupEventSubscriptions();
         this.setupEventSubscriptions();
-        this.getContainers();
+        await this.getContainers();
       }
     },
     clearDropDownPosition(e) {

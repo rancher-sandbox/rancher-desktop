@@ -14,6 +14,7 @@ const VOLUME_CELL_TEST_IDS = {
 export class VolumesPage {
   readonly page:              Page;
   readonly table:             Locator;
+  readonly volumes:           Locator;
   readonly namespaceSelector: Locator;
   readonly searchBox:         Locator;
   readonly errorBanner:       Locator;
@@ -21,6 +22,7 @@ export class VolumesPage {
   constructor(page: Page) {
     this.page = page;
     this.table = page.getByTestId('volumes-table');
+    this.volumes = this.table.locator(`tr.main-row[data-node-id]`);
     this.namespaceSelector = page.getByTestId('namespace-selector');
     this.searchBox = page.getByTestId('search-input');
     this.errorBanner = page.getByTestId('error-banner');
@@ -101,7 +103,9 @@ export class VolumesPage {
 
   async clickBulkDelete() {
     // Use the direct delete button that appears when items are selected
-    const deleteButton = this.page.getByRole('button', { name: 'Delete' }).first();
+    const deleteButton = this.page
+      .getByRole('button', { name: 'Delete' })
+      .first();
     await deleteButton.click();
   }
 

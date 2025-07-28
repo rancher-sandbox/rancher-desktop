@@ -5,11 +5,13 @@ type ActionString = 'logs' | 'stop' | 'start' | 'delete';
 export class ContainersPage {
   readonly page:              Page;
   readonly table:             Locator;
+  readonly containers:        Locator;
   readonly namespaceSelector: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.table = page.locator('.sortable-table');
+    this.containers = this.table.locator(`tr.main-row[data-node-id]`);
     this.namespaceSelector = page.locator('.select-namespace');
   }
 
@@ -35,7 +37,9 @@ export class ContainersPage {
       delete: 'Delete',
     }[action];
 
-    const actionLocator = this.page.getByTestId('actionmenu').getByText(actionText, { exact: true });
+    const actionLocator = this.page
+      .getByTestId('actionmenu')
+      .getByText(actionText, { exact: true });
     await actionLocator.click();
   }
 

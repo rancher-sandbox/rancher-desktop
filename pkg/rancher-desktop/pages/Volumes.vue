@@ -170,6 +170,7 @@ export default defineComponent({
   },
   mounted() {
     this.isComponentMounted = true;
+    this.ddClient = window.ddClient;
 
     this.$store.dispatch('page/setHeader', {
       title:       this.t('volumes.title'),
@@ -209,8 +210,6 @@ export default defineComponent({
         this.setupContainerdVolumePolling();
         return;
       }
-
-      this.ddClient = window.ddClient;
 
       this.volumeEventSubscription = this.ddClient.docker.rdSubscribeToEvents(
         (event) => {
