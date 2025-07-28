@@ -175,7 +175,8 @@ export default defineComponent({
                 }"
                 @click.stop="toggleExpand(group.ref)"
               />
-              {{ group.ref }} ({{ group.rows.length }})
+              {{ group.ref }}
+              <span v-if="!expanded[group.ref]"> ({{ group.rows.length }})</span>
             </div>
           </td>
           <td
