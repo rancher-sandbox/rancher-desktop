@@ -176,6 +176,7 @@ export default defineComponent({
                 @click.stop="toggleExpand(group.ref)"
               />
               {{ group.ref }}
+              <span v-if="!expanded[group.ref]"> ({{ group.rows.length }})</span>
             </div>
           </td>
           <td
@@ -280,7 +281,7 @@ export default defineComponent({
         }
       }
 
-      &:not([aria-expanded]) {
+      &[aria-expanded="false"] {
         :deep(~ .main-row) {
           visibility: collapse;
           .toggle-container {
