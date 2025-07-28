@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -83,7 +84,7 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		for _, distroName := range distroNames {
-			err = assertWSLIsRunning(distroName)
+			err = assertWSLIsRunning(cmd.Context(), distroName)
 			if err == nil {
 				commandName = "wsl"
 				args = append([]string{
@@ -112,13 +113,13 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 		if err := setupPathEnvVar(paths); err != nil {
 			return err
 		}
-		if !checkLimaIsRunning(commandName) {
+		if !checkLimaIsRunning(cmd.Context(), commandName) {
 			// No further output wanted, so just exit with the desired status.
 			os.Exit(1)
 		}
 		args = append([]string{"shell", lima.InstanceName}, args...)
 	}
-	shellCommand := exec.Command(commandName, args...)
+	shellCommand := exec.CommandContext(cmd.Context(), commandName, args...)
 	shellCommand.Stdin = os.Stdin
 	shellCommand.Stdout = os.Stdout
 	shellCommand.Stderr = os.Stderr
@@ -142,12 +143,12 @@ func setupPathEnvVar(paths *p.Paths) error {
 
 const restartDirective = "Either run 'rdctl start' or start the Rancher Desktop application first"
 
-func checkLimaIsRunning(commandName string) bool {
+func checkLimaIsRunning(ctx context.Context, commandName string) bool {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
 	//nolint:gosec // The command name is auto-detected, and the instance name is constant.
-	cmd := exec.Command(commandName, "ls", lima.InstanceName, "--format", "{{.Status}}")
+	cmd := exec.CommandContext(ctx, commandName, "ls", lima.InstanceName, "--format", "{{.Status}}")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -177,9 +178,9 @@ func checkLimaIsRunning(commandName string) bool {
 
 // Check that WSL is running the given distribution; if not, an error will be
 // returned with a message suitable for printing to the user.
-func assertWSLIsRunning(distroName string) error {
+func assertWSLIsRunning(ctx context.Context, distroName string) error {
 	// Ignore error messages; none are expected here
-	rawOutput, err := exec.Command("wsl", "--list", "--verbose").CombinedOutput()
+	rawOutput, err := exec.CommandContext(ctx, "wsl", "--list", "--verbose").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to run `wsl --list --verbose: %w", err)
 	}

@@ -23,7 +23,7 @@ import (
 	"fmt"
 )
 
-func CheckProcessWindows() (bool, error) {
+func CheckProcessWindows(ctx context.Context) (bool, error) {
 	return false, fmt.Errorf("internal error: CheckProcessWindows shouldn't be called")
 }
 

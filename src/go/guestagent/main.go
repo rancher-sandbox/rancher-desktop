@@ -112,7 +112,7 @@ func main() {
 
 	var portTracker tracker.Tracker
 
-	wslProxyForwarder := forwarder.NewWSLProxyForwarder("/run/wsl-proxy.sock")
+	wslProxyForwarder := forwarder.NewWSLProxyForwarder(ctx, "/run/wsl-proxy.sock")
 	portTracker = tracker.NewAPITracker(ctx, wslProxyForwarder, tracker.GatewayBaseURL, *tapIfaceIP, *adminInstall)
 	// Manually register the port for K8s API, we would
 	// only want to send this manual port mapping if both

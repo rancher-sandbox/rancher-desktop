@@ -15,14 +15,19 @@ limitations under the License.
 package utils
 
 import (
+	"context"
 	"io"
 	"net"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
-func Pipe(conn net.Conn, upstreamAddr string) {
-	upstream, err := net.Dial("tcp", upstreamAddr)
+func Pipe(ctx context.Context, conn net.Conn, upstreamAddr string) {
+	dialer := net.Dialer{
+		Timeout: 5 * time.Second,
+	}
+	upstream, err := dialer.DialContext(ctx, "tcp", upstreamAddr)
 	if err != nil {
 		logrus.Errorf("Failed to dial upstream %s: %s", upstreamAddr, err)
 		return

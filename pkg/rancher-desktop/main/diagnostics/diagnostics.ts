@@ -50,6 +50,7 @@ export class DiagnosticsManager {
         const imports = (await Promise.all([
           import('./connectedToInternet'),
           import('./dockerCliSymlinks'),
+          import('./dockerContext'),
           import('./integrationsWindows'),
           import('./kubeConfigSymlink'),
           import('./kubeContext'),

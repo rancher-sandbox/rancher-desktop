@@ -16,8 +16,10 @@ limitations under the License.
 package forwarder
 
 import (
+	"context"
 	"encoding/json"
 	"net"
+	"time"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 )
@@ -27,18 +29,22 @@ import (
 // For more information on Rancher Desktop WSL Proxy, refer to the source code at:
 // https://github.com/rancher-sandbox/rancher-desktop/blob/main/src/go/networking/cmd/proxy/wsl_integration_linux.go
 type WSLProxyForwarder struct {
+	ctx         context.Context
+	dialer      net.Dialer
 	proxySocket string
 }
 
-func NewWSLProxyForwarder(proxySocket string) *WSLProxyForwarder {
+func NewWSLProxyForwarder(ctx context.Context, proxySocket string) *WSLProxyForwarder {
 	return &WSLProxyForwarder{
+		ctx:         ctx,
+		dialer:      net.Dialer{Timeout: 5 * time.Second},
 		proxySocket: proxySocket,
 	}
 }
 
 // Send forwards the port mappings to WSL Proxy.
 func (v *WSLProxyForwarder) Send(portMapping types.PortMapping) error {
-	conn, err := net.Dial("unix", v.proxySocket)
+	conn, err := v.dialer.DialContext(v.ctx, "unix", v.proxySocket)
 	if err != nil {
 		return err
 	}

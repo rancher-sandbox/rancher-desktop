@@ -8,9 +8,8 @@ import MockBackend from './mock';
 import WSLBackend from './wsl';
 
 import { LimaKubernetesBackendMock, WSLKubernetesBackendMock } from '@pkg/backend/mock_screenshots';
-import DockerDirManager from '@pkg/utils/dockerDirManager';
 
-export default function factory(arch: Architecture, dockerDirManager: DockerDirManager): VMBackend {
+export default function factory(arch: Architecture): VMBackend {
   const platform = os.platform();
 
   if (process.env.RD_MOCK_BACKEND === '1') {
@@ -20,7 +19,7 @@ export default function factory(arch: Architecture, dockerDirManager: DockerDirM
   switch (platform) {
   case 'linux':
   case 'darwin':
-    return new LimaBackend(arch, dockerDirManager, (backend: LimaBackend) => {
+    return new LimaBackend(arch, (backend: LimaBackend) => {
       if (process.env.RD_MOCK_FOR_SCREENSHOTS) {
         return new LimaKubernetesBackendMock(arch, backend);
       } else {

@@ -179,7 +179,28 @@ export default defineComponent({
   beforeUnmount() {
     this.stopStreaming();
     this.stopContainerChecking();
-    this.terminal?.dispose();
+    if (this.terminal) {
+      try {
+        if (this.resizeHandler) {
+          window.removeEventListener('resize', this.resizeHandler);
+          this.resizeHandler = null;
+        }
+
+        if (this.searchAddon) {
+          this.searchAddon.clearDecorations();
+          this.searchAddon = null;
+        }
+
+        if (this.fitAddon) {
+          this.fitAddon = null;
+        }
+
+        this.terminal.dispose();
+        this.terminal = null;
+      } catch (error) {
+        console.error('Error disposing terminal:', error);
+      }
+    }
     ipcRenderer.off('settings-read', this.onSettingsRead);
     window.removeEventListener('keydown', this.handleGlobalKeydown);
     if (this.resizeHandler) {
