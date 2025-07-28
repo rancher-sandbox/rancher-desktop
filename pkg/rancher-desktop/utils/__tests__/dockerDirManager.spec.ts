@@ -8,7 +8,6 @@ import { jest } from '@jest/globals';
 import mockModules from '../testUtils/mockModules';
 
 import * as childProcess from '@pkg/utils/childProcess';
-import type DockerDirManager from '@pkg/utils/dockerDirManager';
 import paths from '@pkg/utils/paths';
 
 const spawnFile = childProcess.spawnFile;
@@ -20,6 +19,7 @@ const modules = mockModules({
   '@pkg/utils/logging': {
     background: {
       debug: jest.fn(),
+      error: jest.fn(),
       /** Mocked console.log() to check messages. */
       log:   jest.fn(),
     },
@@ -34,11 +34,11 @@ const itUnix = os.platform() === 'win32' ? it.skip : it;
 const itDarwin = os.platform() === 'darwin' ? it : it.skip;
 const itLinux = os.platform() === 'linux' ? it : it.skip;
 const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
-const { default: DockerDirManagerCtor } = await import('@pkg/utils/dockerDirManager');
+const { DockerDirManager } = await import('@pkg/utils/dockerDirManager');
 
 describe('DockerDirManager', () => {
   /** The instance of LimaBackend under test. */
-  let subj: DockerDirManager;
+  let subj: InstanceType<typeof DockerDirManager>;
   /** A directory we can use for scratch files during the test. */
   let workdir: string;
 
@@ -46,7 +46,7 @@ describe('DockerDirManager', () => {
     modules['@pkg/utils/childProcess'].spawnFile.mockImplementation(spawnFile);
     await expect((async() => {
       workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-lima-test-'));
-      subj = new DockerDirManagerCtor(path.join(workdir, '.docker'));
+      subj = new DockerDirManager(path.join(workdir, '.docker'));
     })()).resolves.toBeUndefined();
   });
   afterEach(async() => {
