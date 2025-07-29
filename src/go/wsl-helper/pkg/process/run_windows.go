@@ -17,12 +17,13 @@ limitations under the License.
 package process
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 )
 
-func Launch(executable string, args ...string) error {
-	err := exec.Command(executable, args...).Start()
+func Launch(ctx context.Context, executable string, args ...string) error {
+	err := exec.CommandContext(ctx, executable, args...).Start()
 	if err != nil {
 		return fmt.Errorf("failed to start %s: %w", executable, err)
 	}

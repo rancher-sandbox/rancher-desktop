@@ -57,8 +57,8 @@ const dockerAPIVersion = "v1.41.0"
 
 // Serve up the docker proxy at the given endpoint, using the given function to
 // create a connection to the real dockerd.
-func Serve(endpoint string, dialer func() (net.Conn, error)) error {
-	listener, err := platform.Listen(endpoint)
+func Serve(ctx context.Context, endpoint string, dialer func(ctx context.Context) (net.Conn, error)) error {
+	listener, err := platform.Listen(ctx, endpoint)
 	if err != nil {
 		return err
 	}
@@ -78,8 +78,8 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 	defer logWriter.Close()
 	munger := newRequestMunger()
 	proxy := &util.ReverseProxy{
-		Dial: func(string, string) (net.Conn, error) {
-			return dialer()
+		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			return dialer(ctx)
 		},
 		Director: func(req *http.Request) {
 			logrus.WithField("request", req).
@@ -177,7 +177,7 @@ func (m *requestMunger) getRequestPath(req *http.Request) string {
 }
 
 // MungeRequest modifies a given request in-place.
-func (m *requestMunger) MungeRequest(req *http.Request, dialer func() (net.Conn, error)) error {
+func (m *requestMunger) MungeRequest(req *http.Request, dialer func(ctx context.Context) (net.Conn, error)) error {
 	requestPath := m.getRequestPath(req)
 	logEntry := logrus.WithFields(logrus.Fields{
 		"method": req.Method,
@@ -218,7 +218,7 @@ func (m *requestMunger) MungeRequest(req *http.Request, dialer func() (net.Conn,
 	return nil
 }
 
-func (m *requestMunger) MungeResponse(resp *http.Response, dialer func() (net.Conn, error)) error {
+func (m *requestMunger) MungeResponse(resp *http.Response, dialer func(ctx context.Context) (net.Conn, error)) error {
 	requestPath := m.getRequestPath(resp.Request)
 	logEntry := logrus.WithFields(logrus.Fields{
 		"method": resp.Request.Method,
@@ -265,7 +265,7 @@ we use the provided id path template variable to make an upstream request to the
 Fortunately it supports both id or name as the container identifier.
 The Id returned will be the full long container id that is used to lookup in docker-binds.json.
 */
-func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, dialer func() (net.Conn, error)) (*containerInspectResponseBody, error) {
+func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, dialer func(ctx context.Context) (net.Conn, error)) (*containerInspectResponseBody, error) {
 	// url for inspecting container
 	inspectURL, err := req.URL.Parse(fmt.Sprintf("/%s/containers/%s/json", dockerAPIVersion, id))
 	if err != nil {
@@ -275,7 +275,7 @@ func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, di
 	client := &http.Client{
 		Transport: &http.Transport{
 			Dial: func(string, string) (net.Conn, error) {
-				return dialer()
+				return dialer(req.Context())
 			},
 		},
 	}

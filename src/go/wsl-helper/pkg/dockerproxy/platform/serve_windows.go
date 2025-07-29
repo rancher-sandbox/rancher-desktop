@@ -17,6 +17,7 @@ limitations under the License.
 package platform
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os/exec"
@@ -36,12 +37,12 @@ const DefaultEndpoint = "npipe:////./pipe/docker_engine"
 var ErrListenerClosed = winio.ErrPipeListenerClosed
 
 // MakeDialer computes the dial function.
-func MakeDialer(port uint32) (func() (net.Conn, error), error) {
+func MakeDialer(port uint32) (func(ctx context.Context) (net.Conn, error), error) {
 	vmGUID, err := probeVMGUID(port)
 	if err != nil {
 		return nil, fmt.Errorf("could not detect WSL2 VM: %w", err)
 	}
-	dial := func() (net.Conn, error) {
+	dial := func(ctx context.Context) (net.Conn, error) {
 		conn, err := dialHvsock(vmGUID, port)
 		if err != nil {
 			return nil, err
@@ -74,7 +75,7 @@ func dialHvsock(vmGUID hvsock.GUID, port uint32) (net.Conn, error) {
 }
 
 // Listen on the given Windows named pipe endpoint.
-func Listen(endpoint string) (net.Listener, error) {
+func Listen(ctx context.Context, endpoint string) (net.Listener, error) {
 	const prefix = "npipe://"
 
 	if !strings.HasPrefix(endpoint, prefix) {
@@ -151,9 +152,9 @@ func IsAbsolutePath(input string) bool {
 
 // TranslatePathFromClient converts a client path to a path that can be used by
 // the docker daemon.
-func TranslatePathFromClient(windowsPath string) (string, error) {
+func TranslatePathFromClient(ctx context.Context, windowsPath string) (string, error) {
 	// TODO: See if we can do something faster than shelling out.
-	cmd := exec.Command("wsl", "--distribution", "rancher-desktop", "--exec", "/bin/wslpath", "-a", "-u", windowsPath)
+	cmd := exec.CommandContext(ctx, "wsl", "--distribution", "rancher-desktop", "--exec", "/bin/wslpath", "-a", "-u", windowsPath)
 	output, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("error getting WSL path: %w", err)

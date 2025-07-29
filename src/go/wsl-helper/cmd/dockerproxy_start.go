@@ -36,7 +36,7 @@ var dockerproxyStartCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		port := dockerproxyStartViper.GetUint32("port")
 		endpoint := dockerproxyStartViper.GetString("endpoint")
-		return dockerproxy.Start(port, endpoint, args)
+		return dockerproxy.Start(cmd.Context(), port, endpoint, args)
 	},
 }
 

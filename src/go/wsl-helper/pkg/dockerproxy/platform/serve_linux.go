@@ -17,6 +17,7 @@ limitations under the License.
 package platform
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -37,19 +38,19 @@ const DefaultEndpoint = "unix:///var/run/docker.sock"
 var ErrListenerClosed = net.ErrClosed
 
 // MakeDialer computes the dial function.
-func MakeDialer(proxyEndpoint string) (func() (net.Conn, error), error) {
-	dialer := func() (net.Conn, error) {
-		conn, err := net.Dial("unix", proxyEndpoint)
+func MakeDialer(proxyEndpoint string) (func(ctx context.Context) (net.Conn, error), error) {
+	dialer := net.Dialer{}
+	return func(ctx context.Context) (net.Conn, error) {
+		conn, err := dialer.DialContext(ctx, "unix", proxyEndpoint)
 		if err != nil {
 			return nil, err
 		}
 		return conn, nil
-	}
-	return dialer, nil
+	}, nil
 }
 
 // Listen on the given Unix socket endpoint.
-func Listen(endpoint string) (net.Listener, error) {
+func Listen(ctx context.Context, endpoint string) (net.Listener, error) {
 	prefix := "unix://"
 	if !strings.HasPrefix(endpoint, prefix) {
 		return nil, fmt.Errorf("endpoint %s does not start with protocol %s", endpoint, prefix)
@@ -63,7 +64,8 @@ func Listen(endpoint string) (net.Listener, error) {
 
 	// First, try to connect to it; if it's connection refused, then the socket
 	// file exists but nobody is listening, in which case we can delete it.
-	conn, err := net.Dial("unix", filepath)
+	dialer := net.Dialer{}
+	conn, err := dialer.DialContext(ctx, "unix", filepath)
 	if err != nil {
 		if errors.Is(err, syscall.ECONNREFUSED) {
 			if err = os.Remove(filepath); err != nil {
