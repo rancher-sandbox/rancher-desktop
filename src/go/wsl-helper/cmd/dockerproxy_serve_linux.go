@@ -43,7 +43,7 @@ var dockerproxyServeCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		dialer, err := platform.MakeDialer(cmd.Context(), proxyEndpoint)
+		dialer, err := platform.MakeDialer(proxyEndpoint)
 		if err != nil {
 			return err
 		}
