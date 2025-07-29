@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -83,7 +84,7 @@ func main() {
 	if err != nil {
 		logrus.WithError(err).Fatal("could not execute prologue")
 	}
-	err = buildSubcommand([]string{}, helpData{}, output)
+	err = buildSubcommand(context.Background(), []string{}, helpData{}, output)
 	if err != nil {
 		logrus.WithError(err).Fatal("could not build subcommands")
 	}
@@ -98,8 +99,8 @@ func main() {
 // element in the slice is the name of the subcommand.
 // writer is the file to write to for the result; it is expected that `go fmt`
 // will be run on it eventually.
-func buildSubcommand(args []string, parentData helpData, writer io.Writer) error {
-	help, err := getHelp(args)
+func buildSubcommand(ctx context.Context, args []string, parentData helpData, writer io.Writer) error {
+	help, err := getHelp(ctx, args)
 	if err != nil {
 		return fmt.Errorf("error getting help for %v: %w", args, err)
 	}
@@ -129,7 +130,7 @@ func buildSubcommand(args []string, parentData helpData, writer io.Writer) error
 		newArgs := make([]string, 0, len(args))
 		newArgs = append(newArgs, args...)
 		newArgs = append(newArgs, subcommand)
-		err := buildSubcommand(newArgs, subcommands, writer)
+		err := buildSubcommand(ctx, newArgs, subcommands, writer)
 		if err != nil {
 			return err
 		}
@@ -139,11 +140,11 @@ func buildSubcommand(args []string, parentData helpData, writer io.Writer) error
 }
 
 // getHelp runs `nerdctl <args...> -help` and returns the result.
-func getHelp(args []string) (string, error) {
+func getHelp(ctx context.Context, args []string) (string, error) {
 	newArgs := make([]string, 0, len(args)+1)
 	newArgs = append(newArgs, args...)
 	newArgs = append(newArgs, "--help")
-	cmd := exec.Command(nerdctl, newArgs...)
+	cmd := exec.CommandContext(ctx, nerdctl, newArgs...)
 	cmd.Stderr = os.Stderr
 	result, err := cmd.Output()
 	if err != nil {
