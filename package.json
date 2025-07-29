@@ -130,7 +130,7 @@
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "30.0.5",
     "babel-loader": "10.0.0",
-    "cross-env": "7.0.3",
+    "cross-env": "10.0.0",
     "css-loader": "7.1.2",
     "ejs": "3.1.10",
     "electron": "37.2.4",
