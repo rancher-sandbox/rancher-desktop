@@ -262,6 +262,17 @@ export default defineComponent({
     }
 
     .group-row {
+      font-weight: bold;
+
+      .group-tab {
+        i {
+          cursor: pointer;
+          &:hover {
+            color: var(--primary);
+          }
+        }
+      }
+
       .col-description {
         font-weight: bold;
         .group-tab {
