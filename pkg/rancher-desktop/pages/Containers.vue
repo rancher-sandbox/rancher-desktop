@@ -160,7 +160,7 @@ export default defineComponent({
       showRunning:          false,
       containersNamespaces: [],
       error:                null,
-      expanded:             {},
+      expanded:             { 'Kubernetes System': false },
       headers:              [
         // INFO: Disable for now since we can only get the running containers.
         {
@@ -228,7 +228,11 @@ export default defineComponent({
         const composeProject = container.Labels?.['com.docker.compose.project'];
 
         if (k8sPodName && k8sNamespace) {
-          container.projectGroup = `${ k8sNamespace }/${ k8sPodName }`;
+          if (k8sNamespace === 'kube-system') {
+            container.projectGroup = 'Kubernetes System';
+          } else {
+            container.projectGroup = `${ k8sNamespace }/${ k8sPodName }`;
+          }
         } else if (composeProject) {
           container.projectGroup = composeProject;
         } else {
@@ -416,11 +420,6 @@ export default defineComponent({
         } else {
           return a.State.localeCompare(b.State);
         }
-      });
-
-      // Filter out images from "kube-system" namespace
-      this.containersList = this.containersList.filter((container) => {
-        return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
       });
     },
     async stopContainer(container) {
