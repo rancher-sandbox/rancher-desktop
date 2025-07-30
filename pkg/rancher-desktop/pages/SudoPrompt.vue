@@ -32,7 +32,7 @@
     <p>{{ t('sudoPrompt.messageSecondPart') }}</p>
     <checkbox
       id="suppress"
-      v-model="suppress"
+      v-model:value="suppress"
       label="Always run without administrative access"
     />
     <button
@@ -47,7 +47,7 @@
 
 <script lang="ts">
 import { Checkbox } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -57,7 +57,7 @@ type SudoReason = 'networking' | 'docker-socket';
  * SUDO_REASON_DESCRIPTION contains text on why we want sudo access.
  * @todo Put this in i18n
  */
-const SUDO_REASON_DESCRIPTION: Record<SudoReason, {title: string, description: string}> = {
+const SUDO_REASON_DESCRIPTION: Record<SudoReason, { title: string, description: string }> = {
   networking: {
     title:       'Configure networking',
     description: `Provides bridged networking so that it is easier to access your
@@ -70,7 +70,8 @@ const SUDO_REASON_DESCRIPTION: Record<SudoReason, {title: string, description: s
   },
 };
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'sudo-prompt-dialog',
   components: { Checkbox },
   layout:     'dialog',
   data() {

@@ -9,12 +9,17 @@
     </div>
 
     <div class="path-breadcrumb">
-      <span class="breadcrumb-item" @click="navigateToPath('/')">
-        <i class="icon icon-folder-open"></i>root</span>
-      <template v-for="(segment, index) in pathSegments">
-        <span :key="`sep-${index}`" class="breadcrumb-separator">/</span>
+      <span
+        class="breadcrumb-item"
+        @click="navigateToPath('/')"
+      >
+        <i class="icon icon-folder-open" />root</span>
+      <template
+        v-for="(segment, index) in pathSegments"
+        :key="`path-${index}`"
+      >
+        <span class="breadcrumb-separator">/</span>
         <span
-          :key="`path-${index}`"
           class="breadcrumb-item"
           :class="{ 'is-current': index === pathSegments.length - 1 }"
           @click="index < pathSegments.length - 1 ? navigateToPath(getPathUpTo(index)) : null"
@@ -36,11 +41,14 @@
       class="content-state"
       color="error"
     >
-      <span class="icon icon-info-circle icon-lg"/>
+      <span class="icon icon-info-circle icon-lg" />
       {{ error }}
     </banner>
 
-    <div v-else class="file-browser">
+    <div
+      v-else
+      class="file-browser"
+    >
       <sortable-table
         :headers="headers"
         :paging="false"
@@ -52,26 +60,31 @@
         key-field="path"
         no-rows-key="volumes.files.noFiles"
       >
-        <template #col:name="{row}">
+        <template #col:name="{ row }">
           <td>
             <span
               :class="{ 'is-directory': row.isDirectory, 'is-clickable': row.isDirectory }"
               class="file-name"
               @click="row.isDirectory ? navigateToPath(row.path) : null"
             >
-              <i :class="getFileIcon(row)" class="file-icon"></i>
+              <i
+                :class="getFileIcon(row)"
+                class="file-icon"
+              />
               {{ row.name }}
             </span>
           </td>
         </template>
-        <template #col:size="{row}">
+        <template #col:size="{ row }">
           <td>{{ row.isDirectory ? '-' : formatSize(row.size) }}</td>
         </template>
-        <template #col:modified="{row}">
+        <template #col:modified="{ row }">
           <td>{{ formatDate(row.modified) }}</td>
         </template>
-        <template #col:permissions="{row}">
-          <td class="permissions">{{ row.permissions }}</td>
+        <template #col:permissions="{ row }">
+          <td class="permissions">
+            {{ row.permissions }}
+          </td>
         </template>
       </sortable-table>
     </div>
@@ -79,18 +92,18 @@
 </template>
 
 <script lang="ts">
-import {BadgeState, Banner} from '@rancher/components';
-import Vue from 'vue';
-import {mapGetters} from 'vuex';
+import { BadgeState, Banner } from '@rancher/components';
+import { defineComponent } from 'vue';
+import { mapGetters } from 'vuex';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import SortableTable from '@pkg/components/SortableTable';
-import {ContainerEngine} from '@pkg/config/settings';
-import {ipcRenderer} from '@pkg/utils/ipcRenderer';
+import { ContainerEngine } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
-  name: 'VolumeFiles',
-  title: 'Volume Files',
+export default defineComponent({
+  name:       'VolumeFiles',
+  title:      'Volume Files',
   components: {
     BadgeState,
     Banner,
@@ -99,43 +112,43 @@ export default Vue.extend({
   },
   data() {
     return {
-      settings: undefined,
-      ddClient: null,
-      isLoading: true,
-      error: null,
-      volumeExists: false,
-      currentPath: this.$route.query.path || this.$route.query.initialPath || '/',
-      files: [],
+      settings:        undefined,
+      ddClient:        null,
+      isLoading:       true,
+      error:           null,
+      volumeExists:    false,
+      currentPath:     this.$route.query.path || this.$route.query.initialPath || '/',
+      files:           [],
       refreshInterval: null,
-      headers: [
+      headers:         [
         {
-          name: 'name',
+          name:  'name',
           label: this.t('volumes.files.table.header.name'),
-          sort: ['name'],
+          sort:  ['name'],
         },
         {
-          name: 'size',
+          name:  'size',
           label: this.t('volumes.files.table.header.size'),
-          sort: ['size', 'name'],
+          sort:  ['size', 'name'],
           width: 100,
         },
         {
-          name: 'modified',
+          name:  'modified',
           label: this.t('volumes.files.table.header.modified'),
-          sort: ['modified', 'name'],
+          sort:  ['modified', 'name'],
           width: 180,
         },
         {
-          name: 'permissions',
+          name:  'permissions',
           label: this.t('volumes.files.table.header.permissions'),
-          sort: ['permissions', 'name'],
+          sort:  ['permissions', 'name'],
           width: 120,
         },
       ],
     };
   },
   computed: {
-    ...mapGetters('k8sManager', {isK8sReady: 'isReady'}),
+    ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     volumeName() {
       return this.$route.params.name || '';
     },
@@ -168,17 +181,17 @@ export default Vue.extend({
           }
         }
       },
-      immediate: false
-    }
+      immediate: false,
+    },
   },
   mounted() {
     if (!this.isValidVolumeName) {
-      this.error = this.t('volumes.files.invalidVolumeName', {name: this.volumeName});
+      this.error = this.t('volumes.files.invalidVolumeName', { name: this.volumeName });
       return;
     }
 
     this.$store.dispatch('page/setHeader', {
-      title: this.t('volumes.files.title'),
+      title:       this.t('volumes.files.title'),
       description: this.volumeName,
     });
 
@@ -191,7 +204,7 @@ export default Vue.extend({
       }
     }, 30000);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.off('settings-read', this.onSettingsRead);
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
@@ -222,7 +235,7 @@ export default Vue.extend({
         this.volumeExists = volumes?.some(v => v.Name === this.volumeName) || false;
 
         if (!this.volumeExists) {
-          this.error = this.t('volumes.files.volumeNotFound', {name: this.volumeName});
+          this.error = this.t('volumes.files.volumeNotFound', { name: this.volumeName });
         }
       } catch (error) {
         console.error('Error checking volume:', error);
@@ -234,24 +247,24 @@ export default Vue.extend({
       try {
         this.error = null;
 
-        const containerPath = `/volume${this.currentPath}`;
+        const containerPath = `/volume${ this.currentPath }`;
         const lsCommand = [
           'run', '--rm', '--quiet',
-          '-v', `${this.volumeName}:/volume:ro`,
+          '-v', `${ this.volumeName }:/volume:ro`,
           'busybox',
           'ls', '-la', '--full-time', '--group-directories-first',
-          containerPath
+          containerPath,
         ];
 
-        const execOptions = {cwd: '/'};
+        const execOptions = { cwd: '/' };
         if (this.hasNamespaceSelected) {
           execOptions.namespace = this.hasNamespaceSelected;
         }
 
-        const {stderr, stdout} = await this.ddClient.docker.cli.exec(
+        const { stderr, stdout } = await this.ddClient.docker.cli.exec(
           lsCommand[0],
           lsCommand.slice(1),
-          execOptions
+          execOptions,
         );
 
         if (stderr && !stderr.includes('level=warning')) {
@@ -266,11 +279,11 @@ export default Vue.extend({
           error?.stderr,
           error?.error,
           typeof error === 'string' ? error : null,
-          'Failed to list files'
+          'Failed to list files',
         ];
 
         console.error('Error listing files:', error);
-        this.error = this.t('volumes.files.listError', {error: errorSources.find(msg => msg)});
+        this.error = this.t('volumes.files.listError', { error: errorSources.find(msg => msg) });
         this.isLoading = false;
       }
     },
@@ -284,8 +297,8 @@ export default Vue.extend({
           continue;
         }
         const match = line.match(/^(?<permissions>[drwxst-]+)\s+(?<links>\d+)\s+(?<owner>\S+)\s+(?<group>\S+)\s+(?<size>\d+)\s+(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2}:\d{2})\s+(?<timezone>[+-]\d{4})\s+(?<name>.+)$/);
-        if (match && match.groups) {
-          const {permissions, owner, group, size, date, time, name} = match.groups;
+        if (match?.groups) {
+          const { permissions, owner, group, size, date, time, name } = match.groups;
 
           if (name === '.' || name === '..') {
             continue;
@@ -293,10 +306,10 @@ export default Vue.extend({
 
           const isDirectory = permissions.startsWith('d');
           const path = this.currentPath === '/'
-            ? `/${name}`
-            : `${this.currentPath}/${name}`;
+            ? `/${ name }`
+            : `${ this.currentPath }/${ name }`;
 
-          const modified = new Date(`${date}T${time}`);
+          const modified = new Date(`${ date }T${ time }`);
 
           files.push({
             name,
@@ -320,9 +333,9 @@ export default Vue.extend({
 
       // Use router to create history entry for directory navigation
       this.$router.push({
-        name: 'volumes-files-name',
-        params: {name: this.volumeName},
-        query: {path: path}
+        name:   'volumes-files-name',
+        params: { name: this.volumeName },
+        query:  { path },
       }).catch(err => {
         if (err.name !== 'NavigationDuplicated') {
           console.error('Navigation error:', err);

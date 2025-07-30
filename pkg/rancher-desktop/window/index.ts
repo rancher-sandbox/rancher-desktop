@@ -254,7 +254,7 @@ function createView() {
       // Insert (or overwrite) CORS headers to pretend this was allowed.  While
       // ideally we can just disable `webSecurity` instead, that seems to break
       // the preload script (which breaks the extension APIs).
-      const responseHeaders: Record<string, string|string[]> = { ...details.responseHeaders };
+      const responseHeaders: Record<string, string | string[]> = { ...details.responseHeaders };
       // HTTP headers use case-insensitive comparison; but accents should count
       // as different characters (even though it should be ASCII only).
       const { compare } = new Intl.Collator('en', { sensitivity: 'accent' });

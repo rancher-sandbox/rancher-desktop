@@ -1,10 +1,13 @@
+import { jest } from '@jest/globals';
 import semver from 'semver';
 
-import { queryUpgradeResponder, UpgradeResponderRequestPayload } from '../LonghornProvider';
+import type { spawnFile as spawnFileType } from '@pkg/utils/childProcess';
+import type fetchType from '@pkg/utils/fetch';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+import type getWSLVersionType from '@pkg/utils/wslVersion';
+import type { WSLVersionInfo } from '@pkg/utils/wslVersion';
 
-import { spawnFile } from '@pkg/utils/childProcess';
-import fetch from '@pkg/utils/fetch';
-import getWSLVersion, { WSLVersionInfo } from '@pkg/utils/wslVersion';
+import type { queryUpgradeResponder as queryUpgradeResponderType, UpgradeResponderRequestPayload } from '../LonghornProvider';
 
 const itWindows = process.platform === 'win32' ? it : it.skip;
 const itUnix = process.platform !== 'win32' ? it : it.skip;
@@ -28,45 +31,28 @@ const standardMockedVersion: WSLVersionInfo = {
   },
 };
 
-jest.mock('@pkg/utils/fetch', () => {
-  return {
-    __esModule: true,
-    default:    jest.fn(),
-  };
-});
-
-jest.mock('@pkg/utils/childProcess', () => {
-  return {
-    __esModule: true,
-    spawnFile:  jest.fn(),
-  };
-});
-
-jest.mock('@pkg/utils/osVersion', () => {
-  return {
-    __esModule:      true,
-    getMacOsVersion: jest.fn(() => {
-      return new semver.SemVer('12.0.0');
-    }),
-  };
-});
-
-jest.mock('@pkg/utils/wslVersion', () => {
-  return {
-    __esModule: true,
-    default:    jest.fn<ReturnType<typeof getWSLVersion>, Parameters<typeof getWSLVersion>>(),
-  };
+const modules = mockModules({
+  '@pkg/utils/fetch':        { default: jest.fn<(...args: Parameters<typeof fetchType>) => Promise<Partial<Awaited<ReturnType<typeof fetchType>>>>>() },
+  '@pkg/utils/childProcess': { spawnFile: jest.fn<typeof spawnFileType>() },
+  '@pkg/utils/osVersion':    { getMacOsVersion: jest.fn(() => new semver.SemVer('12.0.0')) },
+  '@pkg/utils/wslVersion':   { default: jest.fn<typeof getWSLVersionType>() },
 });
 
 describe('queryUpgradeResponder', () => {
+  const fetch = modules['@pkg/utils/fetch'].default;
+  let queryUpgradeResponder: typeof queryUpgradeResponderType;
+
+  beforeAll(async() => {
+    ({ queryUpgradeResponder } = await import('../LonghornProvider'));
+  });
   afterEach(() => {
-    jest.mocked(spawnFile).mockReset();
-    jest.mocked(fetch).mockReset();
+    modules['@pkg/utils/childProcess'].spawnFile.mockReset();
+    fetch.mockReset();
   });
 
   it('should return the latest version', async() => {
-    jest.mocked(getWSLVersion).mockResolvedValue(standardMockedVersion);
-    jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+    modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
+    fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -97,8 +83,8 @@ describe('queryUpgradeResponder', () => {
   });
 
   it('should set unsupportedUpdateAvailable to true when a newer-than-latest version is unsupported', async() => {
-    jest.mocked(getWSLVersion).mockResolvedValue(standardMockedVersion);
-    jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+    modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
+    fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -130,8 +116,8 @@ describe('queryUpgradeResponder', () => {
   });
 
   it('should set unsupportedUpdateAvailable to false when no newer-than-latest versions are unsupported', async() => {
-    jest.mocked(getWSLVersion).mockResolvedValue(standardMockedVersion);
-    jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+    modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
+    fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -163,8 +149,8 @@ describe('queryUpgradeResponder', () => {
   });
 
   it('should throw an error if no versions are supported', async() => {
-    jest.mocked(getWSLVersion).mockResolvedValue(standardMockedVersion);
-    jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+    modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
+    fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -195,8 +181,8 @@ describe('queryUpgradeResponder', () => {
   });
 
   it('should treat all versions as supported when server does not include Supported key', async() => {
-    jest.mocked(getWSLVersion).mockResolvedValue(standardMockedVersion);
-    jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+    modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
+    fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -225,7 +211,7 @@ describe('queryUpgradeResponder', () => {
   });
 
   it('should format the current app version properly and include it in request to Upgrade Responder', async() => {
-    jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+    fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -240,17 +226,19 @@ describe('queryUpgradeResponder', () => {
     const appVersion = '1.2.3';
 
     await queryUpgradeResponder('testurl', new semver.SemVer(appVersion));
-    expect((fetch as jest.Mock).mock.calls.length).toBe(1);
-    const rawBody = (fetch as jest.Mock).mock.calls[0][1].body;
-    const body: UpgradeResponderRequestPayload = JSON.parse(rawBody);
+    expect(fetch.mock.calls.length).toBe(1);
+    const rawBody = fetch.mock.calls[0][1]?.body;
+
+    expect(typeof rawBody).toBe('string');
+    const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);
 
     expect(body.appVersion).toBe(appVersion);
   });
 
   describeWindows('when we can get WSL version', () => {
     it('should include wslVersion when using store WSL', async() => {
-      jest.mocked(getWSLVersion).mockResolvedValue(standardMockedVersion);
-      jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+      modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
+      fetch.mockResolvedValueOnce({
         json: () => Promise.resolve({
           requestIntervalInMinutes: 100,
           versions:                 [
@@ -263,15 +251,17 @@ describe('queryUpgradeResponder', () => {
         }),
       });
       await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
-      expect((fetch as jest.Mock).mock.calls.length).toBe(1);
-      const rawBody = (fetch as jest.Mock).mock.calls[0][1].body;
-      const body: UpgradeResponderRequestPayload = JSON.parse(rawBody);
+      expect(fetch.mock.calls.length).toBe(1);
+      const rawBody = fetch.mock.calls[0][1]?.body;
+
+      expect(typeof rawBody).toBe('string');
+      const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);
 
       expect(body.extraInfo.wslVersion).toBe('1.2.5.0');
     });
     it('should include wslVersion when using inbox WSL', async() => {
-      jest.mocked(getWSLVersion).mockResolvedValue({ ...standardMockedVersion, inbox: true });
-      jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+      modules['@pkg/utils/wslVersion'].default.mockResolvedValue({ ...standardMockedVersion, inbox: true });
+      fetch.mockResolvedValueOnce({
         json: () => Promise.resolve({
           requestIntervalInMinutes: 100,
           versions:                 [
@@ -284,17 +274,19 @@ describe('queryUpgradeResponder', () => {
         }),
       });
       await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
-      expect((fetch as jest.Mock).mock.calls.length).toBe(1);
-      const rawBody = (fetch as jest.Mock).mock.calls[0][1].body;
-      const body: UpgradeResponderRequestPayload = JSON.parse(rawBody);
+      expect(fetch.mock.calls.length).toBe(1);
+      const rawBody = fetch.mock.calls[0][1]?.body;
+
+      expect(typeof rawBody).toBe('string');
+      const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);
 
       expect(body.extraInfo.wslVersion).toBe('1.0.0');
     });
   });
 
   itWindows('should not include wslVersion in request to Upgrade Responder when wsl --version is unsuccessful', async() => {
-    jest.mocked(getWSLVersion).mockRejectedValue('test rejected value');
-    jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+    modules['@pkg/utils/wslVersion'].default.mockRejectedValue('test rejected value');
+    fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -307,15 +299,17 @@ describe('queryUpgradeResponder', () => {
       }),
     });
     await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
-    expect((fetch as jest.Mock).mock.calls.length).toBe(1);
-    const rawBody = (fetch as jest.Mock).mock.calls[0][1].body;
-    const body: UpgradeResponderRequestPayload = JSON.parse(rawBody);
+    expect(fetch.mock.calls.length).toBe(1);
+    const rawBody = fetch.mock.calls[0][1]?.body;
+
+    expect(typeof rawBody).toBe('string');
+    const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);
 
     expect(body.extraInfo.wslVersion).toBe(undefined);
   });
 
   itUnix('should not check wsl.exe --version or include wslVersion if not on Windows', async() => {
-    jest.mocked(fetch as ()=>Promise<any>).mockResolvedValueOnce({
+    fetch.mockResolvedValueOnce({
       json: () => Promise.resolve({
         requestIntervalInMinutes: 100,
         versions:                 [
@@ -328,10 +322,12 @@ describe('queryUpgradeResponder', () => {
       }),
     });
     await queryUpgradeResponder('testurl', new semver.SemVer('v1.2.3'));
-    expect((spawnFile as jest.Mock).mock.calls.length).toBe(0);
-    expect((fetch as jest.Mock).mock.calls.length).toBe(1);
-    const rawBody = (fetch as jest.Mock).mock.calls[0][1].body;
-    const body: UpgradeResponderRequestPayload = JSON.parse(rawBody);
+    expect(modules['@pkg/utils/childProcess'].spawnFile.mock.calls.length).toBe(0);
+    expect(fetch.mock.calls.length).toBe(1);
+    const rawBody = fetch.mock.calls[0][1]?.body;
+
+    expect(typeof rawBody).toBe('string');
+    const body: UpgradeResponderRequestPayload = JSON.parse(rawBody as string);
 
     expect(body.extraInfo.wslVersion).toBe(undefined);
   });

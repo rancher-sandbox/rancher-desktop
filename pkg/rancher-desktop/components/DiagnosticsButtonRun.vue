@@ -1,11 +1,11 @@
 <script lang="ts">
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import Vue, { PropType } from 'vue';
+import { PropType, defineComponent } from 'vue';
 
 dayjs.extend(relativeTime);
 
-export default Vue.extend({
+export default defineComponent({
   name:  'diagnostics-button-run',
   props: { timeLastRun: Date as PropType<Date> },
   data() {
@@ -36,7 +36,7 @@ export default Vue.extend({
       this.currentTime = dayjs();
     }, 1000);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     clearInterval(this.lastRunInterval);
   },
   methods: {
@@ -55,7 +55,7 @@ export default Vue.extend({
       class="btn btn-xs role-secondary"
       @click="onClick"
     >
-      <span class="icon icon-refresh icon-diagnostics"></span>
+      <span class="icon icon-refresh icon-diagnostics" />
       Rerun
     </button>
     <div class="diagnostics-status-history">

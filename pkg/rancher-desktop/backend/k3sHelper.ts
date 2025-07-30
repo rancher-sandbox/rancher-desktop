@@ -8,7 +8,7 @@ import tls from 'tls';
 import util from 'util';
 
 import {
-  CustomObjectsApi, KubeConfig, V1ObjectMeta, findHomeDir, HttpError,
+  CustomObjectsApi, KubeConfig, V1ObjectMeta, findHomeDir, ApiException,
 } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import _ from 'lodash';
@@ -56,7 +56,7 @@ export interface ReleaseAPIEntry {
   tag_name: string;
   assets: {
     browser_download_url: string;
-    name: string;
+    name:                 string;
   }[];
 }
 
@@ -66,13 +66,13 @@ export class NoCachedK3sVersionsError extends Error {
 const CURRENT_CACHE_VERSION = 2 as const;
 
 /** cacheData describes the JSON data we write to the cache. */
-type cacheData = {
+interface cacheData {
   cacheVersion?: typeof CURRENT_CACHE_VERSION;
   /** List of available versions; includes build information. */
-  versions: string[];
+  versions:      string[];
   /** Mapping of channel labels to current version (excluding build information). */
-  channels: Record<string, ShortVersion>;
-};
+  channels:      Record<string, ShortVersion>;
+}
 
 /**
  * RequiresRestartSeverityChecker is a function that will be used to determine
@@ -97,7 +97,7 @@ type RequiresRestartCheckers = {
  */
 export type ExtraRequiresReasons = {
   [K in keyof RecursiveTypes<K8s.BackendSettings>]?: {
-    current: RecursiveTypes<K8s.BackendSettings>[K];
+    current:   RecursiveTypes<K8s.BackendSettings>[K];
     severity?: RequiresRestartSeverityChecker<K>;
   }
 };
@@ -399,14 +399,14 @@ export default class K3sHelper extends events.EventEmitter {
         const ValidResourceTypes = ['channel', 'channels'];
         const DataTypeChannel = 'channel';
 
-        type ChannelResponse = {
+        interface ChannelResponse {
           resourceType: string;
           data?: {
-            type: typeof DataTypeChannel;
-            name: string;
+            type:   typeof DataTypeChannel;
+            name:   string;
             latest: string;
           }[];
-        };
+        }
         const channels: ChannelResponse = await channelResponse.json();
 
         console.debug(`Got K3s update channel data: ${ channels.data?.map(ch => ch.name) }`);
@@ -559,7 +559,7 @@ export default class K3sHelper extends events.EventEmitter {
       return undefined;
     }
 
-    const line = stdout.split('/\r?\n/').find(line => /^k3s version /.test(line));
+    const line = stdout.split('/\r?\n/').find(line => line.startsWith('k3s version '));
 
     if (!line) {
       console.debug(`K3s version not in --version output.`);
@@ -658,7 +658,7 @@ export default class K3sHelper extends events.EventEmitter {
    *      If there are none, the newest version older than the desired version
    * @throws {NoCachedK3sVersionsError} if no names are suitable
    */
-  protected static selectClosestSemVer(desiredVersion: semver.SemVer, k3sNames: Array<string>): semver.SemVer {
+  protected static selectClosestSemVer(desiredVersion: semver.SemVer, k3sNames: string[]): semver.SemVer {
     const existingVersions = k3sNames.map(filename => semver.parse(filename)).filter(defined);
 
     if (existingVersions.length === 0) {
@@ -680,7 +680,7 @@ export default class K3sHelper extends events.EventEmitter {
 
   protected static k3sValue(v: semver.SemVer): number {
     try {
-      return parseInt((v.build[0] as string).replace('k3s', ''), 10) || 0;
+      return parseInt((v.build[0]).replace('k3s', ''), 10) || 0;
     } catch {
       return 0;
     }
@@ -695,7 +695,7 @@ export default class K3sHelper extends events.EventEmitter {
    * @returns {Array<semver.SemVer>}: existingVersions,
    *          with lower-build versions culled out as described above.
    */
-  protected static keepHighestBuildVersion(existingVersions: Array<semver.SemVer>): Array<semver.SemVer> {
+  protected static keepHighestBuildVersion(existingVersions: semver.SemVer[]): semver.SemVer[] {
     // Keep only the highest build for each version
     return existingVersions.filter((v, i) => {
       const next = existingVersions[i + 1];
@@ -1080,8 +1080,13 @@ export default class K3sHelper extends events.EventEmitter {
     while (Date.now() < deadline) {
       try {
         const customApi = client.k8sClient.makeApiClient(CustomObjectsApi);
-        const { body: response } = await customApi.listNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts');
-        const charts: V1HelmChart[] = (response as any)?.items ?? [];
+        const response = await customApi.listNamespacedCustomObject({
+          group:     'helm.cattle.io',
+          version:   'v1',
+          namespace: 'kube-system',
+          plural:    'helmcharts',
+        });
+        const charts: V1HelmChart[] = response?.items ?? [];
 
         await Promise.all(charts.filter((chart) => {
           const annotations = chart.metadata?.annotations ?? {};
@@ -1093,13 +1098,19 @@ export default class K3sHelper extends events.EventEmitter {
           if (name) {
             console.debug(`Will delete helm chart ${ name }`);
 
-            return customApi.deleteNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts', name);
+            return customApi.deleteNamespacedCustomObject({
+              group:     'helm.cattle.io',
+              version:   'v1',
+              namespace: 'kube-system',
+              plural:    'helmcharts',
+              name,
+            });
           }
         }));
 
         return;
       } catch (ex) {
-        if (ex instanceof HttpError && ex.statusCode === 503) {
+        if (ex instanceof ApiException && ex.code === 503) {
           console.debug(`Got Service Unavailable (${ ex.body.message }), retrying...`);
           await util.promisify(setTimeout)(1_000);
           continue;
@@ -1228,6 +1239,6 @@ export default class K3sHelper extends events.EventEmitter {
 
 interface V1HelmChart {
   apiVersion?: 'helm.cattle.io/v1';
-  kind?: 'HelmChart';
-  metadata?: V1ObjectMeta;
+  kind?:       'HelmChart';
+  metadata?:   V1ObjectMeta;
 }

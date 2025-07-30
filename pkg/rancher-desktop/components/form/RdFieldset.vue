@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import LabeledBadge from '@pkg/components/form/LabeledBadge.vue';
 import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
@@ -8,7 +8,7 @@ import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
 /**
  * Groups several controls as well as labels
  */
-export default Vue.extend({
+export default defineComponent({
   name:       'rd-fieldset',
   components: { TooltipIcon, LabeledBadge },
   props:      {
@@ -60,7 +60,7 @@ export default Vue.extend({
           v-tooltip="{
             content: lockedTooltip,
             html: true,
-            placement: 'right'
+            placement: 'right',
           }"
           class="icon icon-lock"
         />

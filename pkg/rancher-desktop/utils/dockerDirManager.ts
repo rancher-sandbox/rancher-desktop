@@ -6,6 +6,7 @@ import yaml from 'yaml';
 
 import paths from './paths';
 
+import mainEvents from '@pkg/main/mainEvents';
 import { spawnFile } from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
@@ -16,40 +17,40 @@ const console = Logging.background;
 /**
  * Goes under the `auths` key in docker config.json.
  */
-type AuthConfig = {
-  username?: string,
-  password?: string,
-  auth?: string,
-  email?: string,
+interface AuthConfig {
+  username?:      string,
+  password?:      string,
+  auth?:          string,
+  email?:         string,
   serveraddress?: string,
   identitytoken?: string,
   registrytoken?: string,
-};
+}
 
 /**
  * The parts of a docker config.json file that concern Rancher Desktop.
  */
-type PartialDockerConfig = {
-  auths?: Record<string, AuthConfig>,
-  credsStore?: string,
-  credHelpers?: Record<string, string>,
+interface PartialDockerConfig {
+  auths?:          Record<string, AuthConfig>,
+  credsStore?:     string,
+  credHelpers?:    Record<string, string>,
   currentContext?: string,
-};
+}
 
 /**
  * Manages everything under the docker CLI config directory (except, at
  * the time of writing, docker CLI plugins).
  */
-export default class DockerDirManager {
-  protected readonly dockerDirPath: string;
+export class DockerDirManager {
+  protected readonly dockerDirPath:        string;
   protected readonly dockerContextDirPath: string;
   /**
    * Path to the 'rancher-desktop' docker context file.  The parent directory
    * is the SHA256 hash of the docker context name ('rancher-desktop'), per the
    * docker convention.
    */
-  protected readonly dockerContextPath: string;
-  protected readonly dockerConfigPath: string;
+  protected readonly dockerContextPath:    string;
+  protected readonly dockerConfigPath:     string;
   protected readonly defaultDockerSockPath = '/var/run/docker.sock';
   protected readonly contextName = 'rancher-desktop';
 
@@ -143,7 +144,7 @@ export default class DockerDirManager {
    * @param currentContext The current context.
    * @returns Undefined for default context; string containing context name for other contexts.
    */
-  protected async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
+  async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
     if (weOwnDefaultSocket) {
       return undefined;
     }
@@ -318,6 +319,13 @@ export default class DockerDirManager {
   }
 
   /**
+   * Return the current docker context.
+   */
+  get currentDockerContext(): Promise<string | undefined> {
+    return this.readDockerConfig().then(cfg => cfg.currentContext);
+  }
+
+  /**
    * Clear the docker context if we changed it for running without admin privileges
    */
   async clearDockerContext(): Promise<void> {
@@ -364,6 +372,9 @@ export default class DockerDirManager {
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
       await this.writeDockerConfig(newConfig);
     }
+
+    // Trigger diagnostics, ignoring results.
+    mainEvents.invoke('diagnostics-trigger', 'DOCKER_CONTEXT').catch(e => console.error(e));
   }
 
   /**
@@ -385,3 +396,8 @@ export default class DockerDirManager {
     }
   }
 }
+
+/**
+ * Export a singleton instance of the docker dir manager by default.
+ */
+export default new DockerDirManager(path.join(os.homedir(), '.docker'));

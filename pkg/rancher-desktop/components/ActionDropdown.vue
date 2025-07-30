@@ -1,6 +1,9 @@
 <script>
+import { Dropdown as VDropdown } from 'floating-vue';
+
 export default {
-  name: 'ActionDropdown',
+  name:       'ActionDropdown',
+  components: { VDropdown },
 
   props: {
     size: {
@@ -46,7 +49,7 @@ export default {
 
   methods: {
     hasSlot(name = 'default') {
-      return !!this.$slots[name] || !!this.$scopedSlots[name];
+      return !!this.$slots[name] || !!this.$slots.name();
     },
 
     // allows parent components to programmatically open the dropdown
@@ -60,13 +63,13 @@ export default {
   <div class="dropdown-button-group">
     <div
       class="dropdown-button bg-primary btn-role-primary"
-      :class="{'one-action':!dualAction, [buttonSize]:true, 'disabled': disableButton}"
+      :class="{ 'one-action': !dualAction, [buttonSize]: true, disabled: disableButton }"
     >
-      <v-popover
+      <v-dropdown
         placement="bottom"
         :container="false"
         :disabled="disableButton"
-        :popper-options="{modifiers: { flip: { enabled: false } } }"
+        :popper-options="{ modifiers: { flip: { enabled: false } } }"
       >
         <slot
           name="button-content"
@@ -85,7 +88,7 @@ export default {
         <template #popover>
           <slot name="popover-content" />
         </template>
-      </v-popover>
+      </v-dropdown>
     </div>
   </div>
 </template>

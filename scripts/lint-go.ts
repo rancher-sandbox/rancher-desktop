@@ -139,19 +139,19 @@ async function goLangCILint(fix: boolean): Promise<boolean> {
   return true;
 }
 
-type dependabotConfig = {
+interface dependabotConfig {
   version: 2,
   updates: {
-    'package-ecosystem': string;
-    directory: string;
-    directories: string[];
-    schedule: { interval: 'daily' };
+    'package-ecosystem':        string;
+    directory:                  string;
+    directories:                string[];
+    schedule:                   { interval: 'daily' };
     'open-pull-requests-limit': number;
-    labels: string[];
-    ignore?: {'dependency-name': string; 'update-types'?: string[]; version?: string[] }[];
-    reviewers?: string[];
+    labels:                     string[];
+    ignore?:                    { 'dependency-name': string; 'update-types'?: string[]; version?: string[] }[];
+    reviewers?:                 string[];
   }[];
-};
+}
 
 // Run lint and format in series, for better output.
 async function lintAndFormat(fix: boolean): Promise<boolean> {

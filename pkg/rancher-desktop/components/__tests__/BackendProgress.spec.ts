@@ -1,13 +1,14 @@
+import { jest } from '@jest/globals';
 import { shallowMount } from '@vue/test-utils';
 
-import BackendProgress from '../BackendProgress.vue';
+import mockModules from '@pkg/utils/testUtils/mockModules';
 
-type Progress = {
-  current: number;
-  max: number;
-  description?: string;
+interface Progress {
+  current:         number;
+  max:             number;
+  description?:    string;
   transitionTime?: Date;
-};
+}
 
 function wrap(props: Record<string, any>) {
   return shallowMount(BackendProgress, { propsData: props });
@@ -15,19 +16,23 @@ function wrap(props: Record<string, any>) {
 
 const progress: Progress = { current: 0, max: 0 };
 let callback: (event: Event | undefined, progress: Progress) => void = () => {};
-jest.mock('@pkg/utils/ipcRenderer', () => ({
-  __esModule: true,
-  ipcRenderer: {
-    on(name: string, cb: typeof callback) {
-      expect(name).toEqual('k8s-progress');
-      callback = cb;
+
+mockModules({
+  '@pkg/utils/ipcRenderer': {
+    ipcRenderer: {
+      on(name: string, cb: typeof callback) {
+        expect(name).toEqual('k8s-progress');
+        callback = cb;
+      },
+      invoke(name: string) {
+        expect(name).toEqual('k8s-progress');
+        return Promise.resolve(progress);
+      },
     },
-    invoke(name: string) {
-      expect(name).toEqual('k8s-progress');
-      return Promise.resolve(progress);
-    }
   },
-}));
+});
+
+const { default: BackendProgress } = await import('../BackendProgress.vue');
 
 describe('BackendProgress', () => {
   beforeAll(() => {
@@ -77,7 +82,7 @@ describe('BackendProgress', () => {
 
           // We need transitionTime to be non-zero; so we start at time=1s, and
           // mock Date.now() to be duration + 1 second.
-          Object.assign(progress, { max: -1, transitionTime: 1});
+          Object.assign(progress, { max: -1, transitionTime: 1 });
           jest.spyOn(Date, 'now').mockReturnValue((duration + 1) * 1_000);
           callback?.(undefined, progress);
           jest.advanceTimersByTime(1_000); // We delay rendering by half a second

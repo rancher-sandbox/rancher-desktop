@@ -1,13 +1,12 @@
 import {
   spawn, CommonOptions, IOType, MessagingOptions, StdioOptions, StdioNull, StdioPipe,
-} from 'child_process';
-import stream from 'stream';
+} from 'node:child_process';
+import stream from 'node:stream';
 
 import { Log } from '@pkg/utils/logging';
 
-export {
-  ChildProcess, CommonOptions, SpawnOptions, exec, execFile, spawn,
-} from 'child_process';
+export { ChildProcess, exec, execFile, spawn } from 'node:child_process';
+export type { CommonOptions, SpawnOptions } from 'node:child_process';
 
 /**
  * ErrorCommand is a symbol we attach to any exceptions thrown to describe the
@@ -16,8 +15,8 @@ export {
 export const ErrorCommand = Symbol('child-process.command');
 
 interface SpawnOptionsWithStdioLog<
-  Stdio extends IOType | Log
-  > extends SpawnOptionsLog {
+  Stdio extends IOType | Log,
+> extends SpawnOptionsLog {
   stdio: Stdio
 }
 
@@ -30,7 +29,7 @@ interface SpawnOptionsEncoding {
 }
 
 class SpawnError extends Error {
-  constructor(command: string[], options: {code: number|null, signal: NodeJS.Signals | null, stdout?: string, stderr?: string}) {
+  constructor(command: string[], options: { code: number | null, signal: NodeJS.Signals | null, stdout?: string, stderr?: string }) {
     const executable = command[0];
     let message = `${ executable } exited with code ${ options.code }`;
 
@@ -73,11 +72,11 @@ class SpawnError extends Error {
   }
 
   [ErrorCommand]: string;
-  command: string[];
-  stdout?: string;
-  stderr?: string;
-  code?: number;
-  signal?: NodeJS.Signals;
+  command:        string[];
+  stdout?:        string;
+  stderr?:        string;
+  code?:          number;
+  signal?:        NodeJS.Signals;
 }
 
 /**
@@ -85,12 +84,12 @@ class SpawnError extends Error {
  */
 type StdioElementType = IOType | stream.Stream | Log | number | null | undefined;
 
-type StdioOptionsLog = IOType | Log | Array<StdioElementType>;
+type StdioOptionsLog = IOType | Log | StdioElementType[];
 
 interface CommonSpawnOptionsLog extends CommonOptions, MessagingOptions {
-  argv0?: string;
-  stdio?: StdioOptionsLog;
-  shell?: boolean | string;
+  argv0?:                    string;
+  stdio?:                    StdioOptionsLog;
+  shell?:                    boolean | string;
   windowsVerbatimArguments?: boolean;
 }
 
@@ -104,7 +103,7 @@ interface SpawnOptionsWithStdioTuple<
   Stdin extends StdioNull | StdioPipe,
   Stdout extends StdioNullLog | StdioPipe,
   Stderr extends StdioNullLog | StdioPipe,
-  > extends SpawnOptionsLog {
+> extends SpawnOptionsLog {
   stdio: [Stdin, Stdout, Stderr];
 }
 
@@ -264,7 +263,7 @@ export async function spawnFile(
           }
           childStream.on('data', (chunk) => {
             if (stdStreams[i]) {
-              (stdStreams[i] as stream.Writable).write(chunk);
+              (stdStreams[i]).write(chunk);
             } else {
               result[resultMap[i]] += chunk;
             }

@@ -2,9 +2,22 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import manageLinesInFile, { START_LINE, END_LINE } from '@pkg/integrations/manageLinesInFile';
+import { jest } from '@jest/globals';
+
 import * as childProcess from '@pkg/utils/childProcess';
+import mockModules from '@pkg/utils/testUtils/mockModules';
 import { withResource } from '@pkg/utils/testUtils/mockResources';
+
+const modules = mockModules({
+  fs: {
+    ...fs,
+    promises: {
+      ...fs.promises,
+      rename:    jest.fn(fs.promises.rename),
+      writeFile: jest.fn(fs.promises.writeFile),
+    },
+  },
+});
 
 const describeUnix = process.platform === 'win32' ? describe.skip : describe;
 const testUnix = process.platform === 'win32' ? test.skip : test;
@@ -13,12 +26,14 @@ const FILE_NAME = 'fakercfile';
 const TEST_LINE_1 = 'this is test line 1';
 const TEST_LINE_2 = 'this is test line 2';
 
+const { default: manageLinesInFile, START_LINE, END_LINE } = await import('@pkg/integrations/manageLinesInFile');
+
 let testDir: string;
 let rcFilePath: string;
 let backupFilePath: string;
 let tempFilePath: string;
 let symlinkPath: string;
-let SystemError: new (key: string, context: {code: string, syscall: string, message: string}) => NodeJS.ErrnoException;
+let SystemError: new (key: string, context: { code: string, syscall: string, message: string }) => NodeJS.ErrnoException;
 
 beforeEach(async() => {
   testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdtest-'));
@@ -66,24 +81,21 @@ describe('manageLinesInFile', () => {
 
   describe('Target exists as a plain file', () => {
     testUnix('Preserves extended attributes', async() => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
-      // @ts-ignore // fs-xattr is not available on Windows.
-      const { get, list, set } = await import('fs-xattr');
-
+      const { listAttributes, getAttribute, setAttribute } = await import('@napi-rs/xattr');
       const unmanagedContents = 'existing lines\n';
       const attributeKey = 'user.io.rancherdesktop.test';
       const attributeValue = 'sample attribute contents';
 
       await fs.promises.writeFile(rcFilePath, unmanagedContents);
-      await set(rcFilePath, attributeKey, attributeValue);
+      await setAttribute(rcFilePath, attributeKey, attributeValue);
       await expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], true)).resolves.not.toThrow();
 
-      const allAttrs: string[] = await list(rcFilePath);
+      const allAttrs: string[] = await listAttributes(rcFilePath);
       // filter out attributes like com.apple.provenance that the OS might add
       const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.'));
 
       expect(filteredAttrs).toEqual([attributeKey]);
-      await expect(get(rcFilePath, attributeKey)).resolves.toEqual(Buffer.from(attributeValue, 'utf-8'));
+      await expect(getAttribute(rcFilePath, attributeKey)).resolves.toEqual(Buffer.from(attributeValue, 'utf-8'));
     });
 
     test('Delete file when false and it contains only the managed lines', async() => {
@@ -98,6 +110,7 @@ describe('manageLinesInFile', () => {
     });
 
     test('Put lines in file that exists and has content', async() => {
+      const { listAttributes } = await import('@napi-rs/xattr');
       const data = 'this is already present in the file\n';
       const expectedContents = [data, START_LINE, TEST_LINE_1, END_LINE, ''].join('\n');
 
@@ -106,10 +119,7 @@ describe('manageLinesInFile', () => {
 
       await expect(fs.promises.readFile(rcFilePath, 'utf8')).resolves.toEqual(expectedContents);
       if (process.platform !== 'win32') {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
-        // @ts-ignore // fs-xattr is not available on Windows.
-        const { list } = await import('fs-xattr');
-        const allAttrs: string[] = await list(rcFilePath);
+        const allAttrs: string[] = await listAttributes(rcFilePath);
         // filter out attributes like com.apple.provenance that the OS might add
         const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.'));
 
@@ -173,8 +183,8 @@ describe('manageLinesInFile', () => {
 
       await fs.promises.writeFile(rcFilePath, unmanagedContents, { mode: 0o600 });
 
-      using spyWriteFile = withResource(jest.spyOn(fs.promises, 'writeFile'));
-      using spyRename = withResource(jest.spyOn(fs.promises, 'rename'));
+      using spyWriteFile = withResource(modules.fs.promises.writeFile);
+      using spyRename = withResource(modules.fs.promises.rename);
 
       await manageLinesInFile(rcFilePath, [TEST_LINE_1], true);
       expect(spyWriteFile).not.toHaveBeenCalledWith(rcFilePath, expect.anything());
@@ -191,7 +201,7 @@ describe('manageLinesInFile', () => {
       await fs.promises.writeFile(rcFilePath, unmanagedContents, { mode: 0o600 });
       const originalWriteFile = fs.promises.writeFile;
 
-      using spyWriteFile = withResource(jest.spyOn(fs.promises, 'writeFile'))
+      using spyWriteFile = withResource(modules.fs.promises.writeFile)
         .mockImplementation(async(file, data, options) => {
           if (file.toString() === tempFilePath) {
             throw new SystemError('EACCESS', {
@@ -311,7 +321,7 @@ describe('manageLinesInFile', () => {
       await fs.promises.writeFile(rcFilePath, unmanagedContents, { mode: 0o600 });
       const originalWriteFile = fs.promises.writeFile;
 
-      using spyWriteFile = withResource(jest.spyOn(fs.promises, 'writeFile'))
+      using spyWriteFile = withResource(modules.fs.promises.writeFile)
         .mockImplementation(async(file, data, options) => {
           if (file !== rcFilePath) {
             // Don't fail when writing to any other files.

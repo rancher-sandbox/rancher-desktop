@@ -4,7 +4,7 @@
  * showing deprecations.
  */
 
-const { spawnSync } = require('node:child_process');
+import { spawnSync } from 'node:child_process';
 
 function main(args) {
   const childArgs = [
@@ -13,7 +13,6 @@ function main(args) {
     '--trace-deprecation',
     '--max_old_space_size=4096',
     '--stack-size=16384',
-    '--conditions=import',
   ];
 
   const finalArgs = [...childArgs, ...args];
@@ -35,8 +34,6 @@ function main(args) {
   }
 }
 
-if (require.main === module) {
-  // Silence BrowsersList warnings because they're pointless for us
-  process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true'; // spellcheck-ignore-line
-  main(process.argv.slice(2));
-}
+// Silence BrowsersList warnings because they're pointless for us
+process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true'; // spellcheck-ignore-line
+main(process.argv.slice(2));

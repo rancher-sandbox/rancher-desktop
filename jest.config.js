@@ -1,16 +1,18 @@
-module.exports = {
+// @ts-check
+import { TS_EXT_TO_TREAT_AS_ESM, ESM_TS_TRANSFORM_PATTERN } from 'ts-jest';
+
+/** @type {import('jest').Config} */
+export default {
   transform: {
-    '^.+\\.js$':  'babel-jest',
-    '^.+\\.ts$':  'ts-jest',
-    '^.+\\.vue$': '@vue/vue2-jest',
+    [ESM_TS_TRANSFORM_PATTERN]: ['ts-jest', { useESM: true }],
+    '^.+\\.vue$':               './pkg/rancher-desktop/utils/testUtils/vue-jest.js',
   },
-  transformIgnorePatterns: [
-    '/node_modules/(?!(yaml|jsonpath-plus|@kubernetes/client-node)/)',
-  ],
-  moduleFileExtensions: [
+  transformIgnorePatterns: [],
+  extensionsToTreatAsEsm:  [...TS_EXT_TO_TREAT_AS_ESM, '.vue'],
+  moduleFileExtensions:    [
     'js',
     'json',
-    'node', // For native modules, e.g. fs-xattr
+    'node', // For native modules, e.g. @napi-rs/xattr
     'ts',
     'vue',
   ],
@@ -26,11 +28,17 @@ module.exports = {
     '^@pkg/assets/': '<rootDir>/pkg/rancher-desktop/config/emptyStubForJSLinter.js',
     '^@pkg/(.*)$':   '<rootDir>/pkg/rancher-desktop/$1',
   },
-  preset:     'ts-jest/presets/js-with-babel',
   setupFiles: [
     '<rootDir>/pkg/rancher-desktop/utils/testUtils/setupElectron.ts',
+    '<rootDir>/pkg/rancher-desktop/utils/testUtils/setupVue.ts',
   ],
   testEnvironment:        'jsdom',
+  testEnvironmentOptions: {
+    customExportConditions: [
+      'node',
+      'node-addons',
+    ],
+  },
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/pkg/rancher-desktop/sudo-prompt/',

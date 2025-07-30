@@ -1,6 +1,6 @@
 <script lang="ts">
-import Vue from 'vue';
-export default Vue.extend({
+import { defineComponent } from 'vue';
+export default defineComponent({
   name:  'preferences-nav-item',
   props: {
     /**
@@ -18,6 +18,7 @@ export default Vue.extend({
       required: true,
     },
   },
+  emits:   ['click'],
   methods: {
     navClicked() {
       this.$emit('click', this.name);

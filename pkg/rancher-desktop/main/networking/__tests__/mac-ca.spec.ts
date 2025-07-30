@@ -2,32 +2,34 @@ import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 
-import getMacCertificates from '../mac-ca';
+import { jest } from '@jest/globals';
 
-import { spawnFile } from '@pkg/utils/childProcess';
-
-// mock crypto to fake certificates.
-jest.mock('crypto');
+import type { spawnFile } from '@pkg/utils/childProcess';
+import mockModules from '@pkg/utils/testUtils/mockModules';
 
 // mock child process execution to return our own results.
 jest.mock('@pkg/utils/childProcess');
+
+const modules = mockModules({
+  crypto:                    { X509Certificate: jest.fn<(blob: crypto.BinaryLike) => crypto.X509Certificate>() },
+  '@pkg/utils/childProcess': { spawnFile: jest.fn<typeof spawnFile>() },
+});
 
 /**
  * testCertMock is a subset of crypto.X509Certificate with an additional bit to
  * indicate whether we expect this certificate to be accepted.
  */
 interface testCertMock {
-  ca: boolean;
-  issuer: string;
-  subject: string;
+  ca:         boolean;
+  issuer:     string;
+  subject:    string;
   acceptable: boolean;
 }
 
 const testDarwin = os.platform() === 'darwin' ? test : test.skip;
-const spawnFileMock = spawnFile as jest.MockedFunction<typeof spawnFile>;
-const X509CertificateMock = crypto.X509Certificate as jest.MockedClass<typeof crypto.X509Certificate>;
 
 testDarwin('getMacCertificates', async() => {
+  const { default: getMacCertificates } = await import('../mac-ca');
   const endCertMarker = '\n-----END CERTIFICATE-----';
   // test certificates; keyed by keychain, then cert PEM
   const testCerts: Record<string, Record<string, testCertMock>> = {
@@ -73,7 +75,7 @@ testDarwin('getMacCertificates', async() => {
     }
   }
 
-  async function mockSpawnFile(command: string, args: string[], opts: {stdio?:any[]}): Promise<{stdout: string}> {
+  async function mockSpawnFile(command: string, args: string[], opts: { stdio?: any[] }): Promise<{ stdout: string }> {
     let stdout = '';
     const handlers: Record<string, () => Promise<void>> = {
       'list-keychains': () => {
@@ -141,9 +143,9 @@ testDarwin('getMacCertificates', async() => {
     return { stdout };
   }
 
-  spawnFileMock.mockImplementation(mockSpawnFile as any);
-  X509CertificateMock.mockImplementation((buffer) => {
-    const pem = buffer as string;
+  modules['@pkg/utils/childProcess'].spawnFile.mockImplementation(mockSpawnFile as any);
+  modules.crypto.X509Certificate.mockImplementation((buffer) => {
+    const pem = buffer.toString();
     const keychain = pemToKeychain[pem];
 
     expect(pemToKeychain).toHaveProperty(pem);

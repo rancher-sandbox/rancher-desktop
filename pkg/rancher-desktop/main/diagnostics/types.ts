@@ -6,25 +6,25 @@ export enum DiagnosticsCategory {
   Testing = 'Testing',
 }
 
-type DiagnosticsFix = {
+interface DiagnosticsFix {
   /** A textual description of the fix to be displayed to the user. */
   description: string;
-};
+}
 
 /**
  * DiagnosticsCheckerResult is the result for running a given diagnostics
  * checker.
  */
-export type DiagnosticsCheckerResult = {
+export interface DiagnosticsCheckerResult {
   /** Link to documentation about this check. */
   documentation?: string,
   /** User-visible markdown description about this check. */
-  description: string,
+  description:    string,
   /** If true, the check succeeded (no fixes need to be applied). */
-  passed: boolean,
+  passed:         boolean,
   /** Potential fixes when this check fails. */
-  fixes: DiagnosticsFix[],
-};
+  fixes:          DiagnosticsFix[],
+}
 
 export type DiagnosticsCheckerSingleResult = DiagnosticsCheckerResult & {
   /**
@@ -40,7 +40,7 @@ export type DiagnosticsCheckerSingleResult = DiagnosticsCheckerResult & {
  */
 export interface DiagnosticsChecker {
   /** Unique identifier for this check. */
-  id: string;
+  id:       string;
   category: DiagnosticsCategory,
   /**
    * Whether any of the checks this checker supports should be used on this

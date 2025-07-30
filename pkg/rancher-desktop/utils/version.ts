@@ -1,10 +1,10 @@
-import { app } from 'electron';
+import Electron from 'electron';
 
 import { spawnFile } from '@pkg/utils/childProcess';
 
 export function getProductionVersion() {
   try {
-    return app.getVersion();
+    return Electron.app.getVersion();
   } catch (err) {
     console.log(`Can't get app version: ${ err }`);
 

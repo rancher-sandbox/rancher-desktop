@@ -30,7 +30,7 @@ test.describe('WSL Integrations', () => {
   let preferencesWindow: Page;
 
   test.beforeAll(async() => {
-    const stubDir = path.resolve(__dirname, '..', 'src', 'go', 'mock-wsl');
+    const stubDir = path.resolve(import.meta.dirname, '..', 'src', 'go', 'mock-wsl');
 
     workdir = await fs.promises.mkdtemp(
       path.join(os.tmpdir(), 'rd-test-wsl-integration-'));
@@ -46,13 +46,13 @@ test.describe('WSL Integrations', () => {
       });
   });
 
-  const writeConfig = async(opts?: {[k in 'alpha'|'beta'|'gamma']?: boolean|string}) => {
+  const writeConfig = async(opts?: Partial<Record<'alpha' | 'beta' | 'gamma', boolean | string>>) => {
     const config: {
       commands: {
-        args: string[],
-        mode?: string,
-        stdout?: string,
-        stderr?: string,
+        args:     string[],
+        mode?:    string,
+        stdout?:  string,
+        stderr?:  string,
         utf16le?: boolean,
       }[]
     } = {

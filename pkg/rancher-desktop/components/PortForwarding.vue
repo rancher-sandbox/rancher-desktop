@@ -29,11 +29,11 @@
             :label="'Include Kubernetes services'"
             :value="includeKubernetesServices"
             :disabled="!isRunning || kubernetesIsDisabled"
-            @input="handleCheckbox"
+            @update:value="handleCheckbox"
           />
         </div>
       </template>
-      <template #col:listenPort="{row}">
+      <template #col:listenPort="{ row }">
         <div
           v-if="serviceBeingEditedIs(row)"
           class="listen-port-div"
@@ -53,25 +53,25 @@
           </p>
         </div>
       </template>
-      <template #row-actions="{row}">
+      <template #row-actions="{ row }">
         <div
-          v-if="row.row.listenPort === undefined && !serviceBeingEditedIs(row.row)"
+          v-if="row.listenPort === undefined && !serviceBeingEditedIs(row)"
           class="action-div"
         >
           <button
             class="btn btn-sm role-tertiary"
-            @click="emitEditPortForward(row.row)"
+            @click="emitEditPortForward(row)"
           >
             Forward
           </button>
         </div>
         <div
-          v-else-if="serviceBeingEditedIs(row.row)"
+          v-else-if="serviceBeingEditedIs(row)"
           class="action-div"
         >
           <button
             class="btn btn-sm role-tertiary btn-icon"
-            @click="emitCancelEditPortForward(row.row)"
+            @click="emitCancelEditPortForward(row)"
           >
             <span class="icon icon-x icon-lg" />
           </button>
@@ -88,7 +88,7 @@
         >
           <button
             class="btn btn-sm role-tertiary"
-            @click="emitCancelPortForward(row.row)"
+            @click="emitCancelPortForward(row)"
           >
             Cancel
           </button>
@@ -100,7 +100,7 @@
 
 <script lang="ts">
 import { Banner, Checkbox } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import * as K8s from '@pkg/backend/k8s';
 import SortableTable from '@pkg/components/SortableTable/index.vue';
@@ -109,13 +109,14 @@ import type { PropType } from 'vue';
 
 type ServiceEntryWithKey = K8s.ServiceEntry & { key: string };
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'port-forwarding',
   components: {
     SortableTable, Checkbox, Banner,
   },
   directives: {
     focus: {
-      inserted(element) {
+      mounted(element) {
         element.focus();
       },
     },

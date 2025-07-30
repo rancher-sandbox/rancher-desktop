@@ -1,10 +1,12 @@
 <script lang="ts">
-import { Checkbox } from '@rancher/components';
-import Vue from 'vue';
+import * as Components from '@rancher/components';
+import { defineComponent } from 'vue';
 
 import TooltipIcon from '@pkg/components/form/TooltipIcon.vue';
 
-export default Vue.extend({
+const { Checkbox } = (Components as any).default ?? Components;
+
+export default defineComponent({
   name:         'rd-checkbox',
   components:   { TooltipIcon, Checkbox },
   inheritAttrs: false,
@@ -40,10 +42,9 @@ export default Vue.extend({
 <template>
   <div class="rd-checkbox-container">
     <checkbox
+      v-bind="$attrs"
       class="checkbox"
       :disabled="$attrs.disabled || isLocked"
-      v-bind="$attrs"
-      v-on="$listeners"
     >
       <template #label>
         <slot name="label">
@@ -89,7 +90,7 @@ export default Vue.extend({
 </template>
 
 <style lang="scss" scoped>
-.checkbox::v-deep .checkbox-outer-container-description {
+.checkbox :deep(.checkbox-outer-container-description) {
   font-size: 11px;
 }
 .tooltip-icon {

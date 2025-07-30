@@ -1,5 +1,6 @@
 import events from 'events';
 
+import { jest } from '@jest/globals';
 import Electron from 'electron';
 
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
@@ -13,7 +14,7 @@ describe('IpcMainProxy', () => {
   let subject: ReturnType<typeof getIpcMainProxy>;
 
   class E extends events.EventEmitter implements Electron.IpcMain {
-    protected handlers: Record<string, {once: boolean, handler: Handler}> = {};
+    protected handlers: Record<string, { once: boolean, handler: Handler }> = {};
 
     handle(channel: string, handler: Handler) {
       this.handleInternal(channel, handler, false);
@@ -137,7 +138,9 @@ describe('IpcMainProxy', () => {
 
   it('should allow adding event handlers', async() => {
     const topic = 'api-get-credentials' as const;
-    const cb = jest.fn().mockImplementation(() => Promise.resolve(1));
+
+    type cbType = Parameters<typeof subject.handle<typeof topic>>[1];
+    const cb = jest.fn().mockImplementation(() => Promise.resolve(1)) as cbType;
 
     subject.handle(topic, cb);
     await expect(emitter.invoke(topic)).resolves.not.toThrow();
@@ -147,7 +150,9 @@ describe('IpcMainProxy', () => {
 
   it('should allow removing event handlers', async() => {
     const topic = 'api-get-credentials' as const;
-    const cb = jest.fn().mockImplementation(() => Promise.resolve(1));
+
+    type cbType = Parameters<typeof subject.handle<typeof topic>>[1];
+    const cb = jest.fn().mockImplementation(() => Promise.resolve(1)) as cbType;
 
     subject.handle(topic, cb);
     subject.removeHandler(topic);
@@ -158,7 +163,9 @@ describe('IpcMainProxy', () => {
 
   it('should allow single-use event handlers', async() => {
     const topic = 'api-get-credentials' as const;
-    const cb = jest.fn().mockImplementation(() => Promise.resolve(1));
+
+    type cbType = Parameters<typeof subject.handle<typeof topic>>[1];
+    const cb = jest.fn().mockImplementation(() => Promise.resolve(1)) as cbType;
 
     subject.handleOnce(topic, cb);
     await expect(emitter.invoke(topic)).resolves.not.toThrow();

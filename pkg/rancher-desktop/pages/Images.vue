@@ -11,8 +11,8 @@
       :selected-namespace="settings.images.namespace"
       :supports-namespaces="supportsNamespaces"
       :protected-images="protectedImages"
-      @toggledShowAll="onShowAllImagesChanged"
-      @switchNamespace="onChangeNamespace"
+      @toggled-show-all="onShowAllImagesChanged"
+      @switch-namespace="onChangeNamespace"
     />
   </div>
 </template>
@@ -142,7 +142,7 @@ export default {
     ipcRenderer.on('extensions/changed', this.fetchExtensions);
     this.$store.dispatch('extensions/fetch');
   },
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.invoke('images-mounted', false);
     ipcRenderer.removeAllListeners('images-mounted');
     ipcRenderer.removeAllListeners('images-changed');

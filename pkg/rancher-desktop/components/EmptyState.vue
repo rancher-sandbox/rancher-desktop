@@ -1,6 +1,6 @@
 <script lang="ts">
-import Vue from 'vue';
-export default Vue.extend({
+import { defineComponent } from 'vue';
+export default defineComponent({
   name:  'empty-state',
   props: {
     icon: {
@@ -34,7 +34,7 @@ export default Vue.extend({
         <span
           class="icon"
           :class="icon"
-        ></span>
+        />
       </slot>
     </div>
     <div class="empty-state-heading">
@@ -54,7 +54,7 @@ export default Vue.extend({
       v-if="hasPrimaryActionSlot"
       class="empty-state-primary-action"
     >
-      <slot name="primary-action"></slot>
+      <slot name="primary-action" />
     </div>
   </div>
 </template>

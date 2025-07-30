@@ -1,95 +1,123 @@
 <template>
   <div class="container-logs">
-
-    <div class="container-info">
-      <span class="container-name">{{ containerName }}</span>
+    <div
+      class="container-info"
+      data-testid="container-info"
+    >
+      <span
+        class="container-name"
+        data-testid="container-name"
+      >{{ containerName }}</span>
       <badge-state
-          :color="isContainerRunning ? 'bg-success' : 'bg-darker'"
-          :label="containerState"
+        :color="isContainerRunning ? 'bg-success' : 'bg-darker'"
+        :label="containerState"
+        data-testid="container-state"
       />
     </div>
 
-    <div class="search-widget">
-      <i aria-hidden="true" class="icon icon-search search-icon"/>
-      <input
-          ref="searchInput"
-          v-model="searchTerm"
-          aria-label="Search in logs"
-          class="search-input"
-          placeholder="Search logs..."
-          type="search"
-          @input="performSearch"
-          @keydown="handleSearchKeydown"
+    <div
+      class="search-widget"
+      data-testid="search-widget"
+    >
+      <i
+        aria-hidden="true"
+        class="icon icon-search search-icon"
       />
-      <button
-          :disabled="!searchTerm"
-          aria-label="Previous match"
-          class="search-btn role-tertiary"
-          title="Previous match"
-          @click="searchPrevious"
+      <input
+        ref="searchInput"
+        v-model="searchTerm"
+        aria-label="Search in logs"
+        class="search-input"
+        data-testid="search-input"
+        placeholder="Search logs..."
+        type="search"
+        @input="performSearch"
+        @keydown="handleSearchKeydown"
       >
-        <i aria-hidden="true" class="icon icon-chevron-up"/>
+      <button
+        :disabled="!searchTerm"
+        aria-label="Previous match"
+        class="search-btn role-tertiary"
+        data-testid="search-prev-btn"
+        title="Previous match"
+        @click="searchPrevious"
+      >
+        <i
+          aria-hidden="true"
+          class="icon icon-chevron-up"
+        />
       </button>
       <button
-          :disabled="!searchTerm"
-          aria-label="Next match"
-          class="search-btn role-tertiary"
-          title="Next match"
-          @click="searchNext"
+        :disabled="!searchTerm"
+        aria-label="Next match"
+        class="search-btn role-tertiary"
+        data-testid="search-next-btn"
+        title="Next match"
+        @click="searchNext"
       >
-        <i aria-hidden="true" class="icon icon-chevron-down"/>
+        <i
+          aria-hidden="true"
+          class="icon icon-chevron-down"
+        />
       </button>
       <button
-          :disabled="!searchTerm"
-          aria-label="Clear search"
-          class="search-close-btn role-tertiary"
-          title="Clear search"
-          @click="clearSearch"
+        :disabled="!searchTerm"
+        aria-label="Clear search"
+        class="search-close-btn role-tertiary"
+        data-testid="search-clear-btn"
+        title="Clear search"
+        @click="clearSearch"
       >
-        <i aria-hidden="true" class="icon icon-x"/>
+        <i
+          aria-hidden="true"
+          class="icon icon-x"
+        />
       </button>
     </div>
 
     <loading-indicator
-        v-if="isLoading"
-        class="content-state"
+      v-if="isLoading || waitingForInitialLogs"
+      class="content-state"
+      data-testid="loading-indicator"
     >
       {{ t('containers.logs.loading') }}
     </loading-indicator>
 
     <banner
-        v-else-if="error"
-        class="content-state"
-        color="error"
+      v-if="error && !waitingForInitialLogs"
+      class="content-state"
+      color="error"
+      data-testid="error-message"
     >
-      <span class="icon icon-info-circle icon-lg"/>
+      <span class="icon icon-info-circle icon-lg" />
       {{ error }}
     </banner>
 
     <div
-        v-else
-        ref="terminalContainer"
-        class="terminal-container"
+      v-if="!isLoading"
+      ref="terminalContainer"
+      :class="['terminal-container', { 'terminal-hidden': waitingForInitialLogs }]"
+      data-testid="terminal"
     />
   </div>
 </template>
 
 <script>
-import {BadgeState, Banner} from '@rancher/components';
-import Vue from 'vue';
-import {mapGetters} from 'vuex';
-import {Terminal} from '@xterm/xterm';
-import {FitAddon} from '@xterm/addon-fit';
-import {WebLinksAddon} from '@xterm/addon-web-links';
-import {SearchAddon} from '@xterm/addon-search';
+import { BadgeState, Banner } from '@rancher/components';
+import { FitAddon } from '@xterm/addon-fit';
+import { SearchAddon } from '@xterm/addon-search';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+import { Terminal } from '@xterm/xterm';
+import { defineComponent } from 'vue';
+import { mapGetters } from 'vuex';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
-import {ContainerEngine} from '@pkg/config/settings';
-import {ipcRenderer} from '@pkg/utils/ipcRenderer';
+import { ContainerEngine } from '@pkg/config/settings';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
-  name: 'ContainerLogs',
-  title: 'Container Logs',
+export default defineComponent({
+  name:       'ContainerLogs',
+  title:      'Container Logs',
   components: {
     BadgeState,
     Banner,
@@ -97,27 +125,33 @@ export default Vue.extend({
   },
   data() {
     return {
-      settings: undefined,
-      ddClient: null,
-      isLoading: true,
-      error: null,
-      containerName: '',
-      containerState: '',
-      isContainerRunning: false,
-      terminal: null,
-      fitAddon: null,
-      searchAddon: null,
-      streamProcess: null,
-      searchTerm: '',
-      resizeHandler: null,
-      reconnectAttempts: 0,
-      maxReconnectAttempts: 5,
-      searchDebounceTimer: null,
+      settings:               undefined,
+      ddClient:               null,
+      isLoading:              true,
+      error:                  null,
+      containerName:          '',
+      containerState:         '',
+      isContainerRunning:     false,
+      terminal:               null,
+      fitAddon:               null,
+      searchAddon:            null,
+      streamProcess:          null,
+      searchTerm:             '',
+      resizeHandler:          null,
+      reconnectAttempts:      0,
+      maxReconnectAttempts:   5,
+      searchDebounceTimer:    null,
       containerCheckInterval: null,
+      /** Controls terminal visibility - true hides terminal until logs arrive to prevent fast scroll */
+      waitingForInitialLogs:  true,
+      /** Timeout ID for 200ms delay before revealing terminal after initial logs */
+      revealTimeout:          null,
+      /** Tracks if any log output has been received - used with fallback timer to ensure terminal reveals even without logs */
+      hasReceivedLogs:        false,
     };
   },
   computed: {
-    ...mapGetters('k8sManager', {isK8sReady: 'isReady'}),
+    ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     containerId() {
       const id = this.$route.params.id;
       // Validate container ID format (alphanumeric + hyphens/underscores only)
@@ -132,21 +166,41 @@ export default Vue.extend({
   },
   mounted() {
     this.$store.dispatch('page/setHeader', {
-      title: this.t('containers.logs.title'),
+      title:       this.t('containers.logs.title'),
       description: '',
     });
 
     ipcRenderer.on('settings-read', this.onSettingsRead);
 
     ipcRenderer.send('settings-read');
-    // Don't call initializeLogs here - wait for settings to load
 
     window.addEventListener('keydown', this.handleGlobalKeydown);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.stopStreaming();
     this.stopContainerChecking();
-    this.terminal?.dispose();
+    if (this.terminal) {
+      try {
+        if (this.resizeHandler) {
+          window.removeEventListener('resize', this.resizeHandler);
+          this.resizeHandler = null;
+        }
+
+        if (this.searchAddon) {
+          this.searchAddon.clearDecorations();
+          this.searchAddon = null;
+        }
+
+        if (this.fitAddon) {
+          this.fitAddon = null;
+        }
+
+        this.terminal.dispose();
+        this.terminal = null;
+      } catch (error) {
+        console.error('Error disposing terminal:', error);
+      }
+    }
     ipcRenderer.off('settings-read', this.onSettingsRead);
     window.removeEventListener('keydown', this.handleGlobalKeydown);
     if (this.resizeHandler) {
@@ -154,6 +208,9 @@ export default Vue.extend({
     }
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
+    }
+    if (this.revealTimeout) {
+      clearTimeout(this.revealTimeout);
     }
   },
   methods: {
@@ -172,8 +229,8 @@ export default Vue.extend({
     async getContainerInfo() {
       try {
         const listOptions = {
-          all: true,
-          filters: `id=${this.containerId}`,
+          all:     true,
+          filters: `id=${ this.containerId }`,
         };
 
         if (this.hasNamespaceSelected) {
@@ -203,26 +260,33 @@ export default Vue.extend({
     async startStreaming() {
       try {
         this.error = null;
+        this.waitingForInitialLogs = true;
+        this.hasReceivedLogs = false;
 
         if (!this.terminal) {
           await this.initializeTerminal();
         }
 
         const streamOptions = {
-          cwd: '/',
+          cwd:    '/',
           stream: {
             onOutput: (data) => {
               if (this.terminal && (data.stdout || data.stderr)) {
                 const output = data.stdout || data.stderr;
 
-                const buffer = this.terminal.buffer.active;
-                const viewport = this.terminal.rows;
-                const isAtBottom = buffer.viewportY >= buffer.length - viewport;
+                this.hasReceivedLogs = true;
 
                 this.terminal.write(output);
 
-                if (isAtBottom) {
-                  this.terminal.scrollToBottom();
+                if (this.waitingForInitialLogs) {
+                  if (this.revealTimeout) {
+                    clearTimeout(this.revealTimeout);
+                  }
+
+                  this.revealTimeout = setTimeout(() => {
+                    this.terminal.scrollToBottom();
+                    this.waitingForInitialLogs = false;
+                  }, 200);
                 }
               }
             },
@@ -233,7 +297,7 @@ export default Vue.extend({
             onClose: (code) => {
               this.streamProcess = null;
               if (code !== 0 && this.isContainerRunning) {
-                this.handleStreamError(new Error(`Stream closed with code ${code}`));
+                this.handleStreamError(new Error(`Stream closed with code ${ code }`));
               }
             },
             splitOutputLines: false,
@@ -250,19 +314,24 @@ export default Vue.extend({
 
         this.reconnectAttempts = 0;
 
-
+        setTimeout(() => {
+          if (this.waitingForInitialLogs && !this.hasReceivedLogs) {
+            this.waitingForInitialLogs = false;
+          }
+        }, 500);
       } catch (error) {
         console.error('Error starting log stream:', error);
 
+        this.waitingForInitialLogs = false;
+
         const errorMessages = {
-          'No such container': 'Container not found. It may have been removed.',
-          'permission denied': 'Permission denied. Check Docker access permissions.',
-          'connection refused': 'Cannot connect to Docker. Is Docker running?'
+          'No such container':  'Container not found. It may have been removed.',
+          'permission denied':  'Permission denied. Check Docker access permissions.',
+          'connection refused': 'Cannot connect to Docker. Is Docker running?',
         };
 
         const errorKey = Object.keys(errorMessages).find(key => error.message.includes(key));
         this.error = errorKey ? errorMessages[errorKey] : (error.message || this.t('containers.logs.fetchError'));
-
       }
     },
     stopStreaming() {
@@ -303,34 +372,34 @@ export default Vue.extend({
       if (this.$refs.terminalContainer) {
         this.terminal = new Terminal({
           theme: {
-            background: '#1a1a1a',
-            foreground: '#e0e0e0',
-            cursor: '#8be9fd',
-            selection: 'rgba(139, 233, 253, 0.3)',
-            black: '#000000',
-            red: '#ff5555',
-            green: '#50fa7b',
-            yellow: '#f1fa8c',
-            blue: '#8be9fd',
-            magenta: '#ff79c6',
-            cyan: '#8be9fd',
-            white: '#f8f8f2',
-            brightBlack: '#6272a4',
-            brightRed: '#ff6e6e',
-            brightGreen: '#69ff94',
-            brightYellow: '#ffffa5',
-            brightBlue: '#d6acff',
+            background:    '#1a1a1a',
+            foreground:    '#e0e0e0',
+            cursor:        '#8be9fd',
+            selection:     'rgba(139, 233, 253, 0.3)',
+            black:         '#000000',
+            red:           '#ff5555',
+            green:         '#50fa7b',
+            yellow:        '#f1fa8c',
+            blue:          '#8be9fd',
+            magenta:       '#ff79c6',
+            cyan:          '#8be9fd',
+            white:         '#f8f8f2',
+            brightBlack:   '#6272a4',
+            brightRed:     '#ff6e6e',
+            brightGreen:   '#69ff94',
+            brightYellow:  '#ffffa5',
+            brightBlue:    '#d6acff',
             brightMagenta: '#ff92df',
-            brightCyan: '#a4ffff',
-            brightWhite: '#ffffff'
+            brightCyan:    '#a4ffff',
+            brightWhite:   '#ffffff',
           },
-          fontSize: 14,
-          fontFamily: '\'Courier New\', \'Monaco\', monospace',
-          cursorBlink: false,
+          fontSize:     14,
+          fontFamily:   '\'Courier New\', \'Monaco\', monospace',
+          cursorBlink:  false,
           disableStdin: true,
-          convertEol: true,
-          scrollback: 50000,
-          wordWrap: true
+          convertEol:   true,
+          scrollback:   50000,
+          wordWrap:     true,
         });
 
         this.fitAddon = new FitAddon();
@@ -465,7 +534,6 @@ export default Vue.extend({
   }
 }
 
-
 .container-info {
   grid-area: info;
   display: flex;
@@ -498,6 +566,10 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
 
+  &.terminal-hidden {
+    visibility: hidden;
+  }
+
   :deep(.xterm) {
     padding: 1rem;
     height: 100%;
@@ -507,7 +579,6 @@ export default Vue.extend({
     overflow: hidden;
   }
 }
-
 
 .search-widget {
   grid-area: search;
@@ -553,7 +624,6 @@ export default Vue.extend({
     background: var(--body-bg);
   }
 }
-
 
 .search-btn,
 .search-close-btn {

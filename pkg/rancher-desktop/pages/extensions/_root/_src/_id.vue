@@ -1,18 +1,19 @@
 <script lang="ts">
 
 import { ipcRenderer } from 'electron';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import ExtensionsError from '@pkg/components/ExtensionsError.vue';
 import ExtensionsUninstalled from '@pkg/components/ExtensionsUninstalled.vue';
 import { hexDecode } from '@pkg/utils/string-encode';
 
 interface ExtensionsData {
-  error: Error | undefined;
+  error:           Error | undefined;
   isExtensionGone: boolean;
 }
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'extension-ui',
   components: { ExtensionsError, ExtensionsUninstalled },
   beforeRouteEnter(to, _from, next) {
     const { params: { root, src, id } } = to;
@@ -52,7 +53,7 @@ export default Vue.extend({
     ipcRenderer.on('err:extensions/open', this.extensionError);
     ipcRenderer.on('ok:extensions/uninstall', this.extensionUninstalled);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.off('err:extensions/open', this.extensionError);
   },
   methods: {

@@ -1,12 +1,12 @@
 import type { Page, Locator } from '@playwright/test';
 
 export class ExtensionsPage {
-  readonly page: Page;
-  readonly cardEpinio: Locator;
+  readonly page:          Page;
+  readonly cardEpinio:    Locator;
   readonly buttonInstall: Locator;
-  readonly tabInstalled: Locator;
-  readonly tabCatalog: Locator;
-  readonly navEpinio: Locator;
+  readonly tabInstalled:  Locator;
+  readonly tabCatalog:    Locator;
+  readonly navEpinio:     Locator;
 
   constructor(page: Page) {
     this.page = page;

@@ -54,7 +54,7 @@ func TestNewPortProxyUDP(t *testing.T) {
 		UpstreamAddress: testServerIP,
 		UDPBufferSize:   1024,
 	}
-	portProxy := portproxy.NewPortProxy(localListener, proxyConfig)
+	portProxy := portproxy.NewPortProxy(t.Context(), localListener, proxyConfig)
 	go portProxy.Start()
 
 	_, testPort, err := net.SplitHostPort(targetConn.LocalAddr().String())
@@ -75,7 +75,7 @@ func TestNewPortProxyUDP(t *testing.T) {
 		},
 	}
 	t.Logf("sending the following portMapping to portProxy: %+v", portMapping)
-	err = marshalAndSend(localListener, portMapping)
+	err = marshalAndSend(t.Context(), localListener, portMapping)
 	require.NoError(t, err)
 
 	// indicate when UDP mappings are ready
@@ -115,7 +115,8 @@ func TestNewPortProxyTCP(t *testing.T) {
 	testServerIP, err := availableIP()
 	require.NoError(t, err, "cannot continue with the test since there are no available IP addresses")
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:", testServerIP))
+	listenerConfig := &net.ListenConfig{}
+	listener, err := listenerConfig.Listen(t.Context(), "tcp", fmt.Sprintf("%s:", testServerIP))
 	require.NoError(t, err)
 	defer listener.Close()
 
@@ -138,11 +139,11 @@ func TestNewPortProxyTCP(t *testing.T) {
 	proxyConfig := &portproxy.ProxyConfig{
 		UpstreamAddress: testServerIP,
 	}
-	portProxy := portproxy.NewPortProxy(localListener, proxyConfig)
+	portProxy := portproxy.NewPortProxy(t.Context(), localListener, proxyConfig)
 	go portProxy.Start()
 
 	getURL := fmt.Sprintf("http://localhost:%s", testPort)
-	resp, err := httpGetRequest(context.Background(), getURL)
+	resp, err := httpGetRequest(t.Context(), getURL)
 	require.ErrorIsf(t, err, syscall.ECONNREFUSED, "no listener should be available for port: %s", testPort)
 	if resp != nil {
 		resp.Body.Close()
@@ -163,10 +164,10 @@ func TestNewPortProxyTCP(t *testing.T) {
 		},
 	}
 	t.Logf("sending the following portMapping to portProxy: %+v", portMapping)
-	err = marshalAndSend(localListener, portMapping)
+	err = marshalAndSend(t.Context(), localListener, portMapping)
 	require.NoError(t, err)
 
-	resp, err = httpGetRequest(context.Background(), getURL)
+	resp, err = httpGetRequest(t.Context(), getURL)
 	require.NoError(t, err)
 	require.Equal(t, resp.StatusCode, http.StatusOK)
 	defer resp.Body.Close()
@@ -185,10 +186,10 @@ func TestNewPortProxyTCP(t *testing.T) {
 			},
 		},
 	}
-	err = marshalAndSend(localListener, portMapping)
+	err = marshalAndSend(t.Context(), localListener, portMapping)
 	require.NoError(t, err)
 
-	resp, err = httpGetRequest(context.Background(), getURL)
+	resp, err = httpGetRequest(t.Context(), getURL)
 	require.Errorf(t, err, "the listener for port: %s should already be closed", testPort)
 	require.ErrorIs(t, err, syscall.ECONNREFUSED)
 	if resp != nil {
@@ -212,12 +213,15 @@ func httpGetRequest(ctx context.Context, url string) (*http.Response, error) {
 	return resp, nil
 }
 
-func marshalAndSend(listener net.Listener, portMapping types.PortMapping) error {
+func marshalAndSend(ctx context.Context, listener net.Listener, portMapping types.PortMapping) error {
 	b, err := json.Marshal(portMapping)
 	if err != nil {
 		return err
 	}
-	c, err := net.Dial(listener.Addr().Network(), listener.Addr().String())
+	testDialer := net.Dialer{
+		Timeout: 5 * time.Second,
+	}
+	c, err := testDialer.DialContext(ctx, listener.Addr().Network(), listener.Addr().String())
 	if err != nil {
 		return err
 	}

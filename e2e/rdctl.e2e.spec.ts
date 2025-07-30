@@ -24,7 +24,7 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 import _ from 'lodash';
-import fetch, { RequestInit } from 'node-fetch';
+import fetch from 'node-fetch';
 import yaml from 'yaml';
 
 import { NavPage } from './pages/nav-page';
@@ -50,13 +50,14 @@ import paths from '@pkg/utils/paths';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { ElectronApplication, Page } from '@playwright/test';
+import type { RequestInit } from 'node-fetch';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;
   let serverState: ServerState;
   let page: Page;
   const ENOENTMessage = os.platform() === 'win32' ? 'The system cannot find the file specified' : 'no such file or directory';
-  const appPath = path.join(__dirname, '../');
+  const appPath = path.dirname(import.meta.dirname);
 
   async function doRequest(path: string, body = '', method = 'GET') {
     const url = `http://127.0.0.1:${ serverState.port }/${ path.replace(/^\/*/, '') }`;
@@ -90,7 +91,7 @@ test.describe('Command server', () => {
     }
   }
 
-  async function rdctlWithStdin(inputFile: string, commandArgs: string[]): Promise< { stdout: string, stderr: string, error?: any}> {
+  async function rdctlWithStdin(inputFile: string, commandArgs: string[]): Promise< { stdout: string, stderr: string, error?: any }> {
     let stream: fs.ReadStream | null = null;
 
     try {
@@ -549,7 +550,7 @@ test.describe('Command server', () => {
 
     test('should no longer work', async() => {
       for (const method in endpoints) {
-        for (const endpoint of endpoints[method as 'GET'|'PUT']) {
+        for (const endpoint of endpoints[method as 'GET' | 'PUT']) {
           const resp = await doRequest(`/v0/${ endpoint }`, '', method);
 
           expect({
@@ -678,7 +679,7 @@ test.describe('Command server', () => {
     });
 
     test.describe('set', () => {
-      const unsupportedPrefsByPlatform: {[x in NodeJS.Platform] ?: [string, any][]} = {
+      const unsupportedPrefsByPlatform: Partial<Record<NodeJS.Platform, [string, any][]>> = {
         win32: [
           ['application.admin-access', true],
           ['application.path-management-strategy', 'rcfiles'],
@@ -850,12 +851,14 @@ test.describe('Command server', () => {
         test('accepts new settings', async() => {
           const oldSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
           const body: RecursivePartial<Settings> = {
-            ...(os.platform() === 'win32' ? {} : {
-              virtualMachine: {
-                memoryInGB: oldSettings.virtualMachine.memoryInGB + 1,
-                numberCPUs: oldSettings.virtualMachine.numberCPUs + 1,
-              },
-            }),
+            ...(os.platform() === 'win32'
+              ? {}
+              : {
+                virtualMachine: {
+                  memoryInGB: oldSettings.virtualMachine.memoryInGB + 1,
+                  numberCPUs: oldSettings.virtualMachine.numberCPUs + 1,
+                },
+              }),
             version:     CURRENT_SETTINGS_VERSION,
             application: {
               // XXX: Can't change adminAccess until we can process the sudo-request dialog (and decline it)
@@ -1185,7 +1188,7 @@ test.describe('Command server', () => {
 
       test.describe('getting endpoints', () => {
         async function getEndpoints() {
-          const apiSpecPath = path.join(path.dirname(__filename), '../pkg/rancher-desktop/assets/specs/command-api.yaml');
+          const apiSpecPath = path.join(import.meta.dirname, '../pkg/rancher-desktop/assets/specs/command-api.yaml');
           const apiSpec = await fs.promises.readFile(apiSpecPath, 'utf-8');
           const specPaths = yaml.parse(apiSpec).paths;
 

@@ -1,10 +1,11 @@
 <script>
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { networkStatus } from '@pkg/utils/networks';
 
-export default Vue.extend({
+export default defineComponent({
+  name:  'network-status',
   props: {
     icon: {
       type:    String,
@@ -80,7 +81,7 @@ export default Vue.extend({
       v-if="isStatusBarItem"
       class="icon icon-dot"
       :class="networkStatus ? 'online' : 'offline'"
-    ></i>
+    />
   </span>
 </template>
 

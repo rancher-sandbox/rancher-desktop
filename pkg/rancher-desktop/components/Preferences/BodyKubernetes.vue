@@ -1,7 +1,7 @@
 <script lang="ts">
 
 import { Banner } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import RdInput from '@pkg/components/RdInput.vue';
@@ -15,7 +15,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-body-kubernetes',
   components: {
     Banner,
@@ -106,7 +106,7 @@ export default Vue.extend({
         label="Enable Kubernetes"
         :value="preferences.kubernetes.enabled"
         :is-locked="isPreferenceLocked('kubernetes.enabled')"
-        @input="onChange('kubernetes.enabled', $event)"
+        @update:value="onChange('kubernetes.enabled', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -116,7 +116,7 @@ export default Vue.extend({
     >
       <rd-select
         class="select-k8s-version"
-        :value="kubernetesVersion"
+        :model-value="kubernetesVersion"
         :disabled="isKubernetesDisabled"
         :is-locked="isPreferenceLocked('kubernetes.version')"
         @change="onChange('kubernetes.version', $event.target.value)"
@@ -175,7 +175,7 @@ export default Vue.extend({
         :disabled="isKubernetesDisabled"
         :value="preferences.kubernetes.options.traefik"
         :is-locked="isPreferenceLocked('kubernetes.options.traefik')"
-        @input="onChange('kubernetes.options.traefik', $event)"
+        @update:value="onChange('kubernetes.options.traefik', $event)"
       />
       <!-- Don't disable Spinkube option when Wasm is disabled; let validation deal with it  -->
       <rd-checkbox
@@ -184,12 +184,18 @@ export default Vue.extend({
         :value="preferences.experimental.kubernetes.options.spinkube"
         :is-locked="isPreferenceLocked('experimental.kubernetes.options.spinkube')"
         :is-experimental="true"
-        @input="onChange('experimental.kubernetes.options.spinkube', $event)"
+        @update:value="onChange('experimental.kubernetes.options.spinkube', $event)"
       >
-        <template v-if="spinOperatorIncompatible" #below>
+        <template
+          v-if="spinOperatorIncompatible"
+          #below
+        >
           <banner color="warning">
             Spin operator requires
-            <a href="#" @click.prevent="$root.navigate('Container Engine', 'general')">WebAssembly</a>
+            <a
+              href="#"
+              @click.prevent="$root.navigate('Container Engine', 'general')"
+            >WebAssembly</a>
             to be enabled.
           </banner>
         </template>

@@ -1,5 +1,12 @@
 <template>
   <div class="containers">
+    <banner
+      v-if="error"
+      color="error"
+      @close="error = null"
+    >
+      {{ error }}
+    </banner>
     <SortableTable
       ref="sortableTableRef"
       class="containersTable"
@@ -10,8 +17,10 @@
       :row-actions="true"
       :paging="true"
       :rows-per-page="10"
-      :has-advanced-filtering="true"
+      :has-advanced-filtering="false"
       :loading="!containersList"
+      group-by="projectGroup"
+      :group-sort="['projectGroup']"
     >
       <template #header-middle>
         <div class="header-middle">
@@ -34,7 +43,7 @@
           </div>
         </div>
       </template>
-      <template #col:containerState="{row}">
+      <template #col:containerState="{ row }">
         <td>
           <badge-state
             :color="isRunning(row) ? 'bg-success' : 'bg-darker'"
@@ -42,14 +51,14 @@
           />
         </td>
       </template>
-      <template #col:imageName="{row}">
+      <template #col:imageName="{ row }">
         <td>
           <span v-tooltip="getTooltipConfig(row.imageName)">
             {{ shortSha(row.imageName) }}
           </span>
         </td>
       </template>
-      <template #col:containerName="{row}">
+      <template #col:containerName="{ row }">
         <td>
           <span v-tooltip="getTooltipConfig(row.containerName)">
             {{ shortSha(row.containerName) }}
@@ -93,14 +102,23 @@
           </div>
         </td>
       </template>
+      <template #group-row="{ group }">
+        <tr class="group-row">
+          <td :colspan="headers.length + 1">
+            <div class="group-tab">
+              {{ group.ref }} ({{ group.rows.length }})
+            </div>
+          </td>
+        </tr>
+      </template>
     </SortableTable>
   </div>
 </template>
 
 <script>
-import { BadgeState } from '@rancher/components';
+import { BadgeState, Banner } from '@rancher/components';
 import { shell } from 'electron';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
@@ -114,10 +132,10 @@ let containerCheckInterval = null;
  * @property Id {string} The container id
  */
 
-export default Vue.extend({
+export default defineComponent({
   name:       'Containers',
   title:      'Containers',
-  components: { SortableTable, BadgeState },
+  components: { SortableTable, BadgeState, Banner },
   data() {
     return {
       /** @type import('@pkg/config/settings').Settings | undefined */
@@ -126,6 +144,7 @@ export default Vue.extend({
       containersList:       null,
       showRunning:          false,
       containersNamespaces: [],
+      error:                null,
       headers:              [
         // INFO: Disable for now since we can only get the running containers.
         {
@@ -163,7 +182,8 @@ export default Vue.extend({
         return [];
       }
 
-      const containers = structuredClone(this.containersList);
+      // `this.containersList` is a Proxy; so we can't use structedClone.
+      const containers = JSON.parse(JSON.stringify(this.containersList));
 
       return containers.map((container) => {
         const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
@@ -185,6 +205,18 @@ export default Vue.extend({
           } else {
             container.State = container.Status.toLowerCase();
           }
+        }
+
+        const k8sPodName = container.Labels?.['io.kubernetes.pod.name'];
+        const k8sNamespace = container.Labels?.['io.kubernetes.pod.namespace'];
+        const composeProject = container.Labels?.['com.docker.compose.project'];
+
+        if (k8sPodName && k8sNamespace) {
+          container.projectGroup = `${ k8sNamespace }/${ k8sPodName }`;
+        } else if (composeProject) {
+          container.projectGroup = composeProject;
+        } else {
+          container.projectGroup = 'Standalone Containers';
         }
 
         container.availableActions = [
@@ -276,7 +308,7 @@ export default Vue.extend({
     this.checkContainers().catch(console.error);
     containerCheckInterval = setInterval(this.checkContainers.bind(this), 1_000);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.removeAllListeners('settings-update');
     ipcRenderer.removeAllListeners('containers-namespaces');
     ipcRenderer.removeAllListeners('containers-namespaces-containers');
@@ -385,7 +417,7 @@ export default Vue.extend({
       await this.execCommand('rm', container);
     },
     viewLogs(container) {
-      this.$router.push(`/containers/logs/${container.Id}`);
+      this.$router.push(`/containers/logs/${ container.Id }`);
     },
     isRunning(container) {
       return container.State === 'running' || container.Status === 'Up';
@@ -418,8 +450,34 @@ export default Vue.extend({
 
         return stdout;
       } catch (error) {
-        window.alert(error.message);
-        console.error(`Error executing command ${ command }`, error.message);
+        const extractErrorMessage = (err) => {
+          const rawMessage = err?.message || err?.stderr || err || '';
+
+          if (typeof rawMessage === 'string') {
+            // Extract message from fatal/error format: time="..." level=fatal msg="actual message"
+            const msgMatch = rawMessage.match(/msg="((?:[^"\\]|\\.)*)"/);
+            if (msgMatch) {
+              return msgMatch[1];
+            }
+
+            // Fallback: remove timestamp and level prefixes
+            const cleanedMessage = rawMessage
+              .replace(/time="[^"]*"\s*/g, '')
+              .replace(/level=(fatal|error|info)\s*/g, '')
+              .replace(/msg="/g, '')
+              .replace(/"\s*Error: exit status \d+/g, '')
+              .trim();
+
+            if (cleanedMessage) {
+              return cleanedMessage;
+            }
+          }
+
+          return `Failed to execute command: ${ command }`;
+        };
+
+        this.error = extractErrorMessage(error);
+        console.error(`Error executing command ${ command }`, error);
       }
     },
     shortSha(sha) {
@@ -540,10 +598,10 @@ export default Vue.extend({
   min-width: 8rem;
 }
 
-.containersTable::v-deep .search-box {
+.containersTable :deep(.search-box) {
   align-self: flex-end;
 }
-.containersTable::v-deep .bulk {
+.containersTable :deep(.bulk) {
   align-self: flex-end;
 }
 

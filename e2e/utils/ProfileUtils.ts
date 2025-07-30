@@ -45,7 +45,7 @@ async function fileExists(fullPath: string): Promise<boolean> {
   return false;
 }
 
-function getDeploymentBaseNames(platform: 'linux'|'darwin'): string[] {
+function getDeploymentBaseNames(platform: 'linux' | 'darwin'): string[] {
   if (platform === 'linux') {
     return ['rancher-desktop.defaults.json', 'rancher-desktop.locked.json'];
   } else if (platform === 'darwin') {
@@ -55,7 +55,7 @@ function getDeploymentBaseNames(platform: 'linux'|'darwin'): string[] {
   }
 }
 
-function getDeploymentPaths(platform: 'linux'|'darwin', profileDir: string): string[] {
+function getDeploymentPaths(platform: 'linux' | 'darwin', profileDir: string): string[] {
   let baseNames = getDeploymentBaseNames(platform);
 
   if (platform === 'linux' && profileDir === paths.deploymentProfileSystem) {
@@ -141,7 +141,7 @@ export async function verifyNoSystemProfile(): Promise<string[]> {
       return [ex.message];
     }
   }
-  const profilePaths = getDeploymentPaths(platform as 'linux'|'darwin', paths.deploymentProfileSystem);
+  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
   const existingProfiles = [];
 
   for (const profilePath of profilePaths) {
@@ -175,7 +175,7 @@ export async function verifySystemProfile(): Promise<string[]> {
  * then wait for the main window to open.
  */
 export async function testForFirstRunWindow(testInfo: TestInfo, options: startRancherDesktopOptions) {
-  let page: Page|undefined;
+  let page: Page | undefined;
   let navPage: NavPage;
   let windowCount = 0;
   let windowCountForMainPage = 0;
@@ -237,7 +237,7 @@ export async function testForFirstRunWindow(testInfo: TestInfo, options: startRa
  * the first window to appear is the main window).
  */
 export async function testForNoFirstRunWindow(testInfo: TestInfo, options: startRancherDesktopOptions) {
-  let page: Page|undefined;
+  let page: Page | undefined;
   let navPage: NavPage;
   let windowCount = 0;
   let windowCountForMainPage = 0;

@@ -17,9 +17,9 @@ const ipcMainProxy = getIpcMainProxy(console);
 
 interface ImageContents {
   imageName: string,
-  tag: string,
-  imageID: string,
-  size: string
+  tag:       string,
+  imageID:   string,
+  size:      string
 }
 
 // Map image-related events to the associated image processor's methods

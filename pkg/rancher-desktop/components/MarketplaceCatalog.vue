@@ -1,18 +1,14 @@
 <script lang="ts">
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import MarketplaceCard from '@pkg/components/MarketplaceCard.vue';
-import { Settings, ContainerEngine } from '@pkg/config/settings';
+import { ContainerEngine } from '@pkg/config/settings';
 import type { ExtensionState, MarketplaceData } from '@pkg/store/extensions';
 
 type ExtensionData = MarketplaceData;
 
-interface VuexBindings {
-  getPreferences: Settings;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   name:       'marketplace-catalog',
   components: { MarketplaceCard },
   data() {
@@ -22,7 +18,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
     ...mapGetters('preferences', ['getPreferences']),
     ...mapGetters('extensions', ['installedExtensions', 'marketData']) as {
       installedExtensions: () => ExtensionState[],
-      marketData: () => MarketplaceData[],
+      marketData:          () => MarketplaceData[],
     },
     containerEngine(): string {
       return this.getPreferences.containerEngine.name;
@@ -77,7 +73,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       v-model="searchValue"
       type="text"
       placeholder="Search"
-    />
+    >
     <div
       v-if="filteredExtensions.length === 0"
       class="extensions-content-missing"

@@ -11,9 +11,9 @@ const console = Logging.diagnostics;
  */
 export type DiagnosticsResult = DiagnosticsCheckerResult & {
   /** The diagnostics checker that produced this result. */
-  id: string,
+  id:       string,
   /** Whether to avoid notifying the user about failures for this check. */
-  mute: boolean,
+  mute:     boolean,
   category: DiagnosticsCategory,
 };
 
@@ -21,10 +21,10 @@ export type DiagnosticsResult = DiagnosticsCheckerResult & {
  * DiagnosticsResultCollection is the data structure that will be returned to
  * clients over the HTTP API.
  */
-export type DiagnosticsResultCollection = {
+export interface DiagnosticsResultCollection {
   last_update: string,
-  checks: Array<DiagnosticsResult>,
-};
+  checks:      DiagnosticsResult[],
+}
 
 /**
  * DiagnosticsManager manages the collection of diagnostics checkers, and is
@@ -38,30 +38,33 @@ export class DiagnosticsManager {
   lastUpdate = new Date(0);
 
   /** Last known check results, indexed by the checker id. */
-  results: Record<DiagnosticsChecker['id'], DiagnosticsCheckerResult|DiagnosticsCheckerSingleResult[]> = {};
+  results: Record<DiagnosticsChecker['id'], DiagnosticsCheckerResult | DiagnosticsCheckerSingleResult[]> = {};
 
   /** Mapping of category name to diagnostic ids */
   readonly checkerIdByCategory: Partial<Record<DiagnosticsCategory, string[]>> = {};
 
   constructor(diagnostics?: DiagnosticsChecker[]) {
-    this.checkers = diagnostics ? Promise.resolve(diagnostics) : (async() => {
-      const imports = (await Promise.all([
-        import('./connectedToInternet'),
-        import('./dockerCliSymlinks'),
-        import('./integrationsWindows'),
-        import('./kubeConfigSymlink'),
-        import('./kubeContext'),
-        import('./kubeVersionsAvailable'),
-        import('./limaDarwin'),
-        import('./mockForScreenshots'),
-        import('./pathManagement'),
-        import('./rdBinInShell'),
-        import('./testCheckers'),
-        import('./wslFromStore'),
-      ])).map(obj => obj.default);
+    this.checkers = diagnostics
+      ? Promise.resolve(diagnostics)
+      : (async() => {
+        const imports = (await Promise.all([
+          import('./connectedToInternet'),
+          import('./dockerCliSymlinks'),
+          import('./dockerContext'),
+          import('./integrationsWindows'),
+          import('./kubeConfigSymlink'),
+          import('./kubeContext'),
+          import('./kubeVersionsAvailable'),
+          import('./limaDarwin'),
+          import('./mockForScreenshots'),
+          import('./pathManagement'),
+          import('./rdBinInShell'),
+          import('./testCheckers'),
+          import('./wslFromStore'),
+        ])).map(obj => obj.default);
 
-      return (await Promise.all(imports)).flat();
-    })();
+        return (await Promise.all(imports)).flat();
+      })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
         this.checkerIdByCategory[checker.category] ??= [];
@@ -83,14 +86,14 @@ export class DiagnosticsManager {
   /**
    * Returns the list of currently known category names.
    */
-  getCategoryNames(): Array<string> {
+  getCategoryNames(): string[] {
     return Object.keys(this.checkerIdByCategory);
   }
 
   /**
    * Returns undefined if the categoryName isn't known, the list of IDs in that category otherwise.
    */
-  getIdsForCategory(categoryName: string): Array<string> | undefined {
+  getIdsForCategory(categoryName: string): string[] | undefined {
     return this.checkerIdByCategory[categoryName as DiagnosticsCategory];
   }
 

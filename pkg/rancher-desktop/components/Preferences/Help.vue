@@ -1,11 +1,11 @@
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import Help from '@pkg/components/Help.vue';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-help',
   components: { Help },
   methods:    {

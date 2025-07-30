@@ -25,16 +25,16 @@ export class RDBinInShellPath implements DiagnosticsChecker {
     this.args = args.concat(`printf "\n${ pathOutputDelimiter }%s\n" "$PATH"`);
   }
 
-  id: string;
+  id:         string;
   executable: string;
-  args: string[];
+  args:       string[];
   category = DiagnosticsCategory.Utilities;
   applicable(): Promise<boolean> {
     return Promise.resolve(['darwin', 'linux'].includes(process.platform));
   }
 
   async check(): Promise<DiagnosticsCheckerResult> {
-    const fixes: {description: string}[] = [];
+    const fixes: { description: string }[] = [];
     let passed = false;
     let description: string;
 

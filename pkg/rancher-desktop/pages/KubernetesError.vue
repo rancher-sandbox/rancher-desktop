@@ -5,7 +5,7 @@
         <img
           id="logo"
           src="../../../resources/icons/logo-square-red@2x.png"
-        />
+        >
         <span>
           <h2 data-test="k8s-error-header">
             {{ t('app.name') }} Error
@@ -59,11 +59,12 @@
 <script lang="ts">
 import os from 'os';
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
+  name:   'kubernetes-error-dialog',
   layout: 'dialog',
   data() {
     return {

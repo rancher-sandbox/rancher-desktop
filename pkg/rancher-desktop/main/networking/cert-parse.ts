@@ -43,12 +43,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-import forge, { asn1 } from 'node-forge';
+import forge from 'node-forge';
 
 import Logging from '@pkg/utils/logging';
 import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.background;
+const { asn1 } = forge;
 
 const x509CertificateValidityValidator = {
   name:        'Certificate',
@@ -147,11 +148,11 @@ const x509CertificateValidityValidator = {
  */
 function parseIssuer(encoded: any): Record<string, string> {
   const decoded: {
-        type: string;
-        value: string;
-        name?: string;
-        shortName?: string;
-    }[] = (forge.pki as any).RDNAttributesAsArray(encoded);
+    type:       string;
+    value:      string;
+    name?:      string;
+    shortName?: string;
+  }[] = (forge.pki as any).RDNAttributesAsArray(encoded);
   const result: Record<string, string> = Object.create({}, {
     toString: {
       enumerable: false,
@@ -219,12 +220,12 @@ export default function checkCertValidity(pem: string): boolean {
   }
   const obj = forge.asn1.fromDer(msg.body);
   const capture: {
-        validityUTC1?: string;
-        validityGeneralized1?: string;
-        validityUTC2?: string;
-        validityGeneralized2?: string;
-        issuerEncoded?: any;
-    } = {};
+    validityUTC1?:         string;
+    validityGeneralized1?: string;
+    validityUTC2?:         string;
+    validityGeneralized2?: string;
+    issuerEncoded?:        any;
+  } = {};
   const errors: string[] = [];
   // @types/node-forge is missing many methods, so we need to cast as any.
   const valid = (forge.asn1 as any).validate(obj, x509CertificateValidityValidator, capture, errors);

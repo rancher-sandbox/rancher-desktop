@@ -1,7 +1,7 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:         'rd-input',
   inheritAttrs: false,
   props:        {
@@ -22,20 +22,22 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="rd-input-container">
+  <div
+    class="rd-input-container"
+    :class="$attrs.class"
+  >
     <input
-      :value="value"
-      :class="{ 'locked' : isLocked && !$attrs.disabled }"
-      :disabled="$attrs.disabled || isLocked"
       v-bind="$attrs"
-      v-on="$listeners"
-    />
+      :value="value"
+      :class="{ locked: isLocked && !$attrs.disabled }"
+      :disabled="!!$attrs.disabled || isLocked"
+    >
     <slot name="after">
       <i
         v-if="isLocked"
         v-tooltip="{
           content: tooltip || t('preferences.locked.tooltip'),
-          placement: 'right'
+          placement: 'right',
         }"
         class="icon icon-lock"
       />

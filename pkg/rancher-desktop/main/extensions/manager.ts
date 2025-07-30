@@ -95,7 +95,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
    * @note Only one listener per topic is supported.
    */
   protected setMainListener<K extends keyof IpcMainEvents>(channel: K, listener: IpcMainEventListener<K>) {
-    const oldListener = this.eventListeners[channel] as IpcMainEventListener<K> | undefined;
+    const oldListener = this.eventListeners[channel];
 
     if (oldListener) {
       console.error(`Removing duplicate event listener for ${ channel }`);

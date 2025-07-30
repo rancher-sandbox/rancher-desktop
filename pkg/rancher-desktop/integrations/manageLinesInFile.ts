@@ -36,25 +36,25 @@ function newErrorWithPath<T extends Record<string, any>>(messageTemplate: (input
  * this file.
  */
 export const ErrorDeterminingExtendedAttributes =
-  newErrorWithPath(({ path }: {path: string}) => `Failed to determine if \`${ path }\` contains extended attributes`);
+  newErrorWithPath(({ path }: { path: string }) => `Failed to determine if \`${ path }\` contains extended attributes`);
 /**
  * `ErrorCopyingExtendedAttributes occurs if we failed to copy extended
  * attributes while managing a file.
  */
 export const ErrorCopyingExtendedAttributes =
-  newErrorWithPath(({ path }: {path: string}) => `Failed to copy extended attributes while managing \`${ path }\``);
+  newErrorWithPath(({ path }: { path: string }) => `Failed to copy extended attributes while managing \`${ path }\``);
 /**
  * `ErrorNotRegularFile` signifies that we were unable to process a file because
  * it is not a regular file (e.g. a named pipe or a device).
  */
 export const ErrorNotRegularFile =
-  newErrorWithPath(({ path }: {path: string}) => `Refusing to manage \`${ path }\` which is neither a regular file nor a symbolic link`);
+  newErrorWithPath(({ path }: { path: string }) => `Refusing to manage \`${ path }\` which is neither a regular file nor a symbolic link`);
 /**
  * `ErrorWritingFile` signifies that we attempted to process a file but writing
  * to it resulted in unexpected contents.
  */
 export const ErrorWritingFile =
-  newErrorWithPath(({ path, backupPath }: {path: string, backupPath: string}) => `Error writing to \`${ path }\`: written contents are unexpected; see backup in \`${ backupPath }\``);
+  newErrorWithPath(({ path, backupPath }: { path: string, backupPath: string }) => `Error writing to \`${ path }\`: written contents are unexpected; see backup in \`${ backupPath }\``);
 
 /**
  * Inserts/removes fenced lines into/from a file. Idempotent.
@@ -152,15 +152,16 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
  * files must already exist.
  */
 async function copyFileExtendedAttributes(fromPath: string, toPath: string): Promise<void> {
+  const { listAttributes, getAttribute, removeAttribute, setAttribute } = await import('@napi-rs/xattr');
   try {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- This only fails on Windows
-    // @ts-ignore // fs-xattr is not available on Windows
-    const { list, get, set } = await import('fs-xattr');
+    for (const attr of await listAttributes(fromPath)) {
+      const value = await getAttribute(fromPath, attr);
 
-    for (const attr of await list(fromPath)) {
-      const value = await get(fromPath, attr);
-
-      await set(toPath, attr, value);
+      if (value === null) {
+        await removeAttribute(toPath, attr);
+      } else {
+        await setAttribute(toPath, attr, value);
+      }
     }
   } catch (cause) {
     if (process.env.NODE_ENV === 'test' && process.env.RD_TEST !== 'e2e') {

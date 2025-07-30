@@ -56,7 +56,7 @@ interface MainEventNames {
    */
   'transient-settings-fetch'(): TransientSettings;
 
-   /**
+  /**
     * Emitted to update current transient settings.
     *
     * @param transientSettings The new transient settings.
@@ -110,7 +110,7 @@ interface MainEventNames {
    * @note This does not update the last run time (since it only runs a single
    * checker).
    */
-  'diagnostics-trigger'(id: string): DiagnosticsCheckerResult|DiagnosticsCheckerResult[] | undefined;
+  'diagnostics-trigger'(id: string): DiagnosticsCheckerResult | DiagnosticsCheckerResult[] | undefined;
 
   /**
    * Generically signify that a diagnostic should be updated.
@@ -192,8 +192,8 @@ type IsHandler<eventName extends keyof MainEventNames> =
  */
 type HandlerParams<eventName extends keyof MainEventNames> =
   IsHandler<eventName> extends true
-  ? Parameters<MainEventNames[eventName]>
-  : never;
+    ? Parameters<MainEventNames[eventName]>
+    : never;
 
 /**
  * The return type for mainEvents.invoke(eventName, ...), without the Promise<>
@@ -202,8 +202,8 @@ type HandlerParams<eventName extends keyof MainEventNames> =
  */
 type HandlerReturn<eventName extends keyof MainEventNames> =
   IsHandler<eventName> extends true
-  ? Awaited<ReturnType<MainEventNames[eventName]>>
-  : never;
+    ? Awaited<ReturnType<MainEventNames[eventName]>>
+    : never;
 
 /**
  * The complete type for a handler, combining both the parameters and the
@@ -211,10 +211,10 @@ type HandlerReturn<eventName extends keyof MainEventNames> =
  */
 type HandlerType<eventName extends keyof MainEventNames> =
   IsHandler<eventName> extends true
-  ? (...args: HandlerParams<eventName>) => Promise<HandlerReturn<eventName>>
-  : never;
+    ? (...args: HandlerParams<eventName>) => Promise<HandlerReturn<eventName>>
+    : never;
 
-interface MainEvents extends EventEmitter {
+export interface MainEvents extends EventEmitter {
   emit<eventName extends keyof MainEventNames>(
     event: IsHandler<eventName> extends false ? eventName : never,
     ...args: Parameters<MainEventNames[eventName]>

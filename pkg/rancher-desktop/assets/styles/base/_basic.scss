@@ -76,6 +76,14 @@ BUTTON,
     @include form-focus }
 }
 
+button,
+input,
+optgroup,
+select,
+textarea {
+  margin: var(--outline-width);
+}
+
 A {
   @include link-color(var(--link), var(--body-text));
 

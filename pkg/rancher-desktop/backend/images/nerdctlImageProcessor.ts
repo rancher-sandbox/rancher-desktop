@@ -84,7 +84,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
     );
   }
 
-  async getNamespaces(): Promise<Array<string>> {
+  async getNamespaces(): Promise<string[]> {
     const { stdout, stderr } = await childProcess.spawnFile(executable('nerdctl'),
       ['namespace', 'list', '--quiet'],
       { stdio: ['inherit', 'pipe', 'pipe'] });
@@ -105,7 +105,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
    */
 
   parse(data: string): imageProcessor.imageType[] {
-    const images: Array<imageProcessor.imageType> = [];
+    const images: imageProcessor.imageType[] = [];
     const records = data.split(/\r?\n/)
       .filter(line => line.trim().length > 0)
       .map((line) => {

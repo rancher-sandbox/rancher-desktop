@@ -3,13 +3,13 @@ import type { Log } from '@pkg/utils/logging';
 import type { ChildProcessByStdio, SpawnOptions } from 'child_process';
 import type { Readable } from 'stream';
 
-export type ContainerBasicOptions = {
+export interface ContainerBasicOptions {
   /**
    * Namespace the container should be created in.
    * @note Silently ignored when using moby.
    */
   namespace?: string;
-};
+}
 
 /**
  * ContainerRunOptions are the options the can be passed to
@@ -17,7 +17,7 @@ export type ContainerBasicOptions = {
  */
 export type ContainerRunOptions = ContainerBasicOptions & {
   /** The name of the container. */
-  name?: string;
+  name?:    string;
   /** Container restart policy, defaults to "no". */
   restart?: 'always' | 'no';
 };
@@ -28,7 +28,7 @@ export type ContainerRunOptions = ContainerBasicOptions & {
  */
 export type ContainerStopOptions = ContainerBasicOptions & {
   /** Force stop the container (killing it uncleanly). */
-  force?: true;
+  force?:  true;
   /** Delete the container after stopping. */
   delete?: true;
 };
@@ -42,18 +42,18 @@ export type ContainerComposeOptions = ContainerBasicOptions & {
   /** The directory holding the compose files. */
   composeDir: string;
   /** The name of the project */
-  name?: string;
+  name?:      string;
   /** Environment variables to set on build */
-  env?: Record<string, string>;
+  env?:       Record<string, string>;
 };
 
 export type ContainerComposeExecOptions = ContainerComposeOptions & {
   /** The service to exec in. */
-  service: string;
+  service:  string;
   /** The command (and arguments) to execute. */
-  command: string[];
+  command:  string[];
   /** Run the command as the given (in-container) user. */
-  user?: string,
+  user?:    string,
   /** Run the command in the given (in-container) directory */
   workdir?: string;
 };
@@ -63,9 +63,9 @@ export type ReadableProcess = ChildProcessByStdio<null, Readable, Readable>;
 
 export type ContainerComposePortOptions = ContainerComposeOptions & {
   /** The service to find the port for */
-  service: string;
+  service:  string;
   /** The private port to map */
-  port: number;
+  port:     number;
   /** The protocol to use */
   protocol: 'tcp' | 'udp';
 };
@@ -161,6 +161,6 @@ export interface ContainerEngineClient {
    */
   runClient(args: string[], stdio?: 'ignore', options?: ContainerRunClientOptions): Promise<Record<string, never>>;
   runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
-  runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{stdout: string, stderr: string}>;
+  runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string, stderr: string }>;
   runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
 }

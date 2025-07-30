@@ -1,7 +1,7 @@
 <script lang="ts">
 
 import { Banner } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import EngineSelector from '@pkg/components/EngineSelector.vue';
@@ -12,7 +12,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-container-engine-general',
   components: {
     Banner,
@@ -75,12 +75,18 @@ export default Vue.extend({
         :description="t('webAssembly.description')"
         :value="preferences.experimental.containerEngine.webAssembly.enabled"
         :is-locked="isPreferenceLocked('experimental.containerEngine.webAssembly.enabled')"
-        @input="onChange('experimental.containerEngine.webAssembly.enabled', $event)"
+        @update:value="onChange('experimental.containerEngine.webAssembly.enabled', $event)"
       >
-        <template v-if="webAssemblyIncompatible" #below>
+        <template
+          v-if="webAssemblyIncompatible"
+          #below
+        >
           <banner color="warning">
             WebAssembly must be enabled for the
-            <a href="#" @click.prevent="$root.navigate('Kubernetes')">Spin Operator</a>
+            <a
+              href="#"
+              @click.prevent="$root.navigate('Kubernetes')"
+            >Spin Operator</a>
             to be installed.
           </banner>
         </template>

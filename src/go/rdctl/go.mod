@@ -6,15 +6,15 @@ toolchain go1.23.4
 
 require (
 	github.com/adrg/xdg v0.5.3
-	github.com/docker/cli v28.3.1+incompatible
+	github.com/docker/cli v28.3.3+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/spf13/cobra v1.9.1
-	github.com/spf13/pflag v1.0.6
+	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/sys v0.33.0
-	golang.org/x/text v0.26.0
+	golang.org/x/sys v0.34.0
+	golang.org/x/text v0.27.0
 )
 
 require (

@@ -1,18 +1,22 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import NavIconExtension from '@pkg/components/NavIconExtension.vue';
 import SortableTable from '@pkg/components/SortableTable/index.vue';
+import useCredentials from '@pkg/hocs/withCredentials';
 import type { ExtensionState } from '@pkg/store/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'extensions-installed',
   components: {
     LoadingIndicator, NavIconExtension, SortableTable, EmptyState,
+  },
+  setup() {
+    useCredentials();
   },
   data() {
     return {
@@ -61,7 +65,7 @@ export default Vue.extend({
     browseExtensions() {
       this.$emit('click:browse');
     },
-    extensionTitle(ext: {id: string, labels: Record<string, string>}): string {
+    extensionTitle(ext: { id: string, labels: Record<string, string> }): string {
       return ext.labels?.['org.opencontainers.image.title'] ?? ext.id;
     },
     async uninstall(installed: ExtensionState) {
@@ -119,17 +123,17 @@ export default Vue.extend({
           </empty-state>
         </td>
       </template>
-      <template #col:icon="{row}">
+      <template #col:icon="{ row }">
         <td>
           <nav-icon-extension :extension-id="row.id" />
         </td>
       </template>
-      <template #col:id="{row}">
+      <template #col:id="{ row }">
         <td>
           {{ extensionTitle(row) }}
         </td>
       </template>
-      <template #col:actions="{row}">
+      <template #col:actions="{ row }">
         <td>
           <div class="actions">
             <span
@@ -137,7 +141,7 @@ export default Vue.extend({
               name="busy"
               :is-loading="busy"
             >
-              <loading-indicator></loading-indicator>
+              <loading-indicator />
             </span>
             <button
               v-if="!busy[row.id] && row.canUpgrade"

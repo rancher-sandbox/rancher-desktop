@@ -1,9 +1,9 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import Tabbed from '@pkg/components/Tabbed/index.vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'rd-tabbed',
   components: { Tabbed },
 });
@@ -12,11 +12,11 @@ export default Vue.extend({
 <template>
   <tabbed
     v-bind="$attrs"
+    :use-hash="true"
     class="action-tabs"
-    v-on="$listeners"
   >
-    <slot name="tabs"></slot>
-    <slot></slot>
+    <slot name="tabs" />
+    <slot />
   </tabbed>
 </template>
 
@@ -26,26 +26,40 @@ export default Vue.extend({
     flex-direction: column;
     max-height: 100%;
 
-    ::v-deep .tabs:focus .tab.active {
+    :deep(.tabs:focus .tab.active) {
       text-decoration: none;
     }
 
-    ::v-deep .tabs {
+    :deep(.tabs) {
+      border: none;
       border-bottom: 1px solid var(--border);
 
-      a {
-        text-decoration: none;
+      &:focus {
+        outline: none;
+        .tab.active a span {
+          text-decoration: none;
+        }
+      }
+      .tab a:hover {
+        color: var(--link);
+        span {
+          text-decoration: none;
+        }
       }
     }
 
-    ::v-deep .tab-container {
+    :deep(.tab-container) {
       max-height: 100%;
       overflow: auto;
       background-color: transparent;
+      &.no-content {
+        border: none;
+      }
     }
 
-    ::v-deep li.tab {
+    :deep(li.tab) {
       margin-right: 0;
+      margin-bottom: -1px;
       padding-right: 0;
       border-bottom: 1px solid var(--border);
 

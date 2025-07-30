@@ -6,17 +6,27 @@
 
 import path from 'path';
 
-if ('jest' in globalThis && 'mock' in jest) {
-  jest.mock('electron', () => {
-    return {
-      __esModule: true,
-      default:    {
-        app: {
-          isPackaged: false,
-          getAppPath: () => path.resolve('.'),
-        },
-        ipcMain: {},
-      },
-    };
-  });
-}
+import { jest } from '@jest/globals';
+
+jest.unstable_mockModule('electron', () => {
+  const exports = {
+    app: {
+      isPackaged: false,
+      getAppPath: () => path.resolve('.'),
+    },
+    BrowserWindow:   {},
+    dialog:          {},
+    ipcMain:         {},
+    ipcRenderer:     {},
+    nativeTheme:     {},
+    screen:          {},
+    shell:           {},
+    WebContentsView: {},
+  };
+
+  return {
+    __esModule: true,
+    default:    exports,
+    ...exports,
+  };
+});

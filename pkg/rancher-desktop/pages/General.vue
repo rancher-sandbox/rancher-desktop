@@ -22,7 +22,7 @@
     <telemetry-opt-in
       :telemetry="settings.application.telemetry.enabled"
       :is-telemetry-locked="telemetryLocked"
-      @updateTelemetry="updateTelemetry"
+      @update-telemetry="updateTelemetry"
     />
     <hr>
     <div class="network-status">
@@ -79,7 +79,7 @@ export default {
     });
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.off('settings-update', this.onSettingsUpdate);
     ipcRenderer.off('update-state', this.onUpdateState);
   },

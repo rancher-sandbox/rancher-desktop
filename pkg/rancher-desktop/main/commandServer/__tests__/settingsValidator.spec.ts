@@ -2,17 +2,26 @@
 
 import os from 'os';
 
+import { jest } from '@jest/globals';
 import _ from 'lodash';
 import { SemVer } from 'semver';
-
-import SettingsValidator from '../settingsValidator';
 
 import * as settings from '@pkg/config/settings';
 import { MountType, VMType } from '@pkg/config/settings';
 import { getDefaultMemory } from '@pkg/config/settingsImpl';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
-import * as osVersion from '@pkg/utils/osVersion';
+import mockModules from '@pkg/utils/testUtils/mockModules';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
+
+const modules = mockModules({
+  os: {
+    arch:     jest.spyOn(os, 'arch'),
+    platform: jest.spyOn(os, 'platform'),
+  },
+  '@pkg/utils/osVersion': {
+    getMacOsVersion: jest.fn<() => SemVer>(() => new SemVer('13.5.0')),
+  },
+});
 
 const cfg = _.merge(
   {},
@@ -21,26 +30,19 @@ const cfg = _.merge(
     kubernetes:  { version: '1.29.4' },
     application: { pathManagementStrategy: PathManagementStrategy.Manual },
   });
-const subject = new SettingsValidator();
-let spyPlatform: jest.SpiedFunction<typeof os.platform>;
 
-beforeAll(async() => {
-  if (process.platform === 'darwin') {
-    await osVersion.fetchMacOsVersion();
-  }
-});
+const subject = new (await import('../settingsValidator')).default();
 
 beforeEach(() => {
-  spyPlatform = jest.spyOn(os, 'platform');
+  modules.os.platform.mockReturnValue(process.platform);
 });
-
 afterEach(() => {
-  spyPlatform.mockRestore();
+  modules.os.platform.mockRestore();
 });
 
 cfg.virtualMachine.memoryInGB ||= getDefaultMemory();
 subject.k8sVersions = ['1.29.4', '1.0.0'];
-describe(SettingsValidator, () => {
+describe('SettingsValidator', () => {
   it('should do nothing when given existing settings', () => {
     const [needToUpdate, errors] = subject.validateSettings(cfg, cfg);
 
@@ -94,15 +96,16 @@ describe(SettingsValidator, () => {
 
     // Fields that can only be set on specific platforms.
     const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
-      'application.adminAccess':                    'linux',
-      'experimental.virtualMachine.proxy.enabled':  'win32',
-      'experimental.virtualMachine.proxy.address':  'win32',
-      'experimental.virtualMachine.proxy.password': 'win32',
-      'experimental.virtualMachine.proxy.port':     'win32',
-      'experimental.virtualMachine.proxy.username': 'win32',
-      'kubernetes.ingress.localhostOnly':           'win32',
-      'virtualMachine.memoryInGB':                  'darwin',
-      'virtualMachine.numberCPUs':                  'linux',
+      'application.adminAccess':                      'linux',
+      'experimental.virtualMachine.proxy.enabled':    'win32',
+      'experimental.virtualMachine.proxy.address':    'win32',
+      'experimental.virtualMachine.proxy.password':   'win32',
+      'experimental.virtualMachine.proxy.port':       'win32',
+      'experimental.virtualMachine.proxy.username':   'win32',
+      'experimental.virtualMachine.sshPortForwarder': 'darwin',
+      'kubernetes.ingress.localhostOnly':             'win32',
+      'virtualMachine.memoryInGB':                    'darwin',
+      'virtualMachine.numberCPUs':                    'linux',
     };
 
     const spyValidateSettings = jest.spyOn(subject, 'validateSettings');
@@ -135,7 +138,7 @@ describe(SettingsValidator, () => {
 
         if (keyPath.join('.') in platformSpecificFields) {
           beforeEach(() => {
-            spyPlatform.mockReturnValue(platformSpecificFields[keyPath.join('.')]);
+            modules.os.platform.mockReturnValue(platformSpecificFields[keyPath.join('.')]);
           });
         }
 
@@ -298,7 +301,7 @@ describe(SettingsValidator, () => {
 
   describe('WSL.integrations', () => {
     beforeEach(() => {
-      spyPlatform.mockReturnValue('win32');
+      modules.os.platform.mockReturnValue('win32');
     });
 
     it('should reject invalid values', () => {
@@ -312,7 +315,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject being set on non-Windows', () => {
-      spyPlatform.mockReturnValue('haiku');
+      modules.os.platform.mockReturnValue('haiku');
       const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { WSL: { integrations: { foo: true } } });
 
       expect({ needToUpdate, errors, isFatal }).toEqual({
@@ -401,7 +404,7 @@ describe(SettingsValidator, () => {
 
   describe('pathManagementStrategy', () => {
     beforeEach(() => {
-      spyPlatform.mockReturnValue('linux');
+      modules.os.platform.mockReturnValue('linux');
     });
     describe('should accept valid settings', () => {
       test.each(Object.keys(PathManagementStrategy))('%s', (strategy) => {
@@ -770,7 +773,7 @@ describe(SettingsValidator, () => {
 
     expect({ needToUpdate, errors, isFatal }).toEqual({
       needToUpdate: false,
-      errors:       expect.objectContaining({ length: 1 }),
+      errors:       [expect.anything()],
       isFatal:      false,
     });
   });
@@ -808,18 +811,13 @@ describe(SettingsValidator, () => {
   });
 
   describe('virtualMachine.type', () => {
-    let spyArch: jest.SpiedFunction<typeof os.arch>;
-    let spyMacOsVersion: jest.SpiedFunction<typeof osVersion.getMacOsVersion>;
-
     beforeEach(() => {
-      spyPlatform.mockReturnValue('darwin');
-      spyArch = jest.spyOn(os, 'arch');
-      spyMacOsVersion = jest.spyOn(osVersion, 'getMacOsVersion');
+      modules.os.platform.mockReturnValue('darwin');
     });
 
     afterEach(() => {
-      spyArch.mockRestore();
-      spyMacOsVersion.mockRestore();
+      modules.os.arch.mockRestore();
+      modules['@pkg/utils/osVersion'].getMacOsVersion.mockRestore();
     });
 
     function checkForError(needToUpdate: boolean, errors: string[], errorMessage: string) {
@@ -849,8 +847,8 @@ describe(SettingsValidator, () => {
     }
 
     it('should reject VZ if architecture is arm and macOS version < 13.3.0', () => {
-      spyArch.mockReturnValue('arm64');
-      spyMacOsVersion.mockReturnValue(new SemVer('13.2.0'));
+      modules.os.arch.mockReturnValue('arm64');
+      modules['@pkg/utils/osVersion'].getMacOsVersion.mockReturnValue(new SemVer('13.2.0'));
       const [needToUpdate, errors] = subject.validateSettings(
         cfg, getVMTypeSetting(VMType.VZ));
 
@@ -861,8 +859,8 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject VZ if architecture is Intel macOS version < 13.0.0', () => {
-      spyArch.mockReturnValue('x64');
-      spyMacOsVersion.mockReturnValue(new SemVer('12.0.0'));
+      modules.os.arch.mockReturnValue('x64');
+      modules['@pkg/utils/osVersion'].getMacOsVersion.mockReturnValue(new SemVer('12.0.0'));
       const [needToUpdate, errors] = subject.validateSettings(
         cfg, getVMTypeSetting(VMType.VZ));
 
@@ -873,7 +871,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should reject VZ if mount type is 9p', () => {
-      spyMacOsVersion.mockReturnValue(new SemVer('13.3.0'));
+      modules['@pkg/utils/osVersion'].getMacOsVersion.mockReturnValue(new SemVer('13.3.0'));
       const [needToUpdate, errors] = subject.validateSettings(
         _.merge({}, cfg, getMountTypeSetting(MountType.NINEP)), getVMTypeSetting(VMType.VZ));
 

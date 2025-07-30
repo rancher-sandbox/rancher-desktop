@@ -1,13 +1,11 @@
 <script lang="ts">
-import Vue from 'vue';
-import VueSlider from 'vue-slider-component';
+import { defineComponent } from 'vue';
+import VueSlider from 'vue-3-slider-component';
 
 import RdInput from '@pkg/components/RdInput.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 
-import 'vue-slider-component/theme/default.css';
-
-export default Vue.extend({
+export default defineComponent({
   name:       'rd-slider',
   components: {
     VueSlider, RdFieldset, RdInput,
@@ -76,9 +74,9 @@ export default Vue.extend({
         </template>
       </rd-input>
       <vue-slider
-        ref="memory"
+        ref="slider"
         class="rd-slider-rail"
-        :value="value"
+        :model-value="value"
         :min="min"
         :max="max"
         :interval="interval"
@@ -102,6 +100,7 @@ export default Vue.extend({
   flex-direction: row;
   align-items: center;
   gap: 2rem;
+  margin-bottom: 1rem;
 }
 
 .rd-slider-rail {
@@ -113,27 +112,27 @@ export default Vue.extend({
   flex: 1;
 }
 
-.vue-slider::v-deep .vue-slider-rail {
+.vue-slider :deep(.vue-slider-rail) {
   background-color: var(--progress-bg);
 }
 
-.vue-slider::v-deep .vue-slider-mark-step {
+.vue-slider :deep(.vue-slider-mark-step) {
   background-color: var(--checkbox-tick-disabled);
   opacity: 0.5;
 }
 
-.vue-slider::v-deep .vue-slider-dot-handle {
+.vue-slider :deep(.vue-slider-dot-handle) {
   background-color: var(--scrollbar-thumb);
   box-shadow: 0.5px 0.5px 2px 1px var(--darker);
 }
 
 @media screen and (prefers-color-scheme: dark) {
-  .vue-slider::v-deep .vue-slider-dot-handle {
+  .vue-slider :deep(.vue-slider-dot-handle) {
     background-color: var(--checkbox-tick-disabled);
   }
 }
 
-.vue-slider::v-deep .vue-slider-process {
+.vue-slider :deep(.vue-slider-process) {
   background-color: var(--error);
 }
 

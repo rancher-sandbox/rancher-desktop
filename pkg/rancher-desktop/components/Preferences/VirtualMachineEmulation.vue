@@ -2,7 +2,7 @@
 
 import { RadioButton, RadioGroup } from '@rancher/components';
 import semver from 'semver';
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import IncompatiblePreferencesAlert, { CompatiblePrefs } from '@pkg/components/IncompatiblePreferencesAlert.vue';
@@ -13,12 +13,7 @@ import { RecursiveTypes } from '@pkg/utils/typeUtils';
 
 import type { PropType } from 'vue';
 
-interface VuexBindings {
-  macOsVersion: semver.SemVer;
-  isArm: boolean;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   name:       'preferences-virtual-machine-emulation',
   components: {
     IncompatiblePreferencesAlert,
@@ -36,8 +31,13 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
   computed: {
     ...mapGetters('preferences', ['isPreferenceLocked']),
     ...mapState('transientSettings', ['macOsVersion', 'isArm']),
-    options(): { label: string, value: VMType, description: string, disabled: boolean,
-      compatiblePrefs: CompatiblePrefs | [] }[] {
+    options(): {
+      label:           string,
+      value:           VMType,
+      description:     string,
+      disabled:        boolean,
+      compatiblePrefs: CompatiblePrefs | []
+    }[] {
       return Object.values(VMType)
         .map((x) => {
           return {
@@ -126,21 +126,21 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
               :options="options"
               :name="groupName"
               :disabled="isLocked"
-              :class="{ 'locked-radio' : isLocked }"
+              :class="{ 'locked-radio': isLocked }"
             >
               <template
                 v-for="(option, index) in options"
                 #[index]="{ isDisabled }"
               >
                 <radio-button
-                  :key="groupName+'-'+index"
+                  :key="groupName + '-' + index"
                   v-tooltip="disabledVmTypeTooltip(option.disabled)"
                   :name="groupName"
                   :value="preferences.virtualMachine.type"
                   :val="option.value"
                   :disabled="option.disabled || isDisabled"
                   :data-test="option.label"
-                  @input="onChange('virtualMachine.type', $event)"
+                  @update:value="onChange('virtualMachine.type', $event)"
                 >
                   <template #label>
                     {{ option.label }}
@@ -170,7 +170,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
             :label="t('virtualMachine.useRosetta.label')"
             :value="preferences.virtualMachine.useRosetta"
             :is-locked="isPreferenceLocked('virtualMachine.useRosetta')"
-            @input="onChange('virtualMachine.useRosetta', $event)"
+            @update:value="onChange('virtualMachine.useRosetta', $event)"
           />
         </rd-fieldset>
       </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { ToggleSwitch } from '@rancher/components';
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import DiagnosticsButtonRun from '@pkg/components/DiagnosticsButtonRun.vue';
@@ -11,11 +11,7 @@ import { DiagnosticsCategory } from '@pkg/main/diagnostics/types';
 
 import type { PropType } from 'vue';
 
-interface VuexBindings {
-  showMuted: boolean;
-}
-
-export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
+export default defineComponent({
   name:       'DiagnosticsBody',
   components: {
     DiagnosticsButtonRun,
@@ -85,10 +81,15 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       return `${ count } ${ units } ago`;
     },
     muteRow(isMuted: boolean, row: DiagnosticsResult) {
+      if (typeof isMuted !== 'boolean') {
+        // Because <toggle-switch> doesn't define an explicit list of events,
+        // it triggers from the underlying component too; ignore it.
+        return;
+      }
       this.$store.dispatch('diagnostics/updateDiagnostic', { isMuted, row });
     },
     toggleMute() {
-      this.$store.dispatch('preferences/setShowMuted', !this.showMuted as boolean);
+      this.$store.dispatch('preferences/setShowMuted', !this.showMuted);
     },
     toggleExpand(group: DiagnosticsCategory) {
       this.expanded[group] = !this.expanded[group];
@@ -110,7 +111,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         <toggle-switch
           off-label="Show Muted"
           :value="showMuted"
-          @input="toggleMute"
+          @update:value="toggleMute"
         />
       </div>
       <div class="spacer" />
@@ -123,6 +124,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       key-field="id"
       :headers="headers"
       :rows="filteredRows"
+      :paging="true"
       group-by="category"
       :search="false"
       :table-actions="false"
@@ -153,7 +155,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
           </empty-state>
         </td>
       </template>
-      <template #group-row="{group}">
+      <template #group-row="{ group }">
         <tr
           :ref="`group-${group.ref}`"
           class="group-row"
@@ -169,11 +171,12 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
                 :class="{
                   icon: true,
                   'icon-chevron-right': !expanded[group.ref],
-                  'icon-chevron-down': !!expanded[group.ref]
+                  'icon-chevron-down': !!expanded[group.ref],
                 }"
                 @click.stop="toggleExpand(group.ref)"
               />
               {{ group.ref }}
+              <span v-if="!expanded[group.ref]"> ({{ group.rows.length }})</span>
             </div>
           </td>
           <td
@@ -184,9 +187,9 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
           </td>
         </tr>
       </template>
-      <template #col:description="{row}">
+      <template #col:description="{ row }">
         <td>
-          <span v-html="row.description"></span>
+          <span v-html="row.description" />
           <a
             v-if="row.documentation"
             :href="row.documentation"
@@ -194,23 +197,23 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
           ><span class="icon icon-external-link" /></a>
         </td>
       </template>
-      <template #col:mute="{row}">
+      <template #col:mute="{ row }">
         <td>
           <toggle-switch
             class="mute-toggle"
             :data-test="`diagnostics-mute-row-${row.id}`"
             :value="row.mute"
-            @input="muteRow($event, row)"
+            @update:value="muteRow($event, row)"
           />
         </td>
       </template>
       <template
         v-if="featureFixes"
-        #sub-row="{row}"
+        #sub-row="{ row }"
       >
         <tr>
           <!--We want an empty data cell so description will align with name-->
-          <td></td>
+          <td />
           <td
             v-if="row.fixes.length > 0"
             class="sub-row"
@@ -278,8 +281,8 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
         }
       }
 
-      &:not([aria-expanded]) {
-        &::v-deep ~ .main-row {
+      &[aria-expanded="false"] {
+        :deep(~ .main-row) {
           visibility: collapse;
           .toggle-container {
             /* When using visibility:collapse, the toggle switch produces some
@@ -293,7 +296,7 @@ export default (Vue as VueConstructor<Vue & VuexBindings>).extend({
       }
     }
 
-    .mute-toggle::v-deep .label {
+    .mute-toggle :deep(.label) {
       /* We have no labels on the mute toggles; force them to not exist so that
          the two sides of the table have equal padding. */
       display: none;

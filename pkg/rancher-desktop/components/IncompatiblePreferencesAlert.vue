@@ -1,19 +1,20 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
-import Vue, { PropType } from 'vue';
+import { PropType, defineComponent } from 'vue';
 
 import type { NavItemName } from '@pkg/config/transientSettings';
 
 export type CompatiblePrefs = {
   /** title is the string to display to the user to describe the preference. */
-  title: string,
+  title:       string,
   /** navItemName is the nav item (top level navigation) to switch to. */
   navItemName: NavItemName;
   /** tabName is the tab to switch to, if any */
-  tabName?: string,
+  tabName?:    string,
 }[];
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'incompatible-preferences-alert',
   components: { Banner },
   props:      {
     compatiblePrefs: {
@@ -73,7 +74,7 @@ export default Vue.extend({
 </template>
 
 <style scoped lang="scss">
-  ::v-deep .banner__content {
+  :deep(.banner__content) {
     flex-wrap: wrap;
   }
 </style>

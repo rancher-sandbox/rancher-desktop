@@ -1,24 +1,25 @@
 import os from 'os';
 import path from 'path';
 
-import paths, { Paths } from '../paths';
+import mockModules from '../testUtils/mockModules';
+
+import type { Paths } from '../paths';
 
 const RESOURCES_PATH = path.join(process.cwd(), 'resources');
 
 type Platform = 'darwin' | 'linux' | 'win32';
 type expectedData = Record<Platform, string | Error>;
 
-jest.mock('electron', () => {
-  return {
-    __esModule: true,
-    default:    {
-      app: {
-        isPackaged: false,
-        getAppPath: () => process.cwd(),
-      },
+mockModules({
+  electron: {
+    app: {
+      isPackaged: false,
+      getAppPath: () => process.cwd(),
     },
-  };
+  },
 });
+
+const { default: paths } = await import('../paths');
 
 describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
@@ -100,7 +101,7 @@ describe('paths', () => {
   };
 
   const table = Object.entries(cases).flatMap(
-    ([prop, data]) => Object.entries(data).map<[string, Platform, string|Error]>(
+    ([prop, data]) => Object.entries(data).map<[string, Platform, string | Error]>(
       ([platform, expected]) => [prop, platform as Platform, expected],
     ),
   ).filter(([_, platform]) => platform === process.platform);

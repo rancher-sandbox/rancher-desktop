@@ -1,9 +1,9 @@
 <script lang="ts">
 
 import { shell } from 'electron';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:  'help',
   props: {
     url: {
@@ -38,11 +38,11 @@ export default Vue.extend({
     <i
       v-tooltip="{
         content: tooltip,
-        placement: 'left'
+        placement: 'left',
       }"
       class="icon icon-question-mark"
       :class="{
-        disabled
+        disabled,
       }"
       @click="openUrl"
     />

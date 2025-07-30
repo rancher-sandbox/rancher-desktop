@@ -22,11 +22,12 @@
 
 <script lang="ts">
 import { Checkbox } from '@rancher/components';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'wsl-integration',
   components: { Checkbox },
 
   props: {
@@ -57,7 +58,7 @@ export default Vue.extend({
 
   computed: {
     integrationsList() {
-      const results: {name: string, value: boolean, disabled: boolean, description: string}[] = [];
+      const results: { name: string, value: boolean, disabled: boolean, description: string }[] = [];
 
       for (const [name, value] of Object.entries(this.integrations)) {
         if (typeof value === 'boolean') {

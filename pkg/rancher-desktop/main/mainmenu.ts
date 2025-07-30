@@ -13,13 +13,13 @@ async function versionedDocsUrl() {
 }
 
 export default function buildApplicationMenu(): void {
-  const menuItems: Array<MenuItem> = getApplicationMenu();
+  const menuItems: MenuItem[] = getApplicationMenu();
   const menu = Menu.buildFromTemplate(menuItems);
 
   Menu.setApplicationMenu(menu);
 }
 
-function getApplicationMenu(): Array<MenuItem> {
+function getApplicationMenu(): MenuItem[] {
   switch (process.platform) {
   case 'darwin':
     return getMacApplicationMenu();
@@ -53,12 +53,14 @@ function getViewMenu(): MenuItem {
   return new MenuItem({
     label:   '&View',
     submenu: [
-      ...(Electron.app.isPackaged ? [] : [
-        { role: 'reload', label: '&Reload' },
-        { role: 'forceReload', label: '&Force Reload' },
-        { role: 'toggleDevTools', label: 'Toggle &Developer Tools' },
-        { type: 'separator' },
-      ] as const),
+      ...(Electron.app.isPackaged
+        ? []
+        : [
+          { role: 'reload', label: '&Reload' },
+          { role: 'forceReload', label: '&Force Reload' },
+          { role: 'toggleDevTools', label: 'Toggle &Developer Tools' },
+          { type: 'separator' },
+        ] as const),
       {
         label:       '&Actual Size',
         accelerator: 'CmdOrCtrl+0',
@@ -87,17 +89,19 @@ function getViewMenu(): MenuItem {
 }
 
 function getHelpMenu(isMac: boolean): MenuItem {
-  const helpMenuItems: Array<MenuItemConstructorOptions> = [
-    ...(!isMac ? [
-      {
-        role:  'about',
-        label: `&About ${ Electron.app.name }`,
-        click() {
-          Electron.app.showAboutPanel();
-        },
-      } as MenuItemConstructorOptions,
-      { type: 'separator' } as MenuItemConstructorOptions,
-    ] : []),
+  const helpMenuItems: MenuItemConstructorOptions[] = [
+    ...(!isMac
+      ? [
+        {
+          role:  'about',
+          label: `&About ${ Electron.app.name }`,
+          click() {
+            Electron.app.showAboutPanel();
+          },
+        } as MenuItemConstructorOptions,
+        { type: 'separator' } as MenuItemConstructorOptions,
+      ]
+      : []),
     {
       label: isMac ? 'Rancher Desktop &Help' : 'Get &Help',
       click: async() => {
@@ -131,7 +135,7 @@ function getHelpMenu(isMac: boolean): MenuItem {
   });
 }
 
-function getMacApplicationMenu(): Array<MenuItem> {
+function getMacApplicationMenu(): MenuItem[] {
   return [
     new MenuItem({
       label:   Electron.app.name,
@@ -162,7 +166,7 @@ function getMacApplicationMenu(): Array<MenuItem> {
   ];
 }
 
-function getWindowsApplicationMenu(): Array<MenuItem> {
+function getWindowsApplicationMenu(): MenuItem[] {
   return [
     new MenuItem({
       label:   '&File',

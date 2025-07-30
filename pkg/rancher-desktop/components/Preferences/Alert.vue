@@ -1,8 +1,8 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapState } from 'vuex';
 
-type AlertMap = Record<'reset'|'restart'|'error', string>;
+type AlertMap = Record<'reset' | 'restart' | 'error', string>;
 
 const alertMap: AlertMap = {
   reset:   'preferences.actions.banner.reset',
@@ -10,7 +10,7 @@ const alertMap: AlertMap = {
   error:   'preferences.actions.banner.error',
 };
 
-export default Vue.extend({
+export default defineComponent({
   name:     'preferences-alert',
   computed: {
     ...mapState('preferences', ['severities', 'preferencesError']),

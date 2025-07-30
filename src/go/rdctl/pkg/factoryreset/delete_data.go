@@ -17,6 +17,7 @@ limitations under the License.
 package factoryreset
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -91,7 +92,7 @@ func clearDockerContext() error {
 	return os.Rename(scratchFile.Name(), configFilePath)
 }
 
-func deleteLimaVM() error {
+func deleteLimaVM(ctx context.Context) error {
 	appPaths, err := paths.GetPaths()
 	if err != nil {
 		return err
@@ -103,5 +104,5 @@ func deleteLimaVM() error {
 	if err != nil {
 		return err
 	}
-	return exec.Command(limactl, "delete", "-f", "0").Run()
+	return exec.CommandContext(ctx, limactl, "delete", "-f", "0").Run()
 }

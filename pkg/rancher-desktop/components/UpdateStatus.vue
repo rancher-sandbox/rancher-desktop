@@ -4,7 +4,7 @@
       <version />
       <rd-checkbox
         v-if="updatePossible"
-        v-model="updatesEnabled"
+        v-model:value="updatesEnabled"
         class="updatesEnabled"
         label="Check for updates automatically"
         :is-locked="autoUpdateLocked"
@@ -53,7 +53,7 @@
         >
           {{ applyMessage }}
         </button>
-        <span v-else></span>
+        <span v-else />
       </template>
     </card>
     <card
@@ -76,17 +76,17 @@
         </p>
       </template>
       <template #actions>
-        <div></div>
+        <div />
       </template>
     </card>
   </div>
 </template>
 
 <script lang="ts">
-import { Card } from '@rancher/components';
+import * as Components from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import Version from '@pkg/components/Version.vue';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
@@ -94,7 +94,10 @@ import { UpdateState } from '@pkg/main/update';
 
 import type { PropType } from 'vue';
 
-export default Vue.extend({
+const { Card } = (Components as any).default ?? Components;
+
+export default defineComponent({
+  name:       'update-status',
   components: {
     Version, Card, RdCheckbox,
   },

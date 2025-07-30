@@ -1,7 +1,7 @@
 declare module '@shell/core/types' {
   class IPlugin {
-    metadata: any;
+    metadata:   any;
     addProduct: any;
-    addRoutes: any;
+    addRoutes:  any;
   }
 }

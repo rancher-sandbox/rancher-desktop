@@ -1,11 +1,24 @@
-import RegistryAuth from '@pkg/backend/containerClient/auth';
+/** @jest-environment node */
+
+import { jest } from '@jest/globals';
+
 import * as childProcess from '@pkg/utils/childProcess';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+
+const modules = mockModules({
+  '@pkg/utils/childProcess': {
+    ...childProcess,
+    spawnFile: jest.fn(childProcess.spawnFile),
+  },
+});
+
+const { default: RegistryAuth } = await import('@pkg/backend/containerClient/auth');
 
 describe('RegistryAuth', () => {
   describe('parseAuthHeader', () => {
     const testCases: {
-      input: string,
-      expected: { scheme: string, parameters?: Record<string, string>}[],
+      input:    string,
+      expected: { scheme: string, parameters?: Record<string, string> }[],
     }[] = [
       { input: '', expected: [] },
       {
@@ -62,7 +75,7 @@ describe('RegistryAuth', () => {
     it('should not fail when failing to list known credentials', async() => {
       const exception = new Error('failed to spawn file');
 
-      jest.spyOn(childProcess, 'spawnFile').mockRejectedValue(exception);
+      modules['@pkg/utils/childProcess'].spawnFile.mockRejectedValue(exception);
       await expect(RegistryAuth['findAuth']('example.test')).resolves.toBeUndefined();
     });
   });

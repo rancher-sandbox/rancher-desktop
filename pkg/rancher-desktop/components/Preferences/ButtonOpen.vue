@@ -1,7 +1,8 @@
 <script lang="ts">
-import Vue from 'vue';
-export default Vue.extend({
+import { defineComponent } from 'vue';
+export default defineComponent({
   name:    'preferences-button',
+  emits:   ['open-preferences'],
   methods: {
     openPreferences() {
       this.$emit('open-preferences');

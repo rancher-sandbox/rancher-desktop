@@ -2,7 +2,7 @@
   <div
     class="wrapper"
     :class="{
-      'blur': blur
+      blur,
     }"
   >
     <rd-nav
@@ -13,14 +13,20 @@
       @open-preferences="openPreferences"
     />
     <the-title ref="title" />
-    <main ref="body" class="body">
+    <main
+      ref="body"
+      class="body"
+    >
       <RouterView />
     </main>
     <!-- The extension area is used for sizing the extension view. -->
-    <div id="extension-spacer" class="extension" />
-    <status-bar class="status-bar"></status-bar>
+    <div
+      id="extension-spacer"
+      class="extension"
+    />
+    <status-bar class="status-bar" />
     <!-- The ActionMenu is used by SortableTable for per-row actions. -->
-    <ActionMenu />
+    <ActionMenu data-testid="actionmenu" />
   </div>
 </template>
 
@@ -136,7 +142,7 @@ export default {
     this.$store.dispatch('i18n/init').catch(ex => console.error(ex));
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     ipcRenderer.off('k8s-check-state');
     ipcRenderer.off('extensions/getContentArea');
     ipcRenderer.removeAllListeners('backend-locked');

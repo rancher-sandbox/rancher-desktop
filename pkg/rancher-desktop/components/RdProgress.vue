@@ -1,7 +1,8 @@
 <!-- A progress bar, with support for indeterminate progress -->
 <script lang="ts">
-import Vue from 'vue';
-export default Vue.extend({
+import { defineComponent } from 'vue';
+export default defineComponent({
+  name:  'rd-progress',
   props: {
     indeterminate: {
       type:    Boolean,
@@ -53,13 +54,13 @@ export default Vue.extend({
 <template>
   <div
     class="bar"
-    :class="{indeterminate}"
+    :class="{ indeterminate }"
     :style="barStyle"
   >
     <div
       class="indicator"
       :style="indicatorStyle"
-    ></div>
+    />
   </div>
 </template>
 

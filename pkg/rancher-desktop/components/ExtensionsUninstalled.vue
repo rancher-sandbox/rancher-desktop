@@ -1,9 +1,9 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import EmptyState from '@pkg/components/EmptyState.vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'extensions-uninstalled',
   components: { EmptyState },
   props:      {
@@ -41,7 +41,7 @@ export default Vue.extend({
     :heading="emptyStateHeading"
   >
     <template #body>
-      <span v-html="emptyStateBody"></span>
+      <span v-html="emptyStateBody" />
     </template>
     <template #primary-action>
       <button

@@ -11,7 +11,7 @@
       class="details"
       :title="progressDetails"
     >{{ progressDetails }}</label>
-    <CustomProgress
+    <RdProgress
       class="progress-bar"
       :indeterminate="progressIndeterminate"
       :value="progress.current"
@@ -25,23 +25,24 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
-import CustomProgress from '@pkg/components/Progress.vue';
+import RdProgress from '@pkg/components/RdProgress.vue';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default Vue.extend({
-  components: { CustomProgress },
+export default defineComponent({
+  name:       'backend-progress',
+  components: { RdProgress },
   data() {
     return {
       /** Current Kubernetes backend action progress. */
       progress: { current: 1, max: 1 } as {
         /** The current progress, from 0 to max. */
-        readonly current: number;
+        readonly current:         number;
         /** Maximum possible progress; if less than zero, the progress is indeterminate. */
-        readonly max: number;
+        readonly max:             number;
         /** Description of current action. */
-        readonly description?: string;
+        readonly description?:    string;
         /** Time since the description became valid. */
         readonly transitionTime?: Date;
       },
@@ -91,7 +92,7 @@ export default Vue.extend({
       if (this.progress.max > 0) {
         // If we have numbers, give a description about that.
         const units = ['', 'K', 'M', 'G', 'T'];
-        const scales = [2**0, 2**10, 2**20, 2**30, 2**40];
+        const scales = [2 ** 0, 2 ** 10, 2 ** 20, 2 ** 30, 2 ** 40];
         const remaining = this.progress.max - this.progress.current;
 
         const unitIndex = scales.findLastIndex((scale) => remaining * 2 >= scale);

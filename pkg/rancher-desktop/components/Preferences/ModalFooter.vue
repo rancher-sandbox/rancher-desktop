@@ -1,10 +1,10 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import PreferencesAlert from '@pkg/components/Preferences/Alert.vue';
 
-export default Vue.extend({
+export default defineComponent({
   name:       'preferences-footer',
   components: { PreferencesAlert },
   computed:   {

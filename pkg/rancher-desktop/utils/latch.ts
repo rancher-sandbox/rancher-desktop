@@ -14,7 +14,7 @@ interface Latch extends Promise<void> {
  * calling a method on that Promise.
  */
 export default function Latch(): Latch {
-  const holder: {resolve?: () => void} = {};
+  const holder: { resolve?: () => void } = {};
   const result: Latch = new Promise<void>((resolve) => {
     holder.resolve = resolve;
   }) as any;

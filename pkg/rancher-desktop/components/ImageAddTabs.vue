@@ -16,18 +16,18 @@
       name="pull"
       :weight="1"
     />
-    <slot></slot>
+    <slot />
   </rd-tabbed>
 </template>
 
 <script lang="ts">
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'image-add-tabs',
 
   components: {
@@ -38,6 +38,8 @@ export default Vue.extend({
   data() {
     return { activeTab: 'pull' };
   },
+
+  emits: ['click'],
 
   methods: {
     tabSelected({ tab }: { tab: any }) {

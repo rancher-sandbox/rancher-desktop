@@ -3,33 +3,54 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 
+import { jest } from '@jest/globals';
+
+import mockModules from '../testUtils/mockModules';
+
 import * as childProcess from '@pkg/utils/childProcess';
-import DockerDirManager from '@pkg/utils/dockerDirManager';
-import { Log } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+
+const spawnFile = childProcess.spawnFile;
+const modules = mockModules({
+  '@pkg/utils/childProcess': {
+    ...childProcess,
+    spawnFile: jest.fn<(command: string, args: string[], options: any) => Promise<unknown>>(),
+  },
+  '@pkg/utils/logging': {
+    background: {
+      debug: jest.fn(),
+      error: jest.fn(),
+      /** Mocked console.log() to check messages. */
+      log:   jest.fn(),
+    },
+  },
+  '@pkg/utils/paths': {
+    ...paths,
+    resources: paths.resources,
+  },
+});
 
 const itUnix = os.platform() === 'win32' ? it.skip : it;
 const itDarwin = os.platform() === 'darwin' ? it : it.skip;
 const itLinux = os.platform() === 'linux' ? it : it.skip;
 const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
+const { DockerDirManager } = await import('@pkg/utils/dockerDirManager');
 
 describe('DockerDirManager', () => {
   /** The instance of LimaBackend under test. */
-  let subj: DockerDirManager;
+  let subj: InstanceType<typeof DockerDirManager>;
   /** A directory we can use for scratch files during the test. */
   let workdir: string;
-  /** Mocked console.log() to check messages. */
-  let consoleMock: jest.SpyInstance<void, [message?: any, ...optionalArgs: any[]]>;
 
   beforeEach(async() => {
+    modules['@pkg/utils/childProcess'].spawnFile.mockImplementation(spawnFile);
     await expect((async() => {
       workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-lima-test-'));
-      consoleMock = jest.spyOn(console, 'log');
       subj = new DockerDirManager(path.join(workdir, '.docker'));
     })()).resolves.toBeUndefined();
   });
   afterEach(async() => {
-    consoleMock.mockReset();
+    modules['@pkg/utils/logging'].background.log.mockReset();
     await fs.promises.rm(workdir, { recursive: true });
   });
 
@@ -109,7 +130,7 @@ describe('DockerDirManager', () => {
         Metadata: { Description: 'Rancher Desktop moby context' },
         Name:     'rancher-desktop',
       });
-      expect(consoleMock).not.toHaveBeenCalled();
+      expect(modules['@pkg/utils/logging'].background.log).not.toHaveBeenCalled();
     });
   });
 
@@ -163,9 +184,9 @@ describe('DockerDirManager', () => {
 
       await expect(subj.ensureDockerContextConfigured(false, sockPath)).resolves.toBeUndefined();
 
-      expect(consoleMock).toHaveBeenCalledWith(
+      expect(modules['@pkg/utils/logging'].background.log.mock.calls).toContainEqual([
         expect.stringMatching(`Could not read existing docker socket.*${ workdir }.*pikachu.*ENOENT`),
-        expect.anything());
+      ]);
 
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'rancher-desktop');
     });
@@ -182,9 +203,9 @@ describe('DockerDirManager', () => {
 
       await expect(subj.ensureDockerContextConfigured(false, sockPath)).resolves.toBeUndefined();
 
-      expect(consoleMock).toHaveBeenCalledWith(
+      expect(modules['@pkg/utils/logging'].background.log.mock.calls).toContainEqual([
         expect.stringMatching(`Invalid existing context.*pikachu.*${ workdir }`),
-        expect.anything());
+      ]);
 
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'rancher-desktop');
     });
@@ -205,7 +226,7 @@ describe('DockerDirManager', () => {
     itUnix('should allow for existing invalid context configuration', async() => {
       const metaDir = path.join(workdir, '.docker', 'contexts', 'meta');
       const statMock = jest.spyOn(fs.promises, 'stat')
-        .mockImplementation((pathLike: fs.PathLike, opts?: fs.StatOptions | undefined) => {
+        .mockImplementation((pathLike: fs.PathLike, opts?: fs.StatOptions ) => {
           expect(pathLike).toEqual('/var/run/docker.sock');
 
           throw new Error(`ENOENT: no such file or directory, stat ${ pathLike }`);
@@ -218,15 +239,15 @@ describe('DockerDirManager', () => {
         await fs.promises.writeFile(path.join(metaDir, 'invalid-context-two'), '');
         await expect(subj.ensureDockerContextConfigured(false, sockPath)).resolves.toBeUndefined();
 
-        expect(consoleMock).toHaveBeenCalledWith(
+        expect(modules['@pkg/utils/logging'].background.log.mock.calls).toContainEqual([
           expect.stringMatching(`Failed to read context.*invalid-context.*EISDIR`),
-          expect.anything());
-        expect(consoleMock).toHaveBeenCalledWith(
+        ]);
+        expect(modules['@pkg/utils/logging'].background.log.mock.calls).toContainEqual([
           expect.stringMatching(`Failed to read context.*invalid-context-two.*ENOTDIR`),
-          expect.anything());
-        expect(consoleMock).toHaveBeenCalledWith(
+        ]);
+        expect(modules['@pkg/utils/logging'].background.log.mock.calls).toContainEqual([
           expect.stringMatching(`Could not read existing docker socket.*ENOENT`),
-          expect.anything());
+        ]);
       } finally {
         statMock.mockRestore();
       }
@@ -244,7 +265,7 @@ describe('DockerDirManager', () => {
     it('should throw errors reading config.json', async() => {
       await fs.promises.mkdir(configPath, { recursive: true });
       await expect(subj.ensureCredHelperConfigured()).rejects.toThrow('EISDIR');
-      expect(consoleMock).not.toHaveBeenCalled();
+      expect(modules['@pkg/utils/logging'].background.log).not.toHaveBeenCalled();
     });
 
     it('should set credsStore to default when undefined', async() => {
@@ -327,26 +348,24 @@ describe('DockerDirManager', () => {
   });
 
   describe('credHelperWorking', () => {
-    let replacedPathsResources: jest.ReplaceProperty<string>;
-    let spawnMock: jest.SpiedFunction<typeof childProcess.spawnFile>;
     const commonCredHelperExpectations: (...args: Parameters<typeof childProcess.spawnFile>) => void = (command, args, options) => {
       expect(command).toEqual('docker-credential-mockhelper');
       expect(args[0]).toEqual('list');
       expect(options.stdio[0]).toBe('ignore');
       expect(options.stdio[1]).toBe('ignore');
-      expect(options.stdio[2]).toBeInstanceOf(Log);
+      expect(options.stdio[2]).toBe(modules['@pkg/utils/logging'].background);
     };
 
     beforeEach(() => {
-      replacedPathsResources = jest.replaceProperty(paths, 'resources', 'RESOURCES');
+      modules['@pkg/utils/paths'].resources = 'RESOURCES';
     });
     afterEach(() => {
-      spawnMock.mockRestore();
-      replacedPathsResources.restore();
+      modules['@pkg/utils/childProcess'].spawnFile.mockRestore();
+      modules['@pkg/utils/paths'].resources = paths.resources;
     });
 
     it('should return false when cred helper is not working', async() => {
-      spawnMock = jest.spyOn(childProcess, 'spawnFile')
+      modules['@pkg/utils/childProcess'].spawnFile
         .mockImplementation((command, args, options) => {
           commonCredHelperExpectations(command, args, options);
 
@@ -356,7 +375,7 @@ describe('DockerDirManager', () => {
     });
 
     it('should return true when cred helper is working', async() => {
-      spawnMock = jest.spyOn(childProcess, 'spawnFile')
+      modules['@pkg/utils/childProcess'].spawnFile
         .mockImplementation((command, args, options) => {
           commonCredHelperExpectations(command, args, options);
 
@@ -366,13 +385,14 @@ describe('DockerDirManager', () => {
     });
 
     it('should blacklist docker-credentials-desktop', async() => {
-      spawnMock = jest.spyOn(childProcess, 'spawnFile').mockRejectedValue('not called');
+      modules['@pkg/utils/childProcess'].spawnFile
+        .mockRejectedValue('not called');
       await expect(subj['credHelperWorking']('desktop')).resolves.toBeFalsy();
-      expect(spawnMock).not.toHaveBeenCalled();
+      expect(modules['@pkg/utils/childProcess'].spawnFile).not.toHaveBeenCalled();
     });
 
     it('should test cred helper with resources in path', async() => {
-      spawnMock = jest.spyOn(childProcess, 'spawnFile')
+      modules['@pkg/utils/childProcess'].spawnFile
         .mockImplementation((command, args, options) => {
           commonCredHelperExpectations(command, args, options);
 
@@ -384,7 +404,7 @@ describe('DockerDirManager', () => {
     });
 
     itDarwin('should test cred helper with /usr/local/bin in path', async() => {
-      spawnMock = jest.spyOn(childProcess, 'spawnFile')
+      modules['@pkg/utils/childProcess'].spawnFile
         .mockImplementation((command, args, options) => {
           commonCredHelperExpectations(command, args, options);
 

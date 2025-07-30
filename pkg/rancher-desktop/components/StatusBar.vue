@@ -1,18 +1,19 @@
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import BackendProgress from '@pkg/components/BackendProgress.vue';
 import StatusBarItem, { StatusBarItemData } from '@pkg/components/StatusBarItem.vue';
 
-type BarItem = {
-  name: string,
+interface BarItem {
+  name:       string,
   component?: string,
-  icon: string,
-  data?: StatusBarItemData,
-};
+  icon:       string,
+  data?:      StatusBarItemData,
+}
 
-export default Vue.extend({
+export default defineComponent({
+  name:       'status-bar',
   components: { BackendProgress, StatusBarItem },
   computed:   {
     ...mapGetters('preferences', ['getPreferences']),
@@ -61,18 +62,15 @@ export default Vue.extend({
 <template>
   <footer>
     <div class="left-column">
-      <template
+      <status-bar-item
         v-for="item in items"
-      >
-        <status-bar-item
-          :key="item.name"
-          :sub-component="item.component"
-          :data="item.data"
-          :icon="item.icon"
-          class="status-bar-item"
-        >
-        </status-bar-item>
-      </template>
+        :key="item.name"
+        :ref="item.name"
+        :sub-component="item.component"
+        :data="item.data"
+        :icon="item.icon"
+        class="status-bar-item"
+      />
     </div>
     <div class="right-column">
       <BackendProgress class="progress" />

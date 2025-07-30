@@ -5,7 +5,7 @@ import { LOCALE } from '@pkg/config/cookies';
 import { getProduct, getVendor } from '@pkg/config/private-label';
 import { get } from '@pkg/utils/object';
 
-const translationContext = require.context('@pkg/assets/translations', true, /.*/);
+const translationContext = import.meta.webpackContext('@pkg/assets/translations', { recursive: true, regExp: /.*/ });
 
 const NONE = 'none';
 
