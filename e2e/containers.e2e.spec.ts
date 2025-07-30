@@ -258,7 +258,6 @@ test.describe.serial('Containers Tests', () => {
       // Remove all existing containers to ensure clean state
       try {
         const existingContainers = await tool('docker', 'ps', '-aq');
-
         const containerIds = existingContainers.trim().split(/\s+/);
 
         if (containerIds.length > 0) {
@@ -276,7 +275,7 @@ test.describe.serial('Containers Tests', () => {
         autoRefreshContainerName,
         'alpine',
         'sleep',
-        '30',
+        'inf',
       );
       autoRefreshContainerId = output.trim();
 

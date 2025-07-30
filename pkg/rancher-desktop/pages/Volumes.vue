@@ -73,6 +73,7 @@
 
 <script lang="ts">
 import { Banner } from '@rancher/components';
+import merge from 'lodash/merge';
 import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -129,29 +130,31 @@ export default defineComponent({
       }
 
       // Process volumes in place to preserve object references
-      this.volumesList.forEach((volume) => {
-        volume.volumeName = volume.Name;
-        volume.created = volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '';
-        volume.mountpoint = volume.Mountpoint || '';
-        volume.driver = volume.Driver || '';
-        volume.availableActions = [
-          {
-            label:    this.t('volumes.manager.table.action.browse'),
-            action:   'browseFiles',
-            enabled:  true,
-            bulkable: false,
-          },
-          {
-            label:      this.t('volumes.manager.table.action.delete'),
-            action:     'deleteVolume',
-            enabled:    true,
-            bulkable:   true,
-            bulkAction: 'deleteVolume',
-          },
-        ];
-        volume.deleteVolume = this.createDeleteVolumeHandler(volume);
-        volume.browseFiles = this.createBrowseFilesHandler(volume);
-      });
+      for (const volume of this.volumesList) {
+        merge(volume, {
+          volumeName: volume.Name,
+          created: volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
+          mountpoint: volume.Mountpoint || '',
+          driver: volume.Driver || '',
+          availableActions: [
+            {
+              label:    this.t('volumes.manager.table.action.browse'),
+              action:   'browseFiles',
+              enabled:  true,
+              bulkable: false,
+            },
+            {
+              label:      this.t('volumes.manager.table.action.delete'),
+              action:     'deleteVolume',
+              enabled:    true,
+              bulkable:   true,
+              bulkAction: 'deleteVolume',
+            },
+          ],
+          deleteVolume: this.createDeleteVolumeHandler(volume),
+          browseFiles: this.createBrowseFilesHandler(volume),
+        });
+      }
 
       return this.volumesList;
     },

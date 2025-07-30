@@ -185,7 +185,7 @@ test.describe.serial('Volumes Tests', () => {
         `${ volumeName }:/data`,
         'alpine',
         'sleep',
-        '300',
+        'inf',
       );
 
       await page.reload();
@@ -217,8 +217,7 @@ test.describe.serial('Volumes Tests', () => {
 
       // Remove all existing volumes to ensure clean state
       try {
-        const existingVolumes = await tool('docker', 'volume', 'ls', '-q');
-
+        const existingVolumes = await tool('docker', 'volume', 'ls', '--quiet');
         const volumeNames = existingVolumes.trim().split(/\s+/);
 
         if (volumeNames.length > 0) {
