@@ -10,7 +10,6 @@ addlabel
 addrepo
 adfs
 adrg
-advapi
 airgap
 aks
 alertmanager
@@ -87,10 +86,9 @@ bosco
 bottlesofbeeronthewall
 bpf
 bpffs
+breadcrumb
 browserhome
 brucebean
-breadcrumb
-bsd
 bsdextrautils
 bsdtar
 btime
@@ -144,7 +142,6 @@ clusterscanbenchmark
 clusterscanprofile
 clusterscanreport
 clustertemplates
-cmds
 CNCF
 cni
 cnutils
@@ -155,15 +152,13 @@ composefile
 confd
 configmap
 conflist
-connectaddress
-connectport
 constrainttemplate
 containerapi
 CONTAINERENGINE
 containernetworking
+cooldown
 copypac
 coredns
-corejs
 corepack
 coreutils
 cpanm
@@ -180,7 +175,6 @@ Ctl
 ctrctl
 cxt
 cygpath
-DACL
 daemonset
 dapp
 dasherize
@@ -191,7 +185,6 @@ dcnone
 dcrd
 DCs
 ddd
-deadcode
 debbuild
 debian
 Debugf
@@ -206,12 +199,10 @@ destinationrule
 DETECTEXCEPTIONS
 developercertificate
 dfile
-dhclient
 didinit
 diffdisk
 digitalocean
 dirents
-dismapi
 distatus
 distros
 Dlg
@@ -244,12 +235,9 @@ eastus
 ebegin
 ecm
 edmonton
-eend
-eerror
 einfo
 electronjs
 elko
-elog
 endgroup
 endscript
 engineimage
@@ -268,8 +256,6 @@ etcdbackup
 etest
 euid
 eula
-eventlog
-Eventlogger
 excludesection
 Executability
 EXITDIALOGOPTIONALCHECKBOX
@@ -309,10 +295,8 @@ gazornaanplatt
 gcs
 gdk
 GENERALIZEDTIME
-getfattr
 getwindowid
 gha
-ghp
 gitmodules
 gitrepo
 gke
@@ -320,7 +304,6 @@ globalrole
 globalrolebinding
 Gluster
 gname
-gochecknoglobals
 gocritic
 gofmt
 goland
@@ -332,12 +315,9 @@ gopacket
 gosec
 GOTOOLCHAIN
 govet
-govmm
-GOWORK
 gpg
 gpu
 grafana
-GRGX
 gtk
 guestagent
 Gutterless
@@ -357,7 +337,6 @@ hklm
 HMR
 hocs
 horizontalpodautoscaler
-hosthandshake
 HOSTPORT
 hoverable
 howett
@@ -381,7 +360,6 @@ ifaces
 ifnotstart
 ifstarted
 iidfile
-iife
 imageinfo
 IMAGENAME
 IMAGEPATH
@@ -397,7 +375,6 @@ INSTALLPROPERTY
 ioctl
 ipaddr
 iptable
-iputils
 Isf
 islabel
 isthebestmeshuggahalbum
@@ -408,10 +385,8 @@ itp
 iwr
 jan
 jetstack
-jitconfig
 JOBOBJECT
 joycelin
-jpe
 jsmith
 JSONOr
 jsontable
@@ -419,7 +394,6 @@ JSONTo
 julianb
 karl
 Kaspersky
-kata
 kde
 KDM
 keychain
@@ -485,16 +459,12 @@ limactl
 limaiptables
 limaloc
 linds
-linebreak
 linenum
 linkname
 linode
 linting
 linuxkit
 Linuxy
-listenaddress
-listenertracker
-listenport
 loadbalancer
 loblaw
 localnet
@@ -584,7 +554,6 @@ nolint
 nologin
 nologo
 nomount
-nonamedreturns
 NONINFRINGEMENT
 noprofile
 noproxy
@@ -601,7 +570,6 @@ nsis
 NSISUNINSTALLCOMMAND
 nspr
 nss
-nullglob
 numlock
 nuxt
 nxt
@@ -610,7 +578,6 @@ objectset
 octicons
 oidc
 oneoff
-oom
 openapitools
 openldapconfig
 openrc
@@ -647,7 +614,6 @@ persistentvolume
 persistentvolumeclaim
 PFlags
 pgid
-pgrep
 pidfd
 pidfile
 pidof
@@ -661,7 +627,6 @@ pixbuf
 pki
 pkill
 plists
-plusplus
 plutil
 podmetrics
 podmonitor
@@ -679,8 +644,6 @@ Postgre
 postgresql
 postrotate
 POSTROUTING
-Powerdown
-poweroff
 PQgrl
 prakhar
 prebuilds
@@ -707,7 +670,6 @@ pushable
 pvc
 PWSTR
 qcow
-qmp
 qword
 rackspace
 ramdisk
@@ -717,7 +679,6 @@ rawdata
 rcedit
 rcfiles
 rcompare
-rdagent
 rdctl
 rddepman
 rdinstall
@@ -776,12 +737,11 @@ scinfo
 sconfig
 screencapture
 screenshots
-scrollback
 scriptdir
 scriptname
 scriptpath
+scrollback
 scrolllock
-sddl
 secretservice
 Segoe
 serveraddress
@@ -790,7 +750,6 @@ serviceaccount
 serviceapi
 servicemonitor
 servicewatcher
-setfattr
 setproxy
 sfc
 sharedscripts
@@ -824,7 +783,6 @@ songgao
 sourced
 spi
 spinkube
-spinoperator
 splatform
 splunk
 ssd
@@ -844,11 +802,8 @@ subshells
 subvar
 sumologic
 suse
-svclb
 SVCNAME
-SYD
 syscalls
-sysctl
 sysdeps
 sysfs
 tarballs
@@ -887,11 +842,9 @@ TQF
 Tracef
 traefik
 transitioning
-trimpath
 trivy
 TVar
 tvf
-UAC
 ucmonitor
 udhcpc
 UEFI
@@ -899,10 +852,7 @@ Unauthed
 UNCONFIGURED
 unexpose
 unexposing
-unfetch
-Uninstalls
 unmarshaling
-unparam
 unparsable
 unregistering
 unversioned
@@ -914,13 +864,10 @@ userdb
 usermod
 userpreference
 UTCTIME
-varnamelen
 vcenter
 vcpus
 vcs
-vde
 VDropdown
-ventura
 VERSIONSTRING
 vertificate
 veth
@@ -936,19 +883,14 @@ virtualservice
 vishvananda
 VMGUID
 vmnet
-VModal
 VMs
-vmsock
 vmwarevsphere
 vmx
 vnc
 vnd
 vnode
 vsock
-VTooltip
-vtun
 vtunnel
-vtunneltracker
 vuex
 vul
 vznat
@@ -965,7 +907,6 @@ wordpress
 workdir
 Wrapf
 wsl
-wslapi
 wslconfig
 wslenv
 WSLg
@@ -1006,7 +947,6 @@ YSW
 Yubi
 zeroedthick
 zerowidthspace
-zipinfo
 zipperhead
 ZSelected
 zst
