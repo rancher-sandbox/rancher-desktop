@@ -6,6 +6,8 @@ updates:
   directory: "/"
   schedule:
     interval: "daily"
+  cooldown:
+    default-days: 7
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
 
@@ -14,6 +16,8 @@ updates:
   directory: "/"
   schedule:
     interval: "daily"
+  cooldown:
+    default-days: 7
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   ignore:
@@ -39,6 +43,8 @@ updates:
   - "/scripts"
   schedule:
     interval: "daily"
+  cooldown:
+    default-days: 7
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   groups:
