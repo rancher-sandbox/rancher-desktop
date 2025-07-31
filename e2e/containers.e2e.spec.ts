@@ -1,12 +1,13 @@
 import { expect, test, ElectronApplication, Page } from '@playwright/test';
 
 import { ContainerLogsPage } from './pages/container-logs-page';
+import { ContainersPage } from './pages/containers-page';
 import { NavPage } from './pages/nav-page';
 import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
 
 let page: Page;
 
-test.describe.serial('Container Logs Tests', () => {
+test.describe.serial('Containers Tests', () => {
   let electronApp: ElectronApplication;
   let testContainerId: string;
   let testContainerName: string;
@@ -25,8 +26,7 @@ test.describe.serial('Container Logs Tests', () => {
     if (testContainerId) {
       try {
         await tool('docker', 'rm', '-f', testContainerId);
-      } catch (error) {
-      }
+      } catch (error) {}
     }
     await teardown(electronApp, testInfo);
   });
@@ -42,8 +42,18 @@ test.describe.serial('Container Logs Tests', () => {
   test('should create and display test container', async() => {
     testContainerName = `test-logs-container-${ Date.now() }`;
 
-    const output = await tool('docker', 'run', '--detach', '--name', testContainerName,
-      'alpine', 'sh', '-c', 'echo "Starting"; for i in $(seq 1 10); do echo "L$i: msg$i"; done; echo "Finished"'); testContainerId = output.trim();
+    const output = await tool(
+      'docker',
+      'run',
+      '--detach',
+      '--name',
+      testContainerName,
+      'alpine',
+      'sh',
+      '-c',
+      'echo "Starting"; for i in $(seq 1 10); do echo "L$i: msg$i"; done; echo "Finished"',
+    );
+    testContainerId = output.trim();
 
     expect(testContainerId).toMatch(/^[a-f0-9]{64}$/);
 
@@ -56,7 +66,9 @@ test.describe.serial('Container Logs Tests', () => {
     await containersPage.waitForContainerToAppear(testContainerId);
     await containersPage.viewContainerLogs(testContainerId);
 
-    await page.waitForURL(`**/containers/logs/${ testContainerId }`, { timeout: 10_000 });
+    await page.waitForURL(`**/containers/logs/${ testContainerId }`, {
+      timeout: 10_000,
+    });
   });
 
   test('should display container logs page', async() => {
@@ -73,7 +85,9 @@ test.describe.serial('Container Logs Tests', () => {
 
     await expect(containerLogsPage.containerInfo).toBeVisible();
 
-    await expect(containerLogsPage.containerName).toContainText(testContainerName);
+    await expect(containerLogsPage.containerName).toContainText(
+      testContainerName,
+    );
     await expect(containerLogsPage.containerState).not.toBeEmpty();
   });
 
@@ -96,9 +110,12 @@ test.describe.serial('Container Logs Tests', () => {
     const searchHighlight = page.locator('span.xterm-decoration-top');
     await expect(searchHighlight).toBeVisible();
 
-    const highlightedRow = containerLogsPage.terminal.locator('.xterm-rows div', {
-      has: page.locator('.xterm-decoration-top'),
-    });
+    const highlightedRow = containerLogsPage.terminal.locator(
+      '.xterm-rows div',
+      {
+        has: page.locator('.xterm-decoration-top'),
+      },
+    );
 
     await expect(highlightedRow).toContainText('L1: msg1');
 
@@ -125,8 +142,17 @@ test.describe.serial('Container Logs Tests', () => {
     let scrollTestContainerId: string;
 
     try {
-      const output = await tool('docker', 'run', '--detach', '--name', scrollTestContainerName,
-        'alpine', 'sh', '-c', 'for i in $(seq 1 100); do echo "Line $i:"; done; sleep 1');
+      const output = await tool(
+        'docker',
+        'run',
+        '--detach',
+        '--name',
+        scrollTestContainerName,
+        'alpine',
+        'sh',
+        '-c',
+        'for i in $(seq 1 100); do echo "Line $i:"; done; sleep 1',
+      );
       scrollTestContainerId = output.trim();
 
       const navPage = new NavPage(page);
@@ -138,7 +164,9 @@ test.describe.serial('Container Logs Tests', () => {
       await containersPage.waitForContainerToAppear(scrollTestContainerId);
       await containersPage.viewContainerLogs(scrollTestContainerId);
 
-      await page.waitForURL(`**/containers/logs/${ scrollTestContainerId }`, { timeout: 10_000 });
+      await page.waitForURL(`**/containers/logs/${ scrollTestContainerId }`, {
+        timeout: 10_000,
+      });
 
       const containerLogsPage = new ContainerLogsPage(page);
       await containerLogsPage.waitForLogsToLoad();
@@ -163,8 +191,7 @@ test.describe.serial('Container Logs Tests', () => {
       if (scrollTestContainerId) {
         try {
           await tool('docker', 'rm', '-f', scrollTestContainerId);
-        } catch (cleanupError) {
-        }
+        } catch (cleanupError) {}
       }
     }
   });
@@ -174,8 +201,17 @@ test.describe.serial('Container Logs Tests', () => {
     let longRunningContainerId: string;
 
     try {
-      const output = await tool('docker', 'run', '--detach', '--name', longRunningContainerName,
-        'alpine', 'sh', '-c', 'while true; do echo "Log $(date +%s)"; sleep 2; done');
+      const output = await tool(
+        'docker',
+        'run',
+        '--detach',
+        '--name',
+        longRunningContainerName,
+        'alpine',
+        'sh',
+        '-c',
+        'while true; do echo "Log $(date +%s)"; sleep 2; done',
+      );
       longRunningContainerId = output.trim();
 
       const navPage = new NavPage(page);
@@ -187,7 +223,9 @@ test.describe.serial('Container Logs Tests', () => {
       await containersPage.waitForContainerToAppear(longRunningContainerId);
       await containersPage.viewContainerLogs(longRunningContainerId);
 
-      await page.waitForURL(`**/containers/logs/${ longRunningContainerId }`, { timeout: 10000 });
+      await page.waitForURL(`**/containers/logs/${ longRunningContainerId }`, {
+        timeout: 10000,
+      });
 
       const containerLogsPage = new ContainerLogsPage(page);
       await containerLogsPage.waitForLogsToLoad();
@@ -202,8 +240,59 @@ test.describe.serial('Container Logs Tests', () => {
       if (longRunningContainerId) {
         try {
           await tool('docker', 'rm', '-f', longRunningContainerId);
-        } catch (cleanupError) {
+        } catch (cleanupError) {}
+      }
+    }
+  });
+
+  test('should auto-refresh containers list', async() => {
+    const containersPage = new ContainersPage(page);
+    const autoRefreshContainerName = `auto-refresh-test-${ Date.now() }`;
+    let autoRefreshContainerId = '';
+
+    try {
+      const navPage = new NavPage(page);
+      await navPage.navigateTo('Containers');
+      await containersPage.waitForTableToLoad();
+
+      // Remove all existing containers to ensure clean state
+      try {
+        const existingContainers = await tool('docker', 'ps', '--all', '--quiet');
+        const containerIds = existingContainers.trim().split(/\s+/);
+
+        if (containerIds.length > 0) {
+          await tool('docker', 'rm', '--force', ...containerIds);
         }
+      } catch {}
+
+      await expect(containersPage.containers).toHaveCount(0);
+
+      const output = await tool(
+        'docker',
+        'run',
+        '--detach',
+        '--name',
+        autoRefreshContainerName,
+        'alpine',
+        'sleep',
+        'inf',
+      );
+      autoRefreshContainerId = output.trim();
+
+      await expect(
+        containersPage.getContainerRow(autoRefreshContainerId),
+      ).toBeVisible();
+
+      await tool('docker', 'rm', '--force', autoRefreshContainerId);
+
+      await expect(
+        containersPage.getContainerRow(autoRefreshContainerId),
+      ).toBeHidden();
+    } finally {
+      if (autoRefreshContainerId) {
+        try {
+          await tool('docker', 'rm', '-f', autoRefreshContainerId);
+        } catch {}
       }
     }
   });

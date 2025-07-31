@@ -125,8 +125,6 @@ import SortableTable from '@pkg/components/SortableTable';
 import { ContainerEngine } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-let containerCheckInterval = null;
-
 /**
  * @typedef Container {Object} The return type of ddClient.docker.listContainers
  * @property Id {string} The container id
@@ -139,13 +137,16 @@ export default defineComponent({
   data() {
     return {
       /** @type import('@pkg/config/settings').Settings | undefined */
-      settings:             undefined,
-      ddClient:             null,
-      containersList:       null,
-      showRunning:          false,
-      containersNamespaces: [],
-      error:                null,
-      headers:              [
+      settings:                   undefined,
+      ddClient:                   null,
+      containersList:             null,
+      showRunning:                false,
+      containersNamespaces:       [],
+      containerEventSubscription: null,
+      error:                      null,
+      isComponentMounted:         false,
+      setupTimeoutId:             null,
+      headers:                    [
         // INFO: Disable for now since we can only get the running containers.
         {
           name:  'containerState',
@@ -182,10 +183,19 @@ export default defineComponent({
         return [];
       }
 
-      // `this.containersList` is a Proxy; so we can't use structedClone.
-      const containers = JSON.parse(JSON.stringify(this.containersList));
+      const containers = Array.from(this.containersList.values());
 
-      return containers.map((container) => {
+      containers.sort((a, b) => {
+        if (a.State === 'running' && b.State !== 'running') {
+          return -1;
+        } else if (a.State !== 'running' && b.State === 'running') {
+          return 1;
+        } else {
+          return a.State.localeCompare(b.State);
+        }
+      });
+
+      for (const container of containers) {
         const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
         const name = names[0];
 
@@ -272,9 +282,9 @@ export default defineComponent({
             this.viewLogs(container);
           };
         }
+      }
 
-        return container;
-      });
+      return containers;
     },
     isNerdCtl() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -287,6 +297,7 @@ export default defineComponent({
     },
   },
   mounted() {
+    this.isComponentMounted = true;
     this.$store.dispatch('page/setHeader', {
       title:       this.t('containers.title'),
       description: '',
@@ -301,20 +312,76 @@ export default defineComponent({
 
     ipcRenderer.on('settings-update', (_event, settings) => {
       this.settings = settings;
-      this.containersList = [];
+      this.containersList = null;
       this.checkSelectedNamespace();
     });
 
     this.checkContainers().catch(console.error);
-    containerCheckInterval = setInterval(this.checkContainers.bind(this), 1_000);
+    this.setupEventSubscriptions();
+    this.getContainers().catch(console.error);
   },
   beforeUnmount() {
+    this.isComponentMounted = false;
+    if (this.setupTimeoutId) {
+      clearTimeout(this.setupTimeoutId);
+      this.setupTimeoutId = null;
+    }
     ipcRenderer.removeAllListeners('settings-update');
     ipcRenderer.removeAllListeners('containers-namespaces');
     ipcRenderer.removeAllListeners('containers-namespaces-containers');
-    clearInterval(containerCheckInterval);
+    this.cleanupEventSubscriptions();
   },
   methods: {
+    setupEventSubscriptions() {
+      if (!window.ddClient || !this.isK8sReady || !this.settings) {
+        this.setupTimeoutId = setTimeout(() => {
+          if (this.isComponentMounted) {
+            this.setupEventSubscriptions();
+          }
+        }, 1000);
+        return;
+      }
+
+      this.ddClient = window.ddClient;
+
+      const eventOptions = { namespace: this.selectedNamespace };
+
+      if (!this.isNerdCtl) {
+        eventOptions.filters = {
+          type:  ['container'],
+          event: ['create', 'start', 'stop', 'die', 'kill', 'pause', 'unpause', 'rename', 'update', 'destroy', 'remove'],
+        };
+      }
+
+      this.containerEventSubscription = this.ddClient.docker.rdSubscribeToEvents(
+        (event) => {
+          if (!this.isComponentMounted) {
+            return;
+          }
+
+          console.debug('Container event received:', event);
+
+          // For nerdctl, we need to filter client-side since server-side filtering is limited
+          if (this.isNerdCtl && event.Type !== 'container' && event.Type) {
+            return;
+          }
+
+          this.getContainers().catch(console.error);
+        },
+        eventOptions,
+      );
+
+      // Fetch initial container list after setting up event subscription
+      this.getContainers().catch(console.error);
+    },
+
+    cleanupEventSubscriptions() {
+      if (this.containerEventSubscription) {
+        this.containerEventSubscription.unsubscribe();
+        this.containerEventSubscription = null;
+      }
+    },
+
     async checkContainers() {
       if (window.ddClient && this.isK8sReady && this.settings) {
         this.ddClient = window.ddClient;
@@ -328,7 +395,6 @@ export default defineComponent({
         }
         try {
           await this.getContainers();
-          clearInterval(containerCheckInterval);
         } catch (error) {
           console.error('There was a problem fetching containers:', { error });
         }
@@ -351,7 +417,9 @@ export default defineComponent({
       if (value !== this.selectedNamespace) {
         await ipcRenderer.invoke('settings-write',
           { containers: { namespace: value.target.value } } );
-        this.getContainers();
+        this.cleanupEventSubscriptions();
+        this.setupEventSubscriptions();
+        await this.getContainers();
       }
     },
     clearDropDownPosition(e) {
@@ -388,24 +456,35 @@ export default defineComponent({
       this.containersNamespaces = await this.ddClient?.docker.listNamespaces();
       this.checkSelectedNamespace();
     },
-    async getContainers() {
-      const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.selectedNamespace });
+    updateContainersList(newContainers) {
+      if (!newContainers) {
+        this.containersList = null;
+        return;
+      }
 
-      // Sorts by status, showing running first.
-      this.containersList = containers.sort((a, b) => {
-        if (a.State === 'running' && b.State !== 'running') {
-          return -1;
-        } else if (a.State !== 'running' && b.State === 'running') {
-          return 1;
+      // Filter out images from "kube-system" namespace first
+      const filtered = newContainers.filter((container) => {
+        return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
+      });
+
+      const newMap = new Map();
+
+      filtered.forEach((newContainer) => {
+        const existing = this.containersList?.get(newContainer.Id);
+        if (existing) {
+          Object.assign(existing, newContainer);
+          newMap.set(newContainer.Id, existing);
         } else {
-          return a.State.localeCompare(b.State);
+          newMap.set(newContainer.Id, newContainer);
         }
       });
 
-      // Filter out images from "kube-system" namespace
-      this.containersList = this.containersList.filter((container) => {
-        return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
-      });
+      this.containersList = newMap;
+    },
+
+    async getContainers() {
+      const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.selectedNamespace });
+      this.updateContainersList(containers);
     },
     async stopContainer(container) {
       await this.execCommand('stop', container);

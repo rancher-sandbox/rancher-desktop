@@ -73,6 +73,7 @@
 
 <script lang="ts">
 import { Banner } from '@rancher/components';
+import merge from 'lodash/merge';
 import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -88,14 +89,15 @@ export default defineComponent({
   components: { SortableTable, Banner },
   data() {
     return {
-      settings:            undefined,
-      ddClient:            null,
-      volumesList:         null,
-      volumesNamespaces:   [],
-      // Interval to ensure the first fetch succeeds (instead of trying to stream in updates)
-      volumeCheckInterval: null,
-      error:               null,
-      headers:             [
+      settings:                undefined,
+      ddClient:                null,
+      volumesList:             null,
+      volumesNamespaces:       [],
+      volumeEventSubscription: null,
+      volumePollingInterval:   null,
+      error:                   null,
+      isComponentMounted:      false,
+      headers:                 [
         {
           name:  'volumeName',
           label: this.t('volumes.manage.table.header.volumeName'),
@@ -127,9 +129,10 @@ export default defineComponent({
         return [];
       }
 
-      return this.volumesList.map((volume) => {
-        return {
-          ...volume,
+      const volumes = Array.from(this.volumesList.values());
+
+      for (const volume of volumes) {
+        merge(volume, {
           volumeName:       volume.Name,
           created:          volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
           mountpoint:       volume.Mountpoint || '',
@@ -151,8 +154,10 @@ export default defineComponent({
           ],
           deleteVolume: this.createDeleteVolumeHandler(volume),
           browseFiles:  this.createBrowseFilesHandler(volume),
-        };
-      });
+        });
+      }
+
+      return volumes;
     },
     isContainerdEngine() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -168,6 +173,9 @@ export default defineComponent({
     },
   },
   mounted() {
+    this.isComponentMounted = true;
+    this.ddClient = window.ddClient;
+
     this.$store.dispatch('page/setHeader', {
       title:       this.t('volumes.title'),
       description: '',
@@ -182,18 +190,77 @@ export default defineComponent({
 
     ipcRenderer.on('settings-update', (_event, settings) => {
       this.settings = settings;
-      this.volumesList = [];
+      this.volumesList = null;
       this.checkSelectedNamespace();
     });
 
     this.checkVolumes().catch(console.error);
-    this.volumeCheckInterval = setInterval(this.checkVolumes.bind(this), 5_000);
+    this.setupEventSubscriptions();
+    this.getVolumes().catch(console.error);
   },
   beforeUnmount() {
+    this.isComponentMounted = false;
+    this.cleanupEventSubscriptions();
     ipcRenderer.removeAllListeners('settings-update');
-    clearInterval(this.volumeCheckInterval);
   },
   methods: {
+    setupEventSubscriptions() {
+      if (!window.ddClient || !this.isK8sReady || !this.settings) {
+        setTimeout(() => this.setupEventSubscriptions(), 1000);
+        return;
+      }
+
+      if (this.isNerdCtl) {
+        this.setupContainerdVolumePolling();
+        return;
+      }
+
+      this.volumeEventSubscription = this.ddClient.docker.rdSubscribeToEvents(
+        (event) => {
+          console.debug('Volume event received:', event);
+          this.getVolumes().catch(console.error);
+        },
+        {
+          filters: {
+            type:  ['volume'],
+            event: ['create', 'destroy', 'mount', 'unmount'],
+          },
+          namespace: this.selectedNamespace,
+        },
+      );
+
+      // Fetch initial volume list after setting up event subscription
+      this.getVolumes().catch(console.error);
+    },
+
+    setupContainerdVolumePolling() {
+      // Fetch initial volume list immediately
+      this.getVolumes().catch(console.error);
+
+      // Then poll for changes
+      this.volumePollingInterval = setInterval(() => {
+        if (!this.isComponentMounted) {
+          clearInterval(this.volumePollingInterval);
+          this.volumePollingInterval = null;
+          return;
+        }
+
+        this.getVolumes().catch(console.error);
+      }, 2000);
+    },
+
+    cleanupEventSubscriptions() {
+      if (this.volumeEventSubscription) {
+        this.volumeEventSubscription.unsubscribe();
+        this.volumeEventSubscription = null;
+      }
+
+      if (this.volumePollingInterval) {
+        clearInterval(this.volumePollingInterval);
+        this.volumePollingInterval = null;
+      }
+    },
+
     async checkVolumes() {
       if (window.ddClient && this.isK8sReady && this.settings) {
         this.ddClient = window.ddClient;
@@ -207,7 +274,6 @@ export default defineComponent({
         }
         try {
           await this.getVolumes();
-          clearInterval(this.volumeCheckInterval);
         } catch (error) {
           console.error('There was a problem fetching volumes:', { error });
         }
@@ -229,6 +295,8 @@ export default defineComponent({
       if (value !== this.selectedNamespace) {
         await ipcRenderer.invoke('settings-write',
           { containers: { namespace: value.target.value } });
+        this.cleanupEventSubscriptions();
+        this.setupEventSubscriptions();
         this.getVolumes();
       }
     },
@@ -236,6 +304,27 @@ export default defineComponent({
       this.volumesNamespaces = await this.ddClient?.docker.listNamespaces();
       this.checkSelectedNamespace();
     },
+    updateVolumesList(newVolumes) {
+      if (!newVolumes) {
+        this.volumesList = null;
+        return;
+      }
+
+      const newMap = new Map();
+
+      newVolumes.forEach((newVolume) => {
+        const existing = this.volumesList?.get(newVolume.Name);
+        if (existing) {
+          Object.assign(existing, newVolume);
+          newMap.set(newVolume.Name, existing);
+        } else {
+          newMap.set(newVolume.Name, newVolume);
+        }
+      });
+
+      this.volumesList = newMap;
+    },
+
     async getVolumes() {
       try {
         const options = {};
@@ -245,10 +334,14 @@ export default defineComponent({
         }
 
         const volumes = await this.ddClient?.docker.rdListVolumes(options);
-        this.volumesList = volumes || [];
+        if (volumes) {
+          this.updateVolumesList(volumes);
+        } else {
+          this.volumesList = null;
+        }
       } catch (error) {
         console.error('Failed to fetch volumes:', error);
-        this.volumesList = [];
+        this.volumesList = null;
       }
     },
     async deleteVolume(volume) {
