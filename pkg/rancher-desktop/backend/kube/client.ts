@@ -316,7 +316,7 @@ export class KubeClient extends events.EventEmitter {
     while (!this.shutdown) {
       const endpoints = await this.coreV1API.listNamespacedEndpoints({
         namespace,
-        fieldSelector: `metadata.name == ${ endpointName }`,
+        fieldSelector: `metadata.name==${ endpointName }`,
       });
       const items = endpoints.items.filter(item => item.metadata?.name === endpointName);
 
