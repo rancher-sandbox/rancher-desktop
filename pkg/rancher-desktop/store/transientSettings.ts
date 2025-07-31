@@ -7,11 +7,11 @@ import { defaultTransientSettings, NavItemName, TransientSettings } from '@pkg/c
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-import type { GetterTree } from 'vuex';
+import type { ActionTree, GetterTree } from 'vuex';
 
 type Preferences = typeof defaultTransientSettings.preferences;
 
-interface CommitArgs extends ServerState {
+interface CommitArgs {
   payload?: RecursivePartial<TransientSettings>;
 }
 
@@ -44,14 +44,12 @@ export const mutations: MutationsType<ExtendedTransientSettings> = {
   },
 };
 
-type TransientSettingsContext = ActionContext<ExtendedTransientSettings>;
-
 export const actions = {
-  setPreferences({ commit }: TransientSettingsContext, preferences: Preferences) {
+  setPreferences({ commit }, preferences: Preferences) {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchTransientSettings({ commit }: TransientSettingsContext, args: ServerState) {
-    const { port, user, password } = args;
+  async fetchTransientSettings({ commit, rootState }) {
+    const { port, user, password } = rootState.credentials.credentials;
 
     const response = await fetch(
       uri(port),
@@ -65,10 +63,9 @@ export const actions = {
 
     commit('SET_PREFERENCES', _.cloneDeep(transientSettings.preferences));
   },
-  async commitPreferences({ state, dispatch }: TransientSettingsContext, args: CommitArgs) {
-    const {
-      port, user, password, payload,
-    } = args;
+  async commitPreferences({ state, dispatch, rootState }, args: CommitArgs) {
+    const { port, user, password } = rootState.credentials.credentials;
+    const { payload } = args;
 
     await fetch(
       uri(port),
@@ -81,25 +78,22 @@ export const actions = {
         body: JSON.stringify(payload ?? state.preferences),
       });
 
-    await dispatch(
-      'transientSettings/fetchTransientSettings',
-      args,
-      { root: true });
+    await dispatch('fetchTransientSettings', args);
   },
-  async navigatePrefDialog(context: TransientSettingsContext, args: NavigatePrefsDialogArgs) {
+  async navigatePrefDialog(context, args: NavigatePrefsDialogArgs) {
     const commitArgs = _.omit(args, 'navItem', 'tab');
     const { navItem, tab } = args;
     const preferences = { navItem: { current: navItem, currentTabs: { [navItem]: tab } } };
 
     await context.dispatch('commitPreferences', { ...commitArgs, payload: { preferences } });
   },
-  setMacOsVersion({ commit }: TransientSettingsContext, macOsVersion: semver.SemVer) {
+  setMacOsVersion({ commit }, macOsVersion: semver.SemVer) {
     commit('SET_MAC_OS_VERSION', macOsVersion);
   },
-  setIsArm({ commit }: TransientSettingsContext, isArm: boolean) {
+  setIsArm({ commit }, isArm: boolean) {
     commit('SET_IS_ARM', isArm);
   },
-};
+} satisfies ActionTree<TransientSettings, any>;
 
 export const getters: GetterTree<TransientSettings, TransientSettings> = {
   getPreferences(state: TransientSettings) {
