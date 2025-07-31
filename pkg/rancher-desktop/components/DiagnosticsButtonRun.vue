@@ -41,9 +41,7 @@ export default defineComponent({
   },
   methods: {
     async onClick() {
-      const credentials = await this.$store.dispatch('credentials/fetchCredentials');
-
-      await this.$store.dispatch('diagnostics/runDiagnostics', credentials);
+      await this.$store.dispatch('diagnostics/runDiagnostics');
     },
   },
 });

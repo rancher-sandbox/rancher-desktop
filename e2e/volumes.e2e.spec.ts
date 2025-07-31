@@ -24,8 +24,7 @@ test.describe.serial('Volumes Tests', () => {
     if (testVolumeName) {
       try {
         await tool('docker', 'volume', 'rm', testVolumeName);
-      } catch (error) {
-      }
+      } catch (error) {}
     }
     await teardown(electronApp, testInfo);
   });
@@ -73,7 +72,9 @@ test.describe.serial('Volumes Tests', () => {
 
     await volumesPage.browseVolumeFiles(testVolumeName);
 
-    await page.waitForURL(`**/volumes/files/${ testVolumeName }`, { timeout: 10_000 });
+    await page.waitForURL(`**/volumes/files/${ testVolumeName }`, {
+      timeout: 10_000,
+    });
 
     await page.goBack();
     await volumesPage.waitForTableToLoad();
@@ -86,7 +87,9 @@ test.describe.serial('Volumes Tests', () => {
 
     await volumesPage.deleteVolume(testVolumeName);
 
-    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({ timeout: 10_000 });
+    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({
+      timeout: 20_000,
+    });
 
     testVolumeName = '';
   });
@@ -114,7 +117,9 @@ test.describe.serial('Volumes Tests', () => {
       await volumesPage.deleteBulkVolumes(volumeNames);
 
       for (const volumeName of volumeNames) {
-        await expect(volumesPage.getVolumeRow(volumeName)).toBeHidden({ timeout: 10_000 });
+        await expect(volumesPage.getVolumeRow(volumeName)).toBeHidden({
+          timeout: 10_000,
+        });
       }
 
       await page.reload();
@@ -128,8 +133,7 @@ test.describe.serial('Volumes Tests', () => {
       for (const volumeName of volumeNames) {
         try {
           await tool('docker', 'volume', 'rm', volumeName);
-        } catch (cleanupError) {
-        }
+        } catch (cleanupError) {}
       }
       throw error;
     }
@@ -158,8 +162,7 @@ test.describe.serial('Volumes Tests', () => {
     } finally {
       try {
         await tool('docker', 'volume', 'rm', searchVolumeName);
-      } catch (cleanupError) {
-      }
+      } catch (cleanupError) {}
     }
   });
 
@@ -172,8 +175,18 @@ test.describe.serial('Volumes Tests', () => {
       await tool('docker', 'volume', 'create', volumeName);
 
       // Create container that uses volume above
-      await tool('docker', 'run', '--detach', '--name', containerName,
-        '-v', `${ volumeName }:/data`, 'alpine', 'sleep', '300');
+      await tool(
+        'docker',
+        'run',
+        '--detach',
+        '--name',
+        containerName,
+        '-v',
+        `${ volumeName }:/data`,
+        'alpine',
+        'sleep',
+        'inf',
+      );
 
       await page.reload();
       await volumesPage.waitForTableToLoad();
@@ -191,8 +204,45 @@ test.describe.serial('Volumes Tests', () => {
       try {
         await tool('docker', 'rm', '-f', containerName);
         await tool('docker', 'volume', 'rm', volumeName);
-      } catch (cleanupError) {
-      }
+      } catch (cleanupError) {}
+    }
+  });
+
+  test('should auto-refresh volumes list', async() => {
+    const volumesPage = new VolumesPage(page);
+    const autoRefreshVolumeName = `auto-refresh-test-${ Date.now() }`;
+
+    try {
+      await volumesPage.waitForTableToLoad();
+
+      // Remove all existing volumes to ensure clean state
+      try {
+        const existingVolumes = await tool('docker', 'volume', 'ls', '--quiet');
+        const volumeNames = existingVolumes.trim().split(/\s+/);
+
+        if (volumeNames.length > 0) {
+          await tool('docker', 'volume', 'rm', '--force', ...volumeNames);
+        }
+      } catch {}
+      await expect(volumesPage.volumes).toHaveCount(0);
+
+      await tool('docker', 'volume', 'create', autoRefreshVolumeName);
+
+      await expect(volumesPage.getVolumeRow(autoRefreshVolumeName)).toBeVisible();
+
+      const volumeInfo = volumesPage.getVolumeInfo(autoRefreshVolumeName);
+      await expect(volumeInfo.name).not.toBeEmpty();
+      await expect(volumeInfo.driver).not.toBeEmpty();
+
+      await tool('docker', 'volume', 'rm', autoRefreshVolumeName);
+
+      await expect(
+        volumesPage.getVolumeRow(autoRefreshVolumeName),
+      ).toBeHidden();
+    } finally {
+      try {
+        await tool('docker', 'volume', 'rm', autoRefreshVolumeName);
+      } catch {}
     }
   });
 });

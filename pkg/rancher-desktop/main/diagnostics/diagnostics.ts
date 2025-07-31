@@ -2,6 +2,7 @@ import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult, Diag
 
 import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
+import { send } from '@pkg/window';
 
 const console = Logging.diagnostics;
 
@@ -39,6 +40,8 @@ export class DiagnosticsManager {
 
   /** Last known check results, indexed by the checker id. */
   results: Record<DiagnosticsChecker['id'], DiagnosticsCheckerResult | DiagnosticsCheckerSingleResult[]> = {};
+
+  updateTimeout: ReturnType<typeof setTimeout> | undefined;
 
   /** Mapping of category name to diagnostic ids */
   readonly checkerIdByCategory: Partial<Record<DiagnosticsCategory, string[]>> = {};
@@ -172,6 +175,11 @@ export class DiagnosticsManager {
     } catch (e) {
       console.error(`ERROR checking ${ checker.id }`, { e });
     }
+
+    if (this.updateTimeout !== undefined) {
+      clearTimeout(this.updateTimeout);
+    }
+    this.updateTimeout = setTimeout(() => send('diagnostics/update'), 500);
   }
 
   /**

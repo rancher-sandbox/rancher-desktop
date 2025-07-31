@@ -94,7 +94,6 @@ export default defineComponent({
         :name="groupName"
         :value="value"
         :label="option.label"
-        :description="option.description"
         :val="option.value"
         :disabled="isDisabled"
         :mode="mode"
