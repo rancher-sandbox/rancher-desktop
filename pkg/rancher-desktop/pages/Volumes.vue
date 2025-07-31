@@ -129,13 +129,14 @@ export default defineComponent({
         return [];
       }
 
-      // Process volumes in place to preserve object references
-      for (const volume of this.volumesList) {
+      const volumes = Array.from(this.volumesList.values());
+
+      for (const volume of volumes) {
         merge(volume, {
-          volumeName: volume.Name,
-          created: volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
-          mountpoint: volume.Mountpoint || '',
-          driver: volume.Driver || '',
+          volumeName:       volume.Name,
+          created:          volume.CreatedAt ? new Date(volume.CreatedAt).toLocaleDateString() : '',
+          mountpoint:       volume.Mountpoint || '',
+          driver:           volume.Driver || '',
           availableActions: [
             {
               label:    this.t('volumes.manager.table.action.browse'),
@@ -152,11 +153,11 @@ export default defineComponent({
             },
           ],
           deleteVolume: this.createDeleteVolumeHandler(volume),
-          browseFiles: this.createBrowseFilesHandler(volume),
+          browseFiles:  this.createBrowseFilesHandler(volume),
         });
       }
 
-      return this.volumesList;
+      return volumes;
     },
     isContainerdEngine() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -309,21 +310,19 @@ export default defineComponent({
         return;
       }
 
-      const existingMap = new Map();
-      if (this.volumesList && this.volumesList.length > 0) {
-        this.volumesList.forEach((volume) => {
-          existingMap.set(volume.Name, volume);
-        });
-      }
+      const newMap = new Map();
 
-      this.volumesList = newVolumes.map((newVolume) => {
-        const existing = existingMap.get(newVolume.Name);
+      newVolumes.forEach((newVolume) => {
+        const existing = this.volumesList?.get(newVolume.Name);
         if (existing) {
           Object.assign(existing, newVolume);
-          return existing;
+          newMap.set(newVolume.Name, existing);
+        } else {
+          newMap.set(newVolume.Name, newVolume);
         }
-        return newVolume;
       });
+
+      this.volumesList = newMap;
     },
 
     async getVolumes() {

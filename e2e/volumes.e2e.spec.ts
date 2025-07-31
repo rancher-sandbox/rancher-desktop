@@ -228,7 +228,7 @@ test.describe.serial('Volumes Tests', () => {
 
       await tool('docker', 'volume', 'create', autoRefreshVolumeName);
 
-      await volumesPage.waitForVolumeToAppear(autoRefreshVolumeName);
+      await expect(volumesPage.getVolumeRow(autoRefreshVolumeName)).toBeVisible();
 
       const volumeInfo = volumesPage.getVolumeInfo(autoRefreshVolumeName);
       await expect(volumeInfo.name).not.toBeEmpty();

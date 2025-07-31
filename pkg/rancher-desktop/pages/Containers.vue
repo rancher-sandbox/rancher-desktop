@@ -172,8 +172,19 @@ export default defineComponent({
         return [];
       }
 
-      // Process containers in place to preserve object references
-      for (const container of this.containersList) {
+      const containers = Array.from(this.containersList.values());
+
+      containers.sort((a, b) => {
+        if (a.State === 'running' && b.State !== 'running') {
+          return -1;
+        } else if (a.State !== 'running' && b.State === 'running') {
+          return 1;
+        } else {
+          return a.State.localeCompare(b.State);
+        }
+      });
+
+      for (const container of containers) {
         const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
         const name = names[0];
 
@@ -250,7 +261,7 @@ export default defineComponent({
         }
       }
 
-      return this.containersList;
+      return containers;
     },
     isNerdCtl() {
       return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
@@ -433,35 +444,19 @@ export default defineComponent({
         return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
       });
 
-      // Sorts by status, showing running first.
-      const sorted = filtered.sort((a, b) => {
-        if (a.State === 'running' && b.State !== 'running') {
-          return -1;
-        } else if (a.State !== 'running' && b.State === 'running') {
-          return 1;
-        } else {
-          return a.State.localeCompare(b.State);
-        }
-      });
+      const newMap = new Map();
 
-      // Create a map of existing containers by ID for efficient lookup
-      const existingMap = new Map();
-      if (this.containersList) {
-        this.containersList.forEach((container) => {
-          existingMap.set(container.Id, container);
-        });
-      }
-
-      // Update the list while preserving object references where possible
-      this.containersList = sorted.map((newContainer) => {
-        const existing = existingMap.get(newContainer.Id);
+      filtered.forEach((newContainer) => {
+        const existing = this.containersList?.get(newContainer.Id);
         if (existing) {
-          // Update existing object properties to preserve selection
           Object.assign(existing, newContainer);
-          return existing;
+          newMap.set(newContainer.Id, existing);
+        } else {
+          newMap.set(newContainer.Id, newContainer);
         }
-        return newContainer;
       });
+
+      this.containersList = newMap;
     },
 
     async getContainers() {

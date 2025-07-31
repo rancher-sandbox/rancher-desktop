@@ -248,7 +248,7 @@ test.describe.serial('Containers Tests', () => {
   test('should auto-refresh containers list', async() => {
     const containersPage = new ContainersPage(page);
     const autoRefreshContainerName = `auto-refresh-test-${ Date.now() }`;
-    let autoRefreshContainerId: string;
+    let autoRefreshContainerId = '';
 
     try {
       const navPage = new NavPage(page);
@@ -257,7 +257,7 @@ test.describe.serial('Containers Tests', () => {
 
       // Remove all existing containers to ensure clean state
       try {
-        const existingContainers = await tool('docker', 'ps', '-aq');
+        const existingContainers = await tool('docker', 'ps', '--all', '--quiet');
         const containerIds = existingContainers.trim().split(/\s+/);
 
         if (containerIds.length > 0) {
