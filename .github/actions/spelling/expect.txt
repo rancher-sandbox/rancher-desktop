@@ -245,6 +245,7 @@ entrypoints
 epinio
 EPONY
 ERRFILE
+errdefs
 errgroup
 Errorln
 Errorw
