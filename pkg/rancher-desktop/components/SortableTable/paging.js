@@ -2,12 +2,32 @@ import { ROWS_PER_PAGE } from '@pkg/store/prefs';
 
 export default {
   computed: {
+    collapsedFilteredRows() {
+      if (!this.groupBy || Object.keys(this.collapsedGroups).length === 0) {
+        return this.filteredRows;
+      }
+
+      const seenGroups = new Set();
+
+      return this.filteredRows.filter(row => {
+        const groupKey = row[this.groupBy];
+        const isCollapsed = this.collapsedGroups[groupKey] === false;
+
+        if (!seenGroups.has(groupKey)) {
+          seenGroups.add(groupKey);
+          return true;
+        }
+
+        return !isCollapsed;
+      });
+    },
+
     totalRows() {
       if (this.externalPaginationEnabled) {
         return this.externalPaginationResult?.count || 0;
       }
 
-      return this.filteredRows.length;
+      return this.collapsedFilteredRows.length;
     },
 
     indexFrom() {
@@ -53,9 +73,9 @@ export default {
       if (this.externalPaginationEnabled) {
         return this.rows;
       } else if ( this.paging ) {
-        return this.filteredRows.slice(this.indexFrom - 1, this.indexTo);
+        return this.collapsedFilteredRows.slice(this.indexFrom - 1, this.indexTo);
       } else {
-        return this.filteredRows;
+        return this.collapsedFilteredRows;
       }
     },
   },

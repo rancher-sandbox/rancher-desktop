@@ -21,6 +21,7 @@
       :loading="!containersList"
       group-by="projectGroup"
       :group-sort="['projectGroup']"
+      :collapsed-groups="expanded"
     >
       <template #header-middle>
         <div class="header-middle">
@@ -102,11 +103,25 @@
           </div>
         </td>
       </template>
-      <template #group-row="{ group }">
-        <tr class="group-row">
+      <template #group-row="{ group, groupCounts }">
+        <tr
+          :ref="`group-${group.ref}`"
+          class="group-row"
+          :aria-expanded="expanded[group.ref] !== false"
+        >
           <td :colspan="headers.length + 1">
             <div class="group-tab">
-              {{ group.ref }} ({{ group.rows.length }})
+              <i
+                data-title="Toggle Expand"
+                :class="{
+                  icon: true,
+                  'icon-chevron-right': expanded[group.ref] === false,
+                  'icon-chevron-down': expanded[group.ref] !== false,
+                }"
+                @click.stop="toggleExpand(group.ref)"
+              />
+              {{ group.ref }}
+              <span v-if="expanded[group.ref] === false"> ({{ groupCounts[group.ref] || group.rows.length }})</span>
             </div>
           </td>
         </tr>
@@ -147,7 +162,8 @@ export default defineComponent({
       isComponentMounted:         false,
       setupTimeoutId:             null,
       headers:                    [
-        // INFO: Disable for now since we can only get the running containers.
+      
+      // INFO: Disable for now since we can only get the running containers.
         {
           name:  'containerState',
           label: this.t('containers.manage.table.header.state'),
@@ -222,7 +238,11 @@ export default defineComponent({
         const composeProject = container.Labels?.['com.docker.compose.project'];
 
         if (k8sPodName && k8sNamespace) {
-          container.projectGroup = `${ k8sNamespace }/${ k8sPodName }`;
+          if (k8sNamespace === 'kube-system') {
+            container.projectGroup = 'Kubernetes System';
+          } else {
+            container.projectGroup = `${ k8sNamespace }/${ k8sPodName }`;
+          }
         } else if (composeProject) {
           container.projectGroup = composeProject;
         } else {
@@ -620,6 +640,13 @@ export default defineComponent({
         return shell.openExternal(`http://localhost:${ hostPort }`);
       }
     },
+    toggleExpand(group) {
+      if (this.expanded[group] === undefined) {
+        this.expanded[group] = false;
+      } else {
+        this.expanded[group] = !this.expanded[group];
+      }
+    },
   },
 });
 </script>
@@ -687,5 +714,25 @@ export default defineComponent({
 .port-container {
   display: flex;
   gap: 5px;
+}
+
+.group-row {
+  font-weight: bold;
+
+  .group-tab {
+
+    i {
+      cursor: pointer;
+      &:hover {
+        color: var(--primary);
+      }
+    }
+  }
+
+  &[aria-expanded="false"] {
+    :deep(~ .main-row) {
+      display: none;
+    }
+  }
 }
 </style>

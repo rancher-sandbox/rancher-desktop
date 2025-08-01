@@ -110,6 +110,11 @@ export default {
       type:    Array,
       default: null,
     },
+    collapsedGroups: {
+      // Object tracking which groups are collapsed, e.g. { "group1": false }
+      type:    Object,
+      default: () => ({}),
+    },
 
     defaultSortBy: {
       // Default field to sort by if none is specified
@@ -1276,6 +1281,7 @@ export default {
           name="group-row"
           :group="groupedRows"
           :full-colspan="fullColspan"
+          :group-counts="groupCounts"
         >
           <tr class="group-row">
             <td :colspan="fullColspan">
