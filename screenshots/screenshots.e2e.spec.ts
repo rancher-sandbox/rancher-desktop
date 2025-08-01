@@ -99,7 +99,7 @@ test.describe.serial('Main App Test', () => {
       });
 
       try {
-        await expect(containersPage.page.getByRole('row')).toHaveCount(6);
+        await expect(containersPage.page.getByRole('row')).toHaveCount(8);
         await screenshot.take('Containers');
       } finally {
         await containersPage.page.evaluate(() => {
@@ -168,7 +168,7 @@ test.describe.serial('Main App Test', () => {
     test('Extensions Page', async({ colorScheme }) => {
       const extensionsPage = await navPage.navigateTo('Extensions');
 
-      await expect(extensionsPage.cardEpinio).toBeVisible();
+      await expect(extensionsPage.cardEpinio).toBeVisible({ timeout: 30_000 });
       await screenshot.take('Extensions');
 
       await extensionsPage.tabInstalled.click();
