@@ -11,14 +11,14 @@
       ref="sortableTableRef"
       class="containersTable"
       :headers="headers"
-      key-field="Id"
+      key-field="id"
       :rows="rows"
       no-rows-key="containers.sortableTables.noRows"
       :row-actions="true"
       :paging="true"
       :rows-per-page="10"
       :has-advanced-filtering="false"
-      :loading="!containersList"
+      :loading="containers === null"
       group-by="projectGroup"
       :group-sort="['projectGroup']"
     >
@@ -28,14 +28,14 @@
             <label>Namespace</label>
             <select
               class="select-namespace"
-              :value="selectedNamespace"
+              :value="namespace"
               @change="onChangeNamespace($event)"
             >
               <option
-                v-for="item in containersNamespaces"
+                v-for="item in namespaces"
                 :key="item"
                 :value="item"
-                :selected="item === selectedNamespace"
+                :selected="item === namespace"
               >
                 {{ item }}
               </option>
@@ -47,7 +47,7 @@
         <td>
           <badge-state
             :color="isRunning(row) ? 'bg-success' : 'bg-darker'"
-            :label="row.State"
+            :label="row.state"
           />
         </td>
       </template>
@@ -69,17 +69,17 @@
         <td>
           <div class="port-container">
             <a
-              v-for="port in getUniquePorts(row.Ports).slice(0, 2)"
-              :key="port"
+              v-for="[hostPort, containerPort] in row.portList.slice(0, 2)"
+              :key="hostPort"
               target="_blank"
               class="link"
-              @click="openUrl(port)"
+              @click="openUrl(hostPort)"
             >
-              {{ port }}
+              {{ hostPort }}:{{ containerPort }}
             </a>
 
             <div
-              v-if="shouldHaveDropdown(row.Ports)"
+              v-if="shouldHaveDropdown(row.portList)"
               class="dropdown"
               @mouseenter="addDropDownPosition"
               @mouseleave="clearDropDownPosition"
@@ -89,13 +89,13 @@
               </span>
               <div class="dropdown-content">
                 <a
-                  v-for="port in getUniquePorts(row.Ports).slice(2)"
-                  :key="port"
+                  v-for="[hostPort, containerPort] in row.portList.slice(2)"
+                  :key="hostPort"
                   target="_blank"
                   class="link"
-                  @click="openUrl(port)"
+                  @click="openUrl(hostPort)"
                 >
-                  {{ port }}
+                  {{ hostPort }}:{{ containerPort }}
                 </a>
               </div>
             </div>
@@ -131,16 +131,35 @@
 <script>
 import { BadgeState, Banner } from '@rancher/components';
 import { shell } from 'electron';
+import merge from 'lodash/merge';
 import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
-import { ContainerEngine } from '@pkg/config/settings';
+import { mapTypedGetters, mapTypedState } from '@pkg/entry/store';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 /**
- * @typedef Container {Object} The return type of ddClient.docker.listContainers
- * @property Id {string} The container id
+ * @import { Container } from '@pk/store/containers'
+ */
+
+/**
+ * @typedef { Object } Action
+ * @property { string } label
+ * @property { string } action
+ * @property { boolean } enabled
+ * @property { boolean } bulkable
+ * @property { boolean } [bulkAction]
+ */
+
+/**
+ * @typedef { Container } RowItem An item in the table row
+ * @property { Action[] } [availableActions]
+ * @property { (this: Container, containers?: Container[]) => void } [stopContainer]
+ * @property { (this: Container, containers?: Container[]) => void } [startContainer]
+ * @property { (this: Container, containers?: Container[]) => void } [deleteContainer]
+ * @property { (this: Container) => void } [viewLogs]
+ * @property { (readonly [number, number])[] } portList
  */
 
 export default defineComponent({
@@ -151,17 +170,16 @@ export default defineComponent({
     return {
       /** @type import('@pkg/config/settings').Settings | undefined */
       settings:                   undefined,
-      ddClient:                   null,
-      containersList:             null,
-      showRunning:                false,
-      containersNamespaces:       [],
-      containerEventSubscription: null,
       error:                      null,
-      isComponentMounted:         false,
-      setupTimeoutId:             null,
       /** @type Record<string, boolean> */
       collapsed:                   {},
-      headers:                    [
+      /**
+       * This timer is used to retry subscribing to events until the backend is
+       * ready enough to update the vuex store.
+       * @type ReturnType<typeof setTimeout> | undefined
+       */
+      subscribeTimer:       undefined,
+      headers:              [
         {
           name:  'containerState',
           label: this.t('containers.manage.table.header.state'),
@@ -192,126 +210,74 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
+    ...mapTypedState('container-engine', ['containers', 'namespaces']),
+    ...mapTypedGetters('container-engine', ['namespace', 'supportsNamespaces']),
+    /** @returns {RowItem[]} */
     rows() {
-      if (!this.containersList) {
+      if (!this.containers) {
         return [];
       }
-
-      const containers = Array.from(this.containersList.values());
-
-      containers.sort((a, b) => {
-        if (a.State === 'running' && b.State !== 'running') {
-          return -1;
-        } else if (a.State !== 'running' && b.State === 'running') {
-          return 1;
-        } else {
-          return a.State.localeCompare(b.State);
-        }
-      });
-
-      for (const container of containers) {
-        const names = Array.isArray(container.Names) ? container.Names : container.Names.split(/\s+/);
-        const name = names[0];
-
-        container.state = container.State;
-        container.containerName = name.replace(
-          /_[a-z0-9-]{36}_[0-9]+/,
-          '',
-        );
-        container.started = container.State === 'running' ? container.Status : '';
-        container.imageName = container.Image;
-        container.containerState = container.State ?? container.Status;
-
-        if (this.isNerdCtl) {
-          container.started = container.containerState;
-          if (container.Status.match(/exited/i)) {
-            container.State = 'exited';
-          } else {
-            container.State = container.Status.toLowerCase();
+      return Object.values(this.containers)
+        .filter(container => {
+          // Filter out containers from the 'kube-system' namespace
+          return this.supportsNamespaces || container.labels['io.kubernetes.pod.namespace'] !== 'kube-system';
+        })
+        .sort((a, b) => {
+          // Sort by status, showing running first.
+          if ((a.state === 'running' || b.state === 'running') && a.state !== b.state) {
+            // One of the two is running; put that first.
+            return a.state === 'running' ? -1 : 1;
           }
-        }
-
-        const k8sPodName = container.Labels?.['io.kubernetes.pod.name'];
-        const k8sNamespace = container.Labels?.['io.kubernetes.pod.namespace'];
-        const composeProject = container.Labels?.['com.docker.compose.project'];
-
-        if (k8sPodName && k8sNamespace) {
-          container.projectGroup = `${ k8sNamespace }/${ k8sPodName }`;
-        } else if (composeProject) {
-          container.projectGroup = composeProject;
-        } else {
-          container.projectGroup = 'Standalone Containers';
-        }
-
-        container.availableActions = [
-          {
-            label:      'Logs',
-            action:     'viewLogs',
-            enabled:    true,
-            bulkable:   false,
+          // Both or running, or neither.
+          return a.state.localeCompare(b.state) || a.id.localeCompare(b.id);
+        })
+        .map(container => merge({}, container, {
+          availableActions: [
+            {
+              label:      'Logs',
+              action:     'viewLogs',
+              enabled:    true,
+              bulkable:   false,
+            },
+            {
+              label:      'Stop',
+              action:     'stopContainer',
+              enabled:    this.isRunning(container),
+              bulkable:   true,
+              bulkAction: 'stopContainer',
+            },
+            {
+              label:      'Start',
+              action:     'startContainer',
+              enabled:    this.isStopped(container),
+              bulkable:   true,
+              bulkAction: 'startContainer',
+            },
+            {
+              label:      this.t('images.manager.table.action.delete'),
+              action:     'deleteContainer',
+              enabled:    this.isStopped(container),
+              bulkable:   true,
+              bulkAction: 'deleteContainer',
+            },
+          ],
+          stopContainer:   (args) => {
+            this.execCommand('stop', args?.length ? args : container);
           },
-          {
-            label:      'Stop',
-            action:     'stopContainer',
-            enabled:    this.isRunning(container),
-            bulkable:   true,
-            bulkAction: 'stopContainer',
+          startContainer:   (args) => {
+            this.execCommand('start', args?.length ? args : container);
           },
-          {
-            label:      'Start',
-            action:     'startContainer',
-            enabled:    this.isStopped(container),
-            bulkable:   true,
-            bulkAction: 'startContainer',
+          deleteContainer:   (args) => {
+            this.execCommand('rm', args?.length ? args : container);
           },
-          {
-            label:      this.t('images.manager.table.action.delete'),
-            action:     'deleteContainer',
-            enabled:    this.isStopped(container),
-            bulkable:   true,
-            bulkAction: 'deleteContainer',
-          },
-        ];
-
-        if (!container.stopContainer) {
-          container.stopContainer = (...args) => {
-            this.stopContainer(...(args?.length > 0 ? args : [container]));
-          };
-        }
-
-        if (!container.startContainer) {
-          container.startContainer = (...args) => {
-            this.startContainer(...(args?.length > 0 ? args : [container]));
-          };
-        }
-
-        if (!container.deleteContainer) {
-          container.deleteContainer = (...args) => {
-            this.deleteContainer(...(args?.length > 0 ? args : [container]));
-          };
-        }
-
-        if (!container.viewLogs) {
-          container.viewLogs = () => {
+          viewLogs: () => {
             this.viewLogs(container);
-          };
-        }
-      }
-
-      return containers;
-    },
-    isNerdCtl() {
-      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
-    },
-    supportsNamespaces() {
-      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD;
-    },
-    selectedNamespace() {
-      return this.supportsNamespaces ? this.settings?.containers.namespace : undefined;
+          },
+          portList: this.getPortList(container),
+        }));
     },
   },
   mounted() {
-    this.isComponentMounted = true;
     this.$store.dispatch('page/setHeader', {
       title:       this.t('containers.title'),
       description: '',
@@ -319,121 +285,63 @@ export default defineComponent({
 
     ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;
-      this.checkContainers().catch(console.error);
+      this.subscribe().catch(console.error);
     });
 
     ipcRenderer.send('settings-read');
 
     ipcRenderer.on('settings-update', (_event, settings) => {
       this.settings = settings;
-      this.containersList = null;
       this.checkSelectedNamespace();
     });
 
-    this.checkContainers().catch(console.error);
-    this.setupEventSubscriptions();
-    this.getContainers().catch(console.error);
+    this.subscribe().catch(console.error);
   },
   beforeUnmount() {
-    this.isComponentMounted = false;
-    if (this.setupTimeoutId) {
-      clearTimeout(this.setupTimeoutId);
-      this.setupTimeoutId = null;
-    }
     ipcRenderer.removeAllListeners('settings-update');
-    ipcRenderer.removeAllListeners('containers-namespaces');
-    ipcRenderer.removeAllListeners('containers-namespaces-containers');
-    this.cleanupEventSubscriptions();
+    this.$store.dispatch('container-engine/unsubscribe').catch(console.error);
+    clearTimeout(this.subscribeTimer);
   },
   methods: {
-    setupEventSubscriptions() {
-      if (!window.ddClient || !this.isK8sReady || !this.settings) {
-        this.setupTimeoutId = setTimeout(() => {
-          if (this.isComponentMounted) {
-            this.setupEventSubscriptions();
-          }
-        }, 1000);
-        return;
-      }
-
-      this.ddClient = window.ddClient;
-
-      const eventOptions = { namespace: this.selectedNamespace };
-
-      if (!this.isNerdCtl) {
-        eventOptions.filters = {
-          type:  ['container'],
-          event: ['create', 'start', 'stop', 'die', 'kill', 'pause', 'unpause', 'rename', 'update', 'destroy', 'remove'],
-        };
-      }
-
-      this.containerEventSubscription = this.ddClient.docker.rdSubscribeToEvents(
-        (event) => {
-          if (!this.isComponentMounted) {
-            return;
-          }
-
-          console.debug('Container event received:', event);
-
-          // For nerdctl, we need to filter client-side since server-side filtering is limited
-          if (this.isNerdCtl && event.Type !== 'container' && event.Type) {
-            return;
-          }
-
-          this.getContainers().catch(console.error);
-        },
-        eventOptions,
-      );
-
-      // Fetch initial container list after setting up event subscription
-      this.getContainers().catch(console.error);
-    },
-
-    cleanupEventSubscriptions() {
-      if (this.containerEventSubscription) {
-        this.containerEventSubscription.unsubscribe();
-        this.containerEventSubscription = null;
-      }
-    },
-
-    async checkContainers() {
-      if (window.ddClient && this.isK8sReady && this.settings) {
-        this.ddClient = window.ddClient;
-
-        try {
-          if (this.supportsNamespaces) {
-            await this.getNamespaces();
-          }
-        } catch (error) {
-          console.error('There was a problem fetching namespaces:', { error });
+    async subscribe() {
+      clearTimeout(this.subscribeTimer);
+      try {
+        if (!window.ddClient || !this.isK8sReady || !this.settings) {
+          setTimeout(() => this.subscribe(), 1_000);
+          return;
         }
-        try {
-          await this.getContainers();
-        } catch (error) {
-          console.error('There was a problem fetching containers:', { error });
-        }
+        await this.$store.dispatch('container-engine/subscribe', {
+          type:      'containers',
+          client:    window.ddClient,
+        });
+      } catch (error) {
+        console.error('There was a problem subscribing to container events:', { error });
       }
     },
+
     checkSelectedNamespace() {
-      if (!this.supportsNamespaces || this.containersNamespaces.length === 0) {
+      if (!this.supportsNamespaces || !this.namespaces?.length) {
         // Nothing to verify yet
         return;
       }
-      if (!this.containersNamespaces.includes(this.selectedNamespace)) {
+      if (!this.namespaces.includes(this.namespace)) {
         const K8S_NAMESPACE = 'k8s.io';
-        const defaultNamespace = this.containersNamespaces.includes(K8S_NAMESPACE) ? K8S_NAMESPACE : this.containersNamespaces[0];
+        const defaultNamespace = this.namespaces.includes(K8S_NAMESPACE) ? K8S_NAMESPACE : this.namespaces[0];
 
         ipcRenderer.invoke('settings-write',
           { containers: { namespace: defaultNamespace } } );
       }
     },
-    async onChangeNamespace(value) {
-      if (value !== this.selectedNamespace) {
+    async onChangeNamespace(event) {
+      const { value } = event.target;
+      if (value !== this.namespace) {
         await ipcRenderer.invoke('settings-write',
-          { containers: { namespace: value.target.value } } );
-        this.cleanupEventSubscriptions();
-        this.setupEventSubscriptions();
-        await this.getContainers();
+          { containers: { namespace: value } } );
+        this.$store.dispatch('container-engine/subscribe', {
+          type:      'containers',
+          client:    window.ddClient,
+          namespace: value,
+        });
       }
     },
     clearDropDownPosition(e) {
@@ -466,57 +374,16 @@ export default defineComponent({
         }
       }
     },
-    async getNamespaces() {
-      this.containersNamespaces = await this.ddClient?.docker.listNamespaces();
-      this.checkSelectedNamespace();
-    },
-    updateContainersList(newContainers) {
-      if (!newContainers) {
-        this.containersList = null;
-        return;
-      }
-
-      // Filter out images from "kube-system" namespace first
-      const filtered = newContainers.filter((container) => {
-        return container.Labels['io.kubernetes.pod.namespace'] !== 'kube-system';
-      });
-
-      const newMap = new Map();
-
-      filtered.forEach((newContainer) => {
-        const existing = this.containersList?.get(newContainer.Id);
-        if (existing) {
-          Object.assign(existing, newContainer);
-          newMap.set(newContainer.Id, existing);
-        } else {
-          newMap.set(newContainer.Id, newContainer);
-        }
-      });
-
-      this.containersList = newMap;
-    },
-
-    async getContainers() {
-      const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.selectedNamespace });
-      this.updateContainersList(containers);
-    },
-    async stopContainer(container) {
-      await this.execCommand('stop', container);
-    },
-    async startContainer(container) {
-      await this.execCommand('start', container);
-    },
-    async deleteContainer(container) {
-      await this.execCommand('rm', container);
-    },
     viewLogs(container) {
-      this.$router.push(`/containers/logs/${ container.Id }`);
+      this.$router.push(`/containers/logs/${ container.id }`);
     },
+    /** @param container {RowItem} */
     isRunning(container) {
-      return container.State === 'running' || container.Status === 'Up';
+      return container.state === 'running' || container.status === 'Up';
     },
+    /** @param container {RowItem} */
     isStopped(container) {
-      return container.State === 'created' || container.State === 'exited' || container.Status.includes('Exited');
+      return container.state === 'created' || container.state === 'exited';
     },
     /**
      * Execute a command against some containers
@@ -525,21 +392,19 @@ export default defineComponent({
      */
     async execCommand(command, _ids) {
       try {
-        const ids = Array.isArray(_ids) ? _ids.map(c => c.Id) : [_ids.Id];
+        const ids = Array.isArray(_ids) ? _ids.map(c => c.id) : [_ids.id];
+        const options = { cwd: '/' };
 
         console.info(`Executing command ${ command } on container ${ ids }`);
+        if (this.supportsNamespaces) {
+          options.namespace = this.namespace;
+        }
 
-        const { stderr, stdout } = await this.ddClient.docker.cli.exec(
-          command,
-          [...ids],
-          { cwd: '/', namespace: this.selectedNamespace },
-        );
+        const { stderr, stdout } = await window.ddClient.docker.cli.exec(command, [...ids], options);
 
         if (stderr) {
           throw new Error(stderr);
         }
-
-        await this.getContainers();
 
         return stdout;
       } catch (error) {
@@ -592,42 +457,29 @@ export default defineComponent({
 
       return { content: sha };
     },
-    getUniquePorts(ports) {
-      const keys = Object.keys(ports);
-
-      if (!keys || Object.keys(keys).length === 0) {
-        return [];
-      }
-
-      const uniquePortMap = keys.map((key) => {
-        const values = ports[key];
-
-        const hostPorts = values?.map(value => value.HostPort);
-        const uniqueHostPorts = [...new Set(hostPorts)];
-
-        return { [key]: uniqueHostPorts };
-      });
-
-      const displayMap = uniquePortMap.map((element) => {
-        const key = Object.keys(element)[0];
-        const values = element[key];
-        const port = key.split('/')[0];
-
-        return values.map(value => `${ value }:${ port }`);
-      });
-
-      return [].concat.apply([], displayMap);
+    /**
+     * @param container {Container}
+     * @returns {[number, number][]} (host port, container port) tuples, sorted by host port.
+     */
+    getPortList(container) {
+      /** @type [string, { HostIp: string, HostPort: string}][] */
+      const rawPorts = Object.entries(container.ports).filter(([, host]) => !!host);
+      // Convert to a map to make sure it's unique by host port
+      /** @type Record<string, string> */
+      const mapping = Object.fromEntries(rawPorts.flatMap(([portDef, entries]) => {
+        return entries.map(({ HostPort }) => [HostPort, portDef.split('/')[0]]);
+      }));
+      return Object.entries(mapping).map(([h, c]) => [parseInt(h, 10), parseInt(c, 10)]);
     },
+    /** @param ports {(readonly [number, number])[]} */
     shouldHaveDropdown(ports) {
       if (!ports) {
         return false;
       }
 
-      return this.getUniquePorts(ports)?.length >= 3;
+      return ports.length >= 3;
     },
-    openUrl(port) {
-      const hostPort = parseInt(port.split(':')[0]);
-
+    openUrl(hostPort) {
       if ([80, 443].includes(hostPort)) {
         hostPort === 80 ? shell.openExternal(`http://localhost`) : shell.openExternal(`https://localhost`);
       } else {
