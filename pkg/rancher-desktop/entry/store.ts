@@ -2,6 +2,7 @@ import { createStore, mapGetters, mapState, ModuleTree, Plugin } from 'vuex';
 
 import * as ActionMenu from '../store/action-menu';
 import * as ApplicationSettings from '../store/applicationSettings';
+import * as ContainerEngine from '../store/container-engine';
 import * as Credentials from '../store/credentials';
 import * as Diagnostics from '../store/diagnostics';
 import * as Extensions from '../store/extensions';
@@ -18,6 +19,7 @@ import * as TransientSettings from '../store/transientSettings';
 const modules = {
   'action-menu':       ActionMenu,
   applicationSettings: ApplicationSettings,
+  'container-engine':  ContainerEngine,
   credentials:         Credentials,
   diagnostics:         Diagnostics,
   extensions:          Extensions,
