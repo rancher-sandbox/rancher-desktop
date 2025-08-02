@@ -341,10 +341,10 @@ export default class K3sHelper extends events.EventEmitter {
    * Produce a promise that is resolved after a short delay, used for retrying
    * API requests when GitHub API requests are being rate-limited.
    */
-  protected async delayForWaitLimiting(): Promise<void> {
+  protected async delayForWaitLimiting(duration = 1_000): Promise<void> {
     // This is a separate method so that we could override it in the tests.
     // Jest cannot override setTimeout: https://stackoverflow.com/q/52727220/
-    await util.promisify(setTimeout)(1_000);
+    await util.promisify(setTimeout)(duration);
   }
 
   /**
@@ -441,7 +441,9 @@ export default class K3sHelper extends events.EventEmitter {
         if (!response.ok) {
           if (response.status === 403 && response.headers.get('X-RateLimit-Remaining') === '0') {
             // We hit the rate limit; try again after a delay.
-            await this.delayForWaitLimiting();
+            // If given, the rate limit reset time is in seconds since UTC epoch.
+            const resetTime = parseInt(response.headers.get('X-RateLimit-Reset') ?? '0', 10);
+            await this.delayForWaitLimiting(Math.min(1_000, resetTime * 1_000 - Date.now()));
             continue;
           }
           throw new Error(`Could not fetch releases: ${ response.statusText }`);
@@ -1110,9 +1112,11 @@ export default class K3sHelper extends events.EventEmitter {
 
         return;
       } catch (ex) {
-        if (ex instanceof ApiException && ex.code === 503) {
-          console.debug(`Got Service Unavailable (${ ex.body.message }), retrying...`);
-          await util.promisify(setTimeout)(1_000);
+        if (ex instanceof ApiException && [429, 503].includes(ex.code)) {
+          const body = typeof ex.body === 'string' ? JSON.parse(ex.body) : ex.body;
+          const delay = body?.details?.retryAfterSeconds || 1;
+          console.debug(`Got Service Unavailable (${ body.reason }: ${ body.message }), retrying...`);
+          await util.promisify(setTimeout)(delay * 1_000);
           continue;
         }
         console.error(`Error uninstalling ${ ownerName }`, ex);
