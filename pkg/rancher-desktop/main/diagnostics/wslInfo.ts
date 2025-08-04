@@ -1,12 +1,12 @@
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
-import getWSLVersion from '@pkg/utils/wslVersion';
+import getWSLVersion, { compareVersion, makeVersion, versionString } from '@pkg/utils/wslVersion';
 
 /**
- * Check if WSL was installed from Microsoft Store.
+ * Check information about WSL.
  */
 class CheckWSLFromStore implements DiagnosticsChecker {
-  readonly id = 'WSL_FROM_STORE';
+  readonly id = 'WSL_INFO';
 
   category = DiagnosticsCategory.Testing;
   applicable(): Promise<boolean> {
@@ -40,8 +40,16 @@ class CheckWSLFromStore implements DiagnosticsChecker {
       };
     }
 
+    if (compareVersion(version.version, makeVersion(2, 5, 7)) < 0) {
+      return {
+        passed:      false,
+        description: `WSL version ${ versionString(version.version) } is too old.`,
+        fixes:       [{ description: 'Update WSL with `wsl.exe --update`' }],
+      };
+    }
+
     return {
-      passed: true, description: 'WSL is installed.', fixes: [],
+      passed: true, description: `WSL is installed (version ${ versionString(version.version) }).`, fixes: [],
     };
   }
 }
