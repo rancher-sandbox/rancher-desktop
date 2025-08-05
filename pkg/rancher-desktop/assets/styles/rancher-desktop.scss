@@ -30,7 +30,7 @@ label > button:first-child:not(.btn-sm) {
     }
 }
 
-:is(.btn, button, [class*='btn-']):not([class*='role-']) {
+:is(.btn, button, [class*='btn-']):not([class*='role-']):not([class*=bg-primary]) {
   /* buttons should have one of the role- classes:
    * .role-primary, .role-secondary, .role-tertiary, .role-multi-action, etc.
    */

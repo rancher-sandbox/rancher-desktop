@@ -139,16 +139,35 @@
   $color: var(--popover-bg);
   top: 0;
   left: 0;
+  border-radius: var(--border-radius-lg);
+
+  &:focus {
+    outline: none;
+  }
 
   .v-popper__inner {
     background: $color;
     color: var(--popover-text);
-    padding: 10px;
+    padding: 0;
     border-radius: var(--border-radius-lg);
-    border: none;
+    overflow: hidden; /* for border-radius */
+    border: 1px solid var(--dropdown-border);
+
+    li {
+      padding: 10px;
+      &:not(.divider):hover {
+        background-color: var(--dropdown-hover-bg);
+        color: var(--dropdown-hover-text);
+        cursor: pointer;
+      }
+    }
 
     a {
       color: var(--popover-text);
+    }
+
+    .resize-observer, .resize-observer object {
+      position: absolute;
     }
   }
 

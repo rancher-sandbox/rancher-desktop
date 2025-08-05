@@ -3273,6 +3273,9 @@ setup:
     skip: Skip
 
 sortableTable:
+  bulkActions:
+    collapsed:
+      label: Actions
   actionAvailability:
     selected: "{actionable} selected"
     some: "Available for {actionable} of the {total} selected"
@@ -3291,6 +3294,16 @@ sortableTable:
       =1 {{count} {count, plural, =1 {{singularLabel}} other {{pluralLabel}}}}
       other {{from} - {to} of {count} {pluralLabel}}}
   search: Filter
+  in: in
+  addFilter: Add Filter
+  filterFor: Filter for...
+  selectCol: Select a column
+  resetFilters: Reset
+  add: Add
+  tableHeader:
+    noFilter: This column cannot be filtered by
+    groupBy: Group by
+    show: Show
 
 storageClass:
   actions:

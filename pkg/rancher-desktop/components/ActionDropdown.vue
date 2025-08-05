@@ -66,7 +66,7 @@ export default {
       :class="{ 'one-action': !dualAction, [buttonSize]: true, disabled: disableButton }"
     >
       <v-dropdown
-        placement="bottom"
+        placement="bottom-start"
         :container="false"
         :disabled="disableButton"
         :popper-options="{ modifiers: { flip: { enabled: false } } }"
@@ -85,7 +85,7 @@ export default {
             Button <i class="icon icon-chevron-down" />
           </button>
         </slot>
-        <template #popover>
+        <template #popper>
           <slot name="popover-content" />
         </template>
       </v-dropdown>
