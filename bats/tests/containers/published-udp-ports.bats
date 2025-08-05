@@ -1,5 +1,9 @@
 load '../helpers/load'
 
+local_setup() {
+    skip_on_unix
+}
+
 @test 'factory reset' {
     factory_reset
 }
