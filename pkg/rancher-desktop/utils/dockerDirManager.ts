@@ -208,7 +208,7 @@ export class DockerDirManager {
       const timeoutError = Symbol('timeout');
       const execPromise = this.spawnFileWithExtraPath('pass', ['ls']);
       const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(timeoutError), 1_000));
-      const result = await Promise.any([execPromise, timeoutPromise]);
+      const result = await Promise.race([execPromise, timeoutPromise]);
 
       if (Object.is(result, timeoutError)) {
         console.debug('Timed out waiting for pass');
