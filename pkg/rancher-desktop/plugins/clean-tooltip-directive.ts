@@ -24,7 +24,11 @@ export default ({
     const fn: DirectiveHook<HTMLElement, any, any> = (el, binding) => {
       let { value } = binding;
 
-      value = DOMPurify.sanitize(value, { ALLOWED_TAGS });
+      if (typeof value === 'string') {
+        value = DOMPurify.sanitize(value, { ALLOWED_TAGS });
+      } else if (typeof value?.content === 'string') {
+        value.content = DOMPurify.sanitize(value.content, { ALLOWED_TAGS });
+      }
 
       return vTooltip.beforeMount(el, { ...binding, value });
     };
