@@ -7,6 +7,7 @@ import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 import { containersList } from './test-data/containers';
 import { lockedSettings } from './test-data/preferences';
 import { snapshotsList } from './test-data/snapshots';
+import { volumesList } from './test-data/volumes';
 import { NavPage } from '../e2e/pages/nav-page';
 import { PreferencesPage } from '../e2e/pages/preferences';
 import { clearUserProfile } from '../e2e/utils/ProfileUtils';
@@ -122,6 +123,34 @@ test.describe.serial('Main App Test', () => {
 
       await expect(imagesPage.rows).toBeVisible();
       await screenshot.take('Images');
+    });
+
+    test('Volumes Page', async({ colorScheme }) => {
+      const volumesPage = await navPage.navigateTo('Volumes');
+
+      await volumesPage.page.exposeFunction('listVolumesMock', (options?: any) => {
+        return volumesList;
+      });
+      await volumesPage.page.evaluate(() => {
+        // eslint-disable-next-line
+        // @ts-ignore TypeScript doesn't have the correct context.
+        window.ddClient.docker._rdListVolumes = window.ddClient.docker.rdListVolumes;
+        // eslint-disable-next-line
+        // @ts-ignore TypeScript doesn't have the correct context.
+        window.ddClient.docker.rdListVolumes = listVolumesMock;
+      });
+
+      try {
+        await expect(volumesPage.page.locator('.volumesTable')).toBeVisible();
+        await expect(volumesPage.page.getByRole('row')).toHaveCount(7);
+        await screenshot.take('Volumes');
+      } finally {
+        await volumesPage.page.evaluate(() => {
+          // eslint-disable-next-line
+          // @ts-ignore TypeScript doesn't have the correct context.
+          window.ddClient.docker.rdListVolumes = window.ddClient.docker._rdListVolumes;
+        });
+      }
     });
 
     test('Troubleshooting Page', async({ colorScheme }) => {
