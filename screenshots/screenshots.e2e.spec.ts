@@ -100,13 +100,80 @@ test.describe.serial('Main App Test', () => {
       });
 
       try {
-        await expect(containersPage.page.getByRole('row')).toHaveCount(8);
+        await expect(containersPage.page.getByRole('row')).toHaveCount(11);
         await screenshot.take('Containers');
       } finally {
         await containersPage.page.evaluate(() => {
           // eslint-disable-next-line
           // @ts-ignore TypeScript doesn't have the correct context.
           window.ddClient.docker.listContainers = window.ddClient.docker._listContainers;
+        });
+      }
+    });
+
+    test('Container Logs Page', async({ colorScheme }) => {
+      const containersPage = await navPage.navigateTo('Containers');
+
+      await expect(containersPage.page.getByRole('row')).toHaveCount(11);
+
+      await containersPage.page.evaluate(() => {
+        // eslint-disable-next-line
+        // @ts-ignore TypeScript doesn't have the correct context.
+        if (!window.ddClient.docker.cli._exec) {
+          window.ddClient.docker.cli._exec = window.ddClient.docker.cli.exec;
+        }
+        // eslint-disable-next-line
+        // @ts-ignore TypeScript doesn't have the correct context.
+        window.ddClient.docker.cli.exec = (command, args, options) => {
+          if (command === 'logs') {
+            setTimeout(() => {
+              const sampleLogs = [
+                '2025-01-15T10:30:15.123456789Z PostgreSQL Database directory appears to contain a database; Skipping initialization',
+                '2025-01-15T10:30:15.234567890Z LOG:  starting PostgreSQL 15.5 on x86_64-pc-linux-gnu',
+                '2025-01-15T10:30:15.345678901Z LOG:  listening on IPv4 address "0.0.0.0", port 5432',
+                '2025-01-15T10:30:15.456789012Z LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"',
+                '2025-01-15T10:30:15.567890123Z LOG:  database system was shut down at 2025-01-15 10:28:45 UTC',
+                '2025-01-15T10:30:15.678901234Z LOG:  database system is ready to accept connections',
+                '2025-01-15T10:31:20.789012345Z LOG:  checkpoint starting: time',
+                '2025-01-15T10:32:25.890123456Z LOG:  checkpoint complete: wrote 42 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled',
+                '2025-01-15T10:35:30.901234567Z LOG:  received smart shutdown request',
+                '2025-01-15T10:35:30.912345678Z LOG:  database system is shut down',
+              ];
+
+              sampleLogs.forEach(log => {
+                options.stream.onOutput({ stdout: log + '\r\n' });
+              });
+            }, 100);
+
+            return { close: () => {} };
+          }
+          // eslint-disable-next-line
+          // @ts-ignore TypeScript doesn't have the correct context.
+          return window.ddClient.docker.cli._exec(command, args, options);
+        };
+      });
+
+      try {
+        const firstContainerRow = containersPage.page.locator('tr.main-row[data-node-id="b253b86ddaca501c0f542564d086b7535ed015faa323f0f8df8fccc38c0c8ee0"]');
+        const actionsButton = firstContainerRow.locator('.btn.role-multi-action.actions');
+        await actionsButton.click();
+
+        const logsAction = containersPage.page.getByRole('listitem').filter({ hasText: 'Logs' });
+        await logsAction.click();
+
+        await containersPage.page.waitForURL('**/containers/logs/**');
+        await expect(containersPage.page.getByTestId('container-info')).toBeVisible();
+        await expect(containersPage.page.getByTestId('terminal')).toBeVisible();
+        await containersPage.page.waitForTimeout(1500);
+
+        await screenshot.take('Container-Logs');
+      } finally {
+        await containersPage.page.evaluate(() => {
+          // eslint-disable-next-line
+          // @ts-ignore TypeScript doesn't have the correct context.
+          if (window.ddClient.docker.cli._exec) {
+            window.ddClient.docker.cli.exec = window.ddClient.docker.cli._exec;
+          }
         });
       }
     });
