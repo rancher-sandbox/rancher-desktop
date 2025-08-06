@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import yaml from 'yaml';
+
 import { download } from '../lib/download';
 
 import { DownloadContext, getOctokit, VersionedDependency, GlobalDependency } from 'scripts/lib/dependencies';
@@ -18,17 +20,30 @@ export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
     const baseUrl = `https://raw.githubusercontent.com/${ this.githubOwner }/${ this.githubRepo }/master/api/docs`;
     const url = `${ baseUrl }/v${ context.versions.mobyOpenAPISpec }.yaml`;
     const outPath = path.join(process.cwd(), 'src', 'go', 'wsl-helper', 'pkg', 'dockerproxy', 'swagger.yaml');
+    const modifiedPath = path.join(path.dirname(outPath), 'swagger-modified.yaml');
 
     await download(url, outPath, { access: fs.constants.W_OK });
 
-    // As of 1.48 they have an example of an uint64 that's at 2^64-1 (i.e. max),
-    // but the YAML parser uses strconv.ParseInt() which only takes int64.  This
-    // causes issues with `go generate`.  Work around the issue by replacing the
-    // example string, which we don't care about anyway.
-    const originalContents = await fs.promises.readFile(outPath, 'utf-8');
-    const modifiedContents = originalContents.replace('example: 18446744073709551615', 'example: 9223372036854775807');
+    // We may need compatibility fixes from time to time as the upstream swagger
+    // configuration is manually maintained and needs fixups to work.
+    const contents = yaml.parse(await fs.promises.readFile(outPath, 'utf-8'), { intAsBigInt: true });
 
-    await fs.promises.writeFile(outPath, modifiedContents, 'utf-8');
+    // go-swagger gets confused when multiple things have the same name; this
+    // collides with definitions.Config
+    if (contents.definitions?.Plugin?.properties?.Config?.['x-go-name'] === 'Config') {
+      contents.definitions.Plugin.properties.Config['x-go-name'] = 'PluginConfig';
+    }
+    // Same as above; various Plugin* things collide with the non-plugin versions.
+    for (const key of Object.keys(contents.definitions ?? {}).filter(k => /^Plugin./.test(k))) {
+      delete contents.definitions[key]?.['x-go-name'];
+    }
+    // This forces a go type that isn't defined; delete the override and just
+    // use strings instead.
+    if (contents.definitions?.Plugin?.properties?.Config?.properties?.Interface?.properties?.Types?.items?.['x-go-type']?.type === 'CapabilityID') {
+      delete contents.definitions.Plugin.properties.Config.properties.Interface.properties.Types.items['x-go-type'];
+    }
+
+    await fs.promises.writeFile(modifiedPath, yaml.stringify(contents), 'utf-8');
 
     await simpleSpawn('go', ['generate', '-x', 'pkg/dockerproxy/generate.go'], { cwd: path.join(process.cwd(), 'src', 'go', 'wsl-helper') });
     console.log('Moby API swagger models generated.');

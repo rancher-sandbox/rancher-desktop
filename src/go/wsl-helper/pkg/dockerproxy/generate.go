@@ -20,8 +20,8 @@ import (
 	_ "github.com/go-swagger/go-swagger"
 )
 
-//go:generate -command swagger go run github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5
-//go:generate swagger generate server --quiet --skip-validation --config-file swagger-configuration.yaml --server-package models --spec swagger.yaml
+//go:generate -command swagger go tool swagger
+//go:generate swagger generate server --quiet --skip-validation --config-file swagger-configuration.yaml --server-package models --spec swagger-modified.yaml
 
 func init() {
 }
