@@ -89,23 +89,20 @@ test.describe.serial('Main App Test', () => {
       await containersPage.page.exposeFunction('listContainersMock', (options?: any) => {
         return containersList;
       });
-      await containersPage.page.evaluate(() => {
-        // eslint-disable-next-line
-        // @ts-ignore TypeScript doesn't have the correct context.
-        window.ddClient.docker._listContainers = window.ddClient.docker.listContainers;
-        // eslint-disable-next-line
-        // @ts-ignore TypeScript doesn't have the correct context.
-        window.ddClient.docker.listContainers = listContainersMock;
-      });
+      await containersPage.page.evaluate((containersList) => {
+        const { ddClient } = window as any;
+        ddClient.docker._listContainers = ddClient.docker.listContainers;
+        ddClient.docker.listContainers = () => Promise.resolve(containersList);
+      }, await containersList);
 
       try {
-        await expect(containersPage.page.getByRole('row')).toHaveCount(6);
+        await expect(containersPage.page.locator('.main-row')).toHaveCount((await containersList as unknown[]).length);
         await screenshot.take('Containers');
       } finally {
         await containersPage.page.evaluate(() => {
-          // eslint-disable-next-line
-          // @ts-ignore TypeScript doesn't have the correct context.
-          window.ddClient.docker.listContainers = window.ddClient.docker._listContainers;
+          const { ddClient } = window as any;
+          ddClient.docker.listContainers = ddClient.docker._listContainers;
+          delete ddClient.docker._listContainers;
         });
       }
     });
@@ -113,7 +110,7 @@ test.describe.serial('Main App Test', () => {
     test('PortForwarding Page', async({ colorScheme }) => {
       const portForwardingPage = await navPage.navigateTo('PortForwarding');
 
-      await expect(portForwardingPage.page.getByRole('row')).toHaveCount(4);
+      await expect(portForwardingPage.page.locator('.main-row')).toHaveCount(3);
       await screenshot.take('PortForwarding', navPage);
     });
 

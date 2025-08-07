@@ -84,7 +84,7 @@ export class Screenshots {
 
   protected async screenshotWindows(outPath: string, includeAll: boolean) {
     const script = path.resolve(import.meta.dirname, 'screenshot.ps1');
-    const args = [script, '-FilePath', outPath, '-Title', `'${ this.windowTitle }'`];
+    const args = ['-ExecutionPolicy', 'Bypass', script, '-FilePath', outPath, '-Title', `'${ this.windowTitle }'`];
 
     if (!includeAll) {
       args.push('-Foreground');
