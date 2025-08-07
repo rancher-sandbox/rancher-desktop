@@ -68,6 +68,7 @@ create_registry() {
 }
 
 wait_for_registry() {
+    trace "$(ctrctl ps -a)"
     # registry port is forwarded to host
     try --max 20 --delay 5 curl -k --silent --show-error "https://localhost:$REGISTRY_PORT/v2/_catalog"
 }
@@ -161,6 +162,26 @@ verify_default_credStore() {
     rdsudo update-ca-certificates
 }
 
+restart_container_engine() {
+    # BUG BUG BUG
+    # When using containerd, sometimes the container would get wedged on a
+    # restart; however, restarting containerd again seems to fix this.
+    # So we need to keep trying until the registry container is not `created`.
+    # BUG BUG BUG
+    service_control "$CONTAINER_ENGINE_SERVICE" restart || return
+
+    service_control --ifstarted rd-openresty restart || return
+
+    wait_for_container_engine || return
+
+    trace "$(ctrctl ps -a)"
+    if using_containerd; then
+        run ctrctl ps --filter status=created,name=registry --format '{{.Names}}'
+        assert_success || return
+        refute_output registry || return
+    fi
+}
+
 @test 'restart container engine to refresh certs' {
     skip_for_insecure_registry
 
@@ -182,18 +203,16 @@ verify_default_credStore() {
         service_control rancher-desktop-guestagent stop
     fi
 
-    service_control "$CONTAINER_ENGINE_SERVICE" restart
+    try restart_container_engine
 
     # BUG BUG BUG
-    # Second part of the workaround
+    # Second part of the guestagent workaround; see the block about
+    # https://github.com/rancher-sandbox/rancher-desktop/issues/7146
     # BUG BUG BUG
     if is_windows && using_containerd; then
         service_control rancher-desktop-guestagent start
     fi
 
-    service_control --ifstarted rd-openresty restart
-
-    wait_for_container_engine
     wait_for_registry
 }
 
