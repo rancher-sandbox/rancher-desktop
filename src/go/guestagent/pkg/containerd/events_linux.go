@@ -412,25 +412,31 @@ func createLoopbackIPtablesRules(ctx context.Context, networks []string, contain
 }
 
 func createPortMappingFromContainer(id string, labels map[string]string) (nat.PortMap, error) {
+	var err error
 	var data struct {
 		PortMappings []Port `json:"portMappings"`
 	}
 	portMap := make(nat.PortMap)
 
-	if portString := labels[portsKey]; portString != "" {
-		if err := json.Unmarshal([]byte(portString), &data.PortMappings); err != nil {
-			return nil, err
-		}
-	} else if stateDir := labels[stateDirKey]; stateDir != "" {
-		configBytes, err := os.ReadFile(filepath.Join(stateDir, "network-config.json"))
+	portString := labels[portsKey]
+	if portString != "" {
+		err = json.Unmarshal([]byte(portString), &data.PortMappings)
 		if err != nil {
-			return nil, fmt.Errorf("failed reading network state for container %s: %w", id, err)
+			log.Warnf("failed to read container %s port mappings label: %w", id, err)
 		}
-		if err := json.Unmarshal(configBytes, &data); err != nil {
-			return nil, err
+	}
+	if portString == "" || err != nil {
+		if stateDir := labels[stateDirKey]; stateDir != "" {
+			var configBytes []byte
+			configBytes, err = os.ReadFile(filepath.Join(stateDir, "network-config.json"))
+			if err != nil {
+				return nil, fmt.Errorf("failed reading network state for container %s: %w", id, err)
+			}
+			err = json.Unmarshal(configBytes, &data)
 		}
-	} else {
-		return portMap, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	for _, port := range data.PortMappings {
