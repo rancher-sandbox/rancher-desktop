@@ -49,11 +49,13 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (*Paths, error) {
 		Integration: filepath.Join(altAppHome, "bin"),
 		//nolint:gocritic // filepathJoin doesn't like absolute paths
 		DeploymentProfileSystem: filepath.Join("/etc", appName),
-		DeploymentProfileUser:   configHome,
-		ExtensionRoot:           filepath.Join(dataHome, appName, "extensions"),
-		Snapshots:               filepath.Join(dataHome, appName, "snapshots"),
-		ContainerdShims:         filepath.Join(dataHome, appName, "containerd-shims"),
-		OldUserData:             filepath.Join(configHome, "Rancher Desktop"),
+		//nolint:gocritic // filepathJoin doesn't like absolute paths
+		AltDeploymentProfileSystem: filepath.Join("/etc", appName),
+		DeploymentProfileUser:      configHome,
+		ExtensionRoot:              filepath.Join(dataHome, appName, "extensions"),
+		Snapshots:                  filepath.Join(dataHome, appName, "snapshots"),
+		ContainerdShims:            filepath.Join(dataHome, appName, "containerd-shims"),
+		OldUserData:                filepath.Join(configHome, "Rancher Desktop"),
 	}
 	paths.Logs = os.Getenv("RD_LOGS_DIR")
 	if paths.Logs == "" {

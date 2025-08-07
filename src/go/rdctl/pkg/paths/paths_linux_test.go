@@ -31,20 +31,21 @@ func TestGetPaths(t *testing.T) {
 			t.Errorf("Unexpected error getting user home directory: %s", err)
 		}
 		expectedPaths := Paths{
-			AppHome:                 filepath.Join(homeDir, ".local/share", appName),
-			AltAppHome:              filepath.Join(homeDir, ".rd"),
-			Config:                  filepath.Join(homeDir, ".config", appName),
-			Logs:                    filepath.Join(homeDir, ".local/share", appName, "logs"),
-			Cache:                   filepath.Join(homeDir, ".cache", appName),
-			Lima:                    filepath.Join(homeDir, ".local/share", appName, "lima"),
-			Integration:             filepath.Join(homeDir, ".rd/bin"),
-			Resources:               fakeResourcesPath,
-			DeploymentProfileSystem: filepath.Join("/etc", appName),
-			DeploymentProfileUser:   filepath.Join(homeDir, ".config"),
-			ExtensionRoot:           filepath.Join(homeDir, ".local/share", appName, "extensions"),
-			Snapshots:               filepath.Join(homeDir, ".local/share", appName, "snapshots"),
-			ContainerdShims:         filepath.Join(homeDir, ".local/share", appName, "containerd-shims"),
-			OldUserData:             filepath.Join(homeDir, ".config", "Rancher Desktop"),
+			AppHome:                    filepath.Join(homeDir, ".local/share", appName),
+			AltAppHome:                 filepath.Join(homeDir, ".rd"),
+			Config:                     filepath.Join(homeDir, ".config", appName),
+			Logs:                       filepath.Join(homeDir, ".local/share", appName, "logs"),
+			Cache:                      filepath.Join(homeDir, ".cache", appName),
+			Lima:                       filepath.Join(homeDir, ".local/share", appName, "lima"),
+			Integration:                filepath.Join(homeDir, ".rd/bin"),
+			Resources:                  fakeResourcesPath,
+			DeploymentProfileSystem:    filepath.Join("/etc", appName),
+			AltDeploymentProfileSystem: filepath.Join("/etc", appName),
+			DeploymentProfileUser:      filepath.Join(homeDir, ".config"),
+			ExtensionRoot:              filepath.Join(homeDir, ".local/share", appName, "extensions"),
+			Snapshots:                  filepath.Join(homeDir, ".local/share", appName, "snapshots"),
+			ContainerdShims:            filepath.Join(homeDir, ".local/share", appName, "containerd-shims"),
+			OldUserData:                filepath.Join(homeDir, ".config", "Rancher Desktop"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
@@ -71,20 +72,21 @@ func TestGetPaths(t *testing.T) {
 		}
 
 		expectedPaths := Paths{
-			AppHome:                 filepath.Join(environment["XDG_DATA_HOME"], appName),
-			AltAppHome:              filepath.Join(homeDir, ".rd"),
-			Config:                  filepath.Join(environment["XDG_CONFIG_HOME"], appName),
-			Logs:                    environment["RD_LOGS_DIR"],
-			Cache:                   filepath.Join(environment["XDG_CACHE_HOME"], appName),
-			Lima:                    filepath.Join(environment["XDG_DATA_HOME"], appName, "lima"),
-			Integration:             filepath.Join(homeDir, ".rd/bin"),
-			Resources:               fakeResourcesPath,
-			DeploymentProfileSystem: filepath.Join("/etc", appName),
-			DeploymentProfileUser:   environment["XDG_CONFIG_HOME"],
-			ExtensionRoot:           filepath.Join(environment["XDG_DATA_HOME"], appName, "extensions"),
-			Snapshots:               filepath.Join(environment["XDG_DATA_HOME"], appName, "snapshots"),
-			ContainerdShims:         filepath.Join(environment["XDG_DATA_HOME"], appName, "containerd-shims"),
-			OldUserData:             filepath.Join(environment["XDG_CONFIG_HOME"], "Rancher Desktop"),
+			AppHome:                    filepath.Join(environment["XDG_DATA_HOME"], appName),
+			AltAppHome:                 filepath.Join(homeDir, ".rd"),
+			Config:                     filepath.Join(environment["XDG_CONFIG_HOME"], appName),
+			Logs:                       environment["RD_LOGS_DIR"],
+			Cache:                      filepath.Join(environment["XDG_CACHE_HOME"], appName),
+			Lima:                       filepath.Join(environment["XDG_DATA_HOME"], appName, "lima"),
+			Integration:                filepath.Join(homeDir, ".rd/bin"),
+			Resources:                  fakeResourcesPath,
+			DeploymentProfileSystem:    filepath.Join("/etc", appName),
+			AltDeploymentProfileSystem: filepath.Join("/etc", appName),
+			DeploymentProfileUser:      environment["XDG_CONFIG_HOME"],
+			ExtensionRoot:              filepath.Join(environment["XDG_DATA_HOME"], appName, "extensions"),
+			Snapshots:                  filepath.Join(environment["XDG_DATA_HOME"], appName, "snapshots"),
+			ContainerdShims:            filepath.Join(environment["XDG_DATA_HOME"], appName, "containerd-shims"),
+			OldUserData:                filepath.Join(environment["XDG_CONFIG_HOME"], "Rancher Desktop"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {

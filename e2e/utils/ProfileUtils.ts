@@ -8,7 +8,13 @@ import util from 'util';
 import { expect, Page, TestInfo } from '@playwright/test';
 
 import {
-  createDefaultSettings, setUserProfile, startRancherDesktop, retry, teardown, reportAsset, startRancherDesktopOptions,
+  createDefaultSettings,
+  setUserProfile,
+  startRancherDesktop,
+  retry,
+  teardown,
+  reportAsset,
+  startRancherDesktopOptions,
 } from './TestUtils';
 import { NavPage } from '../pages/nav-page';
 
@@ -58,7 +64,7 @@ function getDeploymentBaseNames(platform: 'linux' | 'darwin'): string[] {
 function getDeploymentPaths(platform: 'linux' | 'darwin', profileDir: string): string[] {
   let baseNames = getDeploymentBaseNames(platform);
 
-  if (platform === 'linux' && profileDir === paths.deploymentProfileSystem) {
+  if (platform === 'linux' && (profileDir === paths.deploymentProfileSystem || profileDir === paths.altDeploymentProfileSystem)) {
     // macOS profile base-names are the same in both directories
     // linux ones change...
     baseNames = baseNames.map(s => s.replace('rancher-desktop.', ''));
@@ -141,8 +147,10 @@ export async function verifyNoSystemProfile(): Promise<string[]> {
       return [ex.message];
     }
   }
-  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
   const existingProfiles = [];
+  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
+
+  profilePaths.push(...getDeploymentPaths(platform, paths.altDeploymentProfileSystem));
 
   for (const profilePath of profilePaths) {
     if (await fileExists(profilePath)) {
@@ -160,6 +168,8 @@ export async function verifySystemProfile(): Promise<string[]> {
     return await verifySystemRegistrySubtree();
   }
   const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
+
+  profilePaths.push(...getDeploymentPaths(platform, paths.altDeploymentProfileSystem));
 
   for (const profilePath of profilePaths) {
     if (await fileExists(profilePath)) {

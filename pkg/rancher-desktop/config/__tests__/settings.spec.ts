@@ -220,7 +220,10 @@ describe('settings', () => {
      *
      * macOS plist files:
      * User: `~/Library/Preferences/io.rancherdesktop.profile.{defaults,locked}.plist`
-     * System: `/Library/Preferences/io.rancherdesktop.profile.{defaults,locked}.plist`
+     * System: `/Library/Managed Preferences/io.rancherdesktop.profile.{defaults,locked}.plist`
+     * AltSystem: `/Library/Preferences/io.rancherdesktop.profile.{defaults,locked}.plist`
+     *
+     * A request for the AltSystem profile gets the same response as a request for the System profile.
      *
      * @param useSystemProfile: what to do when a system profile is requested
      * @param usePersonalProfile:  what to do when a user profile is requested
@@ -229,10 +232,10 @@ describe('settings', () => {
      */
     function createMocker(useSystemProfile: ProfileTypes, usePersonalProfile: ProfileTypes, typeToCorrupt?: 'defaults' | 'locked'): (inputPath: any, unused: any) => any {
       return (inputPath: any, unused: any): any => {
-        if (!inputPath.startsWith(paths.deploymentProfileUser) && !inputPath.startsWith(paths.deploymentProfileSystem)) {
+        if (!inputPath.startsWith(paths.deploymentProfileUser) && !inputPath.startsWith(paths.deploymentProfileSystem) && !inputPath.startsWith(paths.altDeploymentProfileSystem)) {
           return actualSyncReader(inputPath, unused);
         }
-        const action = inputPath.startsWith(paths.deploymentProfileSystem) ? useSystemProfile : usePersonalProfile;
+        const action = inputPath.startsWith(paths.deploymentProfileSystem) || inputPath.startsWith(paths.altDeploymentProfileSystem) ? useSystemProfile : usePersonalProfile;
 
         if (action === ProfileTypes.None || inputPath === path.join(paths.config, 'settings.json')) {
           throw new FakeFSError(`File ${ inputPath } not found`, 'ENOENT');

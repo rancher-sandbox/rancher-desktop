@@ -10,35 +10,37 @@ import electron from 'electron';
 
 export interface Paths {
   /** appHome: the location of the main appdata directory. */
-  appHome:                 string;
+  appHome:                    string;
   /** altAppHome is a secondary directory for application data. */
-  altAppHome:              string;
+  altAppHome:                 string;
   /** Directory which holds configuration. */
-  config:                  string;
+  config:                     string;
   /** Directory which holds logs. */
-  logs:                    string;
+  logs:                       string;
   /** Directory which holds caches that may be removed. */
-  cache:                   string;
+  cache:                      string;
   /** Directory that holds resource files in the RD installation. */
-  resources:               string;
+  resources:                  string;
   /** Directory holding Lima state (Unix-specific). */
-  lima:                    string;
+  lima:                       string;
   /** Directory holding provided binary resources */
-  integration:             string;
+  integration:                string;
   /** Deployment Profile System-wide startup settings path. */
-  deploymentProfileSystem: string;
+  deploymentProfileSystem:    string;
+  /** Secondary Deployment Profile System-wide startup settings path. */
+  altDeploymentProfileSystem: string;
   /** Deployment Profile User startup settings path. */
-  deploymentProfileUser:   string;
+  deploymentProfileUser:      string;
   /** Directory that will hold extension data. */
-  readonly extensionRoot:  string;
+  readonly extensionRoot:     string;
   /** Directory holding the WSL distribution (Windows-specific). */
-  wslDistro:               string;
+  wslDistro:                  string;
   /** Directory holding the WSL data distribution (Windows-specific). */
-  wslDistroData:           string;
+  wslDistroData:              string;
   /** Directory that holds snapshots. */
-  snapshots:               string;
+  snapshots:                  string;
   /** Directory that holds user-managed containerd-shims. */
-  containerdShims:         string;
+  containerdShims:            string;
 }
 
 export class UnixPaths implements Paths {
@@ -51,6 +53,7 @@ export class UnixPaths implements Paths {
   lima = '';
   integration = '';
   deploymentProfileSystem = '';
+  altDeploymentProfileSystem = '';
   deploymentProfileUser = '';
   extensionRoot = '';
   snapshots = '';
@@ -95,6 +98,10 @@ export class WindowsPaths implements Paths {
   }
 
   get deploymentProfileSystem(): string {
+    throw new Error('Internal error: Windows profiles will be read from Registry');
+  }
+
+  get altDeploymentProfileSystem(): string {
     throw new Error('Internal error: Windows profiles will be read from Registry');
   }
 
