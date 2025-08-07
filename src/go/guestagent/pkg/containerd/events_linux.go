@@ -20,7 +20,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -42,6 +44,7 @@ import (
 const (
 	namespaceKey = "nerdctl/namespace"
 	portsKey     = "nerdctl/ports"
+	stateDirKey  = "nerdctl/state-dir"
 	networkKey   = "nerdctl/networks"
 )
 
@@ -104,7 +107,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 				if err != nil {
 					log.Errorf("failed to get the container %s from namespace %s: %s", startTask.ContainerID, envelope.Namespace, err)
 				}
-				ports, err := createPortMappingFromString(container.Labels[portsKey])
+				ports, err := createPortMappingFromContainer(container.ID, container.Labels)
 				if err != nil {
 					log.Errorf("failed to create port mapping from container's start task: %v", err)
 				}
@@ -136,7 +139,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					log.Errorf("failed to get the container %s from namespace %s: %s", cuEvent.ID, envelope.Namespace, err)
 				}
 
-				ports, err := createPortMappingFromString(container.Labels[portsKey])
+				ports, err := createPortMappingFromContainer(container.ID, container.Labels)
 				if err != nil {
 					log.Errorf("failed to create port mapping from container's start task: %v", err)
 				}
@@ -268,7 +271,7 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) {
 			continue
 		}
 
-		ports, err := createPortMappingFromString(labels[portsKey])
+		ports, err := createPortMappingFromContainer(c.ID(), labels)
 		if err != nil {
 			log.Errorf("failed to create port mapping for container %s: %v", c.ID(), err)
 		}
@@ -302,8 +305,6 @@ func (e *EventMonitor) Close() error {
 
 	if err := e.portTracker.RemoveAll(); err != nil {
 		finalErr = fmt.Errorf("failed to remove all ports from port tracker: %w", err)
-
-		return finalErr
 	}
 
 	return finalErr
@@ -410,21 +411,29 @@ func createLoopbackIPtablesRules(ctx context.Context, networks []string, contain
 	return nil
 }
 
-func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
-	var ports []Port
-
+func createPortMappingFromContainer(id string, labels map[string]string) (nat.PortMap, error) {
+	var data struct {
+		PortMappings []Port `json:"portMappings"`
+	}
 	portMap := make(nat.PortMap)
 
-	if portMapping == "" {
+	if portString := labels[portsKey]; portString != "" {
+		if err := json.Unmarshal([]byte(portString), &data.PortMappings); err != nil {
+			return nil, err
+		}
+	} else if stateDir := labels[stateDirKey]; stateDir != "" {
+		configBytes, err := os.ReadFile(filepath.Join(stateDir, "network-config.json"))
+		if err != nil {
+			return nil, fmt.Errorf("failed reading network state for container %s: %w", id, err)
+		}
+		if err := json.Unmarshal(configBytes, &data); err != nil {
+			return nil, err
+		}
+	} else {
 		return portMap, nil
 	}
 
-	err := json.Unmarshal([]byte(portMapping), &ports)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, port := range ports {
+	for _, port := range data.PortMappings {
 		portMapKey, err := nat.NewPort(strings.ToLower(port.Protocol), strconv.Itoa(port.ContainerPort))
 		if err != nil {
 			return nil, err
