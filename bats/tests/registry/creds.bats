@@ -185,33 +185,7 @@ restart_container_engine() {
 @test 'restart container engine to refresh certs' {
     skip_for_insecure_registry
 
-    # BUG BUG BUG
-    # When using containerd the guestagent currently doesn't enumerate
-    # running containers when it starts up to find existing open ports
-    # (it does this for moby only). Therefore it misses forwarding
-    # ports that have been opened while the guestagent was down.
-    #
-    # The guestagent would restart automatically when containerd
-    # restart. By explicitly stopping/restarting the guestagent we are
-    # more likely to have the new instance running by the time the
-    # containerd becomes ready.
-    #
-    # This workaround can be removed when the following bug has been fixed:
-    # https://github.com/rancher-sandbox/rancher-desktop/issues/7146
-    # BUG BUG BUG
-    if is_windows && using_containerd; then
-        service_control rancher-desktop-guestagent stop
-    fi
-
     try restart_container_engine
-
-    # BUG BUG BUG
-    # Second part of the guestagent workaround; see the block about
-    # https://github.com/rancher-sandbox/rancher-desktop/issues/7146
-    # BUG BUG BUG
-    if is_windows && using_containerd; then
-        service_control rancher-desktop-guestagent start
-    fi
 
     wait_for_registry
 }
@@ -278,7 +252,7 @@ restart_container_engine() {
 
 @test 'verify the docker-desktop credential helper is replaced with the rancher-desktop default' {
     factory_reset
-    echo '{ "credsStore": "desktop" }' >|"$DOCKER_CONFIG_FILE"
+    create_file "$DOCKER_CONFIG_FILE" <<<'{ "credsStore": "desktop" }'
     start_container_engine
     wait_for_container_engine
     verify_default_credStore
