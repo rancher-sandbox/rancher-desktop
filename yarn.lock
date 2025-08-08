@@ -1241,6 +1241,11 @@
     fs-extra "^9.0.1"
     minimist "^1.2.5"
 
+"@electron/fuses@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@electron/fuses/-/fuses-2.0.0.tgz#b3d0626f08e9d7afe7b968bbbd9a3c9a0594bdfb"
+  integrity sha512-lyb1zK3YHeWUjaz7yiK0GnxSPduwASKMyiDbCtbn3spP6EEt+UWtktggWehG0icFrXAk3GwvcJ4nCrJO0N9IhQ==
+
 "@electron/get@^2.0.0":
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/@electron/get/-/get-2.0.3.tgz#fba552683d387aebd9f3fcadbcafc8e12ee4f960"
