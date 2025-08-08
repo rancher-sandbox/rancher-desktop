@@ -84,7 +84,7 @@ export class Screenshots {
 
   protected async screenshotWindows(outPath: string, includeAll: boolean) {
     const script = path.resolve(import.meta.dirname, 'screenshot.ps1');
-    const args = [script, '-FilePath', outPath, '-Title', `'${ this.windowTitle }'`];
+    const args = ['-ExecutionPolicy', 'Bypass', script, '-FilePath', outPath, '-Title', `'${ this.windowTitle }'`];
 
     if (!includeAll) {
       args.push('-Foreground');
@@ -169,3 +169,19 @@ export class PreferencesScreenshots extends Screenshots {
     await this.screenshot(path);
   }
 }
+
+// If needed, set the screen resolution in CI.
+await (async function() {
+  if (!process.env.CI) {
+    return;
+  }
+  switch (process.platform) {
+  case 'win32': {
+    const script = path.resolve(import.meta.dirname, 'set-display-resolution.ps1');
+    await spawnFile(
+      'powershell.exe',
+      ['-ExecutionPolicy', 'Bypass', script],
+      { stdio: 'inherit' });
+  }
+  }
+})();
