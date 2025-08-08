@@ -124,7 +124,13 @@ export class NavPage {
 
   async navigateTo(tab: keyof typeof pageConstructors) {
     await this.page.click(`.nav li[item="/${ tab }"] a`);
-    await this.page.waitForURL(`**/${ tab }`, { timeout: 60_000 });
+
+    // Special handling for Extensions page due to dynamic component loading
+    if (tab === 'Extensions') {
+      await this.page.waitForSelector('.extensions-page', { timeout: 60_000 });
+    } else {
+      await this.page.waitForURL(`**/${ tab }`, { timeout: 60_000 });
+    }
 
     return pageConstructors[tab](this.page);
   }
