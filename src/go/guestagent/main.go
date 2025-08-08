@@ -143,32 +143,48 @@ func main() {
 
 	if *enableContainerd {
 		group.Go(func() error {
-			eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
-			if err != nil {
-				return fmt.Errorf("error initializing containerd event monitor: %w", err)
-			}
-			if err := tryConnectAPI(ctx, containerdSocketFile, eventMonitor.IsServing); err != nil {
-				return err
-			}
-			eventMonitor.MonitorPorts(ctx)
+			for {
+				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
+				if err != nil {
+					return fmt.Errorf("error initializing containerd event monitor: %w", err)
+				}
+				if err := tryConnectAPI(ctx, containerdSocketFile, eventMonitor.IsServing); err != nil {
+					return err
+				}
 
-			return eventMonitor.Close()
+				eventMonitor.MonitorPorts(ctx)
+				if err := eventMonitor.Close(); err != nil {
+					return err
+				}
+
+				select {
+				case <-ctx.Done():
+					return nil
+				default:
+				}
+			}
 		})
 	}
 
 	if *enableDocker {
 		group.Go(func() error {
-			eventMonitor, err := docker.NewEventMonitor(portTracker)
-			if err != nil {
-				return fmt.Errorf("error initializing docker event monitor: %w", err)
-			}
-			if err := tryConnectAPI(ctx, dockerSocketFile, eventMonitor.Info); err != nil {
-				return err
-			}
-			eventMonitor.MonitorPorts(ctx)
-			eventMonitor.Flush()
+			for {
+				eventMonitor, err := docker.NewEventMonitor(portTracker)
+				if err != nil {
+					return fmt.Errorf("error initializing docker event monitor: %w", err)
+				}
+				if err := tryConnectAPI(ctx, dockerSocketFile, eventMonitor.Info); err != nil {
+					return err
+				}
+				eventMonitor.MonitorPorts(ctx)
+				eventMonitor.Flush()
 
-			return nil
+				select {
+				case <-ctx.Done():
+					return nil
+				default:
+				}
+			}
 		})
 	}
 
