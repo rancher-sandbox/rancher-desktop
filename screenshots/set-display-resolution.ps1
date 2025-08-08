@@ -18,10 +18,7 @@ using System.Runtime.InteropServices;
 namespace DisplayResolution {
   [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Auto)]
   internal struct DEVMODE {
-    public const int CCHDEVICENAME = 32; // multimon.h
-    public const int CCHFORMNAME = 32; // wingdi.h
-
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = CCHDEVICENAME)]
+    [MarshalAs(23, SizeConst = 32)]
     public string dmDeviceName;
     public UInt16 dmSpecVersion;
     public UInt16 dmDriverVersion;
@@ -29,7 +26,6 @@ namespace DisplayResolution {
     public UInt16 dmDriverExtra;
     public UInt32 dmFields;
 
-    // using the DUMMYSTRUCTNAME2 variant because it has the right size
     public Int32 dmPositionX;
     public Int32 dmPositionY;
     public UInt32 dmDisplayOrientation;
@@ -37,15 +33,15 @@ namespace DisplayResolution {
 
     public short dmColor;
     public short dmDuplex;
-    public short dmYResolution;
+    public short dmVerticalResolution;
     public short dmTTOption;
     public short dmCollate;
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = CCHFORMNAME)]
+    [MarshalAs(23, SizeConst = 32)]
     public string dmFormName;
     public UInt16 dmLogPixels;
-    public UInt32 dmBitsPerPel;
-    public UInt32 dmPelsWidth;
-    public UInt32 dmPelsHeight;
+    public UInt32 dmBitsPerPixel;
+    public UInt32 dmPixelsWidth;
+    public UInt32 dmPixelsHeight;
     public UInt32 dmDisplayFlags;
     public UInt32 dmDisplayFrequency;
   }
@@ -54,30 +50,23 @@ namespace DisplayResolution {
     public const UInt32 ENUM_CURRENT_SETTINGS = unchecked((uint)-1);
     [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     public static extern Int32 EnumDisplaySettings(
-      String lpszDeviceName,
-      UInt32 iModeNum,
-      ref DEVMODE lpDevMode);
+      String deviceName,
+      UInt32 modeNum,
+      ref DEVMODE devMode);
 
-    public const Int32 DISP_CHANGE_SUCCESSFUL = 0; // winuser.h
-    public const Int32 DISP_CHANGE_RESTART = 1; // winuser.h
-    public const Int32 DISP_CHANGE_FAILED = -1; // winuser.h
-    public const Int32 DISP_CHANGE_BADMODE = -2; // winuser.h
-    public const Int32 DISP_CHANGE_NOTUPDATED = -3; // winuser.h
-    public const Int32 DISP_CHANGE_BADFLAGS = -4; // winuser.h
-    public const Int32 DISP_CHANGE_BADPARAM = -5; // winuser.h
-    public const Int32 DISP_CHANGE_BADDUALVIEW = -6; // winuser.h
+    public const Int32 DISP_CHANGE_SUCCESSFUL = 0;
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern Int32 ChangeDisplaySettings(
-      ref DEVMODE lpDevMode,
-      UInt32 dwFlags);
+      ref DEVMODE devMode,
+      UInt32 flags);
   }
 
   public class DisplayResolution {
     static public void SetResolution(bool changeResolution) {
       DEVMODE dm = new DEVMODE(), bestMode = new DEVMODE();
       ulong bestSize = 0;
-      dm.dmDeviceName = new String(new char[DEVMODE.CCHDEVICENAME]);
-      dm.dmFormName = new String(new char[DEVMODE.CCHFORMNAME]);
+      dm.dmDeviceName = new String(new char[32]);
+      dm.dmFormName = new String(new char[32]);
       dm.dmSize = (UInt16)Marshal.SizeOf(dm);
 
       var rv = User32.EnumDisplaySettings(null, User32.ENUM_CURRENT_SETTINGS, ref dm);
@@ -89,7 +78,7 @@ namespace DisplayResolution {
 
       Console.WriteLine(String.Format(
         "Current display is {0}x{1}",
-        dm.dmPelsWidth, dm.dmPelsHeight));
+        dm.dmPixelsWidth, dm.dmPixelsHeight));
 
       for (UInt32 i = 0; ; i++) {
         rv = User32.EnumDisplaySettings(null, i, ref dm);
@@ -97,10 +86,10 @@ namespace DisplayResolution {
           break;
         }
         Console.WriteLine(String.Format(
-          "#{0,3} {1,6}x{2,-6} ({3})", i, dm.dmPelsWidth, dm.dmPelsHeight, dm.dmBitsPerPel));
-        if (dm.dmPelsWidth >= 1440 && dm.dmPelsHeight >= 900 && dm.dmBitsPerPel >= 32) {
-          if (dm.dmPelsWidth * dm.dmPelsHeight > bestSize) {
-            bestSize = dm.dmPelsWidth * dm.dmPelsHeight;
+          "#{0,3} {1,6}x{2,-6} ({3})", i, dm.dmPixelsWidth, dm.dmPixelsHeight, dm.dmBitsPerPixel));
+        if (dm.dmPixelsWidth >= 1440 && dm.dmPixelsHeight >= 900 && dm.dmBitsPerPixel >= 32) {
+          if (dm.dmPixelsWidth * dm.dmPixelsHeight > bestSize) {
+            bestSize = dm.dmPixelsWidth * dm.dmPixelsHeight;
             bestMode = dm;
           }
         }
@@ -111,7 +100,7 @@ namespace DisplayResolution {
       }
       Console.WriteLine(String.Format(
         "Picking resolution: {0}x{1} ({2})",
-        bestMode.dmPelsWidth, bestMode.dmPelsHeight, bestMode.dmBitsPerPel));
+        bestMode.dmPixelsWidth, bestMode.dmPixelsHeight, bestMode.dmBitsPerPixel));
       if (changeResolution) {
         rv = User32.ChangeDisplaySettings(ref bestMode, 0);
         if (rv != User32.DISP_CHANGE_SUCCESSFUL) {
@@ -129,7 +118,7 @@ namespace DisplayResolution {
 
       Console.WriteLine(String.Format(
         "Modified display is {0}x{1}",
-        dm.dmPelsWidth, dm.dmPelsHeight));
+        dm.dmPixelsWidth, dm.dmPixelsHeight));
     }
   }
 }
