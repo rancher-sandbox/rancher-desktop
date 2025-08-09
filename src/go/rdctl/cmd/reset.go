@@ -33,32 +33,60 @@ import (
 )
 
 var (
-	factoryReset bool
+	vmReset      bool
 	k8sReset     bool
+	cacheReset   bool
+	factoryReset bool
 )
 
 var resetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "Reset Rancher Desktop",
 	Long: `Reset Rancher Desktop with various options:
-* Default: Delete the VM and create a new one with current settings
-* --factory: Also delete current settings and show first-run dialog on next start
-* --k8s: Delete only the Kubernetes control plane data. When passed with --factory, the k8s cache will also be cleared`,
+* --vm: Delete VM and create a new one with current settings
+* --k8s: Delete deployed Kubernetes workloads
+* --cache: Delete cached Kubernetes images
+* --factory: Delete VM and show first-run dialog on next start
+
+Options can be combined. Some combinations are redundant:
+* --factory includes --vm and --k8s (but not --cache)
+* --vm includes --k8s
+
+At least one option must be specified.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
 		}
 		cmd.SilenceUsage = true
 
+		// Check if any options are specified
+		if !vmReset && !k8sReset && !cacheReset && !factoryReset {
+			return fmt.Errorf("no reset options specified. Use --help to see available options")
+		}
+
+		// Handle factory reset (includes VM and K8s reset)
 		if factoryReset {
-			// Factory reset: same as current factory-reset command
-			return performFactoryReset(cmd.Context(), k8sReset)
+			return performFactoryReset(cmd.Context(), cacheReset)
 		}
-		result, err := doReset(cmd.Context(), k8sReset)
-		if err != nil {
-			return err
+
+		// Handle VM reset (includes K8s reset)
+		if vmReset {
+			if err := performVMReset(cmd.Context()); err != nil {
+				return err
+			}
+			// VM reset includes K8s, so cache is handled separately below
+		} else if k8sReset {
+			// Handle K8s-only reset
+			if err := performK8sReset(cmd.Context()); err != nil {
+				return err
+			}
 		}
-		fmt.Println(string(result))
+
+		// Handle cache reset if requested (and not already handled by factory reset)
+		if cacheReset {
+			return factoryreset.DeleteCacheData()
+		}
+
 		return nil
 	},
 }
@@ -82,8 +110,28 @@ type ResetPayload struct {
 	Mode string `json:"mode"`
 }
 
-// doReset performs a reset with the specified wipe mode
-func doReset(ctx context.Context, k8sOnly bool) ([]byte, error) {
+// performVMReset performs a VM reset (includes K8s reset)
+func performVMReset(ctx context.Context) error {
+	result, err := doReset(ctx, "wipe")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(result))
+	return nil
+}
+
+// performK8sReset performs a K8s-only reset
+func performK8sReset(ctx context.Context) error {
+	result, err := doReset(ctx, "fast")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(result))
+	return nil
+}
+
+// doReset performs a reset with the specified mode
+func doReset(ctx context.Context, mode string) ([]byte, error) {
 	connectionInfo, err := config.GetConnectionInfo(false)
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to get connection info: %w", err)
@@ -91,10 +139,6 @@ func doReset(ctx context.Context, k8sOnly bool) ([]byte, error) {
 	rdClient := client.NewRDClient(connectionInfo)
 	command := client.VersionCommand("", "k8s_reset")
 
-	mode := "wipe"
-	if k8sOnly {
-		mode = "fast"
-	}
 	payload := ResetPayload{
 		Mode: mode,
 	}
@@ -113,6 +157,8 @@ func doReset(ctx context.Context, k8sOnly bool) ([]byte, error) {
 
 func init() {
 	rootCmd.AddCommand(resetCmd)
-	resetCmd.Flags().BoolVar(&factoryReset, "factory", false, "Factory reset: delete current settings and show first-run dialog on next start")
-	resetCmd.Flags().BoolVar(&k8sReset, "k8s", false, "Delete only the Kubernetes control plane data. When passed with --factory, the k8s cache will also be cleared")
+	resetCmd.Flags().BoolVar(&vmReset, "vm", false, "Delete VM and create a new one with current settings")
+	resetCmd.Flags().BoolVar(&k8sReset, "k8s", false, "Delete deployed Kubernetes workloads")
+	resetCmd.Flags().BoolVar(&cacheReset, "cache", false, "Delete cached Kubernetes images")
+	resetCmd.Flags().BoolVar(&factoryReset, "factory", false, "Delete VM and show first-run dialog on next start")
 }

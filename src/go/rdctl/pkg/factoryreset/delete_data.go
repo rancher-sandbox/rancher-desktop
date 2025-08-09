@@ -106,3 +106,19 @@ func deleteLimaVM(ctx context.Context) error {
 	}
 	return exec.CommandContext(ctx, limactl, "delete", "-f", "0").Run()
 }
+
+// DeleteCacheData deletes the application cache
+func DeleteCacheData() error {
+	appPaths, err := paths.GetPaths()
+	if err != nil {
+		return err
+	}
+
+	// Delete the cache directory
+	if err := os.RemoveAll(appPaths.Cache); err != nil {
+		return fmt.Errorf("failed to delete cache directory: %w", err)
+	}
+
+	fmt.Println("Cache cleared successfully")
+	return nil
+}
