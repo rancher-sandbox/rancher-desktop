@@ -81,7 +81,7 @@
   publisher: SUSE LLC
   short_description: Integrate the Application Collection into your development lifecycle
 - slug: ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui
-  version: 0.0.9
+  version: 0.1.0
   containerd_compatible: true
   labels:
     com.docker.desktop.extension.api.version: 0.3.4
