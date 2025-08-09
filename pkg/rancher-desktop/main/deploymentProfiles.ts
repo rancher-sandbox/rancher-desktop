@@ -57,9 +57,9 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PROF
   switch (os.platform()) {
   case 'linux': {
     const linuxPaths = {
-      [paths.deploymentProfileSystem]: ['defaults.json', 'locked.json'],
-      // The altDeploymentProfileSystem path is the same as deploymentProfileSystem.
-      [paths.deploymentProfileUser]:   ['rancher-desktop.defaults.json', 'rancher-desktop.locked.json'],
+      [paths.deploymentProfileSystem]:    ['defaults.json', 'locked.json'],
+      [paths.altDeploymentProfileSystem]: ['defaults.json', 'locked.json'],
+      [paths.deploymentProfileUser]:      ['rancher-desktop.defaults.json', 'rancher-desktop.locked.json'],
     };
 
     for (const configDir in linuxPaths) {

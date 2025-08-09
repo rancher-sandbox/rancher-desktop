@@ -80,7 +80,7 @@ describe('paths', () => {
     },
     altDeploymentProfileSystem: {
       win32:  new Error('Windows profiles will be read from Registry'),
-      linux:  '/etc/rancher-desktop',
+      linux:  '/usr/etc/rancher-desktop',
       darwin: '/Library/Preferences',
     },
     deploymentProfileUser: {

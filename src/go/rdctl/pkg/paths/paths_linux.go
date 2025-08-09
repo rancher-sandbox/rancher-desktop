@@ -50,7 +50,7 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (*Paths, error) {
 		//nolint:gocritic // filepathJoin doesn't like absolute paths
 		DeploymentProfileSystem: filepath.Join("/etc", appName),
 		//nolint:gocritic // filepathJoin doesn't like absolute paths
-		AltDeploymentProfileSystem: filepath.Join("/etc", appName),
+		AltDeploymentProfileSystem: filepath.Join("/usr/etc", appName),
 		DeploymentProfileUser:      configHome,
 		ExtensionRoot:              filepath.Join(dataHome, appName, "extensions"),
 		Snapshots:                  filepath.Join(dataHome, appName, "snapshots"),

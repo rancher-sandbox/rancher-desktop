@@ -64,9 +64,9 @@ function getDeploymentBaseNames(platform: 'linux' | 'darwin'): string[] {
 function getDeploymentPaths(platform: 'linux' | 'darwin', profileDir: string): string[] {
   let baseNames = getDeploymentBaseNames(platform);
 
-  if (platform === 'linux' && (profileDir === paths.deploymentProfileSystem || profileDir === paths.altDeploymentProfileSystem)) {
-    // macOS profile base-names are the same in both directories
-    // linux ones change...
+  if (platform === 'linux' && profileDir !== paths.deploymentProfileUser) {
+    // macOS system profiles live in a shared directory and include the application name;
+    // linux ones are in their own directory, and we need to remove the prefix.
     baseNames = baseNames.map(s => s.replace('rancher-desktop.', ''));
   }
 
@@ -148,9 +148,10 @@ export async function verifyNoSystemProfile(): Promise<string[]> {
     }
   }
   const existingProfiles = [];
-  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
-
-  profilePaths.push(...getDeploymentPaths(platform, paths.altDeploymentProfileSystem));
+  const profilePaths = [
+    ...getDeploymentPaths(platform, paths.deploymentProfileSystem),
+    ...getDeploymentPaths(platform, paths.altDeploymentProfileSystem),
+  ];
 
   for (const profilePath of profilePaths) {
     if (await fileExists(profilePath)) {
@@ -167,9 +168,11 @@ export async function verifySystemProfile(): Promise<string[]> {
   if (platform === 'win32') {
     return await verifySystemRegistrySubtree();
   }
-  const profilePaths = getDeploymentPaths(platform, paths.deploymentProfileSystem);
 
-  profilePaths.push(...getDeploymentPaths(platform, paths.altDeploymentProfileSystem));
+  const profilePaths = [
+    ...getDeploymentPaths(platform, paths.deploymentProfileSystem),
+    ...getDeploymentPaths(platform, paths.altDeploymentProfileSystem),
+  ];
 
   for (const profilePath of profilePaths) {
     if (await fileExists(profilePath)) {

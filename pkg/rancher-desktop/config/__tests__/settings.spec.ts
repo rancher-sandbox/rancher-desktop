@@ -217,6 +217,7 @@ describe('settings', () => {
      *
      * On Linux, system files are (currently) `/etc/rancher-desktop/{defaults,locked}.json`,
      * while the user files are  `~/.config/rancher-desktop.{defaults,locked}.json`
+     * The alternate system location is `/usr/etc/rancher-desktop/{defaults,locked}.json`.
      *
      * macOS plist files:
      * User: `~/Library/Preferences/io.rancherdesktop.profile.{defaults,locked}.plist`
@@ -232,10 +233,11 @@ describe('settings', () => {
      */
     function createMocker(useSystemProfile: ProfileTypes, usePersonalProfile: ProfileTypes, typeToCorrupt?: 'defaults' | 'locked'): (inputPath: any, unused: any) => any {
       return (inputPath: any, unused: any): any => {
-        if (!inputPath.startsWith(paths.deploymentProfileUser) && !inputPath.startsWith(paths.deploymentProfileSystem) && !inputPath.startsWith(paths.altDeploymentProfileSystem)) {
+        const profilePaths = [paths.deploymentProfileUser, paths.deploymentProfileSystem, paths.altDeploymentProfileSystem];
+        if (!profilePaths.some(p => inputPath.startsWith(p))) {
           return actualSyncReader(inputPath, unused);
         }
-        const action = inputPath.startsWith(paths.deploymentProfileSystem) || inputPath.startsWith(paths.altDeploymentProfileSystem) ? useSystemProfile : usePersonalProfile;
+        const action = inputPath.startsWith(paths.deploymentProfileUser) ? usePersonalProfile : useSystemProfile;
 
         if (action === ProfileTypes.None || inputPath === path.join(paths.config, 'settings.json')) {
           throw new FakeFSError(`File ${ inputPath } not found`, 'ENOENT');
