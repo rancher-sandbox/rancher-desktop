@@ -30,18 +30,19 @@ func GetPaths(getResourcesPathFuncs ...func() (string, error)) (*Paths, error) {
 	appHome := filepath.Join(homeDir, "Library", "Application Support", appName)
 	altAppHome := filepath.Join(homeDir, ".rd")
 	paths := Paths{
-		AppHome:                 appHome,
-		AltAppHome:              altAppHome,
-		Config:                  filepath.Join(homeDir, "Library", "Preferences", appName),
-		Cache:                   filepath.Join(homeDir, "Library", "Caches", appName),
-		Lima:                    filepath.Join(appHome, "lima"),
-		Integration:             filepath.Join(altAppHome, "bin"),
-		DeploymentProfileSystem: "/Library/Preferences",
-		DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),
-		ExtensionRoot:           filepath.Join(appHome, "extensions"),
-		Snapshots:               filepath.Join(appHome, "snapshots"),
-		ContainerdShims:         filepath.Join(appHome, "containerd-shims"),
-		OldUserData:             filepath.Join(homeDir, "Library", "Application Support", "Rancher Desktop"),
+		AppHome:                    appHome,
+		AltAppHome:                 altAppHome,
+		Config:                     filepath.Join(homeDir, "Library", "Preferences", appName),
+		Cache:                      filepath.Join(homeDir, "Library", "Caches", appName),
+		Lima:                       filepath.Join(appHome, "lima"),
+		Integration:                filepath.Join(altAppHome, "bin"),
+		DeploymentProfileSystem:    "/Library/Managed Preferences",
+		AltDeploymentProfileSystem: "/Library/Preferences",
+		DeploymentProfileUser:      filepath.Join(homeDir, "Library", "Preferences"),
+		ExtensionRoot:              filepath.Join(appHome, "extensions"),
+		Snapshots:                  filepath.Join(appHome, "snapshots"),
+		ContainerdShims:            filepath.Join(appHome, "containerd-shims"),
+		OldUserData:                filepath.Join(homeDir, "Library", "Application Support", "Rancher Desktop"),
 	}
 	paths.Logs = os.Getenv("RD_LOGS_DIR")
 	if paths.Logs == "" {

@@ -33,6 +33,8 @@ type Paths struct {
 	Resources string `json:"resources"`
 	// Deployment Profile System-wide startup settings path.
 	DeploymentProfileSystem string `json:"deploymentProfileSystem,omitempty"`
+	// Secondary Deployment Profile System-wide startup settings path.
+	AltDeploymentProfileSystem string `json:"altDeploymentProfileSystem,omitempty"`
 	// Deployment Profile User startup settings path.
 	DeploymentProfileUser string `json:"deploymentProfileUser,omitempty"`
 	// Directory that holds extension data.

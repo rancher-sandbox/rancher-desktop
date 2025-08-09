@@ -21,20 +21,21 @@ func TestGetPaths(t *testing.T) {
 			t.Errorf("Unexpected error getting user home directory: %s", err)
 		}
 		expectedPaths := Paths{
-			AppHome:                 filepath.Join(homeDir, "Library", "Application Support", appName),
-			AltAppHome:              filepath.Join(homeDir, ".rd"),
-			Config:                  filepath.Join(homeDir, "Library", "Preferences", appName),
-			Logs:                    filepath.Join(homeDir, "Library", "Logs", appName),
-			Cache:                   filepath.Join(homeDir, "Library", "Caches", appName),
-			Lima:                    filepath.Join(homeDir, "Library", "Application Support", appName, "lima"),
-			Integration:             filepath.Join(homeDir, ".rd", "bin"),
-			Resources:               fakeResourcesPath,
-			DeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
-			DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),
-			ExtensionRoot:           filepath.Join(homeDir, "Library", "Application Support", appName, "extensions"),
-			Snapshots:               filepath.Join(homeDir, "Library", "Application Support", appName, "snapshots"),
-			ContainerdShims:         filepath.Join(homeDir, "Library", "Application Support", appName, "containerd-shims"),
-			OldUserData:             filepath.Join(homeDir, "Library", "Application Support", "Rancher Desktop"),
+			AppHome:                    filepath.Join(homeDir, "Library", "Application Support", appName),
+			AltAppHome:                 filepath.Join(homeDir, ".rd"),
+			Config:                     filepath.Join(homeDir, "Library", "Preferences", appName),
+			Logs:                       filepath.Join(homeDir, "Library", "Logs", appName),
+			Cache:                      filepath.Join(homeDir, "Library", "Caches", appName),
+			Lima:                       filepath.Join(homeDir, "Library", "Application Support", appName, "lima"),
+			Integration:                filepath.Join(homeDir, ".rd", "bin"),
+			Resources:                  fakeResourcesPath,
+			DeploymentProfileSystem:    filepath.Join("/Library", "Managed Preferences"),
+			AltDeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
+			DeploymentProfileUser:      filepath.Join(homeDir, "Library", "Preferences"),
+			ExtensionRoot:              filepath.Join(homeDir, "Library", "Application Support", appName, "extensions"),
+			Snapshots:                  filepath.Join(homeDir, "Library", "Application Support", appName, "snapshots"),
+			ContainerdShims:            filepath.Join(homeDir, "Library", "Application Support", appName, "containerd-shims"),
+			OldUserData:                filepath.Join(homeDir, "Library", "Application Support", "Rancher Desktop"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
@@ -53,20 +54,21 @@ func TestGetPaths(t *testing.T) {
 		rdLogsDir := filepath.Join(homeDir, "anotherLogsDir")
 		t.Setenv("RD_LOGS_DIR", rdLogsDir)
 		expectedPaths := Paths{
-			AppHome:                 filepath.Join(homeDir, "Library", "Application Support", appName),
-			AltAppHome:              filepath.Join(homeDir, ".rd"),
-			Config:                  filepath.Join(homeDir, "Library", "Preferences", appName),
-			Logs:                    rdLogsDir,
-			Cache:                   filepath.Join(homeDir, "Library", "Caches", appName),
-			Lima:                    filepath.Join(homeDir, "Library", "Application Support", appName, "lima"),
-			Integration:             filepath.Join(homeDir, ".rd", "bin"),
-			Resources:               fakeResourcesPath,
-			DeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
-			DeploymentProfileUser:   filepath.Join(homeDir, "Library", "Preferences"),
-			ExtensionRoot:           filepath.Join(homeDir, "Library", "Application Support", appName, "extensions"),
-			Snapshots:               filepath.Join(homeDir, "Library", "Application Support", appName, "snapshots"),
-			ContainerdShims:         filepath.Join(homeDir, "Library", "Application Support", appName, "containerd-shims"),
-			OldUserData:             filepath.Join(homeDir, "Library", "Application Support", "Rancher Desktop"),
+			AppHome:                    filepath.Join(homeDir, "Library", "Application Support", appName),
+			AltAppHome:                 filepath.Join(homeDir, ".rd"),
+			Config:                     filepath.Join(homeDir, "Library", "Preferences", appName),
+			Logs:                       rdLogsDir,
+			Cache:                      filepath.Join(homeDir, "Library", "Caches", appName),
+			Lima:                       filepath.Join(homeDir, "Library", "Application Support", appName, "lima"),
+			Integration:                filepath.Join(homeDir, ".rd", "bin"),
+			Resources:                  fakeResourcesPath,
+			DeploymentProfileSystem:    filepath.Join("/Library", "Managed Preferences"),
+			AltDeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
+			DeploymentProfileUser:      filepath.Join(homeDir, "Library", "Preferences"),
+			ExtensionRoot:              filepath.Join(homeDir, "Library", "Application Support", appName, "extensions"),
+			Snapshots:                  filepath.Join(homeDir, "Library", "Application Support", appName, "snapshots"),
+			ContainerdShims:            filepath.Join(homeDir, "Library", "Application Support", appName, "containerd-shims"),
+			OldUserData:                filepath.Join(homeDir, "Library", "Application Support", "Rancher Desktop"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
