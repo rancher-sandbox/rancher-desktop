@@ -147,7 +147,6 @@ export default defineComponent({
       isComponentMounted:         false,
       setupTimeoutId:             null,
       headers:                    [
-        // INFO: Disable for now since we can only get the running containers.
         {
           name:  'containerState',
           label: this.t('containers.manage.table.header.state'),
