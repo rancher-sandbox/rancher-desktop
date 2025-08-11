@@ -1780,9 +1780,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       try {
         const env: NodeJS.ProcessEnv = {};
 
-        if (this.cfg?.experimental.virtualMachine.sshPortForwarder) {
-          env.LIMA_SSH_PORT_FORWARDER = 'true';
-        }
+        env.LIMA_SSH_PORT_FORWARDER = this.cfg?.experimental.virtualMachine.sshPortForwarder ? 'true' : 'false';
         await this.lima(env, 'start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
       } finally {
         // Symlink the logs (especially if start failed) so the users can find them

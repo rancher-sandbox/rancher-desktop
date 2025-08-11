@@ -147,7 +147,7 @@ export const defaultSettings = {
           '224.0.0.0/4', '240.0.0.0/4'],
       },
       /** Lima only: use SSH port forwarding instead of gRPC. */
-      sshPortForwarder: false,
+      sshPortForwarder: true,
     },
   },
 };
