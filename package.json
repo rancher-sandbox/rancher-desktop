@@ -100,7 +100,7 @@
     "@babel/plugin-proposal-optional-chaining": "7.21.0",
     "@babel/plugin-proposal-private-methods": "7.18.6",
     "@babel/plugin-proposal-private-property-in-object": "7.21.11",
-    "@electron/asar": "4.0.0",
+    "@electron/asar": "4.0.1",
     "@electron/fuses": "^2.0.0",
     "@electron/notarize": "3.0.1",
     "@eslint/compat": "1.3.1",

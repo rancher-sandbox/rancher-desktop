@@ -1214,10 +1214,10 @@
     glob "^7.1.6"
     minimatch "^3.0.4"
 
-"@electron/asar@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@electron/asar/-/asar-4.0.0.tgz#9818aa14637b09782aa617284195eeb79545585a"
-  integrity sha512-tBqVW/Z/iZ88ZGCXtg8jaGVlip6HzVIRUm0RHZ6+YtBMmWQG8jQxF68yLWlNxYXnndBVpwwofQNdt0EicmD0Vg==
+"@electron/asar@4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@electron/asar/-/asar-4.0.1.tgz#0f0edc51ddb5bf30acb49f706d616b11a0b90668"
+  integrity sha512-F4Ykm1jiBGY1WV/o8Q8oFW8Nq0u+S2/vPujzNJtdSJ6C4LHC4CiGLn7c17s7SolZ23gcvCebMncmZtNc+MkxPQ==
   dependencies:
     commander "^13.1.0"
     glob "^11.0.1"
