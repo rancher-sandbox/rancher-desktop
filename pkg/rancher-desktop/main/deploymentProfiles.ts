@@ -57,8 +57,9 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PROF
   switch (os.platform()) {
   case 'linux': {
     const linuxPaths = {
-      [paths.deploymentProfileSystem]: ['defaults.json', 'locked.json'],
-      [paths.deploymentProfileUser]:   ['rancher-desktop.defaults.json', 'rancher-desktop.locked.json'],
+      [paths.deploymentProfileSystem]:    ['defaults.json', 'locked.json'],
+      [paths.altDeploymentProfileSystem]: ['defaults.json', 'locked.json'],
+      [paths.deploymentProfileUser]:      ['rancher-desktop.defaults.json', 'rancher-desktop.locked.json'],
     };
 
     for (const configDir in linuxPaths) {
@@ -75,7 +76,7 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PROF
   }
 
   case 'darwin':
-    for (const rootPath of [paths.deploymentProfileSystem, paths.deploymentProfileUser]) {
+    for (const rootPath of [paths.deploymentProfileSystem, paths.altDeploymentProfileSystem, paths.deploymentProfileUser]) {
       [defaults, locked] = await parseJsonFromPlists(rootPath, 'io.rancherdesktop.profile.defaults.plist', 'io.rancherdesktop.profile.locked.plist');
       fullDefaultPath = join(rootPath, 'io.rancherdesktop.profile.defaults.plist');
       fullLockedPath = join(rootPath, 'io.rancherdesktop.profile.locked.plist');
@@ -115,7 +116,7 @@ async function convertAndParsePlist(inputPath: string): Promise<undefined | Recu
   const getErrorString = (error: any) => error.stdout || error.stderr || error.toString();
 
   try {
-    body = stream.Readable.from(fs.readFileSync(inputPath, { encoding: 'utf-8' }));
+    body = stream.Readable.from(fs.readFileSync(inputPath));
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       return;
