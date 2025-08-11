@@ -123,14 +123,13 @@ export class NavPage {
   Promise<ReturnType<typeof pageConstructors[pageName]>>;
 
   async navigateTo(tab: keyof typeof pageConstructors) {
-    await this.page.click(`.nav li[item="/${ tab }"] a`);
+    const pageLoadHooks: Partial<Record<keyof typeof pageConstructors, (this: NavPage) => Promise<unknown>>> = {
+      Extensions: async function() { await this.page.waitForSelector('.extensions-page', { timeout: 60_000 }) },
+    };
 
-    // Special handling for Extensions page due to dynamic component loading
-    if (tab === 'Extensions') {
-      await this.page.waitForSelector('.extensions-page', { timeout: 60_000 });
-    } else {
-      await this.page.waitForURL(`**/${ tab }`, { timeout: 60_000 });
-    }
+    await this.page.click(`.nav li[item="/${ tab }"] a`);
+    await this.page.waitForURL(`**/${ tab }*`, { timeout: 60_000 });
+    await pageLoadHooks[tab]?.call(this);
 
     return pageConstructors[tab](this.page);
   }

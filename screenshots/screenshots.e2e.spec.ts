@@ -91,12 +91,9 @@ test.describe.serial('Main App Test', () => {
         return containersList;
       });
       await containersPage.page.evaluate(() => {
-        // eslint-disable-next-line
-        // @ts-ignore TypeScript doesn't have the correct context.
-        window.ddClient.docker._listContainers = window.ddClient.docker.listContainers;
-        // eslint-disable-next-line
-        // @ts-ignore TypeScript doesn't have the correct context.
-        window.ddClient.docker.listContainers = listContainersMock;
+        const { ddClient } = window as any;
+        ddClient.docker._listContainers = ddClient.docker.listContainers;
+        ddClient.docker.listContainers = listContainersMock;
       });
 
       try {
@@ -104,9 +101,9 @@ test.describe.serial('Main App Test', () => {
         await screenshot.take('Containers');
       } finally {
         await containersPage.page.evaluate(() => {
-          // eslint-disable-next-line
-          // @ts-ignore TypeScript doesn't have the correct context.
-          window.ddClient.docker.listContainers = window.ddClient.docker._listContainers;
+          const { ddClient } = window as any;
+          ddClient.docker.listContainers = ddClient.docker._listContainers;
+          delete ddClient.docker._listContainers;
         });
       }
     });
@@ -117,14 +114,9 @@ test.describe.serial('Main App Test', () => {
       await expect(containersPage.page.getByRole('row')).toHaveCount(11);
 
       await containersPage.page.evaluate(() => {
-        // eslint-disable-next-line
-        // @ts-ignore TypeScript doesn't have the correct context.
-        if (!window.ddClient.docker.cli._exec) {
-          window.ddClient.docker.cli._exec = window.ddClient.docker.cli.exec;
-        }
-        // eslint-disable-next-line
-        // @ts-ignore TypeScript doesn't have the correct context.
-        window.ddClient.docker.cli.exec = (command, args, options) => {
+        const { ddClient } = window as any;
+        ddClient.docker.cli._exec = ddClient.docker.cli.exec;
+        ddClient.docker.cli.exec = (command, args, options) => {
           if (command === 'logs') {
             setTimeout(() => {
               const sampleLogs = [
@@ -140,16 +132,14 @@ test.describe.serial('Main App Test', () => {
                 '2025-01-15T10:35:30.912345678Z LOG:  database system is shut down',
               ];
 
-              sampleLogs.forEach(log => {
+              for (const log of sampleLogs) {
                 options.stream.onOutput({ stdout: log + '\r\n' });
-              });
+              }
             }, 100);
 
             return { close: () => {} };
           }
-          // eslint-disable-next-line
-          // @ts-ignore TypeScript doesn't have the correct context.
-          return window.ddClient.docker.cli._exec(command, args, options);
+          return ddClient.docker.cli._exec(command, args, options);
         };
       });
 
@@ -169,10 +159,10 @@ test.describe.serial('Main App Test', () => {
         await screenshot.take('Container-Logs');
       } finally {
         await containersPage.page.evaluate(() => {
-          // eslint-disable-next-line
-          // @ts-ignore TypeScript doesn't have the correct context.
-          if (window.ddClient.docker.cli._exec) {
-            window.ddClient.docker.cli.exec = window.ddClient.docker.cli._exec;
+          const { ddClient } = window as any;
+          if (ddClient.docker.cli._exec) {
+            ddClient.docker.cli.exec = ddClient.docker.cli._exec;
+            delete ddClient.docker.cli._exec;
           }
         });
       }
@@ -199,12 +189,9 @@ test.describe.serial('Main App Test', () => {
         return volumesList;
       });
       await volumesPage.page.evaluate(() => {
-        // eslint-disable-next-line
-        // @ts-ignore TypeScript doesn't have the correct context.
-        window.ddClient.docker._rdListVolumes = window.ddClient.docker.rdListVolumes;
-        // eslint-disable-next-line
-        // @ts-ignore TypeScript doesn't have the correct context.
-        window.ddClient.docker.rdListVolumes = listVolumesMock;
+        const { ddClient } = window as any;
+        ddClient.docker._rdListVolumes = ddClient.docker.rdListVolumes;
+        ddClient.docker.rdListVolumes = listVolumesMock;
       });
 
       try {
@@ -213,9 +200,9 @@ test.describe.serial('Main App Test', () => {
         await screenshot.take('Volumes');
       } finally {
         await volumesPage.page.evaluate(() => {
-          // eslint-disable-next-line
-          // @ts-ignore TypeScript doesn't have the correct context.
-          window.ddClient.docker.rdListVolumes = window.ddClient.docker._rdListVolumes;
+          const { ddClient } = window as any;
+          ddClient.docker.rdListVolumes = ddClient.docker._rdListVolumes;
+          delete ddClient.docker._rdListVolumes;
         });
       }
     });
