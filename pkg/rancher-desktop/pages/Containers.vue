@@ -103,10 +103,23 @@
         </td>
       </template>
       <template #group-row="{ group }">
-        <tr class="group-row">
+        <tr
+          class="group-row"
+          :aria-expanded="!collapsed[group.ref]"
+        >
           <td :colspan="headers.length + 1">
             <div class="group-tab">
-              {{ group.ref }} ({{ group.rows.length }})
+              <i
+                data-title="Toggle Expand"
+                :class="{
+                  icon: true,
+                  'icon-chevron-right': !!collapsed[group.ref],
+                  'icon-chevron-down': !collapsed[group.ref],
+                }"
+                @click.stop="toggleExpand(group.ref)"
+              />
+              {{ group.ref }}
+              <span v-if="!!collapsed[group.ref]"> ({{ group.rows.length }})</span>
             </div>
           </td>
         </tr>
@@ -146,8 +159,9 @@ export default defineComponent({
       error:                      null,
       isComponentMounted:         false,
       setupTimeoutId:             null,
+      /** @type Record<string, boolean> */
+      collapsed:                   {},
       headers:                    [
-        // INFO: Disable for now since we can only get the running containers.
         {
           name:  'containerState',
           label: this.t('containers.manage.table.header.state'),
@@ -620,6 +634,10 @@ export default defineComponent({
         return shell.openExternal(`http://localhost:${ hostPort }`);
       }
     },
+
+    toggleExpand(group) {
+      this.collapsed[group] = !this.collapsed[group];
+    },
   },
 });
 </script>
@@ -628,6 +646,25 @@ export default defineComponent({
 .containers {
   &-status {
     padding: 8px 5px;
+  }
+
+  .group-row {
+    .group-tab {
+      font-weight: bold;
+      .icon {
+        cursor: pointer;
+      }
+    }
+    &[aria-expanded="false"] {
+      :deep(~ .main-row) {
+        visibility: collapse;
+        .checkbox-container {
+          /* When using visibility:collapse, the row selection checkbox produces
+           * some artifacts; force it to display:none to avoid flickering. */
+          display: none;
+        }
+      }
+    }
   }
 }
 

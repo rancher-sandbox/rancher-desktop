@@ -264,8 +264,8 @@ export default defineComponent({
     .group-row {
       .col-description {
         font-weight: bold;
-        .group-tab {
-          border-top-left-radius: 0;
+        .group-tab .icon {
+          cursor: pointer;
         }
       }
       .col-mute {
