@@ -198,6 +198,7 @@ deislabs
 destinationrule
 DETECTEXCEPTIONS
 developercertificate
+DEVMODE
 dfile
 didinit
 diffdisk
@@ -844,6 +845,7 @@ Tracef
 traefik
 transitioning
 trivy
+TStr
 TVar
 tvf
 ucmonitor

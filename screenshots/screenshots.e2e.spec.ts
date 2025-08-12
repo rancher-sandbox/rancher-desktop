@@ -54,6 +54,12 @@ test.describe.serial('Main App Test', () => {
     screenshot = new MainWindowScreenshots(page, { directory: `${ colorScheme }/main`, log: console });
 
     await page.emulateMedia({ colorScheme });
+    await (await electronApp.browserWindow(page)).evaluate(browserWindow => {
+      // Ensure the window is of the correct size, and near the top left corner
+      // in case the screen is too small.  But it needs to be lower than the
+      // macOS menu bar.
+      browserWindow.setBounds({ x: 64, y: 64, width: 1024, height: 768 });
+    });
 
     await navPage.progressBecomesReady();
 
