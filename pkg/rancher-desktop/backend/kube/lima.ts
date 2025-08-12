@@ -385,6 +385,9 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     if (!cfg.kubernetes.options.traefik) {
       config.ADDITIONAL_ARGS += ' --disable traefik';
     }
+    if (cfg.application.debug) {
+      config.ADDITIONAL_ARGS += ' --debug';
+    }
     await this.vm.writeFile('/etc/init.d/cri-dockerd', SERVICE_CRI_DOCKERD_SCRIPT, 0o755);
     await this.vm.writeConf('cri-dockerd', {
       LOG_DIR: paths.logs,

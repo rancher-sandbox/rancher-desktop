@@ -1421,6 +1421,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                   console.log(`Disabling flannel and network policy`);
                   k3sConf.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
                 }
+                if (config.application.debug) {
+                  config.ADDITIONAL_ARGS += ' --debug';
+                }
 
                 await this.writeConf('k3s', k3sConf);
               }),
