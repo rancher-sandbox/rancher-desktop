@@ -128,7 +128,7 @@ verify_rancher() {
 
     run try --max 9 --delay 10 curl --insecure --silent --show-error "https://${host}/dashboard/auth/login"
     assert_success
-    assert_output --partial 'href="/dashboard/'
+    assert_output --partial 'src="/dashboard/'
     run kubectl get secret --namespace cattle-system bootstrap-secret -o json
     assert_success
     assert_output --partial "bootstrapPassword"
