@@ -212,6 +212,27 @@ paths:
         '400':
           description: An error occurred
 
+  /v1/k8s_reset:
+    put:
+      operationId: k8sReset
+      summary: Reset Kubernetes
+      requestBody:
+        description: JSON block giving k8s reset options.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  enum: [ fast, wipe ]
+        required: true
+      responses:
+        '202':
+          description: The application is performing a Kubernetes reset.
+        '400':
+          description: An error occurred
+
   /v1/port_forwarding:
     post:
       operationId: createPortForward

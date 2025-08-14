@@ -17,13 +17,7 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/factoryreset"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shutdown"
 )
 
 var removeKubernetesCache bool
@@ -34,25 +28,18 @@ var removeKubernetesCache bool
 // https://github.com/rancher-sandbox/rancher-desktop/issues/2408)
 
 var factoryResetCmd = &cobra.Command{
-	Use:   "factory-reset",
-	Short: "Clear all the Rancher Desktop state and shut it down.",
+	Use:    "factory-reset",
+	Hidden: true, // Hidden for backwards compatibility, use 'rdctl reset --factory' instead
+	Short:  "Clear all the Rancher Desktop state and shut it down.",
 	Long: `Clear all the Rancher Desktop state and shut it down.
 Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kubernetes images.`,
+	Deprecated: "Use 'rdctl reset --factory' instead.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.NoArgs(cmd, args); err != nil {
 			return err
 		}
 		cmd.SilenceUsage = true
-		commonShutdownSettings.WaitForShutdown = false
-		_, err := doShutdown(cmd.Context(), &commonShutdownSettings, shutdown.FactoryReset)
-		if err != nil {
-			return err
-		}
-		paths, err := paths.GetPaths()
-		if err != nil {
-			return fmt.Errorf("failed to get paths: %w", err)
-		}
-		return factoryreset.DeleteData(cmd.Context(), paths, removeKubernetesCache)
+		return performFactoryReset(cmd.Context(), removeKubernetesCache)
 	},
 }
 

@@ -1397,6 +1397,10 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     doFactoryReset(keepSystemImages);
   }
 
+  async k8sReset(context: CommandWorkerInterface.CommandContext, mode: 'fast' | 'wipe') {
+    return await doK8sReset(mode, context);
+  }
+
   async forwardPort(namespace: string, service: string, k8sPort: string | number, hostPort: number) {
     return await doForwardPort(namespace, service, k8sPort, hostPort);
   }
