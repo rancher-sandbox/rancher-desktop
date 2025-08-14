@@ -231,9 +231,9 @@ check_rd_context() {
 
 check_lima() {
     skip_on_windows
-    # Check if VM was killed
+    # Check that the VM has been removed and no longer exists.
     run limactl ls
-    "${assert}_output" --partial "No instance found"
+    "${assert}_output" --regexp "No instance found|no such file or directory"
 }
 
 check_WSL() {
