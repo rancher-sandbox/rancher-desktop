@@ -11,7 +11,7 @@ require (
 	github.com/containernetworking/plugins v1.7.1
 	github.com/containers/gvisor-tap-vsock v0.8.6
 	github.com/docker/docker v28.3.3+incompatible
-	github.com/docker/go-connections v0.5.0
+	github.com/docker/go-connections v0.6.0
 	github.com/lima-vm/lima v1.0.0-beta.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sync v0.16.0
