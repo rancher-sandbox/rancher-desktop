@@ -42,15 +42,11 @@ var (
 var resetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "Reset Rancher Desktop",
-	Long: `Reset Rancher Desktop with various options:
-* --vm: Delete VM and create a new one with current settings
-* --k8s: Delete deployed Kubernetes workloads
-* --cache: Delete cached Kubernetes images
-* --factory: Delete VM and show first-run dialog on next start
+	Long: `Delete parts of Rancher Desktop settings.
+Some reset options are combinations of others:
 
-Options can be combined. Some combinations are redundant:
-* --factory includes --vm and --k8s (but not --cache)
-* --vm includes --k8s
+  * --factory includes --vm and --k8s (but not --cache)
+  * --vm includes --k8s
 
 At least one option must be specified.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -64,24 +60,21 @@ At least one option must be specified.`,
 			return fmt.Errorf("no reset options specified. Use --help to see available options")
 		}
 
-		// Handle factory reset (includes VM and K8s reset)
+		// Handle factory reset (includes VM, K8s and possibly cache reset)
 		if factoryReset {
 			return performFactoryReset(cmd.Context(), cacheReset)
 		}
-
-		// Handle VM reset (includes K8s reset)
-		if vmReset {
-			if err := performVMReset(cmd.Context()); err != nil {
+		if vmReset || k8sReset {
+			resetType := "wipe"
+			if !vmReset {
+				resetType = "fast"
+			}
+			result, err := doReset(cmd.Context(), resetType)
+			if err != nil {
 				return err
 			}
-			// VM reset includes K8s, so cache is handled separately below
-		} else if k8sReset {
-			// Handle K8s-only reset
-			if err := performK8sReset(cmd.Context()); err != nil {
-				return err
-			}
+			fmt.Println(string(result))
 		}
-
 		// Handle cache reset if requested (and not already handled by factory reset)
 		if cacheReset {
 			return factoryreset.DeleteCacheData()
@@ -89,6 +82,11 @@ At least one option must be specified.`,
 
 		return nil
 	},
+}
+
+// resetPayload defines the payload structure for reset requests
+type resetPayload struct {
+	Mode string `json:"mode"`
 }
 
 // performFactoryReset performs a factory reset with the given context and cache removal option
@@ -105,31 +103,6 @@ func performFactoryReset(ctx context.Context, removeCache bool) error {
 	return factoryreset.DeleteData(ctx, pathsCfg, removeCache)
 }
 
-// ResetPayload defines the payload structure for reset requests
-type ResetPayload struct {
-	Mode string `json:"mode"`
-}
-
-// performVMReset performs a VM reset (includes K8s reset)
-func performVMReset(ctx context.Context) error {
-	result, err := doReset(ctx, "wipe")
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(result))
-	return nil
-}
-
-// performK8sReset performs a K8s-only reset
-func performK8sReset(ctx context.Context) error {
-	result, err := doReset(ctx, "fast")
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(result))
-	return nil
-}
-
 // doReset performs a reset with the specified mode
 func doReset(ctx context.Context, mode string) ([]byte, error) {
 	connectionInfo, err := config.GetConnectionInfo(false)
@@ -139,7 +112,7 @@ func doReset(ctx context.Context, mode string) ([]byte, error) {
 	rdClient := client.NewRDClient(connectionInfo)
 	command := client.VersionCommand("", "k8s_reset")
 
-	payload := ResetPayload{
+	payload := resetPayload{
 		Mode: mode,
 	}
 	jsonBuffer, err := json.Marshal(payload)
