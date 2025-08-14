@@ -66,9 +66,9 @@ skip_on_unix() {
 needs_port() {
     local port=$1
     if is_linux; then
-        if [ "$(sysctl -n net.ipv4.ip_unprivileged_port_start)" -gt "$port" ]; then
+        if [ "$(cat /proc/sys/net/ipv4/ip_unprivileged_port_start)" -gt "$port" ]; then
             # Run sudo non-interactive, so don't prompt for password
-            run sudo -n sysctl -w "net.ipv4.ip_unprivileged_port_start=$port"
+            run sudo -n sh -c "echo $port > /proc/sys/net/ipv4/ip_unprivileged_port_start"
             if ((status > 0)); then
                 skip "net.ipv4.ip_unprivileged_port_start must be $port or less"
             fi
