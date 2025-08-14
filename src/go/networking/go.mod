@@ -8,7 +8,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/containers/gvisor-tap-vsock v0.8.6
 	github.com/coreos/go-systemd/v22 v22.5.0
-	github.com/docker/go-connections v0.5.0
+	github.com/docker/go-connections v0.6.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/gopacket v1.1.19
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
