@@ -909,7 +909,7 @@ async function doFactoryReset(keepSystemImages: boolean) {
   // Don't wait for this process to return -- the whole point is for us to not be running.
   const tmpdir = os.tmpdir();
   const outfile = await fs.promises.open(path.join(tmpdir, 'rdctl-stdout.txt'), 'w');
-  const args = ['factory-reset', `--remove-kubernetes-cache=${ (!keepSystemImages) ? 'true' : 'false' }`];
+  const args = ['reset', '--factory', `--cache=${ (!keepSystemImages) ? 'true' : 'false' }`];
 
   if (cfg.application.debug) {
     args.push('--verbose=true');
@@ -920,7 +920,7 @@ async function doFactoryReset(keepSystemImages: boolean) {
     });
 
   rdctl.unref();
-  console.debug(`If factory-reset fails, the rdctl factory-reset output files are in ${ tmpdir }`);
+  console.debug(`If reset fails, the rdctl reset output files are in ${ tmpdir }`);
 }
 
 ipcMainProxy.on('factory-reset', (event, keepSystemImages) => {

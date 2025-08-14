@@ -221,7 +221,7 @@ describeWithCreds('Credentials server', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async({ colorScheme }, testInfo) => {
-    await tool('rdctl', 'factory-reset', '--verbose');
+    await tool('rdctl', 'reset', '--factory', '--verbose');
     [electronApp, page] = await startSlowerDesktop(testInfo, { kubernetes: { enabled: false } });
   });
 

@@ -74,7 +74,7 @@ test.describe('Locked fields', () => {
   const proposedK8sVersion = '1.26.1';
 
   test.beforeAll(async() => {
-    await tool('rdctl', 'factory-reset', '--verbose');
+    await tool('rdctl', 'reset', '--factory', '--verbose');
     reopenLogs();
   });
 
@@ -99,7 +99,7 @@ test.describe('Locked fields', () => {
 
   test.afterAll(async({ colorScheme }, testInfo) => {
     await teardown(electronApp, testInfo);
-    await tool('rdctl', 'factory-reset', '--verbose');
+    await tool('rdctl', 'reset', '--factory', '--verbose');
     reopenLogs();
   });
 

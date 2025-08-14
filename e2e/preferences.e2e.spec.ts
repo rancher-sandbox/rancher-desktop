@@ -32,7 +32,7 @@ test.describe.serial('Main App Test', () => {
 
   test.afterAll(async({ colorScheme }, testInfo) => {
     await teardown(electronApp, testInfo);
-    await tool('rdctl', 'factory-reset', '--verbose');
+    await tool('rdctl', 'reset', '--factory', '--verbose');
     reopenLogs();
   });
 
