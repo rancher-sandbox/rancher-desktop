@@ -88,29 +88,35 @@ type DiagActionContext = ActionContext<DiagnosticsState>;
 
 export const actions = {
   async fetchDiagnostics({ commit, rootState }: DiagActionContext) {
-    const { port, user, password } = rootState.credentials.credentials;
-    const response = await fetch(
-      uri(port, 'diagnostic_checks'),
-      {
-        headers: new Headers({
-          Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }),
-      });
+    try {
+      const { port, user, password } = rootState.credentials.credentials;
+      const response = await fetch(
+        uri(port, 'diagnostic_checks'),
+        {
+          headers: new Headers({
+            Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }),
+        });
 
-    if (!response.ok) {
-      console.log(`fetchDiagnostics: failed: status: ${ response.status }:${ response.statusText }`);
+      if (!response.ok) {
+        console.log(`fetchDiagnostics: failed: status: ${ response.status }:${ response.statusText }`);
+        commit('SET_IN_ERROR', true);
+
+        return;
+      }
+      const result: DiagnosticsResultCollection = await response.json();
+
+      const mutedChecks = rootState.preferences.preferences.diagnostics.mutedChecks;
+      const checks = mapMutedDiagnostics(result.checks, mutedChecks);
+
+      commit('SET_DIAGNOSTICS', await mapMarkdownToDiagnostics(checks));
+      commit('SET_TIME_LAST_RUN', new Date(result.last_update));
+      commit('SET_IN_ERROR', false);
+    } catch (ex) {
+      console.error(`fetchDiagnostics failed:`, ex);
       commit('SET_IN_ERROR', true);
-
-      return;
     }
-    const result: DiagnosticsResultCollection = await response.json();
-
-    const mutedChecks = rootState.preferences.preferences.diagnostics.mutedChecks;
-    const checks = mapMutedDiagnostics(result.checks, mutedChecks);
-
-    commit('SET_DIAGNOSTICS', await mapMarkdownToDiagnostics(checks));
-    commit('SET_TIME_LAST_RUN', new Date(result.last_update));
   },
   async runDiagnostics({ commit, rootState }:DiagActionContext) {
     const { port, user, password } = rootState.credentials.credentials;
