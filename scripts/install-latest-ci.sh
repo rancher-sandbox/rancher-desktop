@@ -98,7 +98,7 @@ install_application() {
     # While the artifact has a consistent name, the single file inside the
     # artifact does not.  Create a temporary directory that `gh run download`
     # will download into, so we can pick out the file that it creates.
-    workdir=$(mktemp --directory "$TMPDIR/rd-install.XXXXXXXXXX")
+    workdir=$(mktemp -d "$TMPDIR/rd-install.XXXXXXXXXX")
     if [[ -z "$workdir" || ! -d "$workdir" ]]; then
         echo "Failed to create temporary directory" >&2
         exit 1
