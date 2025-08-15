@@ -8,7 +8,7 @@ local_setup_file() {
     delete_all_snapshots
     rm -rf "$PATH_CONTAINERD_SHIMS"
     # On Windows the cache directory is under PATH_APP_HOME.
-    factory_reset --remove-kubernetes-cache=true
+    factory_reset --cache
 }
 
 @test 'Start up Rancher Desktop with a snapshots subdirectory' {
@@ -20,7 +20,7 @@ local_setup_file() {
 @test "Verify the snapshot dir isn't deleted on factory-reset" {
     rdctl shutdown
     rdctl snapshot create shortlived-snapshot
-    factory_reset --remove-kubernetes-cache=true
+    factory_reset --cache
     assert_not_exists "$PATH_APP_HOME/rd-engine.json"
     assert_exists "$PATH_SNAPSHOTS"
     run ls -A "$PATH_SNAPSHOTS"
@@ -29,6 +29,6 @@ local_setup_file() {
 
 @test 'Verify factory-reset deletes an empty snapshots directory' {
     rdctl snapshot delete shortlived-snapshot
-    factory_reset --remove-kubernetes-cache=true
+    factory_reset --cache
     assert_not_exists "$PATH_APP_HOME"
 }

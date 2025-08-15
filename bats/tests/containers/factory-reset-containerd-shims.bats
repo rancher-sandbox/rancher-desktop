@@ -15,7 +15,7 @@ local_teardown_file() {
 
 @test 'factory reset' {
     # On Windows the cache directory is under PATH_APP_HOME.
-    factory_reset --remove-kubernetes-cache=true
+    factory_reset --cache
     assert_not_exists "$PATH_APP_HOME"
 }
 
