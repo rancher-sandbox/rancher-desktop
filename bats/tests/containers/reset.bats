@@ -156,8 +156,7 @@ local_setup_file() {
 
 @test 'Make modifications to the VM' {
     rdctl shell sudo cp /etc/os-release /etc/marker-file
-    run rdctl shell ls -l /etc/marker-file
-    assert_success
+    rdctl shell ls -l /etc/marker-file
 }
 
 @test 'Reset only Kubernetes' {
@@ -171,8 +170,7 @@ local_setup_file() {
 }
 
 @test 'Verify VM modifications persist' {
-    run rdctl shell ls -l /etc/marker-file
-    assert_success
+    rdctl shell ls -l /etc/marker-file
 }
 
 @test 'Re-deploy kubernetes workloads' {
@@ -181,15 +179,20 @@ local_setup_file() {
 }
 
 @test 'Reset VM' {
-    rdctl_reset --vm
+    run rdctl_reset --vm
+    assert_success
+    assert_output --partial 'successfully reset'
 }
 
 @test 'Verify VM modifications removed' {
+    wait_for_shell
+    rdctl shell ls -l /etc # ensure `ls` works correctly.
     run rdctl shell ls -l /etc/marker-file
     assert_failure
 }
 
 @test 'Verify Kubernetes workloads removed again' {
+    wait_for_kubelet
     run kubectl get deployment/bats-nginx
     assert_failure
 }
