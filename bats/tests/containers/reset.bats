@@ -181,7 +181,7 @@ local_setup_file() {
 @test 'Reset VM' {
     run rdctl_reset --vm
     assert_success
-    assert_output --partial 'successfully reset'
+    assert_output 'Rancher Desktop wipe reset successful'
 }
 
 @test 'Verify VM modifications removed' {
