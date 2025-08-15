@@ -559,9 +559,9 @@ export class HttpCommandServer {
       error = payloadError;
     }
     if (!error) {
-      console.debug('k8sReset: succeeded 202');
       await this.commandWorker.k8sReset(context, mode);
-      response.status(202).type('txt').send('K8s cluster successfully reset');
+      console.debug(`k8sReset: ${ mode } succeeded`);
+      response.status(200).type('txt').send(`Rancher Desktop ${ mode } reset successful`);
     } else {
       console.debug(`k8sReset: write back status 400, error: ${ error }`);
       response.status(400).type('txt').send(error);
