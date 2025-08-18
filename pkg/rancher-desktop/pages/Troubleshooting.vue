@@ -27,7 +27,7 @@
             :tooltip="debugModeTooltip"
             :is-locked="debugLocked"
             label="Enable debug mode"
-            @input="updateDebug"
+            @update:value="updateDebug"
           />
         </template>
       </troubleshooting-line-item>
