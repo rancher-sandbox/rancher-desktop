@@ -63,7 +63,7 @@ export default defineComponent({
         :label="t('virtualMachine.proxy.label', { }, true)"
         :value="preferences.experimental.virtualMachine.proxy.enabled"
         :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.enabled')"
-        @input="onChange('experimental.virtualMachine.proxy.enabled', $event)"
+        @update:value="onChange('experimental.virtualMachine.proxy.enabled', $event)"
       />
     </rd-fieldset>
     <hr>
