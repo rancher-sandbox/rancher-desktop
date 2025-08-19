@@ -36,7 +36,7 @@ export default defineComponent({
 
       return undefined;
     },
-    getTooltip(): { content: string, placement: string, popperClass: string } {
+    getTooltip() {
       return {
         content:     `<b>${ this.t(this.data.label.tooltip) }</b>: ${ this.data.value }`,
         html:        true,
@@ -58,7 +58,7 @@ export default defineComponent({
   <div class="status-bar-item">
     <span
       v-if="data"
-      v-tooltip="getTooltip"
+      v-clean-tooltip="getTooltip"
     >
       <img
         v-if="isSvgIcon"

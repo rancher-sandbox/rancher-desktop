@@ -73,7 +73,7 @@ export default defineComponent({
       let tooltip = {};
 
       if (disabled) {
-        tooltip = { content: this.t(`prefs.onlyFromVentura_${ this.arch }`) };
+        tooltip = { content: this.t(`prefs.onlyFromVentura_${ this.arch }`, undefined, true) };
       }
 
       return tooltip;
