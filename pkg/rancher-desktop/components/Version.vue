@@ -18,7 +18,7 @@ export default defineComponent({
     return { version: this.t('product.versionChecking') };
   },
   computed: {
-    getTooltip(): { content: string, placement: string, classes: string } {
+    getTooltip() {
       return {
         content:     `<b>${ this.t('product.version') }</b>: ${ this.version }`,
         html:        true,
@@ -38,7 +38,7 @@ export default defineComponent({
 
 <template>
   <span
-    v-tooltip="isStatusBarItem ? getTooltip : {}"
+    v-clean-tooltip="isStatusBarItem ? getTooltip : {}"
     class="versionInfo"
   >
     <i
