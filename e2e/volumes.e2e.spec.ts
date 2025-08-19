@@ -86,9 +86,12 @@ test.describe.serial('Volumes Tests', () => {
     const volumesPage = new VolumesPage(page);
 
     await volumesPage.waitForVolumeToAppear(testVolumeName);
-
+    await expect(volumesPage.errorBanner).toBeHidden();
+    await page.waitForFunction(async() => {
+      return (await window.ddClient.docker.listContainers({ all: true })).length === 0;
+    });
     await volumesPage.deleteVolume(testVolumeName);
-
+    await expect(volumesPage.errorBanner).toBeHidden();
     await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({
       timeout: 20_000,
     });

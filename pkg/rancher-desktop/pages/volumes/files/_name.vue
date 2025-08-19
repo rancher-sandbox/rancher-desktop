@@ -92,6 +92,7 @@
 </template>
 
 <script lang="ts">
+import { ExecProcess } from '@docker/extension-api-client-types/dist/v1';
 import { BadgeState, Banner } from '@rancher/components';
 import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
@@ -99,7 +100,20 @@ import { mapGetters } from 'vuex';
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
 import SortableTable from '@pkg/components/SortableTable';
 import { ContainerEngine } from '@pkg/config/settings';
+import { mapTypedState } from '@pkg/entry/store';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import Latch from '@pkg/utils/latch';
+
+interface fileEntry {
+  name:        string;
+  path:        string;
+  permissions: string;
+  owner:       string;
+  group:       string;
+  size:        number;
+  modified:    Date;
+  isDirectory: boolean;
+}
 
 export default defineComponent({
   name:       'VolumeFiles',
@@ -111,15 +125,17 @@ export default defineComponent({
     SortableTable,
   },
   data() {
+    const queryPath = this.$route.query.path || this.$route.query.initialPath;
+
     return {
-      settings:        undefined,
-      ddClient:        null,
+      ddClient:        null as typeof window.ddClient | null,
       isLoading:       true,
-      error:           null,
+      error:           null as string | null,
       volumeExists:    false,
-      currentPath:     this.$route.query.path || this.$route.query.initialPath || '/',
-      files:           [],
-      refreshInterval: null,
+      currentPath:     Array.isArray(queryPath) ? queryPath.join('/') : queryPath || '/',
+      files:           [] as fileEntry[],
+      refreshInterval: null as ReturnType<typeof setInterval> | null,
+      process:         undefined as ExecProcess | undefined,
       headers:         [
         {
           name:  'name',
@@ -149,15 +165,19 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
-    volumeName() {
-      return this.$route.params.name || '';
+    ...mapTypedState('preferences', { settings: 'initialPreferences' }),
+    volumeName(): string {
+      return Array.isArray(this.$route.params.name) ? this.$route.params.name.join('.') : this.$route.params.name || '';
     },
-    isValidVolumeName() {
+    isValidVolumeName(): boolean {
       const name = this.volumeName;
-      return name && /^[a-zA-Z0-9._-]+$/.test(name);
+      return !!name && /^[a-zA-Z0-9._-]+$/.test(name);
     },
-    hasNamespaceSelected() {
-      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD && this.settings?.containers?.namespace;
+    selectedNamespace(): string | undefined {
+      if (this.settings.containerEngine.name === ContainerEngine.CONTAINERD) {
+        return this.settings.containers.namespace;
+      }
+      return undefined;
     },
     pathSegments() {
       return this.currentPath
@@ -205,14 +225,14 @@ export default defineComponent({
     }, 30000);
   },
   beforeUnmount() {
-    ipcRenderer.off('settings-read', this.onSettingsRead);
+    ipcRenderer.removeListener('settings-read', this.onSettingsRead);
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
+    this.process?.close();
   },
   methods: {
-    async onSettingsRead(event, settings) {
-      this.settings = settings;
+    async onSettingsRead() {
       await this.initializeFileBrowser();
     },
     async initializeFileBrowser() {
@@ -226,12 +246,7 @@ export default defineComponent({
     },
     async checkVolumeExists() {
       try {
-        const options = {};
-        if (this.hasNamespaceSelected) {
-          options.namespace = this.hasNamespaceSelected;
-        }
-
-        const volumes = await this.ddClient?.docker.rdListVolumes(options);
+        const volumes = await this.ddClient?.docker.rdListVolumes({ namespace: this.selectedNamespace });
         this.volumeExists = volumes?.some(v => v.Name === this.volumeName) || false;
 
         if (!this.volumeExists) {
@@ -246,6 +261,9 @@ export default defineComponent({
     async listFiles() {
       try {
         this.error = null;
+        if (!this.ddClient) {
+          throw new Error('Client not configured');
+        }
 
         const containerPath = `/volume${ this.currentPath }`;
         const lsCommand = [
@@ -256,24 +274,49 @@ export default defineComponent({
           containerPath,
         ];
 
-        const execOptions = { cwd: '/' };
-        if (this.hasNamespaceSelected) {
-          execOptions.namespace = this.hasNamespaceSelected;
-        }
-
-        const { stderr, stdout } = await this.ddClient.docker.cli.exec(
+        let stdout = ''; let stderr = '';
+        const latch = Latch();
+        this.process = this.ddClient.docker.cli.exec(
           lsCommand[0],
           lsCommand.slice(1),
-          execOptions,
+          {
+            cwd:       '/',
+            namespace: this.selectedNamespace,
+            stream:    {
+              onOutput(data: { stdout?: string, stderr?: string }) {
+                stdout += data.stdout ?? '';
+                stderr += data.stderr ?? '';
+              },
+              onClose(exitCode: number) {
+                if (exitCode) {
+                  latch.reject(exitCode);
+                } else {
+                  latch.resolve();
+                }
+              },
+              onError(error: any) {
+                latch.reject(error);
+              },
+            },
+          },
         );
 
-        if (stderr && !stderr.includes('level=warning')) {
-          throw new Error(stderr);
-        }
+        try {
+          await latch;
+          if (stderr && !stderr.includes('level=warning')) {
+            throw new Error(stderr);
+          }
 
-        this.files = this.parseLsOutput(stdout);
-        this.isLoading = false;
-      } catch (error) {
+          this.files = this.parseLsOutput(stdout);
+          this.isLoading = false;
+        } finally {
+          try {
+            this.process?.close();
+          } catch (ex) {
+            console.debug(`Failed to stop volume list process:`, ex);
+          }
+        }
+      } catch (error: any) {
         const errorSources = [
           error?.message,
           error?.stderr,
@@ -287,7 +330,7 @@ export default defineComponent({
         this.isLoading = false;
       }
     },
-    parseLsOutput(output) {
+    parseLsOutput(output: string): fileEntry[] {
       const lines = output.trim().split('\n').filter(line => line.trim());
       const files = [];
 
@@ -296,7 +339,7 @@ export default defineComponent({
         if (line.startsWith('total ')) {
           continue;
         }
-        const match = line.match(/^(?<permissions>[drwxst-]+)\s+(?<links>\d+)\s+(?<owner>\S+)\s+(?<group>\S+)\s+(?<size>\d+)\s+(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2}:\d{2})\s+(?<timezone>[+-]\d{4})\s+(?<name>.+)$/);
+        const match = /^(?<permissions>[drwxst-]+)\s+(?<links>\d+)\s+(?<owner>\S+)\s+(?<group>\S+)\s+(?<size>\d+)\s+(?<date>\d{4}-\d{2}-\d{2})\s+(?<time>\d{2}:\d{2}:\d{2})\s+(?<timezone>[+-]\d{4})\s+(?<name>.+)$/.exec(line);
         if (match?.groups) {
           const { permissions, owner, group, size, date, time, name } = match.groups;
 
@@ -326,7 +369,7 @@ export default defineComponent({
 
       return files;
     },
-    navigateToPath(path) {
+    navigateToPath(path: string) {
       if (this.currentPath === path) {
         return;
       }
@@ -342,24 +385,24 @@ export default defineComponent({
         }
       });
     },
-    getPathUpTo(index) {
+    getPathUpTo(index: number) {
       const segments = this.pathSegments.slice(0, index + 1);
       return '/' + segments.join('/');
     },
-    getFileIcon(file) {
+    getFileIcon(file: fileEntry) {
       if (file.isDirectory) {
         return 'icon icon-folder';
       }
 
       return 'icon icon-file';
     },
-    formatSize(bytes) {
+    formatSize(bytes: number) {
       if (bytes === 0) return '0 B';
       const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
       const i = Math.floor(Math.log(bytes) / Math.log(1024));
       return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
     },
-    formatDate(date) {
+    formatDate(date: Date) {
       return date.toLocaleString();
     },
   },
