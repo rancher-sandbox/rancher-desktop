@@ -25,7 +25,7 @@ encoded_id() { # variant
 }
 
 @test 'start container engine' {
-    RD_ENV_EXTENSIONS=1 start_container_engine
+    start_container_engine
     wait_for_container_engine
 }
 
