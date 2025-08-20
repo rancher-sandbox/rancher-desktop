@@ -75,7 +75,7 @@ export default defineComponent({
           <i
             v-if="isLocked"
             v-tooltip="{
-              content: tooltip || t('preferences.locked.tooltip'),
+              content: tooltip || t('preferences.locked.tooltip', undefined, true),
               placement: 'right',
             }"
             class="icon icon-lock"
