@@ -14,7 +14,7 @@
         :label="item.name"
         :disabled="item.disabled"
         :description="item.description"
-        @input="toggleIntegration(item.name, $event)"
+        @update:value="toggleIntegration(item.name, $event)"
       />
     </div>
   </section>
@@ -82,7 +82,7 @@ export default defineComponent({
 
   methods: {
     toggleIntegration(name: string, value: boolean) {
-      this.$set(this.busy, name, value);
+      this.busy.name = value;
       this.$emit('integration-set', name, value);
     },
   },

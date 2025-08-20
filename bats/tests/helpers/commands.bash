@@ -55,7 +55,10 @@ docker_exe() {
         "$PATH_RESOURCES/$PLATFORM/bin/docker$EXE" "$@" | no_cr
 }
 helm() {
-    "$PATH_RESOURCES/$PLATFORM/bin/helm$EXE" "$@" | no_cr
+    # Add path to bundled credential helpers to the front of the PATH; also
+    # ensure that on Windows, it gets exported.
+    PATH="$PATH_RESOURCES/$PLATFORM/bin:$PATH" WSLENV="PATH/l:${WSLENV:-}" \
+        "$PATH_RESOURCES/$PLATFORM/bin/helm$EXE" "$@" | no_cr
 }
 kubectl() {
     kubectl_exe --context rancher-desktop "$@"

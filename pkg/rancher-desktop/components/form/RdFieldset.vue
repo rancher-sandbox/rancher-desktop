@@ -57,7 +57,7 @@ export default defineComponent({
         />
         <i
           v-if="isLocked"
-          v-tooltip="{
+          v-clean-tooltip="{
             content: lockedTooltip,
             html: true,
             placement: 'right',
@@ -66,7 +66,7 @@ export default defineComponent({
         />
         <i
           v-else-if="legendTooltip"
-          v-tooltip="{
+          v-clean-tooltip="{
             content: legendTooltip,
             html: true,
           }"

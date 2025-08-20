@@ -62,7 +62,7 @@ Requires: libdrm2
 Requires: libexpat1
 Requires: libgbm1
 Requires: libgcc1
-Requires: libgdk-pixbuf2.0-0
+Requires: libgdk-pixbuf-2.0-0
 Requires: libglib2.0-0
 Requires: libglib2.0-dev
 Requires: libgtk-3-0

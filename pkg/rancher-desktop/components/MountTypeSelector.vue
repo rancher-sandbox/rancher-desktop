@@ -115,7 +115,7 @@ export default defineComponent({
       let tooltip = {};
 
       if (disabled) {
-        tooltip = { content: this.t(`prefs.onlyWithVZ_${ this.arch }`) };
+        tooltip = { content: this.t(`prefs.onlyWithVZ_${ this.arch }`, undefined, true) };
       }
 
       return tooltip;
