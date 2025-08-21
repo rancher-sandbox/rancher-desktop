@@ -5,6 +5,10 @@
 # Linux, a zip file), along with its accompanying sha512sum file.
 # On Windows, build/signing-config-win.yaml is also required.
 
+# Environment variables as inputs:
+#   RD_SKIP_INSTALL (Linux)
+#     Skip installing Rancher Desktop, and assume it was installed from the repo.
+
 # Required tools:
 # - jq
 # - yq (Windows only)
@@ -12,8 +16,11 @@
 # Note that, on Windows, this is run via msys bash (installed wit git).
 
 set -o errexit -o nounset
+shopt -s nullglob
 
 export MSYS2_ARG_CONV_EXCL='*'
+RDCTL= # Path to rdctl
+APPIMAGE_PID= # PID of AppImage process; not used if not using AppImage.
 
 # All commands in the cleanups array will be run on exit.  They must be plain
 # strings that will be passed to eval
@@ -35,6 +42,11 @@ trap do_cleanup EXIT
 # Locate the archive, check its checksum, and echo the file name.
 get_archive() {
     local checksum archiveName
+    if [[ -n "${RD_SKIP_INSTALL:-}" ]]; then
+        echo "Skipping getting archive." >&2
+        echo "no-archive-used"
+        return
+    fi
     for checksum in *.sha512sum; do
         archiveName=${checksum%.sha512sum}
         if command -v sha512sum &>/dev/null; then
@@ -103,6 +115,7 @@ install_darwin() {
         # For macOS, currently only x86_64 runners support nested virtualization
         # https://github.com/actions/runner-images/issues/9460
         # Abort the script (gracefully) instead of trying to run RD.
+        echo "Skipping actually running on Rancher Desktop because arm64 runners do not have nested virtualization" >&2
         exit 0
     fi
 
@@ -111,13 +124,31 @@ install_darwin() {
 
 # Assume the first argument given is a path to the Rancher Desktop zip file;
 # install it, and set the global variable RDCTL to the path of the rdctl
-# executable.
+# executable.  If the archive is an AppImage file instead, then this function
+# instead sets APPIMAGE_PID.
 install_linux() {
-    local archiveName=$1
+    if [[ $(id --user) -eq 0 ]]; then
+        echo "This script should not be run as root" >&2
+        exit 1
+    fi
 
-    sudo mkdir -p /opt/rancher-desktop
-    sudo unzip -d /opt/rancher-desktop "$archiveName"
-    sudo chmod 4755 /opt/rancher-desktop/chrome-sandbox
+    if [[ -z "${RD_SKIP_INSTALL:-}" ]]; then
+        local archiveName=$1
+
+        if [[ "$archiveName" =~ .*\.AppImage$ ]]; then
+            sudo chmod a+x "$archiveName"
+            "$archiveName" \
+                --no-sandbox --enable-logging=stderr --v=1 \
+                --no-modal-dialogs --kubernetes.enabled \
+                --application.updater.enabled=false&
+            APPIMAGE_PID=$!
+            return
+        else
+            sudo mkdir -p /opt/rancher-desktop
+            sudo unzip -d /opt/rancher-desktop "$archiveName"
+            sudo chmod 4755 /opt/rancher-desktop/chrome-sandbox
+        fi
+    fi
 
     RDCTL="/opt/rancher-desktop/resources/resources/linux/bin/rdctl"
 }
@@ -196,14 +227,27 @@ install_win32() {
 }
 
 # Wait for the backend to be alive.  $RDCTL must be set (from the install_*
-# functions).
+# functions).  If $APPIMAGE_PID is set, assume we're running AppImage instead.
 wait_for_backend() {
-    local deadline state
+    local deadline state deadline_date platform rd_pid
     deadline=$(( $(date +%s) + 10 * 60 ))
+    deadline_date=$({ date --date="@$deadline" || date -j -f %s "$deadline"; } 2>/dev/null)
+    platform=$(get_platform)
 
     while [[ $(date +%s) -lt $deadline ]]; do
-        state=$("$RDCTL" api /v1/backend_state || echo '{"vmState": "NO_RESPONSE"}')
-        state=$(jq --raw-output .vmState <<< "$state")
+        if [[ -n "${APPIMAGE_PID:-}" ]] && [[ -z "${RDCTL:-}" ]]; then
+            rd_pid=$(pidof --separator $'\n' rancher-desktop | sort -n | head -n 1 || echo missing)
+            if [[ -e /proc/$rd_pid/exe ]]; then
+                RDCTL=$(dirname "$(readlink /proc/$rd_pid/exe)")/resources/resources/linux/bin/rdctl
+                continue
+            fi
+            state=NOT_RUNNING
+        elif [[ $platform == linux ]] && [[ ! -e $HOME/.local/share/rancher-desktop/rd-engine.json ]]; then
+            state=NO_SERVER_CONFIG
+        else
+            state=$("$RDCTL" api /v1/backend_state || echo '{"vmState": "NO_RESPONSE"}')
+            state=$(jq --raw-output .vmState <<< "$state")
+        fi
         case "$state" in
             ERROR)
                 echo "Backend reached error state." >&2
@@ -215,15 +259,13 @@ wait_for_backend() {
         esac
 
         # if we get here, either we failed to get state or it's starting.
-        printf "Waiting for backend: (%s) %s/%s\n" "$state" "$(date)" \
-            "$({ date --date="@$deadline" || date -j -f %s "$deadline"; } 2>/dev/null)"
+        printf "Waiting for backend: (%s) %s/%s\n" "$state" "$(date)" "$deadline_date"
         sleep 10
     done
 
     echo "Timed out waiting for backend to stabilize." >&2
     printf "Current time: %s\n" "$(date)" >&2
-    printf "Deadline: %s\n" >&2 \
-        "$({ date --date="@$deadline" || date -j -f %s "$deadline"; } 2>/dev/null)"
+    printf "Deadline: %s\n" "$deadline_date" >&2
     exit 1
 }
 
@@ -233,9 +275,11 @@ main() {
     archive=$(get_archive)
 
     eval "install_${platform}" "$archive"
-    "$RDCTL" start --no-modal-dialogs \
-        --kubernetes.enabled --application.updater.enabled=false
-    cleanups+=("'$RDCTL' shutdown")
+    if [[ -z "${APPIMAGE_PID:-}" ]]; then
+        "$RDCTL" start --no-modal-dialogs \
+            --kubernetes.enabled --application.updater.enabled=false
+        cleanups+=("'$RDCTL' shutdown")
+    fi
     wait_for_backend
     echo "Smoke test passed."
 }

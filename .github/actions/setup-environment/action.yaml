@@ -2,6 +2,11 @@ name: Setup Environment
 description: >-
   This is a composite action that is used to set up the runner for running
   Rancher Desktop.
+inputs:
+  user:
+    default: ''
+    description: >-
+      (Linux only) The user to use to set up `pass`
 
 runs:
   using: composite
@@ -48,7 +53,7 @@ runs:
     id: sudo
     run: |
       if [[ $(id --user) -eq 0 ]]; then
-        echo "sudo=exec" >> "$GITHUB_OUTPUT"
+        echo "sudo=command" >> "$GITHUB_OUTPUT"
         # Fix for https://github.com/rocky-linux/sig-cloud-instance-images/issues/56
         chmod u+r /etc/shadow
       else
@@ -63,9 +68,12 @@ runs:
   - name: "Linux: Set unprivileged port start to 80"
     if: runner.os == 'Linux'
     shell: bash
-    run: ${{ steps.sudo.outputs.sudo }} sysctl -w net.ipv4.ip_unprivileged_port_start=80
+    run: >-
+      ${{ steps.sudo.outputs.sudo }}
+      sh -c
+      'echo 80 > /proc/sys/net/ipv4/ip_unprivileged_port_start'
 
-  - name: "Linux: Initialize pass"
+  - name: "Linux: Install required packages"
     if: runner.os == 'Linux'
     shell: bash
     run: |
@@ -73,18 +81,53 @@ runs:
       for id in $ID $ID_LIKE; do
         case $id in
           suse|opensuse)
-            ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install password-store
-            break;;
-          rocky|rhel|centos)
-            ${{ steps.sudo.outputs.sudo }} dnf install --assumeyes pass
-            break;;
+            ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install \
+              fuse gawk git GraphicsMagick gtk3-tools jq mozilla-nss \
+              noto-sans-fonts password-store sudo xvfb-run
+            if [[ ${GITHUB_JOB:-unknown} =~ appimage ]]; then
+              ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install \
+                libasound2 openssh-clients
+            fi
+            exit 0;;
+          rocky|rhel|centos|fedora)
+            if [[ "$id" != "fedora" ]]; then
+              ${{ steps.sudo.outputs.sudo }} dnf install --assumeyes \
+                "https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID%%.*}.noarch.rpm"
+              ${{ steps.sudo.outputs.sudo }} /usr/bin/crb enable # spellcheck-ignore-line
+            fi
+            ${{ steps.sudo.outputs.sudo }} dnf install --assumeyes \
+              at-spi2-atk cups-libs git GraphicsMagick gtk3 jq \
+              libva nss pass procps-ng sudo xorg-x11-server-Xvfb \
+              /usr/bin/script
+            exit 0;;
           debian|ubuntu)
             ${{ steps.sudo.outputs.sudo }} apt-get update
-            ${{ steps.sudo.outputs.sudo }} apt-get install pass
-            break;;
+            ${{ steps.sudo.outputs.sudo }} apt-get install --verbose-versions --yes \
+              curl jq pass sudo xvfb
+            exit 0;;
         esac
       done
+      printf "Could not find known distribution in [%s %s]\n" "$ID" "$ID_LIKE" >&2
+      exit 1
 
+  - name: "Linux: Set up passwordless sudo"
+    if: runner.os == 'Linux'
+    shell: bash
+    run: |
+      case "$TARGET_USER" in
+        ""|root)
+          exit 0;;
+      esac
+      echo "$TARGET_USER ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$TARGET_USER
+    env:
+      TARGET_USER: ${{ inputs.user || 'root' }}
+
+  - name: "Linux: Initialize pass"
+    if: runner.os == 'Linux'
+    shell: >-
+      /usr/bin/sudo --user=${{ inputs.user || 'root' }}
+      --login --set-home --non-interactive bash {0}
+    run: |
       # Configure the agent to allow default passwords
       HOMEDIR="$(gpgconf --list-dirs homedir)" # spellcheck-ignore-line
       mkdir -p "${HOMEDIR}"

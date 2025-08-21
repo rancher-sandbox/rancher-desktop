@@ -24,6 +24,8 @@ jobs:
       contents: write # Needed to list draft releases
     env:
       RELEASE_TAG: ${{ inputs.tag }}
+    outputs:
+      release-tag: ${{ steps.set-release-tag.outputs.release-tag }}
     steps:
     - name: Find release
       if: inputs.tag == ''
@@ -34,6 +36,9 @@ jobs:
         --jq 'map(select(.draft))[0].tag_name')"
       env:
         GH_TOKEN: ${{ github.token }}
+    - id: set-release-tag
+      run: >-
+        printf "release-tag=%s\n" "$RELEASE_TAG" >> "$GITHUB_OUTPUT"
     - name: Download artifacts
       run: |
         if [[ -z "$RELEASE_TAG" ]]; then
@@ -59,6 +64,8 @@ jobs:
             | jq --raw-output ".data[].name | select(endswith(\".AppImage\")) | select(contains(\".release${branch}.\"))"
           )
         curl -L -o rancher-desktop.AppImage "${OBS_DOWNLOAD_URL}${artifact_name}"
+        # The AppImage does not have a checksum; make one up.
+        sha512sum rancher-desktop.AppImage > rancher-desktop.AppImage.sha512sum
         chmod a+x rancher-desktop.AppImage
       env:
         OBS_DOWNLOAD_URL: https://download.opensuse.org/download/repositories/isv:/Rancher:/dev/AppImage/
@@ -100,7 +107,9 @@ jobs:
       with:
         name: application-linux.AppImage
         if-no-files-found: error
-        path: rancher-desktop.AppImage
+        path: |
+          rancher-desktop.AppImage
+          rancher-desktop.AppImage.sha512sum
 
   smoke-test:
     name: Smoke test
@@ -130,7 +139,6 @@ jobs:
           exec xvfb-run --auto-servernum
           --server-args='-screen 0 1280x960x24'
 
-
     - name: Set log directory
       shell: bash
       # Use node here to do path manipulation to get correct Windows paths.
@@ -152,6 +160,93 @@ jobs:
         path: ${{ github.workspace }}/logs
         if-no-files-found: warn
 
+  repository-smoke-test:
+    name: Smoke test repository
+    needs: download-artifacts
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - { id: opensuse-tumbleweed, image: "registry.opensuse.org/opensuse/tumbleweed:latest"}
+        - { id: opensuse-leap, image: "registry.opensuse.org/opensuse/leap:latest" }
+        - { id: debian, image: "debian:latest" }
+        - { id: fedora, image: "fedora:latest" }
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+      options: --privileged
+    steps:
+    - name: Install basic tools
+      if: contains(matrix.id, 'opensuse')
+      run: >-
+        zypper --non-interactive install
+        git-core tar
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        persist-credentials: false
+    - name: Set up user
+      run: |
+        useradd --create-home --user-group ci-user
+        export LOGS_DIR=$PWD/logs
+        export RD_LOGS_DIR=$LOGS_DIR/rd
+        echo "LOGS_DIR=$LOGS_DIR" >> "$GITHUB_ENV"
+        echo "RD_LOGS_DIR=$RD_LOGS_DIR" >> "$GITHUB_ENV"
+        mkdir -p $RD_LOGS_DIR
+        chown --recursive ci-user "$LOGS_DIR"
+    - uses: ./.github/actions/setup-environment
+    - name: Install Rancher Desktop from package
+      if: runner.os == 'Linux'
+      run: .github/workflows/smoke-test/install-from-repo.sh
+      env:
+        RD_VERSION: ${{ needs.download-artifacts.outputs.release-tag }}
+    - name: "openSUSE Workaround for #9145"
+      if: contains(matrix.id, 'opensuse')
+      run: >-
+        zypper --non-interactive install
+        qemu-img qemu-hw-display-virtio-gpu
+    - name: Run smoke test
+      shell: bash
+      run: |
+        inner_command=(
+          xvfb-run
+            --auto-servernum
+            --server-args='-screen 0 1280x960x24'
+          $PWD/.github/workflows/smoke-test/smoke-test.sh
+        )
+        sudo --user=ci-user --login --set-home --non-interactive \
+          /usr/bin/env --chdir=$PWD \
+            RD_DEBUG_ENABLED=1 RD_TEST=smoke RD_SKIP_INSTALL=true RD_LOGS_DIR=$RD_LOGS_DIR \
+          script \
+            --log-out $LOGS_DIR/repo-${{ matrix.id }}.log \
+            --return --command "${inner_command[*]@Q}"
+
+    - name: Take screenshot
+      if: failure()
+      continue-on-error: true
+      shell: >-
+        sudo --user=ci-user --login --set-home --non-interactive
+        bash --noprofile --norc -eo pipefail {0}
+      run: |
+        set -o xtrace -o errexit
+        PID=$(pidof smoke-test.sh || echo missing)
+        if [[ ! -r /proc/$PID/environ ]]; then
+          echo "Rancher Desktop is not running" >&2
+          exit 0
+        fi
+        export $(gawk 'BEGIN { RS="\0"; FS="=" } ($1 == "DISPLAY" || $1 == "XAUTHORITY") { print }' \
+          < /proc/$PID/environ)
+        env
+        export MAGICK_DEBUG=All # spellcheck-ignore-line
+        gm import -window root -verbose $LOGS_DIR/screenshot-${{ matrix.id }}.png
+
+    - name: Upload logs
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      if: always()
+      with:
+        name: logs-repo-${{ matrix.id }}.zip
+        path: ${{ github.workspace }}/logs
+        if-no-files-found: warn
+
   appimage-smoke-test:
     name: Smoke test AppImage
     needs: download-artifacts
@@ -166,31 +261,9 @@ jobs:
       image: ${{ matrix.image }}
       options: --privileged
     steps:
-    - name: Install dependencies
-      run: |
-        source /etc/os-release
-        for id in $ID $ID_LIKE; do
-          case $id in
-            suse|opensuse)
-              zypper --non-interactive install --recommends \
-                fuse gawk git GraphicsMagick gtk3-tools jq mozilla-nss sudo xvfb-run
-              break;;
-            rocky|rhel|centos)
-              dnf install --assumeyes \
-                https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-              /usr/bin/crb enable # spellcheck-ignore-line
-              dnf install --assumeyes \
-                at-spi2-atk cups-libs git GraphicsMagick gtk3 jq \
-                libva nss procps-ng sudo xorg-x11-server-Xvfb
-              break;;
-          esac
-        done
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         persist-credentials: false
-    - name: Set up environment
-      uses: ./.github/actions/setup-environment
-
     - name: Set up user
       run: |
         useradd --create-home --user-group ci-user
@@ -198,89 +271,37 @@ jobs:
         export RD_LOGS_DIR=$LOGS_DIR/rd
         echo "LOGS_DIR=$LOGS_DIR" >> "$GITHUB_ENV"
         echo "RD_LOGS_DIR=$RD_LOGS_DIR" >> "$GITHUB_ENV"
-        mkdir -p $LOGS_DIR
-        chown ci-user "$LOGS_DIR"
-        sudo --user=ci-user mkdir "$RD_LOGS_DIR"
+        mkdir -p $RD_LOGS_DIR
+        chown --recursive ci-user "$LOGS_DIR"
+    - uses: ./.github/actions/setup-environment
+      with:
+        user: ci-user
 
     - name: Download AppImage
       uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
       with:
         name: application-linux.AppImage
 
-    - name: Start Rancher Desktop
-      id: start-rancher-desktop
+    - name: Run smoke test
       run: |
-        set -o xtrace
-        chmod a+x rancher-desktop.AppImage
         inner_command=(
           xvfb-run
             --auto-servernum
             --server-args='-screen 0 1280x960x24'
-          ./rancher-desktop.AppImage
-            --no-sandbox
-            --enable-logging=stderr
-            --v=1
-            --no-modal-dialogs
-            --kubernetes.enabled
+          $PWD/.github/workflows/smoke-test/smoke-test.sh
         )
-        sudo --user=ci-user \
-          RD_DEBUG_ENABLED=1 RD_LOGS_DIR=$RD_LOGS_DIR RD_TEST=smoke \
+        sudo --user=ci-user --login --set-home --non-interactive \
+          /usr/bin/env --chdir=$PWD \
+            RD_DEBUG_ENABLED=1 RD_TEST=smoke RD_LOGS_DIR=$RD_LOGS_DIR \
           script \
             --log-out $LOGS_DIR/appimage-${{ matrix.id }}.log \
-            --command "${inner_command[*]@Q}" \
-          &
-        echo "TARGET_PID=$!" >> "$GITHUB_ENV"
-    - name: Wait for backend
-      shell: sudo --user=ci-user bash --noprofile --norc -eo pipefail {0}
-      run: |
-        deadline=$(( $(date +%s) + 10 * 60 ))
-        state=UNKNOWN
-        while [[ $(date +%s) -lt $deadline ]]; do
-          printf "Waiting for backend: (%s) %s/%s\n" "$state" "$(date)" \
-            "$({ date --date="@$deadline" || date -j -f %s "$deadline"; } 2>/dev/null)"
-
-          if [[ ! -d /proc/$TARGET_PID ]]; then
-            echo "Process $TARGET_PID exited" >&2
-            exit 1
-          fi
-          rd_pid=$(pidof --separator $'\n' rancher-desktop | sort -n | head -n 1 || echo missing)
-          if [[ ! -e /proc/$rd_pid/exe ]]; then
-            state=NOT_RUNNING
-            sleep 10
-            continue
-          fi
-          if [[ ! -e $HOME/.local/share/rancher-desktop/rd-engine.json ]]; then
-            state=NO_SERVER_CONFIG
-            sleep 10
-            continue
-          fi
-          rdctl=$(dirname "$(readlink /proc/$rd_pid/exe)")/resources/resources/linux/bin/rdctl
-          state=$("$rdctl" api /v1/backend_state || echo '{"vmState": "NO_RESPONSE"}')
-          state=$(jq --raw-output .vmState <<< "$state")
-          case "$state" in
-            ERROR)
-              echo "Backend reached error state." >&2
-              exit 1;;
-            STARTED|DISABLED)
-              printf "PID %s has reached state %s, accepting\n" "$rd_pid" "$state"
-              exit 0;;
-            *)
-              printf "Backend state: %s\n" "$state";;
-          esac
-          sleep 10
-        done
-
-        echo "Timed out waiting for backend to stabilize." >&2
-        printf "Current time: %s\n" "$(date)" >&2
-        printf "Deadline: %s\n" >&2 \
-            "$({ date --date="@$deadline" || date -j -f %s "$deadline"; } 2>/dev/null)"
-        exit 1
+            --return --command "${inner_command[*]@Q}" \
 
     - name: Take screenshot
-      if: failure() && steps.start-rancher-desktop.outcome == 'success'
+      if: failure()
       continue-on-error: true
       shell: >-
-        sudo --user=ci-user LOGS_DIR=$LOGS_DIR
+        sudo --user=ci-user --login --set-home --non-interactive
         bash --noprofile --norc -eo pipefail {0}
       run: |
         set -o xtrace -o errexit
