@@ -20,7 +20,7 @@ jobs:
       matrix:
         include:
         - platform: mac
-          runs-on: macos-13
+          runs-on: macos-latest
         - platform: win
           runs-on: windows-latest
         - platform: linux
