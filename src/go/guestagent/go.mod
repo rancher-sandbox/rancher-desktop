@@ -9,7 +9,7 @@ require (
 	github.com/containerd/containerd v1.7.28
 	github.com/containerd/containerd/api v1.9.0
 	github.com/containernetworking/plugins v1.7.1
-	github.com/containers/gvisor-tap-vsock v0.8.6
+	github.com/containers/gvisor-tap-vsock v0.8.7
 	github.com/docker/docker v28.3.3+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/lima-vm/lima v1.0.0-beta.0
