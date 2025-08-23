@@ -168,17 +168,17 @@ restart_container_engine() {
     # restart; however, restarting containerd again seems to fix this.
     # So we need to keep trying until the registry container is not `created`.
     # BUG BUG BUG
-    service_control "$CONTAINER_ENGINE_SERVICE" restart || return
+    service_control "$CONTAINER_ENGINE_SERVICE" restart
 
-    service_control --ifstarted rd-openresty restart || return
+    service_control --ifstarted rd-openresty restart
 
-    wait_for_container_engine || return
+    wait_for_container_engine
 
     trace "$(ctrctl ps -a)"
     if using_containerd; then
         run ctrctl ps --filter status=created,name=registry --format '{{.Names}}'
-        assert_success || return
-        refute_output registry || return
+        assert_success
+        refute_output registry
     fi
 }
 

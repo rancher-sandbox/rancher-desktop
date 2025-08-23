@@ -25,8 +25,8 @@ RD_USE_IMAGE_ALLOW_LIST=true
 }
 
 assert_pull_fails() {
-    run ctrctl pull "$1" || return
-    assert_failure || return
+    run ctrctl pull "$1"
+    assert_failure
     assert_output --regexp "(UNAUTHORIZED|Forbidden)"
 }
 

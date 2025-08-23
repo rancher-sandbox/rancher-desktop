@@ -36,7 +36,7 @@ shim_version() {
     local version=$2
 
     run rdctl shell "containerd-shim-${shim}-${version}" -v
-    assert_success || return
+    assert_success
     semver "$output"
 }
 
@@ -88,7 +88,7 @@ hello() {
 
 check_container_logs() {
     run ctrctl logs spin-demo-8080
-    assert_success || return
+    assert_success
     assert_output --partial "Available Routes"
 }
 

@@ -15,18 +15,18 @@ is_rancher_chart_compatible() {
     local chart_version=$1
 
     run helm show chart rancher-latest/rancher --version "$chart_version"
-    assert_success || return
+    assert_success
 
     run awk '/^kubeVersion:/ { $1 = ""; print }' <<<"$output"
-    assert_success || return
+    assert_success
     # We only support kubeVersion of form "< x.y.z"
-    assert_output --regexp '^[[:space:]]*<[[:space:]]*[^[:space:]]+$' || return
+    assert_output --regexp '^[[:space:]]*<[[:space:]]*[^[:space:]]+$'
 
     run awk '{ print $2 }' <<<"$output"
-    assert_success || return
+    assert_success
 
     local unsupported_version=$output
-    semver_gt "$unsupported_version" "$RD_KUBERNETES_VERSION" || return
+    semver_gt "$unsupported_version" "$RD_KUBERNETES_VERSION"
 }
 
 # Set (and save) $rancher_chart_version to $RD_RANCHER_IMAGE_TAG if it is set
@@ -54,13 +54,13 @@ determine_chart_version() {
     default_version=${default_version#v}
 
     run --separate-stderr helm search repo --versions rancher-latest/rancher --output json
-    assert_success || return
+    assert_success
 
     run jq_output 'map(.version).[]'
-    assert_success || return
+    assert_success
 
     run sort --version-sort <<<"$output"
-    assert_success || return
+    assert_success
     local versions=$output
 
     for rancher_chart_version in $versions; do
@@ -82,7 +82,7 @@ determine_chart_version() {
     mark_k3s_version_skipped
     printf "Could not find a version of rancher-latest/rancher compatible with Kubernetes %s\n" \
         "$RD_KUBERNETES_VERSION" |
-        fail || return
+        fail
 }
 
 deploy_rancher() {
@@ -104,7 +104,7 @@ deploy_rancher() {
         --create-namespace
 
     local host
-    host=$(traefik_hostname) || return
+    host=$(traefik_hostname)
 
     comment "Installing rancher $rancher_chart_version"
     helm upgrade \
@@ -124,7 +124,7 @@ verify_rancher() {
     fi
 
     local host
-    host=$(traefik_hostname) || return
+    host=$(traefik_hostname)
 
     run try --max 9 --delay 10 curl --insecure --silent --show-error "https://${host}/dashboard/auth/login"
     assert_success
