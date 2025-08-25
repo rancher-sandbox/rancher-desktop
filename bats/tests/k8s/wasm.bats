@@ -10,18 +10,18 @@ local_setup() {
 get_runtime_classes() {
     # kubectl may emit warnings here; ensure that we don't fall over.
     run --separate-stderr kubectl get RuntimeClasses --output json
-    assert_success || return
+    assert_success
 
     if [[ -n $stderr ]]; then
         # Check that we got a deprecation warning:
         # Warning: node.k8s.io/v1beta1 RuntimeClass is deprecated in v1.22+, unavailable in v1.25+
-        output=$stderr assert_output --partial deprecated || return
+        output=$stderr assert_output --partial deprecated
     fi
 
     local rtc=$output
     run jq '.items | length' <<<"$rtc"
-    assert_success || return
-    ((output > 0)) || return
+    assert_success
+    ((output > 0))
     echo "$rtc"
 }
 

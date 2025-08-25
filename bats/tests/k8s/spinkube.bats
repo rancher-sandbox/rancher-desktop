@@ -88,9 +88,9 @@ EOF
 
 assert_helm_charts_are_deleted() {
     run --separate-stderr kubectl get helmcharts --namespace kube-system
-    assert_success || return
-    refute_line traefik || return
-    refute_line spin-operator || return
+    assert_success
+    refute_line traefik
+    refute_line spin-operator
     refute_line cert-manager
 }
 
