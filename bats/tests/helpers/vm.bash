@@ -307,7 +307,7 @@ EOF
 get_container_engine_info() {
     run ctrctl info
     echo "$output"
-    assert_success || return
+    assert_success
     assert_output --partial "Server Version:"
 }
 
@@ -317,11 +317,11 @@ docker_context_exists() {
         return
     fi
     run docker_exe context ls -q
-    assert_success || return
+    assert_success
     assert_line "$RD_DOCKER_CONTEXT"
     # Ensure that the context actually exists by reading from the file.
     run docker_exe context inspect "$RD_DOCKER_CONTEXT" --format '{{ .Name }}'
-    assert_success || return
+    assert_success
     assert_output "$RD_DOCKER_CONTEXT"
 }
 
@@ -367,11 +367,11 @@ get_service_pid() {
     local service_name=$1
     if using_systemd; then
         RD_TIMEOUT=10s run rdshell systemctl show --property MainPID --value "$service_name.service"
-        assert_success || return
+        assert_success
         echo "$output"
     else
         RD_TIMEOUT=10s run rdshell sh -c "RC_SVCNAME=$service_name /usr/libexec/rc/bin/service_get_value pidfile"
-        assert_success || return
+        assert_success
         RD_TIMEOUT=10s rdshell cat "$output"
     fi
 }
@@ -409,14 +409,14 @@ assert_service_status() {
         RD_TIMEOUT=10s run rdsudo systemctl is-active "$service_name"
         # `systemctl is-active` returns 0 on active, and non-0 on non-active.
         if [[ $expect == started ]]; then
-            assert_success || return
+            assert_success
         fi
         assert_line "$mapped_status"
     else
         RD_TIMEOUT=10s run rdsudo rc-service "$service_name" status
         # rc-service report non-zero status (3) when the service is stopped
         if [[ $expect == started ]]; then
-            assert_success || return
+            assert_success
         fi
         assert_output --partial "status: ${expect}"
     fi

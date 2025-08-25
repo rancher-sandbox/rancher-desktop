@@ -103,7 +103,7 @@ join_map() {
     local elem
     local result=""
     for elem in "$@"; do
-        elem=$(eval "$map" '"$elem"') || return
+        elem=$(eval "$map" '"$elem"')
         if [[ -z $result ]]; then
             result=$elem
         else
@@ -205,7 +205,7 @@ semver_gt() {
 
 get_setting() {
     run rdctl api /settings
-    assert_success || return
+    assert_success
     jq_output "$@"
 }
 
@@ -316,7 +316,7 @@ update_allowed_patterns() {
         pid=$(get_service_pid "$CONTAINER_ENGINE_SERVICE")
     fi
 
-    rdctl api settings -X PUT --input - <<EOF || return
+    rdctl api settings -X PUT --input - <<EOF
 {
   "version": 8,
   "containerEngine": {
@@ -329,10 +329,10 @@ update_allowed_patterns() {
 EOF
     # Wait for container engine (and Kubernetes) to be ready again
     if [[ -n ${pid:-} ]]; then
-        try --max 15 --delay 5 refute_service_pid "$CONTAINER_ENGINE_SERVICE" "$pid" || return
-        wait_for_container_engine || return
+        try --max 15 --delay 5 refute_service_pid "$CONTAINER_ENGINE_SERVICE" "$pid"
+        wait_for_container_engine
         if [[ $(get_setting .kubernetes.enabled) == "true" ]]; then
-            wait_for_kubelet || return
+            wait_for_kubelet
         fi
     fi
 }
@@ -353,15 +353,15 @@ create_file() {
     fi
 
     local contents # Base64 encoded file contents
-    contents="$(base64)" || return
+    contents="$(base64)"
 
     local winParent
     local winDest
-    winParent="$(wslpath -w "$(dirname "$dest")")" || return
-    winDest="$(wslpath -w "$dest")" || return
+    winParent="$(wslpath -w "$(dirname "$dest")")"
+    winDest="$(wslpath -w "$dest")"
     PowerShell.exe -NoProfile -NoLogo -NonInteractive -Command "New-Item -ItemType Directory -ErrorAction SilentlyContinue '$winParent'" || true
     local command="[IO.File]::WriteAllBytes('$winDest', \$([System.Convert]::FromBase64String('$contents')))"
-    PowerShell.exe -NoProfile -NoLogo -NonInteractive -Command "$command" || return
+    PowerShell.exe -NoProfile -NoLogo -NonInteractive -Command "$command"
 }
 
 # unique_filename /tmp/image .png

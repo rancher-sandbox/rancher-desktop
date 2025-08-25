@@ -1,5 +1,8 @@
 set -o errexit -o nounset -o pipefail
 
+# Make sure run() will execute all functions with errexit enabled
+export BATS_RUN_ERREXIT=1
+
 # RD_HELPERS_LOADED is set when bats/helpers/load.bash has been loaded
 RD_HELPERS_LOADED=1
 
