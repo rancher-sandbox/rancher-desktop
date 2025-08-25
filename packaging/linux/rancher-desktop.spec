@@ -1,7 +1,7 @@
 #
 # spec file for package rancher-desktop
 #
-# Copyright (c) 2021 SUSE LLC
+# Copyright (c) 2025 SUSE LLC
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -83,10 +83,9 @@ Requires: openssh-clients
 
 %if 0%{?fedora} || 0%{?rhel}
 Requires: pass
-Requires: gnupg2
 %else
 Requires: password-store
-Requires: gpg2
+Requires: qemu-img
 %endif
 
 Requires: glibc
@@ -183,9 +182,6 @@ cp -ra ./* "%{buildroot}/opt/%{name}"
 
 # Link to the binary
 ln -sf "/opt/%{name}/rancher-desktop" "%{buildroot}%{_bindir}/rancher-desktop"
-
-%post
-update-desktop-database %{_prefix}/share/applications || true
 
 %files
 %defattr(-,root,root,-)
