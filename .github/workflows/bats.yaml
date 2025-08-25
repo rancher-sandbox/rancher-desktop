@@ -155,27 +155,23 @@ jobs:
 
     - name: "Windows: Install WSL2 Distribution"
       if: runner.os == 'Windows'
-      shell: powershell # pwsh doesn't have Add-AppxPackage
+      shell: pwsh
       run: |
-        # `wsl --install` seems to have issues in CI since 2024-06-14; however,
-        # manually downloading the Debian installer and running it works.
-        Invoke-WebRequest https://github.com/microsoft/WSL/raw/master/distributions/DistributionInfo.json |
-          Select-Object -ExpandProperty Content |
-          ConvertFrom-JSON |
-          Select-Object -ExpandProperty Distributions |
-          Where-Object Name -EQ "Debian" |
-          Select-Object -ExpandProperty Amd64PackageUrl |
-          % { Invoke-WebRequest $_ -OutFile Debian.AppxBundle }
-        Add-AppxPackage Debian.AppxBundle
-        # Initialize Debian, without going through any first-time setup
-        debian.exe install --root
+        # Install a "modern" WSL distribution
+        wsl --install --no-launch --web-download --name openSUSE openSUSE-Leap-15.6
+        # Prevent first-boot from running
+        wsl --distribution openSUSE --user root --exec sed -i -e '/^command/d' /etc/wsl-distribution.conf
+        # Create the initial user
+        wsl --distribution openSUSE --user root --exec /usr/sbin/useradd --create-home --uid 1000 user
 
     - name: "Windows: Install prerequisites in WSL"
       if: runner.os == 'Windows'
       shell: pwsh
       run: >-
-        wsl.exe -d Debian --exec /usr/bin/env DEBIAN_FRONTEND=noninteractive
-        sh -c 'apt-get update && apt-get install --yes bsdextrautils coreutils curl'
+        wsl.exe --distribution openSUSE --user root --exec
+        zypper --non-interactive install
+        curl
+        util-linux
 
     - name: "Windows: Enable experimental WSL settings"
       if: runner.os == 'Windows' && inputs.experimental
@@ -206,7 +202,7 @@ jobs:
       if: runner.os == 'Windows'
       shell: powershell
       run: >-
-        wsl.exe -d Debian -- echo 'LOGS_DIR=$(pwd)'
+        wsl.exe --distribution openSUSE -- echo 'LOGS_DIR=$(pwd)'
         | Out-File -Encoding ASCII -Append "$ENV:GITHUB_ENV"
       working-directory: logs
 
@@ -238,7 +234,7 @@ jobs:
       shell: bash
       run: echo "BATS_COMMAND=$BATS_COMMAND" >> "$GITHUB_ENV"
       env:
-        BATS_COMMAND: wsl.exe -d Debian --exec
+        BATS_COMMAND: wsl.exe --distribution openSUSE --exec
 
     - name: Run BATS
       # We use ${{ env.BATS_COMMAND }} instead of ${BATS_COMMAND} to let the
