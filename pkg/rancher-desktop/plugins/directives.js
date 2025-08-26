@@ -7,6 +7,8 @@ export default {
 
         if ('LabeledTooltip' in components) {
           refs.value?.focus();
+        } else {
+          _el.focus();
         }
       },
     });
