@@ -252,7 +252,7 @@ function getExec(scope: SpawnOptions['scope']): v1.Exec {
     return (async() => {
       const response = await ipcRenderer.invoke('extensions/spawn/blocking', safeOptions);
 
-      console.debug(`spawn/blocking got result:`, process.env.RD_TEST === 'e2e' ? JSON.stringify(response) : response);
+      console.debug(`spawn/blocking got result:`, (process.env.RD_TEST ?? '').includes('e2e') ? JSON.stringify(response) : response);
 
       const result = {
         cmd:    response.cmd,

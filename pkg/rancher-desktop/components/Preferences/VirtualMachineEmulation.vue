@@ -59,7 +59,7 @@ export default defineComponent({
       return semver.lt(this.macOsVersion.version, '13.0.0') || (this.isArm && semver.lt(this.macOsVersion.version, '13.3.0'));
     },
     rosettaDisabled(): boolean {
-      return !this.isArm;
+      return !this.isArm && !(process.env.RD_TEST ?? '').includes('screenshots');
     },
     arch(): string {
       return this.isArm ? 'arm64' : 'x64';

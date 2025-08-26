@@ -272,7 +272,7 @@ export class DockerDirManager {
     }
     // When running E2E tests in CI, use "none".  Note that we use the default
     // value when running unit tests in CI.
-    const e2eInCI = process.env.CI && process.env.RD_TEST === 'e2e';
+    const e2eInCI = process.env.CI && (process.env.RD_TEST ?? '').includes('e2e');
 
     if (e2eInCI && await this.credHelperWorking('none')) {
       return 'none';

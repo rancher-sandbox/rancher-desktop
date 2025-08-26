@@ -69,7 +69,7 @@ export class Log {
    * @note This is only used during E2E tests where we do a factory reset.
    */
   protected reopen(mode = 'w') {
-    if (process.env.RD_TEST === 'e2e') {
+    if ((process.env.RD_TEST ?? '').includes('e2e')) {
       // If we're running E2E tests, we may need to create the log directory.
       // We don't do this normally because it's synchronous and slow.
       fs.mkdirSync(path.dirname(this.path), { recursive: true });
@@ -84,7 +84,7 @@ export class Log {
     // If we're running unit tests, output to the console rather than file.
     // However, _don't_ do so for end-to-end tests in Playwright.
     // We detect Playwright via an environment variable we set in scripts/e2e.ts
-    if (process.env.NODE_ENV === 'test' && process.env.RD_TEST !== 'e2e') {
+    if (process.env.NODE_ENV === 'test' && (process.env.RD_TEST ?? '').includes('e2e')) {
       this.console = globalThis.console;
     } else {
       this.console = new Console(this.stream);
@@ -195,7 +195,7 @@ export default new Proxy<Module>({}, {
  * the system, so that logs from another instance are not deleted.
  */
 export function clearLoggingDirectory(): void {
-  if (process.env.RD_TEST === 'e2e' || process.type !== 'browser') {
+  if ((process.env.RD_TEST ?? '').includes('e2e') || process.type !== 'browser') {
     return;
   }
 
