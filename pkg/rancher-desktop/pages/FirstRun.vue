@@ -76,6 +76,7 @@
     </rd-fieldset>
     <div class="button-area">
       <button
+        v-focus
         data-test="accept-btn"
         class="role-primary"
         @click="close"
