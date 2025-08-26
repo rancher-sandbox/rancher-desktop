@@ -114,7 +114,7 @@ class E2ETestRunner extends events.EventEmitter {
           ].join('\n'));
         }
       }
-      process.env.RD_TEST = 'e2e';
+      process.env.RD_TEST = process.env.npm_lifecycle_event || 'e2e'; // May include "screenshots"
 
       // Set feature flags
       process.env.RD_ENV_EXTENSIONS = '1';
