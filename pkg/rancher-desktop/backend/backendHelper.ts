@@ -370,19 +370,28 @@ export default class BackendHelper {
   }
 
   /**
-   * Configure the Moby containerd-snapshotter feature if WASM support is requested.
+   * Configure the Moby containerd-snapshotter feature if WASM support is
+   * requested, or if we have not previously run the daemon.
    */
   static async writeMobyConfig(vmx: VMExecutor, configureWASM: boolean) {
     let config: Record<string, any>;
+    let found = false;
 
     try {
       config = JSON.parse(await vmx.readFile(DOCKER_DAEMON_JSON));
+      found = true;
     } catch (err: any) {
       await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(DOCKER_DAEMON_JSON));
       config = {};
     }
     config['features'] ??= {};
-    config['features']['containerd-snapshotter'] = configureWASM;
+    config['features']['containerd-snapshotter'] ||= configureWASM || !found;
+
+    if (config['features']['containerd-snapshotter']) {
+      // If we are using the containerd snapshotter, create /var/lib/docker/image
+      // to avoid breaking cri-dockerd.
+      await vmx.execCommand({ root: true }, 'mkdir', '-p', '/var/lib/docker/image');
+    }
     await vmx.writeFile(DOCKER_DAEMON_JSON, jsonStringifyWithWhiteSpace(config), 0o644);
   }
 
