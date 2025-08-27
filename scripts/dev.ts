@@ -4,10 +4,12 @@
 
 'use strict';
 
-import childProcess from 'child_process';
-import events from 'events';
-import https from 'https';
-import util from 'util';
+import childProcess from 'node:child_process';
+import events from 'node:events';
+import fs from 'node:fs';
+import https from 'node:https';
+import path from 'node:path';
+import util from 'node:util';
 
 import fetch from 'node-fetch';
 import psTree from 'ps-tree';
@@ -73,15 +75,18 @@ class DevRunner extends events.EventEmitter {
   async startMainProcess() {
     console.info('Main process: starting...');
     try {
+      const electronPath = await fs.promises.readFile('node_modules/electron/path.txt', 'utf-8');
+      const argv = process.argv.slice(2);
+
       await buildUtils.buildMain();
 
       this.#mainProcess = this.spawn(
         'Main process',
-        'node',
-        'node_modules/electron/cli.js',
+        path.join('node_modules/electron/dist', electronPath),
+        ...argv.filter(x => x.startsWith('--inspect')),
         buildUtils.rootDir,
         this.rendererPort.toString(),
-        ...process.argv,
+        ...argv.filter(x => !x.startsWith('--inspect')),
       );
       this.#mainProcess.on('exit', (code: number, signal: string) => {
         if (code === 201) {
