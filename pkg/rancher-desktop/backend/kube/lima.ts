@@ -243,7 +243,8 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
         ]));
     }
 
-    await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion);
+    await this.progressTracker.action('Ensuring compatible kubectl', 50,
+      this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion));
     if (this.cfg?.kubernetes?.options.flannel) {
       await this.progressTracker.action(
         'Waiting for nodes',
