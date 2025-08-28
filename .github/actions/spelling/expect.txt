@@ -545,6 +545,7 @@ newfs
 newpid
 ngx
 ninep
+noarch
 nocopy
 nodedriver
 nodemetrics
@@ -565,6 +566,7 @@ normaliser
 NOSETENV
 nothrow
 notifempty
+noto
 notset
 npipe
 nsenter
@@ -572,6 +574,7 @@ nsis
 NSISUNINSTALLCOMMAND
 nspr
 nss
+nullglob
 numlock
 nuxt
 nxt
@@ -700,6 +703,7 @@ regtest
 remotedns
 replicaset
 replicationcontroller
+repofile
 requried
 resolv
 resourcequota
@@ -760,6 +764,7 @@ shasta
 shazbat
 shortkey
 shortlived
+showduplicates
 showmuted
 shuf
 sigch
@@ -933,6 +938,7 @@ Xext
 Xfixes
 xfs
 xit
+xmlout
 xorg
 XPOST
 Xrandr

@@ -33,7 +33,6 @@ jobs:
         persist-credentials: false
 
     - uses: ./.github/actions/yarn-install
-    - uses: ./.github/actions/setup-environment
     - run: sudo apt-get install cpanminus
 
     - name: Check Spelling
