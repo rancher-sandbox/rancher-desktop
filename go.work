@@ -1,6 +1,4 @@
-go 1.24.0
-
-toolchain go1.24.2
+go 1.24.2
 
 use (
 	./scripts
@@ -13,5 +11,6 @@ use (
 	./src/go/networking
 	./src/go/rdctl
 	./src/go/spin-stub
+	./src/go/startup-profile
 	./src/go/wsl-helper
 )

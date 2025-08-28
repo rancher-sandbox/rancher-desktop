@@ -732,7 +732,7 @@ Runas
 runbook
 runc
 rundir
-runlevels
+runlevel
 RUnlock
 runtimeclass
 runtimeclasses
