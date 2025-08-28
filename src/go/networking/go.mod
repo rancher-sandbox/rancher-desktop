@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/containers/gvisor-tap-vsock v0.8.7
-	github.com/coreos/go-systemd/v22 v22.5.0
+	github.com/coreos/go-systemd/v22 v22.6.0
 	github.com/docker/go-connections v0.6.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/google/gopacket v1.1.19
