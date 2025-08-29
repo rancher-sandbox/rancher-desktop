@@ -119,7 +119,7 @@
     "@types/which": "3.0.4",
     "@vue/cli-plugin-babel": "5.0.9",
     "@vue/cli-plugin-router": "5.0.8",
-    "@vue/cli-plugin-vuex": "5.0.8",
+    "@vue/cli-plugin-vuex": "5.0.9",
     "@vue/cli-service": "5.0.9",
     "@vue/compiler-sfc": "3.5.19",
     "@vue/eslint-config-standard-with-typescript": "9.2.0",
