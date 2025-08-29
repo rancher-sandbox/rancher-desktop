@@ -70,7 +70,7 @@ export class MobyClient implements ContainerEngineClient {
     let lastOutput = { stdout: '', stderr: '' };
 
     // Wait for ten consecutive successes, clearing out successCount whenever we
-    // hit an error.  In the ideal case this is a ten-second delay in startup
+    // hit an error.  In the ideal case this is a five-second delay in startup
     // time.  We use `docker system info` because that needs to talk to the
     // socket to fetch data about the engine (and it returns an error if it
     // fails to do so).
@@ -98,7 +98,7 @@ export class MobyClient implements ContainerEngineClient {
           }
         }
       }
-      await util.promisify(setTimeout)(1_000);
+      await util.promisify(setTimeout)(500);
     }
   }
 
