@@ -29,7 +29,6 @@ export default {
     '^@pkg/(.*)$':   '<rootDir>/pkg/rancher-desktop/$1',
   },
   setupFiles: [
-    '<rootDir>/pkg/rancher-desktop/utils/testUtils/setupElectron.ts',
     '<rootDir>/pkg/rancher-desktop/utils/testUtils/setupVue.ts',
   ],
   testEnvironment:        'jsdom',

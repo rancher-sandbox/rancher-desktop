@@ -1,10 +1,14 @@
 import { jest } from '@jest/globals';
 
-import { ExtensionManagerImpl } from '../manager';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+
+mockModules({ electron: undefined });
+
+const { ExtensionManagerImpl } = await import('../manager');
 
 describe('ExtensionManagerImpl', () => {
   describe('findBestVersion', () => {
-    let subject: ExtensionManagerImpl;
+    let subject: InstanceType<typeof ExtensionManagerImpl>;
 
     beforeEach(() => {
       subject = new ExtensionManagerImpl({ getTags: jest.fn() } as any, false);

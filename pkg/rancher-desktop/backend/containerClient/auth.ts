@@ -1,5 +1,6 @@
+import { net } from 'electron';
+
 import runCredentialCommand from '@pkg/main/credentialServer/credentialUtils';
-import fetch, { Headers } from '@pkg/utils/fetch';
 import Logging from '@pkg/utils/logging';
 
 const console = Logging.background;
@@ -118,7 +119,7 @@ class RegistryAuth {
 
     const url = new URL(parameters.realm ?? (host.includes('://') ? host : `https://${ host }`));
     const auth = await this.findAuth(parameters.realm, host);
-    const headers: Record<string, string> = auth ? { Authorization: auth } : {};
+    const headers: HeadersInit = auth ? { Authorization: auth } : {};
 
     if (parameters.service) {
       url.searchParams.set('service', parameters.service);
@@ -129,7 +130,7 @@ class RegistryAuth {
       }
     }
 
-    const resp = await fetch(url.toString(), { headers });
+    const resp = await net.fetch(url.toString(), { headers });
 
     if (!resp.ok) {
       throw new Error(`Could not get authorization token from ${ url } (for ${ url }): ${ JSON.stringify(resp) }`);
@@ -330,7 +331,7 @@ class RegistryAuth {
       }
     }
 
-    const resp = await fetch(endpoint.toString());
+    const resp = await net.fetch(endpoint.toString());
 
     if (resp.status !== 401) {
       console.debug(`${ endpoint } does not require authentication`);

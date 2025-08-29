@@ -1,8 +1,18 @@
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
-import { DiagnosticsManager, DiagnosticsResult } from '../diagnostics';
-import { DiagnosticsCategory, DiagnosticsChecker } from '../types';
+import mockModules from '@pkg/utils/testUtils/mockModules';
+
+import type { DiagnosticsResult } from '../diagnostics';
+import type { DiagnosticsChecker } from '../types';
+
+mockModules({
+  '@pkg/utils/logging': undefined,
+  electron:             undefined,
+});
+
+const { DiagnosticsManager } = await import('../diagnostics');
+const { DiagnosticsCategory } = await import('../types');
 
 describe(DiagnosticsManager, () => {
   const mockDiagnostics: DiagnosticsChecker[] = [

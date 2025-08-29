@@ -1,6 +1,7 @@
+import { net } from 'electron';
+
 import registryAuth from '@pkg/backend/containerClient/auth';
 import { parseImageReference } from '@pkg/utils/dockerUtils';
-import fetch, { Headers } from '@pkg/utils/fetch';
 
 /**
  * Registry interaction, with both Docker Hub and Docker Registry V2 APIs.
@@ -10,10 +11,10 @@ class DockerRegistry {
    * Fetch some API endpoint from the registry
    * @param endpoint The API endpoint, including the registry host.
    */
-  async get(endpoint: URL): ReturnType<typeof fetch> {
+  async get(endpoint: URL): ReturnType<typeof net.fetch> {
     const headers = await this.authenticate(endpoint);
 
-    return await fetch(endpoint.toString(), { headers });
+    return await net.fetch(endpoint.toString(), { headers });
   }
 
   /**
@@ -47,7 +48,7 @@ class DockerRegistry {
       tags.push(...result.tags);
       hasMore = false;
 
-      for (const link of resp.headers[getAsList]('Link') ?? []) {
+      for (const link of (resp.headers.get('Link') ?? '').split(', ')) {
         const fields = link.split(/;\s*/);
 
         if (!fields.some(field => /^rel=("?)next\1$/i.test(field))) {
@@ -64,7 +65,7 @@ class DockerRegistry {
     return tags;
   }
 
-  protected authenticate(endpoint: URL): Promise<Headers> {
+  protected authenticate(endpoint: URL): Promise<HeadersInit> {
     return registryAuth.authenticate(endpoint);
   }
 }
@@ -72,29 +73,3 @@ class DockerRegistry {
 const registry = new DockerRegistry();
 
 export default registry;
-
-// Extend Headers with a helper to get the header values as a list.
-// This is only exported for testing.
-export const getAsList = Symbol('get-as-list');
-
-declare module '@pkg/utils/fetch' {
-  interface Headers {
-    [getAsList](key: string): string[] | null;
-  }
-}
-
-Object.defineProperties(Headers.prototype, {
-  [getAsList]: {
-    value(this: Headers, key: string): string[] | null {
-      const collator = Intl.Collator(undefined, { usage: 'search', sensitivity: 'accent' });
-
-      for (const [k, v] of Object.entries(this.raw())) {
-        if (collator.compare(k, key) === 0) {
-          return v;
-        }
-      }
-
-      return null;
-    },
-  },
-});
