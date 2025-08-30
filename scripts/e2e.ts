@@ -116,9 +116,6 @@ class E2ETestRunner extends events.EventEmitter {
       }
       process.env.RD_TEST = process.env.npm_lifecycle_event || 'e2e'; // May include "screenshots"
 
-      // Set feature flags
-      process.env.RD_ENV_EXTENSIONS = '1';
-
       // Start the renderer process and wait for it to complete the build.
       await this.buildRenderer();
 

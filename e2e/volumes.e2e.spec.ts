@@ -84,9 +84,12 @@ test.describe.serial('Volumes Tests', () => {
     const volumesPage = new VolumesPage(page);
 
     await volumesPage.waitForVolumeToAppear(testVolumeName);
-
+    await expect(volumesPage.errorBanner).toBeHidden();
+    await page.waitForFunction(async() => {
+      return (await window.ddClient.docker.listContainers({ all: true })).length === 0;
+    });
     await volumesPage.deleteVolume(testVolumeName);
-
+    await expect(volumesPage.errorBanner).toBeHidden();
     await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({
       timeout: 20_000,
     });
@@ -109,12 +112,14 @@ test.describe.serial('Volumes Tests', () => {
       await page.reload();
       const volumesPage = new VolumesPage(page);
       await volumesPage.waitForTableToLoad();
+      await expect(volumesPage.errorBanner).toBeHidden();
 
       for (const volumeName of volumeNames) {
         await volumesPage.waitForVolumeToAppear(volumeName);
       }
 
       await volumesPage.deleteBulkVolumes(volumeNames);
+      await expect(volumesPage.errorBanner).toBeHidden();
 
       for (const volumeName of volumeNames) {
         await expect(volumesPage.getVolumeRow(volumeName)).toBeHidden({
@@ -126,9 +131,9 @@ test.describe.serial('Volumes Tests', () => {
       await volumesPage.waitForTableToLoad();
 
       for (const volumeName of volumeNames) {
-        const isPresent = await volumesPage.isVolumePresent(volumeName);
-        expect(isPresent).toBe(false);
+        await expect(volumesPage.getVolumeRow(volumeName)).toBeHidden();
       }
+      await expect(volumesPage.errorBanner).toBeHidden();
     } catch (error) {
       for (const volumeName of volumeNames) {
         try {
