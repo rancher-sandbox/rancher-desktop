@@ -3668,17 +3668,6 @@
     semver "^7.3.4"
     strip-ansi "^6.0.0"
 
-"@vue/compiler-core@3.5.19":
-  version "3.5.19"
-  resolved "https://registry.yarnpkg.com/@vue/compiler-core/-/compiler-core-3.5.19.tgz#f141d35b61b55ce72c3cbb4dc9eeca3821d451aa"
-  integrity sha512-/afpyvlkrSNYbPo94Qu8GtIOWS+g5TRdOvs6XZNw6pWQQmj5pBgSZvEPOIZlqWq0YvoUhDDQaQ2TnzuJdOV4hA==
-  dependencies:
-    "@babel/parser" "^7.28.3"
-    "@vue/shared" "3.5.19"
-    entities "^4.5.0"
-    estree-walker "^2.0.2"
-    source-map-js "^1.2.1"
-
 "@vue/compiler-core@3.5.20":
   version "3.5.20"
   resolved "https://registry.yarnpkg.com/@vue/compiler-core/-/compiler-core-3.5.20.tgz#ea100646460703c98117b88900aab4aa7e6f797e"
@@ -3690,14 +3679,6 @@
     estree-walker "^2.0.2"
     source-map-js "^1.2.1"
 
-"@vue/compiler-dom@3.5.19":
-  version "3.5.19"
-  resolved "https://registry.yarnpkg.com/@vue/compiler-dom/-/compiler-dom-3.5.19.tgz#fc57d9dca4987df67d6ce64dbddaac6d73f1a6ef"
-  integrity sha512-Drs6rPHQZx/pN9S6ml3Z3K/TWCIRPvzG2B/o5kFK9X0MNHt8/E+38tiRfojufrYBfA6FQUFB2qBBRXlcSXWtOA==
-  dependencies:
-    "@vue/compiler-core" "3.5.19"
-    "@vue/shared" "3.5.19"
-
 "@vue/compiler-dom@3.5.20":
   version "3.5.20"
   resolved "https://registry.yarnpkg.com/@vue/compiler-dom/-/compiler-dom-3.5.20.tgz#7eb0d4b761a48b93723cf264d27c1385b90dae6d"
@@ -3705,21 +3686,6 @@
   dependencies:
     "@vue/compiler-core" "3.5.20"
     "@vue/shared" "3.5.20"
-
-"@vue/compiler-sfc@3.5.19":
-  version "3.5.19"
-  resolved "https://registry.yarnpkg.com/@vue/compiler-sfc/-/compiler-sfc-3.5.19.tgz#7f9792ad7de5d4be9b6a32129c75e1f6cd4da015"
-  integrity sha512-YWCm1CYaJ+2RvNmhCwI7t3I3nU+hOrWGWMsn+Z/kmm1jy5iinnVtlmkiZwbLlbV1SRizX7vHsc0/bG5dj0zRTg==
-  dependencies:
-    "@babel/parser" "^7.28.3"
-    "@vue/compiler-core" "3.5.19"
-    "@vue/compiler-dom" "3.5.19"
-    "@vue/compiler-ssr" "3.5.19"
-    "@vue/shared" "3.5.19"
-    estree-walker "^2.0.2"
-    magic-string "^0.30.17"
-    postcss "^8.5.6"
-    source-map-js "^1.2.1"
 
 "@vue/compiler-sfc@3.5.20", "@vue/compiler-sfc@^3.5.13":
   version "3.5.20"
@@ -3735,14 +3701,6 @@
     magic-string "^0.30.17"
     postcss "^8.5.6"
     source-map-js "^1.2.1"
-
-"@vue/compiler-ssr@3.5.19":
-  version "3.5.19"
-  resolved "https://registry.yarnpkg.com/@vue/compiler-ssr/-/compiler-ssr-3.5.19.tgz#1719e7fda6d54f5696ca63d4d40281668c0e601c"
-  integrity sha512-/wx0VZtkWOPdiQLWPeQeqpHWR/LuNC7bHfSX7OayBTtUy8wur6vT6EQIX6Et86aED6J+y8tTw43qo2uoqGg5sw==
-  dependencies:
-    "@vue/compiler-dom" "3.5.19"
-    "@vue/shared" "3.5.19"
 
 "@vue/compiler-ssr@3.5.20":
   version "3.5.20"
@@ -3838,11 +3796,6 @@
   dependencies:
     "@vue/compiler-ssr" "3.5.20"
     "@vue/shared" "3.5.20"
-
-"@vue/shared@3.5.19":
-  version "3.5.19"
-  resolved "https://registry.yarnpkg.com/@vue/shared/-/shared-3.5.19.tgz#5301967a910cb62145e4f17131f3bee88b463c83"
-  integrity sha512-IhXCOn08wgKrLQxRFKKlSacWg4Goi1BolrdEeLYn6tgHjJNXVrWJ5nzoxZqNwl5p88aLlQ8LOaoMa3AYvaKJ/Q==
 
 "@vue/shared@3.5.20", "@vue/shared@^3.5.13":
   version "3.5.20"
@@ -5883,10 +5836,10 @@ end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
-enhanced-resolve@^5.0.0, enhanced-resolve@^5.17.1, enhanced-resolve@^5.17.2:
-  version "5.18.2"
-  resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-5.18.2.tgz#7903c5b32ffd4b2143eeb4b92472bd68effd5464"
-  integrity sha512-6Jw4sE1maoRJo3q8MsSIn2onJFbLTOjY9hlx4DZXmOKvLRd1Ok2kXmAGXaafL2+ijsJZ1ClYbl/pmqr9+k4iUQ==
+enhanced-resolve@^5.0.0, enhanced-resolve@^5.17.1, enhanced-resolve@^5.17.3:
+  version "5.18.3"
+  resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-5.18.3.tgz#9b5f4c5c076b8787c78fe540392ce76a88855b44"
+  integrity sha512-d4lC8xfavMeBjzGr2vECC3fsGXziXZQyJxD868h2M/mBI3PwAuODxAkLkq5HYuvrPYcUtiLzsTo8U3PgX3Ocww==
   dependencies:
     graceful-fs "^4.2.4"
     tapable "^2.2.0"
@@ -11885,10 +11838,10 @@ webpack-virtual-modules@^0.4.2:
   resolved "https://registry.yarnpkg.com/webpack-virtual-modules/-/webpack-virtual-modules-0.4.6.tgz#3e4008230731f1db078d9cb6f68baf8571182b45"
   integrity sha512-5tyDlKLqPfMqjT3Q9TAqf2YqjwmnUleZwzJi1A5qXnlBCdj2AtOJ6wAWdglTIDOPgOiOrXeBeFcsQ8+aGQ6QbA==
 
-webpack@5.100.2, webpack@^5.54.0:
-  version "5.100.2"
-  resolved "https://registry.yarnpkg.com/webpack/-/webpack-5.100.2.tgz#e2341facf9f7de1d702147c91bcb65b693adf9e8"
-  integrity sha512-QaNKAvGCDRh3wW1dsDjeMdDXwZm2vqq3zn6Pvq4rHOEOGSaUMgOOjG2Y9ZbIGzpfkJk9ZYTHpDqgDfeBDcnLaw==
+webpack@5.101.3, webpack@^5.54.0:
+  version "5.101.3"
+  resolved "https://registry.yarnpkg.com/webpack/-/webpack-5.101.3.tgz#3633b2375bb29ea4b06ffb1902734d977bc44346"
+  integrity sha512-7b0dTKR3Ed//AD/6kkx/o7duS8H3f1a4w3BYpIriX4BzIhjkn4teo05cptsxvLesHFKK5KObnadmCHBwGc+51A==
   dependencies:
     "@types/eslint-scope" "^3.7.7"
     "@types/estree" "^1.0.8"
@@ -11900,7 +11853,7 @@ webpack@5.100.2, webpack@^5.54.0:
     acorn-import-phases "^1.0.3"
     browserslist "^4.24.0"
     chrome-trace-event "^1.0.2"
-    enhanced-resolve "^5.17.2"
+    enhanced-resolve "^5.17.3"
     es-module-lexer "^1.2.1"
     eslint-scope "5.1.1"
     events "^3.2.0"
