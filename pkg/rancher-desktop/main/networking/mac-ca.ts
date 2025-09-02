@@ -21,8 +21,12 @@ export default async function * getMacCertificates(): AsyncIterable<string> {
   const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-certificates-'));
 
   try {
-    for await (const keychain of listKeychains()) {
-      yield * getFilteredCertificates(workdir, keychain);
+    const keychains = await Array.fromAsync(listKeychains());
+    const certLists = await Promise.all(keychains.map(async keychain => {
+      return await Array.fromAsync(getFilteredCertificates(workdir, keychain));
+    }));
+    for (const certList of certLists) {
+      yield * certList;
     }
   } finally {
     await fs.promises.rm(workdir, {
@@ -85,6 +89,8 @@ async function * getFilteredCertificates(workdir: string, keychain: string): Asy
     }
     yield certPEM;
   }
+
+  console.debug(`got certificates from ${ keychain }`);
 }
 
 /**
