@@ -1921,15 +1921,17 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         case ContainerEngine.NONE:
           throw new Error('No container engine is set');
         }
-        if (kubernetesVersion) {
-          await this.kubeBackend.install(config, kubernetesVersion, this.#adminAccess);
-        }
 
-        await this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts());
-        await Promise.all([
+        const tasks = [
+          this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts()),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
-        ]);
+        ];
+        if (kubernetesVersion) {
+          tasks.push(this.kubeBackend.install(config, kubernetesVersion, this.#adminAccess));
+        }
+
+        await Promise.all(tasks);
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted

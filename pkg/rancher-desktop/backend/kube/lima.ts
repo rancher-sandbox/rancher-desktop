@@ -136,11 +136,10 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
    */
   async install(config: BackendSettings, desiredVersion: semver.SemVer, allowSudo: boolean) {
     await this.progressTracker.action('Installing k3s', 50, async() => {
-      // installK3s removes old config and makes sure the directories are recreated
-      await this.installK3s(desiredVersion);
-
       const promises: Promise<void>[] = [];
 
+      // installK3s removes old manifests and static workloads.
+      promises.push(this.installK3s(desiredVersion));
       promises.push(this.writeServiceScript(config, desiredVersion, allowSudo));
       if (config.experimental?.containerEngine?.webAssembly?.enabled) {
         promises.push(BackendHelper.configureRuntimeClasses(this.vm));
