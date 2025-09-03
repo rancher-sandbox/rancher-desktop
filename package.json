@@ -144,7 +144,7 @@
     "mustache": "4.2.0",
     "nan": "2.23.0",
     "node-addon-api": "8",
-    "node-gyp": "11.4.1",
+    "node-gyp": "11.4.2",
     "node-gyp-build": "4.8.4",
     "node-loader": "^2.1.0",
     "octokit": "5.0.3",
