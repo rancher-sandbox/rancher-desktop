@@ -1921,15 +1921,17 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         case ContainerEngine.NONE:
           throw new Error('No container engine is set');
         }
-        if (kubernetesVersion) {
-          await this.kubeBackend.install(config, kubernetesVersion, this.#adminAccess);
-        }
 
-        await this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts());
-        await Promise.all([
+        const tasks = [
+          this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts()),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
-        ]);
+        ];
+        if (kubernetesVersion) {
+          tasks.push(this.kubeBackend.install(config, kubernetesVersion, this.#adminAccess));
+        }
+
+        await Promise.all(tasks);
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
@@ -1984,41 +1986,48 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected async installCACerts(): Promise<void> {
-    const certs: (string | Buffer)[] = await new Promise((resolve) => {
-      mainEvents.once('cert-ca-certificates', resolve);
-      mainEvents.emit('cert-get-ca-certificates');
-    });
+    const certs = await this.progressTracker.action('fetching certificates', 56,
+      new Promise<(string | Buffer)[]>((resolve) => {
+        mainEvents.once('cert-ca-certificates', resolve);
+        mainEvents.emit('cert-get-ca-certificates');
+      }));
 
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ca-'));
 
     try {
-      await this.execCommand({ root: true }, '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
+      await this.progressTracker.action('removing existing certificates', 50,
+        this.execCommand({ root: true }, '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt'));
 
       if (certs && certs.length > 0) {
-        const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
-        const archive = tar.pack();
-        const archiveFinished = util.promisify(stream.finished)(archive as any);
+        await this.progressTracker.action('bundling certificates', 50, async function() {
+          const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
+          const archive = tar.pack();
+          const archiveFinished = util.promisify(stream.finished)(archive as any);
 
-        archive.pipe(writeStream);
+          archive.pipe(writeStream);
 
-        for (const [index, cert] of certs.entries()) {
-          const curried = archive.entry.bind(archive, {
-            name: `rd-${ index }.crt`,
-            mode: 0o600,
-          }, cert);
+          for (const [index, cert] of certs.entries()) {
+            const curried = archive.entry.bind(archive, {
+              name: `rd-${ index }.crt`,
+              mode: 0o600,
+            }, cert);
 
-          await util.promisify(curried)();
-        }
-        archive.finalize();
-        await archiveFinished;
+            await util.promisify(curried)();
+          }
+          archive.finalize();
+          await archiveFinished;
+        });
 
-        await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
-        await this.execCommand({ root: true }, 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
+        await this.progressTracker.action('copying certificates', 50,
+          this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`));
+        await this.progressTracker.action('extracting certificates', 50,
+          this.execCommand({ root: true }, 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/'));
       }
     } finally {
       await fs.promises.rm(workdir, { recursive: true, force: true });
     }
-    await this.execCommand({ root: true }, 'update-ca-certificates');
+    await this.progressTracker.action('Running update-ca-certificates', 50,
+      this.execCommand({ root: true }, 'update-ca-certificates'));
   }
 
   protected async installCredentialHelper() {
