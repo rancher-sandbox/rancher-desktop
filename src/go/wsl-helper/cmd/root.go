@@ -18,10 +18,16 @@ limitations under the License.
 package cmd
 
 import (
+	"os"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+// If isInternalCommand is set, when the command has an error we will use logrus
+// to display the error.
+var isInternalCommand bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -36,7 +42,13 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	cobra.CheckErr(rootCmd.Execute())
+	err := rootCmd.Execute()
+	if !isInternalCommand {
+		cobra.CheckErr(err)
+	} else if err != nil {
+		logrus.Error(err)
+		os.Exit(1)
+	}
 }
 
 func init() {

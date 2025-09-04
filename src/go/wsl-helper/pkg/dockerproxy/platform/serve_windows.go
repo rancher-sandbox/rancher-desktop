@@ -23,6 +23,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/Microsoft/go-winio"
 	"github.com/linuxkit/virtsock/pkg/hvsock"
@@ -66,12 +67,28 @@ func dialHvsock(vmGUID hvsock.GUID, port uint32) (net.Conn, error) {
 		ServiceID: svcGUID,
 	}
 
-	conn, err := hvsock.Dial(addr)
-	if err != nil {
-		return nil, fmt.Errorf("could not dial Hyper-V socket: %w", err)
-	}
+	// Normally dial times out after 30 seconds, but we want to time out faster.
+	ch := make(chan struct {
+		conn net.Conn
+		err  error
+	}, 1)
+	go func() {
+		conn, err := hvsock.Dial(addr)
+		ch <- struct {
+			conn net.Conn
+			err  error
+		}{conn: conn, err: err}
+	}()
 
-	return conn, nil
+	select {
+	case result := <-ch:
+		if result.err != nil {
+			return nil, fmt.Errorf("could not dial Hyper-V socket: %w", result.err)
+		}
+		return result.conn, nil
+	case <-time.After(time.Second):
+		return nil, fmt.Errorf("timed out dialing Hyper-V socket")
+	}
 }
 
 // Listen on the given Windows named pipe endpoint.

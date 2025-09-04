@@ -240,10 +240,6 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
 
     await this.progressTracker.action(
-      'Waiting for Kubernetes API',
-      100,
-      this.k3sHelper.waitForServerReady(() => this.vm.ipAddress, config.kubernetes?.port));
-    await this.progressTracker.action(
       'Updating kubeconfig',
       100,
       async() => {
@@ -262,6 +258,11 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
         await this.k3sHelper.updateKubeconfig(
           async() => await this.vm.execCommand({ capture: true }, await this.vm.getWSLHelperPath(), 'k3s', 'kubeconfig'));
       });
+
+    await this.progressTracker.action(
+      'Waiting for Kubernetes API',
+      100,
+      this.k3sHelper.waitForServerReady(() => this.vm.ipAddress, config.kubernetes?.port));
 
     const client = this.client = kubeClient?.() || new KubeClient();
 
@@ -282,34 +283,35 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     this.currentPort = config.kubernetes.port;
     this.emit('current-port-changed', this.currentPort);
 
+    const tasks: Promise<unknown>[] = [
+      this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion),
+    ];
+
     // Remove traefik if necessary.
     if (!config.kubernetes.options.traefik) {
-      await this.progressTracker.action(
+      tasks.push(this.progressTracker.action(
         'Removing Traefik',
         50,
-        this.k3sHelper.uninstallHelmChart(client, 'traefik'));
+        this.k3sHelper.uninstallHelmChart(client, 'traefik')));
     }
     if (!this.cfg?.experimental?.kubernetes?.options?.spinkube) {
-      await this.progressTracker.action(
+      tasks.push(this.progressTracker.action(
         'Removing spinkube operator',
         50,
         Promise.all([
           this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_CERT_MANAGER),
           this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_SPIN_OPERATOR),
-        ]));
+        ])));
     }
 
-    await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion);
     if (config.kubernetes.options.flannel) {
-      await this.progressTracker.action(
+      tasks.push(this.progressTracker.action(
         'Waiting for nodes',
         100,
-        client.waitForReadyNodes());
-    } else {
-      await this.progressTracker.action(
-        'Skipping node checks, flannel is disabled',
-        100, Promise.resolve({}));
+        client.waitForReadyNodes()));
     }
+
+    await Promise.all(tasks);
   }
 
   async stop() {

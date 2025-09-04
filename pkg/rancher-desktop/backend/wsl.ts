@@ -1264,6 +1264,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         // If we were previously running, stop it now.
         await this.progressTracker.action('Stopping existing instance', 100, async() => {
+          try {
+            await this.execCommand({ expectFailure: true }, 'rm', '-f', '/var/log/rc.log');
+          } catch {}
           this.process?.kill('SIGTERM');
           await this.killStaleProcesses();
         });
@@ -1466,17 +1469,21 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           break;
         }
 
-        await this.progressTracker.action('Waiting for container engine to be ready', 0, this.containerEngineClient.waitForReady());
-
-        if (kubernetesVersion) {
-          await this.progressTracker.action('Starting Kubernetes', 100, this.kubeBackend.start(config, kubernetesVersion));
-        }
-
         // Set the kubernetes ingress address to localhost only for
         // a non-admin installation, if it's not already set.
         if (!config.kubernetes.ingress.localhostOnly && !await this.getIsAdminInstall()) {
           this.writeSetting({ kubernetes: { ingress: { localhostOnly: true } } });
         }
+
+        const tasks = [
+          this.progressTracker.action('Waiting for container engine to be ready', 0, this.containerEngineClient.waitForReady()),
+        ];
+
+        if (kubernetesVersion) {
+          tasks.push(this.progressTracker.action('Starting Kubernetes', 100, this.kubeBackend.start(config, kubernetesVersion)));
+        }
+
+        await Promise.all(tasks);
 
         await this.setState(config.kubernetes.enabled ? State.STARTED : State.DISABLED);
       } catch (ex) {
