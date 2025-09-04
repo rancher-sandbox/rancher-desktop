@@ -359,7 +359,7 @@ ipcRenderer.on('extensions/spawn/close', (_, id, returnValue) => {
 
 // During the nuxt removal, import/namespace started failing
 
-class Client implements v1.DockerDesktopClient {
+export class RDXClient implements v1.DockerDesktopClient {
   constructor(info: { arch: string, hostname: string }) {
     Object.assign(this.host, info);
   }
@@ -517,29 +517,32 @@ class Client implements v1.DockerDesktopClient {
 
       return lsContainers.map((c) => {
         const details = inspectContainers.find(i => i.Id.startsWith(c.ID));
-        const pick = (object: any, ...prop: (string | [string, string])[]) => {
+
+        function pick<K extends string | readonly [string, string]>(object: any, ...prop: K[])
+          : { [key in K as key extends string ? key : key[1]]: any } {
           const result: Record<string, any> = {};
 
           for (const p of prop) {
-            const [key, newKey] = Array.isArray(p) ? p : [p, p];
+            const [key, newKey] = (Array.isArray(p) ? p : [p, p]) as [string, string];
 
             if (key in (object ?? {})) {
               result[newKey] = object[key];
             }
           }
 
-          return result;
-        };
+          return result as any;
+        }
 
         return {
           ...pick(c, 'Image', 'Command', 'Status'),
-          ...pick(details, 'Id', ['Image', 'ImageID'], 'NetworkSettings', 'Mounts'),
+          ...pick(details, 'Id', 'NetworkSettings', 'Mounts'),
+          ...pick(details, ['Image', 'ImageID'] as const),
           HostConfig: details.HostConfig ?? {},
           SizeRootFs: details.SizeRootFs ?? -1,
           SizeRw:     details.SizeRw ?? -1,
           Ports:      details.NetworkSettings?.Ports ?? {},
           ...pick(details.Config, 'Labels'),
-          ...pick(details.State, ['Status', 'State']),
+          ...pick(details.State, ['Status', 'State'] as const),
           Names:      typeof c.Names === 'string' ? c.Names.split(/\s+/g) : Array.from(c.Names),
           Created:    Date.parse(c.CreatedAt).valueOf(),
         };
@@ -702,13 +705,13 @@ export default function initExtensions(): void {
   case 'x-rd-extension:': {
     const hostInfo: { arch: string, hostname: string } = JSON.parse(process.argv.slice(-1).pop() ?? '{}');
 
-    Electron.contextBridge.exposeInMainWorld('ddClient', new Client(hostInfo));
+    Electron.contextBridge.exposeInMainWorld('ddClient', new RDXClient(hostInfo));
     break;
   }
   case 'app:': {
     import('os').then(({ arch, hostname }) => {
       Object.defineProperty(window, 'ddClient', {
-        value:        new Client({ arch: arch(), hostname: hostname() }),
+        value:        new RDXClient({ arch: arch(), hostname: hostname() }),
         configurable: true,
         enumerable:   true,
         writable:     true,
