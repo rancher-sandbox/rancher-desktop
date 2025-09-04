@@ -23,7 +23,7 @@ require (
 	github.com/stretchr/testify v1.11.0
 	golang.org/x/sys v0.35.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/client-go v0.33.4
+	k8s.io/client-go v0.34.0
 )
 
 require (
