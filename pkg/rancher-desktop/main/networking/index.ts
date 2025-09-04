@@ -5,9 +5,8 @@ import os from 'os';
 import util from 'util';
 
 import Electron from 'electron';
-import LinuxCA from 'linux-ca';
 
-import filterCert from './cert-parse';
+import getLinuxCertificates from './linux-ca';
 import getMacCertificates from './mac-ca';
 import ElectronProxyAgent from './proxy';
 import getWinCertificates from './win-ca';
@@ -127,7 +126,7 @@ export async function * getSystemCertificates(): AsyncIterable<string> {
   } else if (platform === 'darwin') {
     yield * getMacCertificates();
   } else if (platform === 'linux') {
-    yield * (await LinuxCA.getAllCerts(true)).flat().filter(filterCert);
+    yield * getLinuxCertificates();
   } else {
     throw new Error(`Cannot get system certificates on ${ platform }`);
   }
