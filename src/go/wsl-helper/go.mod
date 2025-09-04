@@ -20,7 +20,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/sys v0.35.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/client-go v0.33.4
