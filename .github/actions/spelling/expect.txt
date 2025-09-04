@@ -449,6 +449,7 @@ libgtk
 libnspr
 libnss
 libpango
+libsecret
 libva
 libx
 libxcb

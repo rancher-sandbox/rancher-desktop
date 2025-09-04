@@ -49,7 +49,6 @@ Requires: qemu-utils
 Requires: qemu-system-x86
 Requires: pass
 Requires: openssh-client
-Requires: gnupg
 Requires: gnutls-bin # To enumerate system certificates
 Requires: libasound2
 Requires: libatk1.0-0
@@ -83,9 +82,9 @@ Requires: qemu
 Requires: openssh-clients
 
 %if 0%{?fedora} || 0%{?rhel}
-Requires: pass
+Requires: (pass or libsecret)
 %else
-Requires: password-store
+Requires: (password-store or libsecret-1-0)
 Requires: qemu-img
 %endif
 
