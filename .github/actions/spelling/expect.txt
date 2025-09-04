@@ -306,6 +306,7 @@ globalrole
 globalrolebinding
 Gluster
 gname
+gnutls
 gocritic
 gofmt
 goland
