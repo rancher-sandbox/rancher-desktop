@@ -150,6 +150,7 @@ local_setup_file() {
 }
 
 @test 'Deploy kubernetes workloads' {
+    CONTAINERD_NAMESPACE=k8s.io ctrctl image pull --quiet "${IMAGE_NGINX:?}"
     kubectl create deployment --replicas 2 --image "${IMAGE_NGINX:?}" bats-nginx
     kubectl wait --for=condition=Available deployment/bats-nginx
 }
@@ -174,6 +175,7 @@ local_setup_file() {
 }
 
 @test 'Re-deploy kubernetes workloads' {
+    CONTAINERD_NAMESPACE=k8s.io ctrctl image pull --quiet "${IMAGE_NGINX:?}"
     kubectl create deployment --replicas 2 --image "${IMAGE_NGINX:?}" bats-nginx
     kubectl wait --for=condition=Available deployment/bats-nginx
 }
