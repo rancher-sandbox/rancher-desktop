@@ -10,26 +10,36 @@ import (
 
 // This file contains handlers for specific commands.
 
+// fileOrUrlOrStdin handles arguments of kind `file|URL|-`.  It returns a
+// mounted path (or the arg as-is), any cleanups, and errors.
+func fileOrUrlOrStdin(input string, argHandlers argHandlersType) (string, []cleanupFunc, error) {
+	if input == "-" {
+		return input, nil, nil
+	}
+	if match, _ := regexp.MatchString(`^[^:/]*://`, input); match {
+		// input is a URL
+		return input, nil, nil
+	}
+	newPath, cleanups, err := argHandlers.filePathArgHandler(input)
+	if err != nil {
+		if cleanupErr := runCleanups(cleanups); cleanupErr != nil {
+			err = multierror.Append(err, cleanupErr)
+		}
+		return input, nil, err
+	}
+	return newPath, cleanups, nil
+}
+
 // builderBuildHandler handles `nerdctl image build`
 func builderBuildHandler(c *commandDefinition, args []string, argHandlers argHandlersType) (*parsedArgs, error) {
+	// nerdctl image build [flags] PATH
 	// The first argument is the directory to build; the rest are ignored.
 	if len(args) < 1 {
 		// This will return an error
 		return &parsedArgs{args: args}, nil
 	}
-	input := args[0]
-	if input == "-" {
-		return &parsedArgs{args: args}, nil
-	}
-	if match, _ := regexp.MatchString(`^[^:/]*://`, input); match {
-		// input is a URL
-		return &parsedArgs{args: args}, nil
-	}
-	newPath, cleanups, err := argHandlers.filePathArgHandler(args[0])
+	newPath, cleanups, err := fileOrUrlOrStdin(args[0], argHandlers)
 	if err != nil {
-		if cleanupErr := runCleanups(cleanups); cleanupErr != nil {
-			err = multierror.Append(err, cleanupErr)
-		}
 		return nil, err
 	}
 	return &parsedArgs{args: append([]string{newPath}, args[1:]...), cleanup: cleanups}, nil
@@ -151,4 +161,18 @@ functionLoop:
 	}
 
 	return &parsedArgs{args: resultArgs, cleanup: cleanups}, nil
+}
+
+// imageImportHandler handles `nerdctl image import`
+func imageImportHandler(c *commandDefinition, args []string, argHandlers argHandlersType) (*parsedArgs, error) {
+	// nerdctl image import [OPTIONS] file|URL|- [REPOSITORY[:TAG]] [flags]
+	if len(args) < 1 {
+		// This will return an error
+		return &parsedArgs{args: args}, nil
+	}
+	newPath, cleanups, err := fileOrUrlOrStdin(args[0], argHandlers)
+	if err != nil {
+		return nil, err
+	}
+	return &parsedArgs{args: append([]string{newPath}, args[1:]...), cleanup: cleanups}, nil
 }
