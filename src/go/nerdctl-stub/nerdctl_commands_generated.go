@@ -23,11 +23,13 @@ var commands = map[string]commandDefinition{
 			"diff":        {},
 			"events":      {},
 			"exec":        {},
+			"export":      {},
 			"healthcheck": {},
 			"help":        {},
 			"history":     {},
 			"image":       {},
 			"images":      {},
+			"import":      {},
 			"info":        {},
 			"inspect":     {},
 			"ipfs":        {},
@@ -36,6 +38,7 @@ var commands = map[string]commandDefinition{
 			"login":       {},
 			"logout":      {},
 			"logs":        {},
+			"manifest":    {},
 			"namespace":   {},
 			"network":     {},
 			"pause":       {},
@@ -634,6 +637,7 @@ var commands = map[string]commandDefinition{
 			"create":      {},
 			"diff":        {},
 			"exec":        {},
+			"export":      {},
 			"healthcheck": {},
 			"inspect":     {},
 			"kill":        {},
@@ -846,6 +850,15 @@ var commands = map[string]commandDefinition{
 			"-w":            ignoredArgHandler,
 		},
 		hasForeignFlags: true,
+	},
+
+	"container export": {
+		commandPath: "container export",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--output": ignoredArgHandler,
+			"-o":       ignoredArgHandler,
+		},
 	},
 
 	"container healthcheck": {
@@ -1324,6 +1337,15 @@ var commands = map[string]commandDefinition{
 		hasForeignFlags: true,
 	},
 
+	"export": {
+		commandPath: "export",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--output": ignoredArgHandler,
+			"-o":       ignoredArgHandler,
+		},
+	},
+
 	"healthcheck": {
 		commandPath: "healthcheck",
 		subcommands: map[string]struct{}{},
@@ -1358,6 +1380,7 @@ var commands = map[string]commandDefinition{
 			"decrypt": {},
 			"encrypt": {},
 			"history": {},
+			"import":  {},
 			"inspect": {},
 			"load":    {},
 			"ls":      {},
@@ -1481,6 +1504,16 @@ var commands = map[string]commandDefinition{
 			"-H":         nil,
 			"-f":         ignoredArgHandler,
 			"-q":         nil,
+		},
+	},
+
+	"image import": {
+		commandPath: "image import",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--message":  ignoredArgHandler,
+			"--platform": ignoredArgHandler,
+			"-m":         ignoredArgHandler,
 		},
 	},
 
@@ -1621,6 +1654,16 @@ var commands = map[string]commandDefinition{
 		},
 	},
 
+	"import": {
+		commandPath: "import",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--message":  ignoredArgHandler,
+			"--platform": ignoredArgHandler,
+			"-m":         ignoredArgHandler,
+		},
+	},
+
 	"info": {
 		commandPath: "info",
 		subcommands: map[string]struct{}{},
@@ -1727,6 +1770,63 @@ var commands = map[string]commandDefinition{
 		},
 	},
 
+	"manifest": {
+		commandPath: "manifest",
+		subcommands: map[string]struct{}{
+			"annotate": {},
+			"create":   {},
+			"inspect":  {},
+			"push":     {},
+			"rm":       {},
+		},
+		options: map[string]argHandler{},
+	},
+
+	"manifest annotate": {
+		commandPath: "manifest annotate",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--arch":        ignoredArgHandler,
+			"--os":          ignoredArgHandler,
+			"--os-features": ignoredArgHandler,
+			"--os-version":  ignoredArgHandler,
+			"--variant":     ignoredArgHandler,
+		},
+	},
+
+	"manifest create": {
+		commandPath: "manifest create",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--amend":    nil,
+			"--insecure": nil,
+		},
+	},
+
+	"manifest inspect": {
+		commandPath: "manifest inspect",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--insecure": nil,
+			"--verbose":  nil,
+		},
+	},
+
+	"manifest push": {
+		commandPath: "manifest push",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--insecure": nil,
+			"--purge":    nil,
+		},
+	},
+
+	"manifest rm": {
+		commandPath: "manifest rm",
+		subcommands: map[string]struct{}{},
+		options:     map[string]argHandler{},
+	},
+
 	"namespace": {
 		commandPath: "namespace",
 		subcommands: map[string]struct{}{
@@ -1761,8 +1861,10 @@ var commands = map[string]commandDefinition{
 		commandPath: "namespace ls",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
-			"--quiet": nil,
-			"-q":      nil,
+			"--format": ignoredArgHandler,
+			"--quiet":  nil,
+			"-f":       ignoredArgHandler,
+			"-q":       nil,
 		},
 	},
 
@@ -1802,6 +1904,7 @@ var commands = map[string]commandDefinition{
 		options: map[string]argHandler{
 			"--driver":      ignoredArgHandler,
 			"--gateway":     ignoredArgHandler,
+			"--internal":    nil,
 			"--ip-range":    ignoredArgHandler,
 			"--ipam-driver": ignoredArgHandler,
 			"--ipam-opt":    ignoredArgHandler,
