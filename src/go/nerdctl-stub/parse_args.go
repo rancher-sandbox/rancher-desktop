@@ -353,6 +353,8 @@ func init() {
 	registerArgHandler("container create", "--pidfile", argHandlers.outputPathArgHandler)
 	registerArgHandler("container create", "--volume", argHandlers.volumeArgHandler)
 	registerArgHandler("container create", "-v", argHandlers.volumeArgHandler)
+	registerArgHandler("container export", "--output", argHandlers.outputPathArgHandler)
+	registerArgHandler("container export", "-o", argHandlers.outputPathArgHandler)
 	registerArgHandler("container run", "--cidfile", argHandlers.outputPathArgHandler)
 	registerArgHandler("container run", "--cosign-key", argHandlers.filePathArgHandler)
 	registerArgHandler("container run", "--env-file", argHandlers.filePathArgHandler)
@@ -368,14 +370,17 @@ func init() {
 	// Set up command handlers
 	registerCommandHandler("builder build", builderBuildHandler)
 	registerCommandHandler("container cp", containerCopyHandler)
+	registerCommandHandler("image import", imageImportHandler)
 
 	// Set up aliases
 	aliasCommand("commit", "container commit")
 	aliasCommand("cp", "container cp")
 	aliasCommand("create", "container create")
 	aliasCommand("exec", "container exec")
+	aliasCommand("export", "container export")
 	aliasCommand("kill", "container kill")
 	aliasCommand("image build", "builder build")
+	aliasCommand("import", "image import")
 	aliasCommand("logs", "container logs")
 	aliasCommand("pause", "container pause")
 	aliasCommand("port", "container port")
