@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import _ from 'lodash';
 import yaml from 'yaml';
 
 import { download } from '../lib/download';
@@ -39,8 +40,12 @@ export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
     }
     // This forces a go type that isn't defined; delete the override and just
     // use strings instead.
-    if (contents.definitions?.Plugin?.properties?.Config?.properties?.Interface?.properties?.Types?.items?.['x-go-type']?.type === 'CapabilityID') {
+    if (_.get(contents, 'definitions.Plugin.properties.Config.properties.Interface.properties.Types.items.x-go-type.type') === 'CapabilityID') {
       delete contents.definitions.Plugin.properties.Config.properties.Interface.properties.Types.items['x-go-type'];
+    }
+    // Overriding the `dateTime` to `time.Time` means we can't use the validation function.
+    if (_.get(contents, 'definitions.Network.properties.Created.x-go-type.import.package') === 'time') {
+      _.set(contents, 'definitions.Network.properties.Created.x-go-type.hints.noValidation', true);
     }
 
     await fs.promises.writeFile(modifiedPath, yaml.stringify(contents), 'utf-8');
