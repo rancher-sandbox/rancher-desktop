@@ -58,7 +58,7 @@ assert_pull_fails() {
 }
 
 @test 'can run kubectl' {
-    kubectl run nginx --image="${IMAGE_NGINX}:latest" --port=8080
+    kubectl run nginx --image="${IMAGE_NGINX}" --port=8080
 }
 
 verify_no_nginx() {

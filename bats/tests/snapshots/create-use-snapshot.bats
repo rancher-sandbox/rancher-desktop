@@ -18,7 +18,7 @@ local_setup() {
 }
 
 @test 'push an nginx pod and verify' {
-    kubectl run nginx --image=nginx:latest --port=8080
+    kubectl run nginx --image="$IMAGE_NGINX" --port=8080
     try --max 48 --delay 5 running_nginx
 }
 
