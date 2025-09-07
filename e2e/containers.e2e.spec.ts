@@ -5,6 +5,8 @@ import { ContainersPage } from './pages/containers-page';
 import { NavPage } from './pages/nav-page';
 import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
 
+import { ContainerEngine } from '@pkg/config/settings';
+
 let page: Page;
 
 test.describe.serial('Containers Tests', () => {
@@ -15,7 +17,7 @@ test.describe.serial('Containers Tests', () => {
   test.beforeAll(async({ colorScheme }, testInfo) => {
     [electronApp, page] = await startSlowerDesktop(testInfo, {
       kubernetes:      { enabled: false },
-      containerEngine: { allowedImages: { enabled: false } },
+      containerEngine: { name: ContainerEngine.MOBY, allowedImages: { enabled: false } },
     });
 
     const navPage = new NavPage(page);
