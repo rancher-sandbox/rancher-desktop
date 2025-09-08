@@ -1,8 +1,8 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/nerdctl-stub/generate
 
-go 1.23.0
+go 1.24.0
 
-toolchain go1.23.4
+toolchain go1.24.2
 
 require github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 
