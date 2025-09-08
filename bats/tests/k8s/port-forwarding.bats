@@ -38,7 +38,7 @@ spec:
             path: index.html
       containers:
       - name: webapp
-        image: nginx
+        image: $IMAGE_NGINX
         volumeMounts:
         - name: webapp-config-volume
           mountPath: /usr/share/nginx/html
