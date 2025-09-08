@@ -65,7 +65,7 @@
     "async-mutex": "^0.5.0",
     "cookie-universal": "2.2.2",
     "cross-spawn": "7.0.6",
-    "dayjs": "1.11.15",
+    "dayjs": "1.11.18",
     "dompurify": "3.2.6",
     "electron-updater": "6.6.2",
     "express": "5.1.0",
