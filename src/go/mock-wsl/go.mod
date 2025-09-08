@@ -1,8 +1,8 @@
 module github.com/rancher-sandbox/rancher-desktop/e2e/assets/mock-wsl
 
-go 1.23.0
+go 1.24.0
 
-toolchain go1.23.4
+toolchain go1.24.2
 
 require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
