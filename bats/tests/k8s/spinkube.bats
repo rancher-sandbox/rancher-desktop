@@ -20,6 +20,10 @@ local_setup() {
     wait_for_kube_deployment_available --namespace spin-operator spin-operator-controller-manager
 }
 
+@test 'wait for spinkube executor' {
+    try kubectl get SpinAppExecutors.core.spinkube.dev/containerd-shim-spin
+}
+
 @test 'deploy app to kubernetes' {
     # Newer versions of the sample app have moved from "deislabs" to "spinkube":
     # ghcr.io/spinkube/containerd-shim-spin/examples/spin-rust-hello:v0.13.0
