@@ -48,7 +48,15 @@ install_plugin() {
   version=$2
   echo "Installing plugin ${plugin} version ${version}"
   "$spin" plugins uninstall "$plugin" || true
-  "$spin" plugins install --yes --version "${version}" "$plugin"
+  # `spin plugins install` requires `git`; however, we can provide the URL of a
+  # remote manifest instead.
+  local url_base="https://github.com/spinframework/spin-plugins/raw/refs/heads/main/manifests/${plugin}"
+  local url="${url_base}/${plugin}@${version}.json"
+  if ! curl --head --silent --fail "${url}" &>/dev/null; then
+    echo "Plugin not available at ${url}, installing unversioned instead."
+    url="${url_base}/${plugin}.json"
+  fi
+  "$spin" plugins install --yes --url "${url}"
   rc=$?; test $rc -ne 0 && echo "Exit status is $rc"
 }
 
