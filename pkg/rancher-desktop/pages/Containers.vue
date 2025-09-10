@@ -368,7 +368,7 @@ export default defineComponent({
       }
 
       this.containerEventSubscription = this.ddClient.docker.rdSubscribeToEvents(
-        (event) => {
+        async(event) => {
           if (!this.isComponentMounted) {
             return;
           }
@@ -380,7 +380,20 @@ export default defineComponent({
             return;
           }
 
-          this.getContainers().catch(console.error);
+          const containerId = event.Actor?.ID || event.id;
+
+          if (containerId) {
+            if (event.Action === 'destroy' || event.Action === 'remove') {
+              this.updateSingleContainer({ Id: containerId, _removed: true });
+            } else {
+              const container = await this.getSingleContainer(containerId);
+              if (container) {
+                this.updateSingleContainer(container);
+              }
+            }
+          } else {
+            this.getContainers().catch(console.error);
+          }
         },
         eventOptions,
       );
@@ -496,9 +509,75 @@ export default defineComponent({
       this.containersList = newMap;
     },
 
+    updateSingleContainer(container) {
+      if (!container) {
+        return;
+      }
+
+      if (container.Labels?.['io.kubernetes.pod.namespace'] === 'kube-system') {
+        return;
+      }
+
+      if (!this.containersList) {
+        this.containersList = new Map();
+      }
+
+      if (container._removed) {
+        this.containersList.delete(container.Id);
+        return;
+      }
+
+      const existing = this.containersList.get(container.Id);
+      if (existing) {
+        Object.assign(existing, container);
+      } else {
+        this.containersList.set(container.Id, container);
+      }
+    },
+
     async getContainers() {
       const containers = await this.ddClient?.docker.listContainers({ all: true, namespace: this.selectedNamespace });
       this.updateContainersList(containers);
+    },
+
+    async getSingleContainer(containerId) {
+      try {
+        const inspectArgs = ['--format={{json .}}', containerId];
+        if (this.selectedNamespace) {
+          inspectArgs.unshift(`--namespace=${ this.selectedNamespace }`);
+        }
+
+        const inspectResult = await this.ddClient?.docker.cli.exec('inspect', inspectArgs);
+
+        if (inspectResult.code || inspectResult.signal) {
+          console.error(`Failed to inspect container ${ containerId }. falling back to full fetch:`, inspectResult.stderr);
+          this.getContainers().catch(console.error);
+          return null;
+        }
+
+        const containerDetails = inspectResult.parseJsonObject();
+
+        return {
+          Id:              containerDetails.Id,
+          Image:           containerDetails.Config?.Image,
+          ImageID:         containerDetails.Image,
+          Command:         containerDetails.Config?.Cmd?.join(' ') || '',
+          Status:          containerDetails.State?.Status,
+          State:           containerDetails.State?.Status,
+          NetworkSettings: containerDetails.NetworkSettings,
+          Mounts:          containerDetails.Mounts,
+          HostConfig:      containerDetails.HostConfig || {},
+          SizeRootFs:      containerDetails.SizeRootFs || -1,
+          SizeRw:          containerDetails.SizeRw || -1,
+          Ports:           containerDetails.NetworkSettings?.Ports || {},
+          Labels:          containerDetails.Config?.Labels,
+          Names:           containerDetails.Name ? [containerDetails.Name] : [],
+          Created:         Date.parse(containerDetails.Created).valueOf(),
+        };
+      } catch (error) {
+        console.error(`Error fetching container ${ containerId }:`, error);
+        return null;
+      }
     },
     async stopContainer(container) {
       await this.execCommand('stop', container);
