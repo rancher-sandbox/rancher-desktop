@@ -1253,10 +1253,10 @@
     fs-extra "^9.0.1"
     promise-retry "^2.0.1"
 
-"@electron/notarize@3.0.2":
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/@electron/notarize/-/notarize-3.0.2.tgz#e6afb791f29fd92efed56035cf2d4f2e69ca3648"
-  integrity sha512-3LCARsJXOxEzzbmKFu/I2oq1eroyLdLBY2/J5ysCiPQ8i58TVIpQ7UdOZmthpppy1aBEiy+YGLUkxz5UMDRfgg==
+"@electron/notarize@3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@electron/notarize/-/notarize-3.1.0.tgz#43f5a6371b337fd34c8278297e80666c956cbd28"
+  integrity sha512-DHePlWvmUKTNok2+yoOp2ZZ+3ZaLlDWdWD43BfzZhRlUPrBs+EwXDBq3kTJlO+jw2KZzeC3GGlypgw4HQZTD5w==
   dependencies:
     debug "^4.4.0"
     promise-retry "^2.0.1"
