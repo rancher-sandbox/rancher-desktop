@@ -8,8 +8,8 @@ ALLOWED="Apache-2.0|0?BSD|ISC|MIT|Python-2.0|Unlicense"
 # jq doesn't support \b word boundaries, so expand "\b(${ALLOWED})\b" into something supported
 REGEX="(^|[^a-zA-Z0-9_])(${ALLOWED})($|[^a-zA-Z0-9_])"
 
-JQ=".data.body[] | select(.[2] | test(\"${REGEX}\") | not)"
-FORBIDDEN=$(yarn licenses list --prod --json --no-progress | jq -r "$JQ")
+JQ="select(.value | test(\"${REGEX}\") | not)"
+FORBIDDEN=$(yarn licenses list --production --json | jq -r "$JQ")
 
 if [[ -z $FORBIDDEN ]]; then
     echo "All NPM modules have licenses matching ${ALLOWED}"
