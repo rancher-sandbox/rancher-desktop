@@ -435,17 +435,40 @@ describe('DockerDirManager', () => {
     });
 
     it('should return the right cred helper for the right platform', async() => {
+      jest.spyOn(subj as any, 'credHelperWorking').mockReturnValue(true);
       await expect(subj['getCredsStoreFor'](undefined)).resolves.toEqual(platformDefaultHelper);
     });
 
     it('should return the platform helper if the existing one does not work', async() => {
-      jest.spyOn(subj as any, 'credHelperWorking').mockResolvedValue(false);
+      jest.spyOn<any, any, (_: string) => Promise<boolean>>(subj, 'credHelperWorking').mockImplementation((helperName) => {
+        return Promise.resolve(os.platform() === 'linux' && helperName === 'pass');
+      });
       await expect(subj['getCredsStoreFor']('broken-helper')).resolves.toEqual(platformDefaultHelper);
     });
 
-    itLinux('should return secretservice when that is the current value', async() => {
-      jest.spyOn(subj as any, 'credHelperWorking').mockResolvedValue(false);
-      await expect(subj['getCredsStoreFor']('secretservice')).resolves.toEqual('secretservice');
+    itLinux('should default to pass when it works', async() => {
+      jest.spyOn<any, any, (_: string) => Promise<boolean>>(subj, 'credHelperWorking').mockImplementation((helperName) => {
+        expect(helperName).toEqual('pass');
+
+        return Promise.resolve(true);
+      });
+      await expect(subj['getCredsStoreFor'](undefined)).resolves.toEqual('pass');
+    });
+
+    itLinux('should default to pass when secretservice is broken', async() => {
+      jest.spyOn<any, any, (_: string) => Promise<boolean>>(subj, 'credHelperWorking').mockImplementation((helperName) => {
+        return Promise.resolve(helperName === 'pass');
+      });
+      await expect(subj['getCredsStoreFor']('secretservice')).resolves.toEqual('pass');
+    });
+
+    itLinux('should default to secretservice when pass does not work', async() => {
+      jest.spyOn<any, any, (_: string) => Promise<boolean>>(subj, 'credHelperWorking').mockImplementation((helperName) => {
+        expect(helperName).toEqual('pass');
+
+        return Promise.resolve(false);
+      });
+      await expect(subj['getCredsStoreFor'](undefined)).resolves.toEqual('secretservice');
     });
   });
 });
