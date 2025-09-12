@@ -291,13 +291,18 @@ func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, conta
 			}
 		}
 	} else {
-		err := e.createLoopbackIPtablesRules(
-			ctx,
-			container.ID,
-			container.NetworkSettings.IPAddress,
-			container.NetworkSettings.Ports)
-		if err != nil {
-			log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain failed: %v", err)
+		bridgeNetwork, ok := container.NetworkSettings.Networks["bridge"]
+		if !ok {
+			log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain failed: failed to find bridge network")
+		} else {
+			err := e.createLoopbackIPtablesRules(
+				ctx,
+				container.ID,
+				bridgeNetwork.IPAddress,
+				container.NetworkSettings.Ports)
+			if err != nil {
+				log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain failed: %v", err)
+			}
 		}
 	}
 }
