@@ -29,7 +29,7 @@ interface PreferencesState {
 
 type Credentials = Omit<ServerState, 'pid'>;
 
-interface CommitArgs extends Credentials {
+interface CommitArgs {
   payload?: RecursivePartial<Settings>;
 }
 
@@ -122,7 +122,7 @@ export const mutations: MutationsType<PreferencesState> = {
 };
 
 type PrefActionContext = ActionContext<PreferencesState>;
-interface ProposePreferencesPayload { port: number, user: string, password: string, preferences?: Settings }
+interface ProposePreferencesPayload { preferences?: Settings }
 
 export const actions = {
   setPreferences({ commit }: PrefActionContext, preferences: Settings) {
@@ -132,8 +132,8 @@ export const actions = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: Credentials) {
-    const { port, user, password } = args;
+  async fetchPreferences({ dispatch, commit, rootState }: PrefActionContext) {
+    const { port, user, password } = rootState.credentials.credentials;
 
     const response = await fetch(
       settingsUri(port),
@@ -154,8 +154,8 @@ export const actions = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async fetchLocked({ dispatch, commit }: PrefActionContext, args: Credentials) {
-    const { port, user, password } = args;
+  async fetchLocked({ commit, rootState }: PrefActionContext) {
+    const { port, user, password } = rootState.credentials.credentials;
 
     const response = await fetch(
       lockedUri(port),
@@ -176,10 +176,9 @@ export const actions = {
 
     commit('SET_LOCKED_PREFERENCES', settings);
   },
-  async commitPreferences({ dispatch, getters }: PrefActionContext, args: CommitArgs) {
-    const {
-      port, user, password, payload,
-    } = args;
+  async commitPreferences({ dispatch, getters, rootState }: PrefActionContext, args: CommitArgs = {}) {
+    const { port, user, password } = rootState.credentials.credentials;
+    const { payload } = args;
 
     await fetch(
       settingsUri(port),
@@ -192,10 +191,7 @@ export const actions = {
         body: JSON.stringify(payload ?? normalizePreferences(getters.getPreferences, 'submit')),
       });
 
-    await dispatch(
-      'preferences/fetchPreferences',
-      args,
-      { root: true });
+    await dispatch('preferences/fetchPreferences', {}, { root: true });
   },
 
   /**
@@ -250,12 +246,11 @@ export const actions = {
    * associated with the preferences.
    */
   async proposePreferences(
-    { commit, state, getters }: PrefActionContext,
-    {
-      port, user, password, preferences,
-    }: ProposePreferencesPayload,
+    { commit, state, getters, rootState }: PrefActionContext,
+    { preferences }: ProposePreferencesPayload = {},
   ): Promise<Severities> {
-    const proposal = preferences || normalizePreferences(getters.getPreferences, 'submit');
+    const proposal = preferences ?? normalizePreferences(getters.getPreferences, 'submit');
+    const { user, password, port } = rootState.credentials.credentials;
 
     const result = await fetch(
       proposedSettings(port),
@@ -290,11 +285,10 @@ export const actions = {
 
     return severities;
   },
-  async setShowMuted({ dispatch, rootState }: PrefActionContext, isMuted: boolean) {
+  async setShowMuted({ dispatch }: PrefActionContext, isMuted: boolean) {
     await dispatch(
       'preferences/commitPreferences',
       {
-        ...rootState.credentials.credentials as Credentials,
         payload: {
           version:     CURRENT_SETTINGS_VERSION,
           diagnostics: { showMuted: isMuted },
