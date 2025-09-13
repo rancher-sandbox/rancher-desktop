@@ -283,11 +283,12 @@ export class DockerDirManager {
     } else if (platform === 'darwin') {
       return 'osxkeychain';
     } else if (platform === 'linux') {
-      if (currentCredsStore === 'secretservice') {
-        return 'secretservice';
-      } else {
+      // On Linux, we need to match the logic used by oras-go (used by helm):
+      // If `pass` works, use it; otherwise use secret service.
+      if (await this.credHelperWorking('pass')) {
         return 'pass';
       }
+      return 'secretservice';
     } else {
       throw new Error(`platform "${ platform }" is not supported`);
     }
