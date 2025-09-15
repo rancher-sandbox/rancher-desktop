@@ -1,7 +1,7 @@
 import merge from 'lodash/merge';
-import { MutationTree, ActionTree, Dispatch, GetterTree } from 'vuex/types';
+import { MutationTree, Dispatch, GetterTree } from 'vuex';
 
-import { MutationsType } from './ts-helpers';
+import { ActionTree, MutationsType } from './ts-helpers';
 
 import { ContainerEngine } from '@pkg/config/settings';
 import type { RDXClient } from '@pkg/preload/extensions';
@@ -350,7 +350,7 @@ export const actions = {
     }
     commit('SET_VOLUMES', volumes);
   },
-} satisfies ActionTree<ContainersState, any>;
+} satisfies ActionTree<ContainersState, any, typeof mutations, typeof getters>;
 
 export const getters = {
   backend(_state, _getters, rootState): ContainerEngine {
@@ -359,7 +359,7 @@ export const getters = {
   supportsNamespaces(state) {
     return state.backend === ContainerEngine.CONTAINERD;
   },
-  namespace(_state, getters, rootState): string | undefined {
+  namespace(_state, _getters, rootState): string | undefined {
     return rootState.preferences.initialPreferences?.containers?.namespace;
   },
 } satisfies GetterTree<ContainersState, any>;

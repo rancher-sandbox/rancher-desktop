@@ -1,9 +1,9 @@
 import DOMPurify from 'dompurify';
 import _ from 'lodash';
 import { marked } from 'marked';
-import { ActionTree, Plugin } from 'vuex';
+import { Plugin } from 'vuex';
 
-import { ActionContext, MutationsType } from './ts-helpers';
+import { ActionTree, MutationsType } from './ts-helpers';
 
 import { CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
 import type { DiagnosticsResult, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
@@ -80,10 +80,8 @@ export const mutations = {
   },
 } satisfies MutationsType<DiagnosticsState>;
 
-type DiagActionContext = ActionContext<DiagnosticsState>;
-
 export const actions = {
-  async fetchDiagnostics({ commit, rootState }: DiagActionContext) {
+  async fetchDiagnostics({ commit, rootState }) {
     try {
       const { port, user, password } = rootState.credentials.credentials;
       const response = await fetch(
@@ -114,7 +112,7 @@ export const actions = {
       commit('SET_IN_ERROR', true);
     }
   },
-  async runDiagnostics({ commit, rootState }:DiagActionContext) {
+  async runDiagnostics({ commit, rootState }) {
     const { port, user, password } = rootState.credentials.credentials;
     const response = await fetch(
       uri(port, 'diagnostic_checks'),
@@ -142,7 +140,7 @@ export const actions = {
   },
   async updateDiagnostic({
     commit, state, dispatch,
-  }: DiagActionContext, { isMuted, row }: { isMuted: boolean, row: DiagnosticsResult }) {
+  }, { isMuted, row }: { isMuted: boolean, row: DiagnosticsResult }) {
     const diagnostics = _.cloneDeep(state.diagnostics);
     const rowToUpdate = diagnostics.find(x => x.id === row.id);
 
@@ -165,7 +163,7 @@ export const actions = {
 
     commit('SET_DIAGNOSTICS', await mapMarkdownToDiagnostics(diagnostics));
   },
-} satisfies ActionTree<DiagnosticsState, any>;
+} satisfies ActionTree<DiagnosticsState, any, typeof mutations>;
 
 export const plugins: Plugin<DiagnosticsState>[] = [
   // Vuex plugin used to refresh diagnostics on command from the backend.

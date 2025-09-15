@@ -1,4 +1,6 @@
-import { ActionContext, MutationsType } from './ts-helpers';
+import { MutationTree } from 'vuex';
+
+import { ActionTree, MutationsType } from './ts-helpers';
 
 interface PageState {
   title:       string;
@@ -14,7 +16,7 @@ export const state: () => PageState = () => ({
   icon:        '',
 });
 
-export const mutations: MutationsType<PageState> = {
+export const mutations = {
   SET_TITLE(state, title) {
     state.title = title;
   },
@@ -27,12 +29,10 @@ export const mutations: MutationsType<PageState> = {
   SET_ICON(state, icon) {
     state.icon = icon;
   },
-};
-
-type PageActionContext = ActionContext<PageState>;
+} satisfies Partial<MutationsType<PageState>> & MutationTree<PageState>;
 
 export const actions = {
-  setHeader({ commit }: PageActionContext, args: { title: string, description?: string, action?: string, icon?: string }) {
+  setHeader({ commit }, args: { title: string, description?: string, action?: string, icon?: string }) {
     const {
       title, description, action, icon,
     } = args;
@@ -42,9 +42,9 @@ export const actions = {
     commit('SET_ACTION', action ?? '');
     commit('SET_ICON', icon ?? '');
   },
-  setAction({ commit }: PageActionContext, args: { action: string }) {
+  setAction({ commit }, args: { action: string }) {
     const { action } = args;
 
     commit('SET_ACTION', action);
   },
-};
+} satisfies ActionTree<PageState, any, typeof mutations>;

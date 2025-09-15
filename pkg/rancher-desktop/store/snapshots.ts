@@ -1,7 +1,7 @@
-import { GetterTree } from 'vuex';
+import { GetterTree, MutationTree } from 'vuex';
 
 import { fetchAPI } from './credentials';
-import { ActionContext, MutationsType } from './ts-helpers';
+import { ActionTree, MutationsType } from './ts-helpers';
 
 import { Snapshot } from '@pkg/main/snapshots/types';
 
@@ -11,16 +11,14 @@ interface SnapshotsState {
 
 export const state: () => SnapshotsState = () => ({ snapshots: [] });
 
-export const mutations: MutationsType<SnapshotsState> = {
+export const mutations = {
   SET_SNAPSHOTS(state: SnapshotsState, snapshots: Snapshot[]) {
     state.snapshots = snapshots;
   },
-};
-
-type SnapshotsActionContext = ActionContext<SnapshotsState>;
+} satisfies Partial<MutationsType<SnapshotsState>> & MutationTree<SnapshotsState>;
 
 export const actions = {
-  async fetch({ commit, rootState }: SnapshotsActionContext) {
+  async fetch({ commit, rootState }) {
     const response = await fetchAPI('/v1/snapshots', rootState);
 
     if (!response.ok) {
@@ -35,7 +33,7 @@ export const actions = {
     commit('SET_SNAPSHOTS', snapshots.sort((a, b) => b.created.localeCompare(a.created)));
   },
 
-  async create({ rootState, dispatch }: SnapshotsActionContext, snapshot: Snapshot) {
+  async create({ rootState, dispatch }, snapshot: Snapshot) {
     const body = JSON.stringify(snapshot ?? {});
 
     const response = await fetchAPI('/v1/snapshots', rootState, { method: 'POST', body });
@@ -51,7 +49,7 @@ export const actions = {
     await dispatch('fetch');
   },
 
-  async delete({ rootState, dispatch }: SnapshotsActionContext, name: string) {
+  async delete({ rootState, dispatch }, name: string) {
     const response = await fetchAPI(`/v1/snapshots?name=${ encodeURIComponent(name) }`, rootState, { method: 'DELETE' });
 
     if (!response.ok) {
@@ -65,7 +63,7 @@ export const actions = {
     await dispatch('fetch');
   },
 
-  async restore({ rootState }: SnapshotsActionContext, name: string) {
+  async restore({ rootState }, name: string) {
     const response = await fetchAPI(`/v1/snapshot/restore?name=${ encodeURIComponent(name) }`, rootState, { method: 'POST' });
 
     if (!response.ok) {
@@ -76,7 +74,7 @@ export const actions = {
       return error;
     }
   },
-};
+} satisfies ActionTree<SnapshotsState, any, typeof mutations, typeof getters>;
 
 export const getters: GetterTree<SnapshotsState, SnapshotsState> = {
   list(state: SnapshotsState) {

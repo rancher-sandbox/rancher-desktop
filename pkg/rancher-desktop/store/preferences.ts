@@ -1,13 +1,13 @@
 import _ from 'lodash';
 
-import { ActionContext, MutationsType } from './ts-helpers';
+import { ActionContext, ActionTree, MutationsType } from './ts-helpers';
 
 import { CURRENT_SETTINGS_VERSION, defaultSettings, Settings, LockedSettingsType } from '@pkg/config/settings';
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { RecursiveKeys, RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
 
-import type { GetterTree } from 'vuex';
+import type { GetterTree, MutationTree } from 'vuex';
 
 interface Severities {
   reset:   boolean;
@@ -90,7 +90,7 @@ export const state: () => PreferencesState = () => (
   }
 );
 
-export const mutations: MutationsType<PreferencesState> = {
+export const mutations = {
   SET_PREFERENCES(state, preferences) {
     state.preferences = preferences;
     state.canApply = false;
@@ -119,20 +119,20 @@ export const mutations: MutationsType<PreferencesState> = {
   SET_CAN_APPLY(state, canApply) {
     state.canApply = canApply;
   },
-};
+} satisfies Partial<MutationsType<PreferencesState>> & MutationTree<PreferencesState>;
 
-type PrefActionContext = ActionContext<PreferencesState>;
+type PrefActionContext = ActionContext<PreferencesState, typeof mutations>;
 interface ProposePreferencesPayload { preferences?: Settings }
 
 export const actions = {
-  setPreferences({ commit }: PrefActionContext, preferences: Settings) {
+  setPreferences({ commit }, preferences: Settings) {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
   },
-  initializePreferences({ commit }: PrefActionContext, preferences: Settings) {
+  initializePreferences({ commit }, preferences: Settings) {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch, commit, rootState }: PrefActionContext) {
+  async fetchPreferences({ dispatch, commit, rootState }) {
     const { port, user, password } = rootState.credentials.credentials;
 
     const response = await fetch(
@@ -154,7 +154,7 @@ export const actions = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async fetchLocked({ commit, rootState }: PrefActionContext) {
+  async fetchLocked({ commit, rootState }) {
     const { port, user, password } = rootState.credentials.credentials;
 
     const response = await fetch(
@@ -176,7 +176,7 @@ export const actions = {
 
     commit('SET_LOCKED_PREFERENCES', settings);
   },
-  async commitPreferences({ dispatch, getters, rootState }: PrefActionContext, args: CommitArgs = {}) {
+  async commitPreferences({ dispatch, getters, rootState }, args: CommitArgs = {}) {
     const { port, user, password } = rootState.credentials.credentials;
     const { payload } = args;
 
@@ -214,7 +214,7 @@ export const actions = {
       { root: true },
     );
   },
-  setWslIntegrations({ commit, state }: PrefActionContext, integrations: Record<string, string | boolean>) {
+  setWslIntegrations({ commit, state }, integrations: Record<string, string | boolean>) {
     /**
      * Merge integrations if they exist during initialization.
      *
@@ -225,14 +225,14 @@ export const actions = {
 
     commit('SET_WSL_INTEGRATIONS', updatedIntegrations);
   },
-  updateWslIntegrations({ commit, state }: PrefActionContext, args: { distribution: string, value: boolean }) {
+  updateWslIntegrations({ commit, state }, args: { distribution: string, value: boolean }) {
     const { distribution, value } = args;
 
     const integrations = _.set(_.cloneDeep(state.wslIntegrations), distribution, value);
 
     commit('SET_WSL_INTEGRATIONS', integrations);
   },
-  setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
+  setPlatformWindows({ commit }, isPlatformWindows: boolean) {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   },
   /**
@@ -246,7 +246,7 @@ export const actions = {
    * associated with the preferences.
    */
   async proposePreferences(
-    { commit, state, getters, rootState }: PrefActionContext,
+    { commit, state, getters, rootState },
     { preferences }: ProposePreferencesPayload = {},
   ): Promise<Severities> {
     const proposal = preferences ?? normalizePreferences(getters.getPreferences, 'submit');
@@ -285,7 +285,7 @@ export const actions = {
 
     return severities;
   },
-  async setShowMuted({ dispatch }: PrefActionContext, isMuted: boolean) {
+  async setShowMuted({ dispatch }, isMuted: boolean) {
     await dispatch(
       'preferences/commitPreferences',
       {
@@ -297,16 +297,16 @@ export const actions = {
       { root: true },
     );
   },
-  setCanApply({ commit }: PrefActionContext, canApply: boolean) {
+  setCanApply({ commit }, canApply: boolean) {
     commit('SET_CAN_APPLY', canApply);
   },
-};
+} satisfies ActionTree<PreferencesState, any, typeof mutations, typeof getters>;
 
-export const getters: GetterTree<PreferencesState, PreferencesState> = {
-  getPreferences(state: PreferencesState) {
+export const getters = {
+  getPreferences(state) {
     return state.preferences;
   },
-  isPreferencesDirty(state: PreferencesState) {
+  isPreferencesDirty(state) {
     const isDirty = !_.isEqual(
       normalizePreferences(state.initialPreferences, 'diff'),
       normalizePreferences(state.preferences, 'diff'),
@@ -316,22 +316,22 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
 
     return isDirty;
   },
-  getWslIntegrations(state: PreferencesState) {
+  getWslIntegrations(state) {
     return state.wslIntegrations;
   },
-  isPlatformWindows(state: PreferencesState) {
+  isPlatformWindows(state) {
     return state.isPlatformWindows;
   },
-  hasError(state: PreferencesState) {
+  hasError(state) {
     return state.hasError;
   },
-  canApply(state: PreferencesState, getters) {
+  canApply(state, getters) {
     return (getters.isPreferencesDirty && state.preferencesError.length === 0) || state.canApply;
   },
-  showMuted(state: PreferencesState) {
+  showMuted(state) {
     return state.preferences.diagnostics.showMuted;
   },
-  isPreferenceLocked: (state: PreferencesState) => (value: string) => {
+  isPreferenceLocked: (state) => (value: string) => {
     return _.get(state.lockedPreferences, value);
   },
-};
+} satisfies GetterTree<PreferencesState, any>;
