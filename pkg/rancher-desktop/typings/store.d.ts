@@ -22,6 +22,20 @@ type storeActions = Intersect<Values<{
     Actions<module, Modules[module]['actions']> : never;
 }>>;
 
+type Mutations<
+  module extends string,
+  mutations extends Record<string, (state: any, payload?: any) => any>,
+> = {
+  [mutation in keyof mutations as `${ module }/${ mutation & string }`]:
+  (payload: Parameters<mutations[mutation]>[1]) => ReturnType<mutations[mutation]>;
+};
+
+type storeMutations = Intersect<Values<{
+  [module in keyof Modules]:
+  Modules[module] extends { mutations: any } ?
+    Mutations<module, Modules[module]['mutations']> : never;
+}>>;
+
 declare module 'vuex/types' {
   export interface Dispatch {
     <action extends keyof storeActions>
@@ -35,6 +49,19 @@ declare module 'vuex/types' {
     (
       type: action,
     ): Promise<Awaited<ReturnType<storeActions[action]>>>;
+  }
+
+  export interface Commit {
+    <mutation extends keyof storeMutations>
+    (
+      type: mutation,
+      payload?: Parameters<storeMutations[mutation]>[0],
+      options?: CommitOptions
+    ): void;
+    <
+      mutation extends keyof storeMutations,
+      P extends { type: mutation } & Parameters<storeMutations[mutation]>[0],
+    >(payloadWithType: P, options?: CommitOptions): void;
   }
 }
 

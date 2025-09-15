@@ -1,11 +1,11 @@
 <template>
   <div class="containers">
     <banner
-      v-if="error"
+      v-if="errorMessage"
       color="error"
-      @close="error = null"
+      @close="clearError"
     >
-      {{ error }}
+      {{ errorMessage }}
     </banner>
     <SortableTable
       ref="sortableTableRef"
@@ -170,7 +170,8 @@ export default defineComponent({
     return {
       /** @type import('@pkg/config/settings').Settings | undefined */
       settings:                   undefined,
-      error:                      null,
+      /** @type string | null */
+      execError:                  null,
       /** @type Record<string, boolean> */
       collapsed:                   {},
       /**
@@ -211,7 +212,7 @@ export default defineComponent({
   computed: {
     ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     ...mapTypedState('container-engine', ['containers', 'namespaces']),
-    ...mapTypedGetters('container-engine', ['namespace', 'supportsNamespaces']),
+    ...mapTypedGetters('container-engine', ['namespace', 'supportsNamespaces', 'error']),
     /** @returns {RowItem[]} */
     rows() {
       if (!this.containers) {
@@ -275,6 +276,16 @@ export default defineComponent({
           },
           portList: this.getPortList(container),
         }));
+    },
+    errorMessage() {
+      if (this.errorMessage) {
+        return this.errorMessage;
+      }
+      switch (this.error?.source) {
+      case 'containers': case 'namespaces':
+        return `${ this.error.error }`;
+      }
+      return null;
     },
   },
   mounted() {
@@ -434,7 +445,7 @@ export default defineComponent({
           return `Failed to execute command: ${ command }`;
         };
 
-        this.error = extractErrorMessage(error);
+        this.execError = extractErrorMessage(error);
         console.error(`Error executing command ${ command }`, error);
       }
     },
@@ -489,6 +500,14 @@ export default defineComponent({
 
     toggleExpand(group) {
       this.collapsed[group] = !this.collapsed[group];
+    },
+
+    clearError() {
+      this.execError = null;
+      switch (this.error?.source) {
+      case 'namespaces': case 'containers':
+        this.$store.commit('container-engine/SET_ERROR', null);
+      }
     },
   },
 });

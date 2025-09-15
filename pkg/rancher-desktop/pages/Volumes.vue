@@ -1,12 +1,12 @@
 <template>
   <div class="volumes">
     <banner
-      v-if="error"
+      v-if="errorMessage"
       color="error"
       data-testid="error-banner"
-      @close="error = null"
+      @close="clearError"
     >
-      {{ error }}
+      {{ errorMessage }}
     </banner>
     <SortableTable
       class="volumesTable"
@@ -109,7 +109,7 @@ export default defineComponent({
     return {
       settings:       undefined as Settings | undefined,
       subscribeTimer: undefined as ReturnType<typeof setTimeout> | undefined,
-      error:          null,
+      execError:      null as string | null,
       headers:        [
         {
           name:  'Name',
@@ -138,7 +138,7 @@ export default defineComponent({
   computed: {
     ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
     ...mapTypedState('container-engine', ['namespaces', 'volumes']),
-    ...mapTypedGetters('container-engine', ['namespace', 'supportsNamespaces']),
+    ...mapTypedGetters('container-engine', ['namespace', 'supportsNamespaces', 'error']),
     rows(): RowItem[] {
       return Object.values(this.volumes ?? {})
         .sort((a, b) => a.Name.localeCompare(b.Name))
@@ -166,6 +166,16 @@ export default defineComponent({
             this.$router.push({ name: 'volumes-files-name', params: { name: volume.Name } });
           },
         }));
+    },
+    errorMessage() {
+      if (this.execError) {
+        return this.execError;
+      }
+      switch (this.error?.source) {
+      case 'namespaces': case 'volumes':
+        return `${ this.error.error }`;
+      }
+      return null;
     },
   },
   mounted() {
@@ -266,7 +276,7 @@ export default defineComponent({
           `Failed to execute command: ${ args.join(' ') }`,
         ];
 
-        this.error = errorSources.find(msg => msg);
+        this.execError = errorSources.find(msg => msg);
         console.error(`Error executing command ${ args.join(' ') }`, error);
       }
     },
@@ -294,6 +304,13 @@ export default defineComponent({
       }
 
       return { content: undefined };
+    },
+    clearError() {
+      this.execError = null;
+      switch (this.error?.source) {
+      case 'namespaces': case 'volumes':
+        this.$store.commit('container-engine/SET_ERROR', null);
+      }
     },
   },
 });

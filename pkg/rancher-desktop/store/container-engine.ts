@@ -8,6 +8,7 @@ import type { RDXClient } from '@pkg/preload/extensions';
 
 type ValidContainerEngine = Exclude<ContainerEngine, ContainerEngine.NONE>;
 type SubscriberType = 'containers' | 'volumes';
+type ErrorSource = 'containers' | 'volumes' | 'namespaces';
 
 /**
  * Shared extension API container list result parts
@@ -154,7 +155,9 @@ class NerdctlVolumeSubscriber extends Subscriber {
           dispatch('fetchNamespaces');
         }
       },
-      { namespace: '_' }, // Use an invalid namespace to filter out most events.
+      // Use an invalid namespace to filter out most events; underscore is not a
+      // valid character in this context.
+      { namespace: '_invalid_' },
     );
   }
 
@@ -184,6 +187,8 @@ export interface ContainersState {
   subscriber: Subscriber | null;
   containers: Record<string, Container> | null;
   volumes:    Record<string, Volume> | null;
+  /** The last error encountered, plus which fetch caused it. */
+  error:      { source: ErrorSource, error: Error } | null;
 }
 
 export const state: () => ContainersState = () => ({
@@ -195,6 +200,7 @@ export const state: () => ContainersState = () => ({
   subscriber: null,
   containers: null,
   volumes:    null,
+  error:      null,
 });
 
 type BulkParams = Pick<ContainersState, 'backend' | 'type' | 'client' | 'namespace'>;
@@ -212,6 +218,9 @@ export const mutations = {
   },
   SET_VOLUMES(state, volumes) {
     state.volumes = volumes;
+  },
+  SET_ERROR(state, error) {
+    state.error = error;
   },
   SET_PARAMS(state, params: BulkParams) {
     let clearData = false;
@@ -264,91 +273,112 @@ export const actions = {
     state.subscriber = null;
   },
   async fetchNamespaces({ commit, state, getters }) {
-    const { client } = state;
+    try {
+      const { client } = state;
 
-    if (!getters.supportsNamespaces) {
-      commit('SET_NAMESPACES', null);
-      return;
+      if (!getters.supportsNamespaces) {
+        commit('SET_NAMESPACES', null);
+        return;
+      }
+
+      commit('SET_NAMESPACES', await client?.docker.listNamespaces() ?? null);
+      if (state.error?.source === 'namespaces') {
+        commit('SET_ERROR', null);
+      }
+    } catch (error: any) {
+      commit('SET_ERROR', { source: 'namespaces', error });
     }
-
-    commit('SET_NAMESPACES', await client?.docker.listNamespaces());
   },
   async fetchContainers({ commit, getters, state }) {
-    const { backend, client, namespace } = state;
-    const containers = state.containers ?? {};
-    const options = { all: true, namespace: getters.supportsNamespaces ? namespace : undefined };
-    const apiContainers = await client?.docker.listContainers(options) ?? [];
-    const ids = new Set<string>();
+    try {
+      const { backend, client, namespace } = state;
+      const containers = state.containers ?? {};
+      const options = { all: true, namespace: getters.supportsNamespaces ? namespace : undefined };
+      const apiContainers = await client?.docker.listContainers(options) ?? [];
+      const ids = new Set<string>();
 
-    // Update containers in-place to maintain any UI state
-    for (const container of apiContainers as (NerdctlContainer | MobyContainer)[]) {
-      /** isContainerd is used to cast the container info to the correct type. */
-      function isContainerd(container: NerdctlContainer | MobyContainer): container is NerdctlContainer {
-        return backend === ContainerEngine.CONTAINERD;
+      // Update containers in-place to maintain any UI state
+      for (const container of apiContainers as (NerdctlContainer | MobyContainer)[]) {
+        /** isContainerd is used to cast the container info to the correct type. */
+        function isContainerd(container: NerdctlContainer | MobyContainer): container is NerdctlContainer {
+          return backend === ContainerEngine.CONTAINERD;
+        }
+
+        const k8sPodName = container.Labels?.['io.kubernetes.pod.name'];
+        const k8sNamespace = container.Labels?.['io.kubernetes.pod.namespace'];
+        const composeProject = container.Labels?.['com.docker.compose.project'];
+        let state = container.State;
+        let projectGroup = 'Standalone Containers';
+
+        if (k8sPodName && k8sNamespace) {
+          projectGroup = `${ k8sNamespace }/${ k8sPodName }`;
+        } else if (composeProject) {
+          projectGroup = composeProject;
+        }
+
+        if (!state) {
+          // For containerd, stopped containers may have no state; try status.
+          state = container.Status.split(/\s+/)[0].toLowerCase() as any || 'exited';
+        }
+
+        const info: Container = {
+          id:            container.Id,
+          containerName: container.Names[0].replace(/_[a-z0-9-]{36}_[0-9]+/, ''),
+          imageName:     container.Image,
+          state,
+          uptime:        '',
+          labels:        container.Labels ?? {},
+          ports:         container.Ports,
+          projectGroup,
+        };
+
+        if (!isContainerd(container)) {
+          if (container.State === 'running') {
+            info.uptime = container.Status;
+          }
+        }
+        containers[container.Id] = merge(containers[container.Id] ?? {}, info);
+        ids.add(container.Id);
       }
-
-      const k8sPodName = container.Labels?.['io.kubernetes.pod.name'];
-      const k8sNamespace = container.Labels?.['io.kubernetes.pod.namespace'];
-      const composeProject = container.Labels?.['com.docker.compose.project'];
-      let state = container.State;
-      let projectGroup = 'Standalone Containers';
-
-      if (k8sPodName && k8sNamespace) {
-        projectGroup = `${ k8sNamespace }/${ k8sPodName }`;
-      } else if (composeProject) {
-        projectGroup = composeProject;
-      }
-
-      if (!state) {
-        // For containerd, stopped containers may have no state; try status.
-        state = container.Status.split(/\s+/)[0].toLowerCase() as any || 'exited';
-      }
-
-      const info: Container = {
-        id:            container.Id,
-        containerName: container.Names[0].replace(/_[a-z0-9-]{36}_[0-9]+/, ''),
-        imageName:     container.Image,
-        state,
-        uptime:        '',
-        labels:        container.Labels ?? {},
-        ports:         container.Ports,
-        projectGroup,
-      };
-
-      if (!isContainerd(container)) {
-        if (container.State === 'running') {
-          info.uptime = container.Status;
+      // Remove containers that no longer exist
+      for (const id of Object.keys(containers)) {
+        if (!ids.has(id)) {
+          delete containers[id];
         }
       }
-      containers[container.Id] = merge(containers[container.Id] ?? {}, info);
-      ids.add(container.Id);
-    }
-    // Remove containers that no longer exist
-    for (const id of Object.keys(containers)) {
-      if (!ids.has(id)) {
-        delete containers[id];
+      commit('SET_CONTAINERS', containers);
+      if (state.error?.source === 'containers') {
+        commit('SET_ERROR', null);
       }
+    } catch (error: any) {
+      commit('SET_ERROR', { source: 'containers', error });
     }
-    commit('SET_CONTAINERS', containers);
   },
   async fetchVolumes({ commit, getters, state }) {
-    const { client, namespace } = state;
-    const volumes = state.volumes ?? {};
-    const names = new Set<string>();
-    const options = { namespace: getters.supportsNamespaces ? namespace : undefined };
+    try {
+      const { client, namespace } = state;
+      const volumes = state.volumes ?? {};
+      const names = new Set<string>();
+      const options = { namespace: getters.supportsNamespaces ? namespace : undefined };
 
-    // Update volumes in-place to maintain any UI state.
-    for (const volume of await client?.docker.rdListVolumes(options) ?? []) {
-      volumes[volume.Name] = Object.assign(volumes[volume.Name] ?? {}, volume);
-      names.add(volume.Name);
-    }
-    // Remove volumes that no longer exist
-    for (const name of Object.keys(volumes)) {
-      if (!names.has(name)) {
-        delete volumes[name];
+      // Update volumes in-place to maintain any UI state.
+      for (const volume of await client?.docker.rdListVolumes(options) ?? []) {
+        volumes[volume.Name] = Object.assign(volumes[volume.Name] ?? {}, volume);
+        names.add(volume.Name);
       }
+      // Remove volumes that no longer exist
+      for (const name of Object.keys(volumes)) {
+        if (!names.has(name)) {
+          delete volumes[name];
+        }
+      }
+      commit('SET_VOLUMES', volumes);
+      if (state.error?.source === 'volumes') {
+        commit('SET_ERROR', null);
+      }
+    } catch (error: any) {
+      commit('SET_ERROR', { source: 'volumes', error });
     }
-    commit('SET_VOLUMES', volumes);
   },
 } satisfies ActionTree<ContainersState, any, typeof mutations, typeof getters>;
 
@@ -361,5 +391,8 @@ export const getters = {
   },
   namespace(_state, _getters, rootState): string | undefined {
     return rootState.preferences.initialPreferences?.containers?.namespace;
+  },
+  error(state) {
+    return state.error;
   },
 } satisfies GetterTree<ContainersState, any>;
