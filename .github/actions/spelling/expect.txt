@@ -89,7 +89,6 @@ bpffs
 breadcrumb
 browserhome
 brucebean
-bsdextrautils
 bsdtar
 btime
 bugtracker
@@ -377,6 +376,7 @@ INSTALLMESSAGE
 INSTALLPROPERTY
 ioctl
 ipaddr
+IPAM
 iptable
 Isf
 islabel
