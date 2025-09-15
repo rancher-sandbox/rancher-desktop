@@ -6,6 +6,6 @@ toolchain go1.24.2
 
 require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
-	golang.org/x/sys v0.35.0
-	golang.org/x/text v0.28.0
+	golang.org/x/sys v0.36.0
+	golang.org/x/text v0.29.0
 )
