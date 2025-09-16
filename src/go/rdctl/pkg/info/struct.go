@@ -9,7 +9,8 @@ import (
 // An Info describes the output the user will receive when running `rdctl info`
 // with no special options.
 type Info struct {
-	Version string `json:"version" help:"Rancher Desktop application version"`
+	Version   string `json:"version" help:"Rancher Desktop application version"`
+	IPAddress string `json:"ip-address" help:"IP address to use to contact the VM"`
 }
 
 // HandlerFunc is the generic interface to populate the [Info] result structure.
