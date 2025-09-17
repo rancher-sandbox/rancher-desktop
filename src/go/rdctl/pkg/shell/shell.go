@@ -134,7 +134,7 @@ func assertWSLIsRunning(ctx context.Context, distroName string) error {
 	// Ignore error messages; none are expected here
 	rawOutput, err := exec.CommandContext(ctx, "wsl", "--list", "--verbose").CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to run `wsl --list --verbose: %w", err)
+		return fmt.Errorf("failed to run 'wsl --list --verbose': %w", err)
 	}
 	decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
 	output, err := decoder.Bytes(rawOutput)
