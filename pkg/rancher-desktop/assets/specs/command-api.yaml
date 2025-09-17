@@ -792,6 +792,17 @@ components:
               # TODO It is not possible to modify this setting via `rdctl set`.
               x-rd-usage: diagnostic ids that have been muted
               additionalProperties: true
+            connectivity:
+              type: object
+              properties:
+                interval:
+                  type: integer
+                  x-rd-usage: >-
+                    Number of milliseconds before polling for network access;
+                    set this to zero to disable background connectivity checking.
+                timeout:
+                  type: integer
+                  x-rd-usage: Number of milliseconds to wait before timing out
 
     diagnostics:
       type: object

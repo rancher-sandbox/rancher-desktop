@@ -118,8 +118,12 @@ export const defaultSettings = {
     namespace: 'default',
   },
   diagnostics: {
-    showMuted:   false,
-    mutedChecks: {} as Record<string, boolean>,
+    showMuted:    false,
+    mutedChecks:  {} as Record<string, boolean>,
+    connectivity: {
+      interval: 5_000,
+      timeout:  5_000,
+    },
   },
   /**
    * Experimental settings
