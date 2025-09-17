@@ -43,7 +43,7 @@ load '../helpers/load'
         # On Windows, the IP address should be constant.
         assert_output 192.168.127.2
     elif is_linux; then
-        assert_output 192.168.5.15 # qemu slirp
+        assert_output 192.168.5.15 # qemu SLIRP
     elif is_macos; then
         address=$output
         if is_true "$(get_setting '.application.adminAccess')"; then
@@ -53,7 +53,7 @@ load '../helpers/load'
             # macOS Virtualization.Framework NAT
             output=$address assert_output --regexp '^192\.168\.205\.'
         else
-            output=$address assert_output 192.168.5.15 # qemu slirp
+            output=$address assert_output 192.168.5.15 # qemu SLIRP
         fi
     else
         fail 'Unknown OS'

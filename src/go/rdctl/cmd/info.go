@@ -58,7 +58,7 @@ func makeLongHelp() string {
 	var builder strings.Builder
 
 	_, _ = builder.WriteString("Returns information about Rancher Desktop.  The command returns all\n")
-	_, _ = builder.WriteString("fields in JSON by default, but a single field can be selected.\n")
+	_, _ = builder.WriteString("fields by default, but a single field can be selected with '--field'.\n")
 	_, _ = builder.WriteString("\n")
 	_, _ = builder.WriteString("The available fields are:\n")
 
