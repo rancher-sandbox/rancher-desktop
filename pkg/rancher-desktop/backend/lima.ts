@@ -111,7 +111,7 @@ export interface LimaConfiguration {
   }[];
   cpus?:     number;
   memory?:   number;
-  disk?:     number;
+  disk?:     string;
   mounts?:   LimaMount[];
   mountType: 'reverse-sshfs' | '9p' | 'virtiofs';
   ssh: {
@@ -629,6 +629,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       }],
       cpus:         this.cfg?.virtualMachine.numberCPUs || 4,
       memory:       (this.cfg?.virtualMachine.memoryInGB || 4) * 1024 * 1024 * 1024,
+      disk:         this.cfg?.experimental.virtualMachine.diskSize ?? '100GiB',
       mounts:       this.getMounts(),
       mountType:    this.cfg?.virtualMachine.mount.type,
       ssh:          { localPort: await this.sshPort },
@@ -2161,15 +2162,16 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
       'experimental.virtualMachine.mount.9p.msizeInKib':      undefined,
       'experimental.virtualMachine.mount.9p.protocolVersion': undefined,
       'experimental.virtualMachine.mount.9p.securityModel':   undefined,
-      'virtualMachine.mount.type':                            undefined,
       'experimental.virtualMachine.sshPortForwarder':         undefined,
+      'virtualMachine.mount.type':                            undefined,
       'virtualMachine.type':                                  undefined,
       'virtualMachine.useRosetta':                            undefined,
     }));
     if (limaConfig) {
       Object.assign(reasons, await this.kubeBackend.requiresRestartReasons(this.cfg, cfg, {
-        'virtualMachine.memoryInGB': { current: (limaConfig.memory ?? 4 * GiB) / GiB },
-        'virtualMachine.numberCPUs': { current: limaConfig.cpus ?? 2 },
+        'experimental.virtualMachine.diskSize': { current: limaConfig.disk ?? '100GiB' },
+        'virtualMachine.memoryInGB':            { current: (limaConfig.memory ?? 4 * GiB) / GiB },
+        'virtualMachine.numberCPUs':            { current: limaConfig.cpus ?? 2 },
       }));
     }
 

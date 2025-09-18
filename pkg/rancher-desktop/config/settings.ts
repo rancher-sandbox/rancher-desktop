@@ -129,7 +129,8 @@ export const defaultSettings = {
     /** can only be enabled if containerEngine.webAssembly.enabled is true */
     kubernetes:      { options: { spinkube: false } },
     virtualMachine:  {
-      mount: {
+      diskSize: '100GiB',
+      mount:    {
         '9p': {
           securityModel:   SecurityModel.NONE,
           protocolVersion: ProtocolVersion.NINEP2000_L,

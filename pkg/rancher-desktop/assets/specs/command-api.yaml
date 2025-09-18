@@ -700,6 +700,12 @@ components:
             virtualMachine:
               type: object
               properties:
+                diskSize:
+                  type: string
+                  x-rd-platforms: [darwin, linux]
+                  x-rd-usage: >-
+                    desired size of the disk; changing this setting will not
+                    shrink existing disks (example: 10GiB)
                 mount:
                   type: object
                   x-rd-platforms: [darwin, linux]
