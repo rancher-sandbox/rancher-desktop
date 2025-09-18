@@ -59,6 +59,7 @@ export class DiagnosticsManager {
           import('./kubeContext'),
           import('./kubeVersionsAvailable'),
           import('./limaDarwin'),
+          import('./limaOverrides'),
           import('./mockForScreenshots'),
           import('./pathManagement'),
           import('./rdBinInShell'),
