@@ -2,62 +2,56 @@ import { net } from 'electron';
 
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
+import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
 
 const console = Logging.diagnostics;
 
-// Returns the timeout, in milliseconds, for the network connectivity check.
-function getTimeout(): number {
-  if (process.env.RD_CONNECTED_TO_INTERNET_TIMEOUT) {
-    const parsedTimeout = parseInt(process.env.RD_CONNECTED_TO_INTERNET_TIMEOUT);
+let pollingInterval: NodeJS.Timeout;
+let timeout = 5_000;
 
-    if (parsedTimeout > 0) {
-      return parsedTimeout;
-    }
+// Since this is just a status check, it's fine to just reset the timer every
+// time _any_ setting has been updated.
+mainEvents.on('settings-update', settings => {
+  clearInterval(pollingInterval);
+
+  const { timeout: localTimeout, interval } = settings.diagnostics.connectivity;
+
+  timeout = localTimeout;
+  if (interval > 0) {
+    pollingInterval = setInterval(() => {
+      mainEvents.invoke('diagnostics-trigger', CheckConnectedToInternet.id);
+    }, interval);
   }
-
-  return 5000;
-}
+});
 
 /**
  * Checks whether we can perform an HTTP request to a host on the internet,
  * with a reasonably short timeout.
  */
 async function checkNetworkConnectivity(): Promise<boolean> {
-  const controller = new AbortController();
-  const timeout = getTimeout();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-  let connected: boolean;
-
-  try {
+  const request = net.request({
     // Using HTTP request that returns a 301 redirect response instead of a 20+ kB web page
-    const resp = await net.fetch('http://docs.rancherdesktop.io/', { signal: controller.signal, redirect: 'manual' });
-    const location = resp.headers.get('Location') || '';
-
-    // Verify that we get the original redirect and not a captive portal
-    if (resp.status !== 301 || !location.includes('docs.rancherdesktop.io')) {
-      throw new Error(`expected status 301 (was ${ resp.status }) and location including docs.rancherdesktop.io (was ${ location })`);
-    }
-    connected = true;
-  } catch (error: any) {
-    let errorMessage = error;
-
-    if (/Redirect was cancelled/.test(error)) {
-      // Electron does not currently handle manual redirects correctly.
-      // https://github.com/electron/electron/issues/43715
-      connected = true;
-    } else {
-      if (error.name === 'AbortError') {
-        errorMessage = `timed out after ${ timeout } ms`;
-      }
-      console.log(`Got error while checking connectivity: ${ errorMessage }`);
-      connected = false;
-    }
+    url:         'http://docs.rancherdesktop.io/',
+    credentials: 'omit',
+    redirect:    'manual',
+    cache:       'no-cache',
+  });
+  const timeoutId = setTimeout(() => {
+    console.log(`${ CheckConnectedToInternet.id }: aborting due to timeout after ${ timeout } milliseconds.`);
+    request.abort();
+  }, timeout);
+  try {
+    return await new Promise<boolean>(resolve => {
+      request.on('response', () => resolve(true));
+      request.on('redirect', () => resolve(true));
+      request.on('error', () => resolve(false));
+      request.on('abort', () => resolve(false));
+      request.end();
+    });
   } finally {
     clearTimeout(timeoutId);
   }
-
-  return connected;
 }
 
 /**
@@ -71,7 +65,9 @@ const CheckConnectedToInternet: DiagnosticsChecker = {
     return Promise.resolve(true);
   },
   async check() {
-    if (await checkNetworkConnectivity()) {
+    const connected = await checkNetworkConnectivity();
+    mainEvents.emit('diagnostics-event', { id: 'network-connectivity', connected });
+    if (connected) {
       return {
         description: 'The application can reach the internet successfully.',
         passed:      true,

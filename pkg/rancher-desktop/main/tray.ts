@@ -36,7 +36,6 @@ export class Tray {
   private currentNetworkStatus:    networkStatus = networkStatus.CHECKING;
   private static instance:         Tray;
   private networkState:            boolean | undefined;
-  private networkInterval:         NodeJS.Timeout;
   private runBuildFromConfigTimer: NodeJS.Timeout | null = null;
   private kubeConfigWatchers:      fs.FSWatcher[] = [];
   private fsWatcherInterval:       NodeJS.Timeout;
@@ -199,25 +198,24 @@ export class Tray {
     mainEvents.on('k8s-check-state', this.k8sStateChangedEvent);
     mainEvents.on('settings-update', this.settingsUpdateEvent);
 
-    // This triggers the CONNECTED_TO_INTERNET diagnostic at a set interval and
-    // updates the network status in the tray if there's a change in the network
-    // state.
-    this.networkInterval = setInterval(async() => {
-      let networkDiagnostic = await mainEvents.invoke('diagnostics-trigger', 'CONNECTED_TO_INTERNET');
-
-      if (Array.isArray(networkDiagnostic)) {
-        networkDiagnostic = networkDiagnostic.shift();
+    // If the network connectivity diagnostic changes results, update it here.
+    mainEvents.on('diagnostics-event', payload => {
+      if (payload.id !== 'network-connectivity') {
+        return;
       }
-      if (this.networkState === networkDiagnostic?.passed) {
+
+      const { connected } = payload;
+
+      if (this.networkState === connected) {
         return; // network state hasn't changed since last check
       }
 
-      this.networkState = !!networkDiagnostic?.passed;
+      this.networkState = connected;
 
       this.handleUpdateNetworkStatus(this.networkState).catch((err: any) => {
         console.log('Error updating network status: ', err);
       });
-    }, 5000);
+    });
   }
 
   private backendStateEvent = (backendIsLocked: string) => {
@@ -258,7 +256,6 @@ export class Tray {
     mainEvents.off('settings-update', this.settingsUpdateEvent);
     ipcMainProxy.removeListener('update-network-status', this.updateNetworkStatusEvent);
     clearInterval(this.fsWatcherInterval);
-    clearInterval(this.networkInterval);
     if (this.runBuildFromConfigTimer) {
       clearTimeout(this.runBuildFromConfigTimer);
       this.runBuildFromConfigTimer = null;

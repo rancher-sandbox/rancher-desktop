@@ -158,8 +158,12 @@ export default class SettingsValidator {
         namespace: this.checkString,
       },
       diagnostics: {
-        mutedChecks: this.checkBooleanMapping,
-        showMuted:   this.checkBoolean,
+        mutedChecks:  this.checkBooleanMapping,
+        showMuted:    this.checkBoolean,
+        connectivity: {
+          interval: this.checkNumber(0, 2 ** 31 - 1),
+          timeout:  this.checkNumber(1, 2 ** 31 - 1),
+        },
       },
     };
     this.canonicalizeSynonyms(newSettings);
