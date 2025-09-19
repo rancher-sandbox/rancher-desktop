@@ -1,8 +1,8 @@
 import semver from 'semver';
-import { GetterTree } from 'vuex';
+import { GetterTree, MutationTree } from 'vuex';
 
 import { fetchAPI } from './credentials';
-import { ActionContext, MutationsType } from './ts-helpers';
+import { ActionTree, MutationsType } from './ts-helpers';
 
 import MARKETPLACE_DATA from '@pkg/assets/extension-data.yaml';
 import type { ExtensionMetadata } from '@pkg/main/extensions/types';
@@ -51,16 +51,14 @@ export interface MarketplaceData {
 
 export const state: () => ExtensionsState = () => ({ extensions: {} });
 
-export const mutations: MutationsType<ExtensionsState> = {
-  SET_EXTENSIONS(state: ExtensionsState, extensions: Record<string, ExtensionState>) {
+export const mutations = {
+  SET_EXTENSIONS(state, extensions: Record<string, ExtensionState>) {
     state.extensions = extensions;
   },
-};
-
-type ExtensionsActionContext = ActionContext<ExtensionsState>;
+} satisfies Partial<MutationsType<ExtensionsState>> & MutationTree<ExtensionsState>;
 
 export const actions = {
-  async fetch({ commit, rootState }: ExtensionsActionContext) {
+  async fetch({ commit, rootState }) {
     const response = await fetchAPI('/v1/extensions', rootState);
 
     if (!response.ok) {
@@ -95,7 +93,7 @@ export const actions = {
    * @param id The extension id; this should include the tag.
    * @returns Error message, or `true` if extension is installed.
    */
-  async install({ rootState, dispatch }: ExtensionsActionContext, { id }: { id: string }) {
+  async install({ rootState, dispatch }, { id }: { id: string }) {
     const r = await fetchAPI(`/v1/extensions/install?id=${ id }`, rootState, { method: 'POST' });
 
     await dispatch('fetch');
@@ -112,7 +110,7 @@ export const actions = {
    * @param id The extension id; this should _not_ include the tag.
    * @returns Error message, or `true` if extension is uninstall.
    */
-  async uninstall({ rootState, dispatch }: ExtensionsActionContext, { id }: { id: string }) {
+  async uninstall({ rootState, dispatch }, { id }: { id: string }) {
     const r = await fetchAPI(`/v1/extensions/uninstall?id=${ id }`, rootState, { method: 'POST' });
 
     await dispatch('fetch');
@@ -123,13 +121,13 @@ export const actions = {
 
     return r.status === 201;
   },
-};
+} satisfies ActionTree<ExtensionsState, any, typeof mutations, typeof getters>;
 
-export const getters: GetterTree<ExtensionsState, ExtensionsState> = {
-  installedExtensions(state: ExtensionsState): ExtensionState[] {
+export const getters = {
+  installedExtensions(state): ExtensionState[] {
     return Object.values(state.extensions);
   },
-  marketData(state: ExtensionsState): MarketplaceData[] {
+  marketData(): MarketplaceData[] {
     return MARKETPLACE_DATA;
   },
-};
+} satisfies GetterTree<ExtensionsState, any>;

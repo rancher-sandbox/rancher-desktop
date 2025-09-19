@@ -1,19 +1,18 @@
 <script lang="ts">
 
 import { defineComponent } from 'vue';
-import { mapGetters } from 'vuex';
 
 import DiagnosticsBody from '@pkg/components/DiagnosticsBody.vue';
+import { mapTypedState } from '@pkg/entry/store';
 
 export default defineComponent({
   name:       'diagnostics',
   components: { DiagnosticsBody },
 
-  computed: mapGetters('diagnostics', ['diagnostics', 'timeLastRun']),
+  computed: mapTypedState('diagnostics', ['diagnostics', 'timeLastRun']),
   async beforeMount() {
-    const credentials = await this.$store.dispatch('credentials/fetchCredentials');
-
-    await this.$store.dispatch('preferences/fetchPreferences', credentials);
+    await this.$store.dispatch('credentials/fetchCredentials');
+    await this.$store.dispatch('preferences/fetchPreferences');
     await this.$store.dispatch('diagnostics/fetchDiagnostics');
   },
   mounted() {

@@ -34,9 +34,9 @@ export default defineComponent({
   },
   async beforeMount() {
     await this.$store.dispatch('credentials/fetchCredentials');
-    await this.$store.dispatch('preferences/fetchPreferences', this.credentials as ServerState);
-    await this.$store.dispatch('preferences/fetchLocked', this.credentials as ServerState);
-    await this.$store.dispatch('transientSettings/fetchTransientSettings', this.credentials as ServerState);
+    await this.$store.dispatch('preferences/fetchPreferences');
+    await this.$store.dispatch('preferences/fetchLocked');
+    await this.$store.dispatch('transientSettings/fetchTransientSettings');
     this.preferencesLoaded = true;
 
     ipcRenderer.on('k8s-integrations', (_, integrations: Record<string, string | boolean>) => {
@@ -73,10 +73,7 @@ export default defineComponent({
     async commitNavItem(current: string) {
       await this.$store.dispatch(
         'transientSettings/commitPreferences',
-        {
-          ...this.credentials as ServerState,
-          payload: { preferences: { navItem: { current } } } as RecursivePartial<TransientSettings>,
-        },
+        { payload: { preferences: { navItem: { current } } } },
       );
     },
     closePreferences() {
@@ -89,20 +86,11 @@ export default defineComponent({
         return;
       }
 
-      await this.$store.dispatch(
-        'preferences/commitPreferences',
-        { ...this.credentials as ServerState },
-      );
+      await this.$store.dispatch('preferences/commitPreferences');
       this.closePreferences();
     },
     async proposePreferences() {
-      const { port, user, password } = this.credentials as ServerState;
-      const { reset } = await this.$store.dispatch(
-        'preferences/proposePreferences',
-        {
-          port, user, password,
-        },
-      );
+      const { reset } = await this.$store.dispatch('preferences/proposePreferences');
 
       if (!reset) {
         return true;

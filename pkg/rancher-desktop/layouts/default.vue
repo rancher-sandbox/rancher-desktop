@@ -38,6 +38,7 @@ import ActionMenu from '@pkg/components/ActionMenu.vue';
 import Nav from '@pkg/components/Nav.vue';
 import StatusBar from '@pkg/components/StatusBar.vue';
 import TheTitle from '@pkg/components/TheTitle.vue';
+import { mapTypedState } from '@pkg/entry/store';
 import initExtensions from '@pkg/preload/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { mainRoutes } from '@pkg/window/constants';
@@ -82,7 +83,7 @@ export default {
       return this.installedExtensions.filter(ext => ext.canUpgrade).length;
     },
     ...mapState('credentials', ['credentials']),
-    ...mapGetters('diagnostics', ['diagnostics']),
+    ...mapTypedState('diagnostics', ['diagnostics']),
     ...mapGetters('extensions', ['installedExtensions']),
   },
 
@@ -119,7 +120,7 @@ export default {
     this.$store.dispatch('extensions/fetch');
 
     ipcRenderer.on('preferences/changed', () => {
-      this.$store.dispatch('preferences/fetchPreferences', this.credentials);
+      this.$store.dispatch('preferences/fetchPreferences');
     });
 
     ipcRenderer.on('extensions/getContentArea', () => {
@@ -139,6 +140,7 @@ export default {
   },
 
   mounted() {
+    this.$store.dispatch('credentials/fetchCredentials').catch(console.error);
     this.$store.dispatch('i18n/init').catch(ex => console.error(ex));
   },
 
@@ -158,7 +160,7 @@ export default {
 
         return;
       }
-      await this.$store.dispatch('preferences/fetchPreferences', this.credentials);
+      await this.$store.dispatch('preferences/fetchPreferences');
       await this.$store.dispatch('diagnostics/fetchDiagnostics');
     },
 

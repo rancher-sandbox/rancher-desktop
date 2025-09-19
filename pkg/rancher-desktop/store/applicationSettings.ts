@@ -1,6 +1,7 @@
 import _ from 'lodash';
+import { GetterTree, MutationTree } from 'vuex';
 
-import { ActionContext, MutationsType } from './ts-helpers';
+import { ActionTree, MutationsType } from './ts-helpers';
 
 import { defaultSettings } from '@pkg/config/settings';
 import type { PathManagementStrategy } from '@pkg/integrations/pathManager';
@@ -21,27 +22,25 @@ export const state: () => State = () => {
   return { pathManagementStrategy: cfg.application.pathManagementStrategy };
 };
 
-export const mutations: MutationsType<State> = {
+export const mutations = {
   SET_PATH_MANAGEMENT_STRATEGY(state: State, strategy: PathManagementStrategy) {
     state.pathManagementStrategy = strategy;
   },
-} as const;
-
-type AppActionContext = ActionContext<State>;
+} satisfies Partial<MutationsType<State>> & MutationTree<State>;
 
 export const actions = {
-  setPathManagementStrategy({ commit }: AppActionContext, strategy: PathManagementStrategy) {
+  setPathManagementStrategy({ commit }, strategy: PathManagementStrategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
   },
-  async commitPathManagementStrategy({ commit }: AppActionContext, strategy: PathManagementStrategy) {
+  async commitPathManagementStrategy({ commit }, strategy: PathManagementStrategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
     cfg.application.pathManagementStrategy = strategy;
     await ipcRenderer.invoke('settings-write', { application: { pathManagementStrategy: strategy } });
   },
-};
+} satisfies ActionTree<State, any, typeof mutations, typeof getters>;
 
 export const getters = {
   pathManagementStrategy({ pathManagementStrategy }: State) {
     return pathManagementStrategy;
   },
-};
+} satisfies GetterTree<State, any>;

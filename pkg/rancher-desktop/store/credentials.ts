@@ -1,4 +1,6 @@
-import { ActionContext, MutationsType } from './ts-helpers';
+import { MutationTree } from 'vuex/types';
+
+import { ActionTree, MutationsType } from './ts-helpers';
 
 import type { ServerState } from '@pkg/main/commandServer/httpCommandServer';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
@@ -41,21 +43,19 @@ export const state: () => CredentialsState = () => (
   }
 );
 
-export const mutations: MutationsType<CredentialsState> = {
+export const mutations = {
   SET_CREDENTIALS(state, credentials) {
     state.credentials = credentials;
     hasCredentials.resolve();
   },
-};
-
-type CredActionContext = ActionContext<CredentialsState>;
+} satisfies Partial<MutationsType<CredentialsState>> & MutationTree<CredentialsState>;
 
 export const actions = {
-  async fetchCredentials({ commit }: CredActionContext): Promise<Credentials> {
+  async fetchCredentials({ commit }): Promise<Credentials> {
     const result = await ipcRenderer.invoke('api-get-credentials');
 
     commit('SET_CREDENTIALS', result);
 
     return result;
   },
-};
+} satisfies ActionTree<CredentialsState, any, typeof mutations>;
