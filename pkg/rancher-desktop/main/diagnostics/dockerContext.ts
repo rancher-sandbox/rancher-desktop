@@ -25,12 +25,11 @@ const dockerContextChecker: DiagnosticsChecker = {
       }
     }
 
+    const DEFAULT_CONTEXT = 'default';
     const settings = await mainEvents.invoke('settings-fetch');
     const useDefaultContext = process.platform === 'win32' || settings.application.adminAccess;
-    const currentContext = await dockerDirManager.currentDockerContext ?? 'default';
-    const desiredContext = useDefaultContext
-      ? 'default'
-      : await dockerDirManager.getDesiredDockerContext(settings.application.adminAccess, currentContext);
+    const currentContext = await dockerDirManager.currentDockerContext ?? DEFAULT_CONTEXT;
+    const desiredContext = await dockerDirManager.getDesiredDockerContext(useDefaultContext, undefined) ?? DEFAULT_CONTEXT;
 
     if (currentContext !== desiredContext) {
       results.push({
