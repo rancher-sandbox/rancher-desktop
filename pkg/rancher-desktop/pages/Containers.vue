@@ -60,9 +60,13 @@
       </template>
       <template #col:containerName="{ row }">
         <td>
-          <span v-tooltip="getTooltipConfig(row.containerName)">
+          <a
+            class="container-name-link"
+            v-tooltip="getTooltipConfig(row.containerName)"
+            @click.stop.prevent="navigateToInfo(row)"
+          >
             {{ shortSha(row.containerName) }}
-          </span>
+          </a>
         </td>
       </template>
       <template #col:ports="{ row }">
@@ -158,7 +162,7 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
  * @property { (this: Container, containers?: Container[]) => void } [stopContainer]
  * @property { (this: Container, containers?: Container[]) => void } [startContainer]
  * @property { (this: Container, containers?: Container[]) => void } [deleteContainer]
- * @property { (this: Container) => void } [viewLogs]
+ * @property { (this: Container) => void } [viewInfo]
  * @property { (readonly [number, number])[] } portList
  */
 
@@ -235,8 +239,8 @@ export default defineComponent({
         .map(container => merge({}, container, {
           availableActions: [
             {
-              label:      'Logs',
-              action:     'viewLogs',
+              label:      'Info',
+              action:     'viewInfo',
               enabled:    true,
               bulkable:   false,
             },
@@ -271,8 +275,8 @@ export default defineComponent({
           deleteContainer:   (args) => {
             this.execCommand('rm', args?.length ? args : container);
           },
-          viewLogs: () => {
-            this.viewLogs(container);
+          viewInfo: () => {
+            this.viewInfo(container);
           },
           portList: this.getPortList(container),
         }));
@@ -385,8 +389,11 @@ export default defineComponent({
         }
       }
     },
-    viewLogs(container) {
-      this.$router.push(`/containers/logs/${ container.id }`);
+    viewInfo(container) {
+      this.$router.push(`/containers/info/${ container.id }`);
+    },
+    navigateToInfo(container) {
+      this.$router.push(`/containers/info/${ container.id }`);
     },
     /** @param container {RowItem} */
     isRunning(container) {
@@ -590,6 +597,17 @@ export default defineComponent({
 }
 .containersTable :deep(.bulk) {
   align-self: flex-end;
+}
+
+.container-name-link {
+  color: var(--link);
+  cursor: pointer;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    color: var(--link-hover);
+  }
 }
 
 .port-container {
