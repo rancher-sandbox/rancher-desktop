@@ -16,7 +16,7 @@ import SudoPrompt from '../pages/SudoPrompt.vue';
 import Troubleshooting from '../pages/Troubleshooting.vue';
 import UnmetPrerequisites from '../pages/UnmetPrerequisites.vue';
 import Volumes from '../pages/Volumes.vue';
-import ContainerLogs from '../pages/containers/logs/_id.vue';
+import ContainerInfo from '../pages/containers/ContainerInfo.vue';
 import ExtensionsItem from '../pages/extensions/_root/_src/_id.vue';
 import ImagesAdd from '../pages/images/add.vue';
 import ImagesScan from '../pages/images/scans/_image-name.vue';
@@ -35,7 +35,7 @@ export default createRouter({
       path: '/Containers', component: Containers, name: 'Containers',
     },
     {
-      path: '/containers/logs/:id', component: ContainerLogs, name: 'containers-logs-id',
+      path: '/containers/info/:id', component: ContainerInfo, name: 'container-info',
     },
     {
       path: '/Volumes', component: Volumes, name: 'Volumes',

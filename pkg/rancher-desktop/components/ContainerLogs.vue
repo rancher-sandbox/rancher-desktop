@@ -1,24 +1,6 @@
 <template>
-  <div class="container-logs">
-    <div
-      class="container-info"
-      data-testid="container-info"
-    >
-      <span
-        class="container-name"
-        data-testid="container-name"
-      >{{ containerName }}</span>
-      <badge-state
-        :color="isContainerRunning ? 'bg-success' : 'bg-darker'"
-        :label="containerState"
-        data-testid="container-state"
-      />
-    </div>
-
-    <div
-      class="search-widget"
-      data-testid="search-widget"
-    >
+  <div class="container-logs-component">
+    <div class="search-widget">
       <i
         aria-hidden="true"
         class="icon icon-search search-icon"
@@ -28,7 +10,6 @@
         v-model="searchTerm"
         aria-label="Search in logs"
         class="search-input"
-        data-testid="search-input"
         placeholder="Search logs..."
         type="search"
         @input="performSearch"
@@ -38,7 +19,6 @@
         :disabled="!searchTerm"
         aria-label="Previous match"
         class="search-btn role-tertiary"
-        data-testid="search-prev-btn"
         title="Previous match"
         @click="searchPrevious"
       >
@@ -51,7 +31,6 @@
         :disabled="!searchTerm"
         aria-label="Next match"
         class="search-btn role-tertiary"
-        data-testid="search-next-btn"
         title="Next match"
         @click="searchNext"
       >
@@ -64,7 +43,6 @@
         :disabled="!searchTerm"
         aria-label="Clear search"
         class="search-close-btn role-tertiary"
-        data-testid="search-clear-btn"
         title="Clear search"
         @click="clearSearch"
       >
@@ -78,16 +56,14 @@
     <loading-indicator
       v-if="isLoading || waitingForInitialLogs"
       class="content-state"
-      data-testid="loading-indicator"
     >
-      {{ t('containers.logs.loading') }}
+      Loading logs...
     </loading-indicator>
 
     <banner
       v-if="error && !waitingForInitialLogs"
       class="content-state"
       color="error"
-      data-testid="error-message"
     >
       <span class="icon icon-info-circle icon-lg" />
       {{ error }}
@@ -97,273 +73,81 @@
       v-if="!isLoading"
       ref="terminalContainer"
       :class="['terminal-container', { 'terminal-hidden': waitingForInitialLogs }]"
-      data-testid="terminal"
     />
   </div>
 </template>
 
 <script>
-import { BadgeState, Banner } from '@rancher/components';
+import { Banner } from '@rancher/components';
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Terminal } from '@xterm/xterm';
 import { defineComponent } from 'vue';
-import { mapGetters } from 'vuex';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
-import { ContainerEngine } from '@pkg/config/settings';
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default defineComponent({
   name:       'ContainerLogs',
-  title:      'Container Logs',
   components: {
-    BadgeState,
     Banner,
     LoadingIndicator,
   },
+  props: {
+    containerId: {
+      type:     String,
+      required: true,
+    },
+    isContainerRunning: {
+      type:     Boolean,
+      default:  false,
+    },
+    namespace: {
+      type:    String,
+      default: null,
+    },
+  },
   data() {
     return {
-      settings:               undefined,
-      ddClient:               null,
       isLoading:              true,
       error:                  null,
-      containerName:          '',
-      containerState:         '',
-      isContainerRunning:     false,
       terminal:               null,
       fitAddon:               null,
       searchAddon:            null,
       streamProcess:          null,
       searchTerm:             '',
       resizeHandler:          null,
+      resizeObserver:         null,
       reconnectAttempts:      0,
       maxReconnectAttempts:   5,
       searchDebounceTimer:    null,
-      containerCheckInterval: null,
-      /** Controls terminal visibility - true hides terminal until logs arrive to prevent fast scroll */
       waitingForInitialLogs:  true,
-      /** Timeout ID for 200ms delay before revealing terminal after initial logs */
       revealTimeout:          null,
-      /** Tracks if any log output has been received - used with fallback timer to ensure terminal reveals even without logs */
       hasReceivedLogs:        false,
     };
   },
-  computed: {
-    ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
-    containerId() {
-      const id = this.$route.params.id;
-      // Validate container ID format (alphanumeric + hyphens/underscores only)
-      if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
-        throw new Error('Invalid container ID format');
-      }
-      return id;
-    },
-    hasNamespaceSelected() {
-      return this.settings?.containerEngine?.name === ContainerEngine.CONTAINERD && this.settings?.containers?.namespace;
-    },
-  },
   mounted() {
-    this.$store.dispatch('page/setHeader', {
-      title:       this.t('containers.logs.title'),
-      description: '',
-    });
-
-    ipcRenderer.on('settings-read', this.onSettingsRead);
-
-    ipcRenderer.send('settings-read');
-
+    this.initializeLogs();
     window.addEventListener('keydown', this.handleGlobalKeydown);
   },
+  watch: {
+    containerId: {
+      handler() {
+        if (this.terminal) {
+          this.cleanup();
+        }
+        this.initializeLogs();
+      },
+    },
+  },
   beforeUnmount() {
-    this.stopStreaming();
-    this.stopContainerChecking();
-    if (this.terminal) {
-      try {
-        if (this.resizeHandler) {
-          window.removeEventListener('resize', this.resizeHandler);
-          this.resizeHandler = null;
-        }
-
-        if (this.searchAddon) {
-          this.searchAddon.clearDecorations();
-          this.searchAddon = null;
-        }
-
-        if (this.fitAddon) {
-          this.fitAddon = null;
-        }
-
-        this.terminal.dispose();
-        this.terminal = null;
-      } catch (error) {
-        console.error('Error disposing terminal:', error);
-      }
-    }
-    ipcRenderer.off('settings-read', this.onSettingsRead);
+    this.cleanup();
     window.removeEventListener('keydown', this.handleGlobalKeydown);
-    if (this.resizeHandler) {
-      window.removeEventListener('resize', this.resizeHandler);
-    }
-    if (this.searchDebounceTimer) {
-      clearTimeout(this.searchDebounceTimer);
-    }
-    if (this.revealTimeout) {
-      clearTimeout(this.revealTimeout);
-    }
   },
   methods: {
-    async onSettingsRead(event, settings) {
-      this.settings = settings;
-      await this.initializeLogs();
-    },
     async initializeLogs() {
-      if (window.ddClient && this.isK8sReady && this.settings) {
-        this.ddClient = window.ddClient;
-        await this.getContainerInfo();
+      if (window.ddClient) {
         await this.startStreaming();
-        this.startContainerChecking();
-      }
-    },
-    async getContainerInfo() {
-      try {
-        const listOptions = {
-          all:     true,
-          filters: `id=${ this.containerId }`,
-        };
-
-        if (this.hasNamespaceSelected) {
-          listOptions.namespace = this.hasNamespaceSelected;
-        }
-
-        const containers = await this.ddClient?.docker.listContainers(listOptions);
-        const container = containers?.[0];
-
-        if (container) {
-          const name = Array.isArray(container.Names) ? container.Names[0] : container.Names.split(/\s+/)?.[0];
-          this.containerName = name?.replace(/_[a-z0-9-]{36}_[0-9]+/, '') || container.Id.substring(0, 12);
-          this.containerState = container.State || container.Status;
-          this.isContainerRunning = container.State === 'running' || container.Status === 'Up';
-        } else {
-          this.containerName = this.containerId.substring(0, 12);
-          this.containerState = 'unknown';
-          this.isContainerRunning = false;
-        }
-      } catch (error) {
-        console.error('Error getting container info:', error);
-        this.containerName = this.containerId.substring(0, 12);
-        this.containerState = 'unknown';
-        this.isContainerRunning = false;
-      }
-    },
-    async startStreaming() {
-      try {
-        this.error = null;
-        this.waitingForInitialLogs = true;
-        this.hasReceivedLogs = false;
-
-        if (!this.terminal) {
-          await this.initializeTerminal();
-        }
-
-        const streamOptions = {
-          cwd:    '/',
-          stream: {
-            onOutput: (data) => {
-              if (this.terminal && (data.stdout || data.stderr)) {
-                const output = data.stdout || data.stderr;
-
-                this.hasReceivedLogs = true;
-
-                this.terminal.write(output);
-
-                if (this.waitingForInitialLogs) {
-                  if (this.revealTimeout) {
-                    clearTimeout(this.revealTimeout);
-                  }
-
-                  this.revealTimeout = setTimeout(() => {
-                    this.terminal.scrollToBottom();
-                    this.waitingForInitialLogs = false;
-                  }, 200);
-                }
-              }
-            },
-            onError: (error) => {
-              console.error('Stream error:', error);
-              this.handleStreamError(error);
-            },
-            onClose: (code) => {
-              this.streamProcess = null;
-              if (code !== 0 && this.isContainerRunning) {
-                this.handleStreamError(new Error(`Stream closed with code ${ code }`));
-              }
-            },
-            splitOutputLines: false,
-          },
-        };
-
-        if (this.hasNamespaceSelected) {
-          streamOptions.namespace = this.hasNamespaceSelected;
-        }
-
-        const streamArgs = ['--follow', '--timestamps', '--tail', '10000', this.containerId];
-
-        this.streamProcess = this.ddClient.docker.cli.exec('logs', streamArgs, streamOptions);
-
-        this.reconnectAttempts = 0;
-
-        setTimeout(() => {
-          if (this.waitingForInitialLogs && !this.hasReceivedLogs) {
-            this.waitingForInitialLogs = false;
-          }
-        }, 500);
-      } catch (error) {
-        console.error('Error starting log stream:', error);
-
-        this.waitingForInitialLogs = false;
-
-        const errorMessages = {
-          'No such container':  'Container not found. It may have been removed.',
-          'permission denied':  'Permission denied. Check Docker access permissions.',
-          'connection refused': 'Cannot connect to Docker. Is Docker running?',
-        };
-
-        const errorKey = Object.keys(errorMessages).find(key => error.message.includes(key));
-        this.error = errorKey ? errorMessages[errorKey] : (error.message || this.t('containers.logs.fetchError'));
-      }
-    },
-    stopStreaming() {
-      if (this.streamProcess) {
-        try {
-          this.streamProcess.close();
-        } catch (error) {
-          console.error('Error stopping log stream:', error);
-        }
-        this.streamProcess = null;
-      }
-    },
-    handleStreamError(error) {
-      if (this.reconnectAttempts < this.maxReconnectAttempts && this.isContainerRunning) {
-        this.reconnectAttempts++;
-        const delay = Math.pow(2, this.reconnectAttempts - 1) * 1000;
-        setTimeout(() => {
-          this.startStreaming();
-        }, delay);
-      } else {
-        this.error = 'Streaming error: ' + error.message + (this.reconnectAttempts >= this.maxReconnectAttempts ? ' (max retries exceeded)' : '');
-      }
-    },
-    startContainerChecking() {
-      this.containerCheckInterval = setInterval(() => {
-        this.getContainerInfo();
-      }, 30000);
-    },
-    stopContainerChecking() {
-      if (this.containerCheckInterval) {
-        clearInterval(this.containerCheckInterval);
-        this.containerCheckInterval = null;
       }
     },
     async initializeTerminal() {
@@ -414,7 +198,10 @@ export default defineComponent({
         }));
 
         this.terminal.open(this.$refs.terminalContainer);
-        this.fitAddon.fit();
+
+        await this.$nextTick(() => {
+          this.fitAddon.fit();
+        });
 
         this.terminal.write('\x1b[?25l');
 
@@ -436,6 +223,115 @@ export default defineComponent({
           }
         };
         window.addEventListener('resize', this.resizeHandler);
+
+        if (window.ResizeObserver) {
+          this.resizeObserver = new ResizeObserver(() => {
+            if (this.fitAddon) {
+              this.fitAddon.fit();
+            }
+          });
+          this.resizeObserver.observe(this.$refs.terminalContainer);
+        }
+      }
+    },
+    async startStreaming() {
+      try {
+        this.error = null;
+        this.waitingForInitialLogs = true;
+        this.hasReceivedLogs = false;
+
+        if (!this.terminal) {
+          await this.initializeTerminal();
+        }
+
+        const streamOptions = {
+          cwd:    '/',
+          stream: {
+            onOutput: (data) => {
+              if (this.terminal && (data.stdout || data.stderr)) {
+                const output = data.stdout || data.stderr;
+
+                this.hasReceivedLogs = true;
+
+                this.terminal.write(output);
+
+                if (this.waitingForInitialLogs) {
+                  if (this.revealTimeout) {
+                    clearTimeout(this.revealTimeout);
+                  }
+
+                  this.revealTimeout = setTimeout(() => {
+                    this.waitingForInitialLogs = false;
+                    this.$nextTick(() => {
+                      if (this.fitAddon) {
+                        this.fitAddon.fit();
+                      }
+                      this.terminal.scrollToBottom();
+                    });
+                  }, 200);
+                }
+              }
+            },
+            onError: (error) => {
+              console.error('Stream error:', error);
+              this.handleStreamError(error);
+            },
+            onClose: (code) => {
+              this.streamProcess = null;
+              if (code !== 0 && this.isContainerRunning) {
+                this.handleStreamError(new Error(`Stream closed with code ${ code }`));
+              }
+            },
+            splitOutputLines: false,
+          },
+        };
+
+        if (this.namespace) {
+          streamOptions.namespace = this.namespace;
+        }
+
+        const streamArgs = ['--follow', '--timestamps', '--tail', '10000', this.containerId];
+        this.streamProcess = window.ddClient.docker.cli.exec('logs', streamArgs, streamOptions);
+        this.reconnectAttempts = 0;
+
+        setTimeout(() => {
+          if (this.waitingForInitialLogs && !this.hasReceivedLogs) {
+            this.waitingForInitialLogs = false;
+          }
+        }, 500);
+      } catch (error) {
+        console.error('Error starting log stream:', error);
+        this.waitingForInitialLogs = false;
+
+        const errorMessages = {
+          'No such container':  'Container not found. It may have been removed.',
+          'permission denied':  'Permission denied. Check Docker access permissions.',
+          'connection refused': 'Cannot connect to Docker. Is Docker running?',
+        };
+
+        const errorKey = Object.keys(errorMessages).find(key => error.message.includes(key));
+        this.error = errorKey ? errorMessages[errorKey] : (error.message || 'Failed to fetch logs');
+      }
+    },
+    stopStreaming() {
+      if (this.streamProcess) {
+        try {
+          this.streamProcess.close();
+        } catch (error) {
+          console.error('Error stopping log stream:', error);
+        }
+        this.streamProcess = null;
+      }
+    },
+    handleStreamError(error) {
+      if (this.reconnectAttempts < this.maxReconnectAttempts && this.isContainerRunning) {
+        this.reconnectAttempts++;
+        const delay = Math.pow(2, this.reconnectAttempts - 1) * 1000;
+        setTimeout(() => {
+          this.startStreaming();
+        }, delay);
+      } else {
+        this.error = 'Streaming error: ' + error.message + (this.reconnectAttempts >= this.maxReconnectAttempts ? ' (max retries exceeded)' : '');
       }
     },
     clearSearch() {
@@ -504,6 +400,38 @@ export default defineComponent({
         }
       }
     },
+    cleanup() {
+      this.stopStreaming();
+      if (this.terminal) {
+        try {
+          if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
+            this.resizeHandler = null;
+          }
+          if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = null;
+          }
+          if (this.searchAddon) {
+            this.searchAddon.clearDecorations();
+            this.searchAddon = null;
+          }
+          if (this.fitAddon) {
+            this.fitAddon = null;
+          }
+          this.terminal.dispose();
+          this.terminal = null;
+        } catch (error) {
+          console.error('Error disposing terminal:', error);
+        }
+      }
+      if (this.searchDebounceTimer) {
+        clearTimeout(this.searchDebounceTimer);
+      }
+      if (this.revealTimeout) {
+        clearTimeout(this.revealTimeout);
+      }
+    },
   },
 });
 </script>
@@ -511,77 +439,17 @@ export default defineComponent({
 <style lang="scss" scoped>
 @import '@xterm/xterm/css/xterm.css';
 
-.container-logs {
-  flex: 1;
+.container-logs-component {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
   grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "info search"
-    "content content";
+  height: 100%;
   gap: 1rem;
-  padding: 1.25rem;
-  overflow: hidden;
   min-height: 0;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
-    grid-template-areas:
-      "info"
-      "search"
-      "content";
-  }
-}
-
-.container-info {
-  grid-area: info;
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  justify-self: start;
-  padding-left: 0.625rem;
-
-  .container-name {
-    font-family: monospace;
-    font-weight: bold;
-    color: var(--primary);
-  }
-}
-
-.content-state {
-  grid-area: content;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2.5rem;
-}
-
-.terminal-container {
-  grid-area: content;
-  border: 1px solid #444;
-  border-radius: var(--border-radius);
-  background: #1a1a1a;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  &.terminal-hidden {
-    visibility: hidden;
-  }
-
-  :deep(.xterm) {
-    padding: 1rem;
-    height: 100%;
-  }
-
-  :deep(.xterm-selection) {
-    overflow: hidden;
-  }
 }
 
 .search-widget {
-  grid-area: search;
   display: flex;
   align-items: center;
   background: var(--nav-bg);
@@ -589,6 +457,8 @@ export default defineComponent({
   border-radius: var(--border-radius);
   overflow: hidden;
   padding: 0 0.25rem;
+  align-self: flex-end;
+  width: fit-content;
   justify-self: end;
 
   button {
@@ -637,6 +507,8 @@ export default defineComponent({
   align-items: center;
   justify-content: center;
   height: 32px;
+  min-height: auto;
+  line-height: normal;
 
   &:hover:not(:disabled) {
     background: var(--primary-hover-bg);
@@ -662,6 +534,35 @@ export default defineComponent({
 .search-btn {
   &:first-child {
     border-left: 1px solid var(--border);
+  }
+}
+
+.content-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2.5rem;
+}
+
+.terminal-container {
+  border: 1px solid #444;
+  border-radius: var(--border-radius);
+  background: #1a1a1a;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  &.terminal-hidden {
+    visibility: hidden;
+  }
+
+  :deep(.xterm) {
+    padding: 1rem;
+    height: 100%;
+  }
+
+  :deep(.xterm-selection) {
+    overflow: hidden;
   }
 }
 </style>
