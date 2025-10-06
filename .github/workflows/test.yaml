@@ -36,8 +36,7 @@ jobs:
       with:
         persist-credentials: false
     - uses: ./.github/actions/yarn-install
-    - run: ./scripts/node-license-check.sh
-      shell: bash
+    - run: yarn license-check
     - run: ./scripts/go-license-check.sh
       shell: bash
     - run: yarn lint:nofix
