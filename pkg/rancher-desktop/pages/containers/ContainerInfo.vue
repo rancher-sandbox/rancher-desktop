@@ -1,10 +1,19 @@
 <template>
   <div class="container-info-page">
-    <div class="header">
-      <h1 class="title">{{ containerName || containerId }}</h1>
+    <div
+      class="header"
+      data-testid="container-info"
+    >
+      <h1
+        class="title"
+        data-testid="container-name"
+      >
+        {{ containerName || containerId }}
+      </h1>
       <badge-state
         :color="isRunning ? 'bg-success' : 'bg-darker'"
         :label="containerState"
+        data-testid="container-state"
       />
     </div>
 
@@ -14,6 +23,7 @@
           v-for="tab in tabs"
           :key="tab.id"
           :class="['tab', 'role-tertiary', { active: activeTab === tab.id }]"
+          :data-testid="`tab-${tab.id}`"
           @click="activeTab = tab.id"
         >
           {{ tab.label }}

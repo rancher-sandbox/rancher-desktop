@@ -61,8 +61,8 @@
       <template #col:containerName="{ row }">
         <td>
           <a
-            class="container-name-link"
             v-tooltip="getTooltipConfig(row.containerName)"
+            class="container-name-link"
             @click.stop.prevent="navigateToInfo(row)"
           >
             {{ shortSha(row.containerName) }}
