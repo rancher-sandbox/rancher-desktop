@@ -1,6 +1,9 @@
 <template>
   <div class="container-logs-component">
-    <div class="search-widget">
+    <div
+      class="search-widget"
+      data-testid="search-widget"
+    >
       <i
         aria-hidden="true"
         class="icon icon-search search-icon"
@@ -10,6 +13,7 @@
         v-model="searchTerm"
         aria-label="Search in logs"
         class="search-input"
+        data-testid="search-input"
         placeholder="Search logs..."
         type="search"
         @input="performSearch"
@@ -19,6 +23,7 @@
         :disabled="!searchTerm"
         aria-label="Previous match"
         class="search-btn role-tertiary"
+        data-testid="search-prev-btn"
         title="Previous match"
         @click="searchPrevious"
       >
@@ -31,6 +36,7 @@
         :disabled="!searchTerm"
         aria-label="Next match"
         class="search-btn role-tertiary"
+        data-testid="search-next-btn"
         title="Next match"
         @click="searchNext"
       >
@@ -43,6 +49,7 @@
         :disabled="!searchTerm"
         aria-label="Clear search"
         class="search-close-btn role-tertiary"
+        data-testid="search-clear-btn"
         title="Clear search"
         @click="clearSearch"
       >
@@ -56,6 +63,7 @@
     <loading-indicator
       v-if="isLoading || waitingForInitialLogs"
       class="content-state"
+      data-testid="loading-indicator"
     >
       Loading logs...
     </loading-indicator>
@@ -64,6 +72,7 @@
       v-if="error && !waitingForInitialLogs"
       class="content-state"
       color="error"
+      data-testid="error-message"
     >
       <span class="icon icon-info-circle icon-lg" />
       {{ error }}
@@ -73,6 +82,7 @@
       v-if="!isLoading"
       ref="terminalContainer"
       :class="['terminal-container', { 'terminal-hidden': waitingForInitialLogs }]"
+      data-testid="terminal"
     />
   </div>
 </template>
@@ -199,9 +209,8 @@ export default defineComponent({
 
         this.terminal.open(this.$refs.terminalContainer);
 
-        await this.$nextTick(() => {
-          this.fitAddon.fit();
-        });
+        await this.$nextTick();
+        this.fitAddon.fit();
 
         this.terminal.write('\x1b[?25l');
 
