@@ -1,65 +1,5 @@
 <template>
   <div class="container-logs-component">
-    <div
-      class="search-widget"
-      data-testid="search-widget"
-    >
-      <i
-        aria-hidden="true"
-        class="icon icon-search search-icon"
-      />
-      <input
-        ref="searchInput"
-        v-model="searchTerm"
-        aria-label="Search in logs"
-        class="search-input"
-        data-testid="search-input"
-        placeholder="Search logs..."
-        type="search"
-        @input="performSearch"
-        @keydown="handleSearchKeydown"
-      >
-      <button
-        :disabled="!searchTerm"
-        aria-label="Previous match"
-        class="search-btn role-tertiary"
-        data-testid="search-prev-btn"
-        title="Previous match"
-        @click="searchPrevious"
-      >
-        <i
-          aria-hidden="true"
-          class="icon icon-chevron-up"
-        />
-      </button>
-      <button
-        :disabled="!searchTerm"
-        aria-label="Next match"
-        class="search-btn role-tertiary"
-        data-testid="search-next-btn"
-        title="Next match"
-        @click="searchNext"
-      >
-        <i
-          aria-hidden="true"
-          class="icon icon-chevron-down"
-        />
-      </button>
-      <button
-        :disabled="!searchTerm"
-        aria-label="Clear search"
-        class="search-close-btn role-tertiary"
-        data-testid="search-clear-btn"
-        title="Clear search"
-        @click="clearSearch"
-      >
-        <i
-          aria-hidden="true"
-          class="icon icon-x"
-        />
-      </button>
-    </div>
-
     <loading-indicator
       v-if="isLoading || waitingForInitialLogs"
       class="content-state"
@@ -125,7 +65,6 @@ export default defineComponent({
       fitAddon:               null,
       searchAddon:            null,
       streamProcess:          null,
-      searchTerm:             '',
       resizeHandler:          null,
       resizeObserver:         null,
       reconnectAttempts:      0,
@@ -138,7 +77,6 @@ export default defineComponent({
   },
   mounted() {
     this.initializeLogs();
-    window.addEventListener('keydown', this.handleGlobalKeydown);
   },
   watch: {
     containerId: {
@@ -152,7 +90,6 @@ export default defineComponent({
   },
   beforeUnmount() {
     this.cleanup();
-    window.removeEventListener('keydown', this.handleGlobalKeydown);
   },
   methods: {
     async initializeLogs() {
@@ -213,18 +150,6 @@ export default defineComponent({
         this.fitAddon.fit();
 
         this.terminal.write('\x1b[?25l');
-
-        this.terminal.attachCustomKeyEventHandler((event) => {
-          if (event.key === '/') {
-            event.preventDefault();
-            if (this.$refs.searchInput) {
-              this.$refs.searchInput.focus();
-              this.$refs.searchInput.select();
-            }
-            return false;
-          }
-          return true;
-        });
 
         this.resizeHandler = () => {
           if (this.fitAddon) {
@@ -344,17 +269,11 @@ export default defineComponent({
       }
     },
     clearSearch() {
-      this.searchTerm = '';
       if (this.searchAddon) {
         this.searchAddon.clearDecorations();
       }
-      this.$nextTick(() => {
-        if (this.$refs.searchInput) {
-          this.$refs.searchInput.focus();
-        }
-      });
     },
-    performSearch() {
+    performSearch(searchTerm) {
       if (this.searchDebounceTimer) {
         clearTimeout(this.searchDebounceTimer);
       }
@@ -363,50 +282,28 @@ export default defineComponent({
         if (!this.searchAddon) return;
 
         this.searchAddon.clearDecorations();
-        if (this.searchTerm) {
+        if (searchTerm) {
           try {
-            this.searchAddon.findNext(this.searchTerm);
+            this.searchAddon.findNext(searchTerm);
           } catch (error) {
             console.error('Search error:', error);
           }
         }
       }, 300);
     },
-    searchNext() {
-      if (!this.searchAddon || !this.searchTerm) return;
-      this.executeSearch(() => this.searchAddon.findNext(this.searchTerm));
+    searchNext(searchTerm) {
+      if (!this.searchAddon || !searchTerm) return;
+      this.executeSearch(() => this.searchAddon.findNext(searchTerm));
     },
-    searchPrevious() {
-      if (!this.searchAddon || !this.searchTerm) return;
-      this.executeSearch(() => this.searchAddon.findPrevious(this.searchTerm));
+    searchPrevious(searchTerm) {
+      if (!this.searchAddon || !searchTerm) return;
+      this.executeSearch(() => this.searchAddon.findPrevious(searchTerm));
     },
     executeSearch(searchFn) {
       try {
         searchFn();
       } catch (error) {
         console.error('Search error:', error);
-      }
-    },
-    handleSearchKeydown(event) {
-      if (event.key === 'Enter') {
-        if (event.shiftKey) {
-          this.searchPrevious();
-        } else {
-          this.searchNext();
-        }
-        event.preventDefault();
-      } else if (event.key === 'Escape') {
-        this.clearSearch();
-        event.preventDefault();
-      }
-    },
-    handleGlobalKeydown(event) {
-      if (event.key === '/') {
-        event.preventDefault();
-        if (this.$refs.searchInput) {
-          this.$refs.searchInput.focus();
-          this.$refs.searchInput.select();
-        }
       }
     },
     cleanup() {
@@ -449,101 +346,12 @@ export default defineComponent({
 @import '@xterm/xterm/css/xterm.css';
 
 .container-logs-component {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  gap: 1rem;
   min-height: 0;
   overflow: hidden;
-}
-
-.search-widget {
-  display: flex;
-  align-items: center;
-  background: var(--nav-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  padding: 0 0.25rem;
-  align-self: flex-end;
-  width: fit-content;
-  justify-self: end;
-
-  button {
-    &:focus-visible {
-      outline: 1px solid var(--primary);
-      outline-offset: -1px;
-    }
-  }
-}
-
-.search-icon {
-  color: var(--muted);
-  font-size: 14px;
-  margin: 0 0.5rem;
-}
-
-.search-input {
-  border: none;
-  background: transparent;
-  color: var(--body-text);
-  font-size: 13px;
-  padding: 0.375rem 0.625rem;
-  min-width: 200px;
-  font-family: var(--font-family-mono), monospace;
-  height: 32px;
-  outline: none;
-
-  &::placeholder {
-    color: var(--muted);
-  }
-
-  &:focus {
-    background: var(--body-bg);
-  }
-}
-
-.search-btn,
-.search-close-btn {
-  background: transparent;
-  border: none;
-  padding: 0.375rem 0.5rem;
-  cursor: pointer;
-  color: var(--muted);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;
-  min-height: auto;
-  line-height: normal;
-
-  &:hover:not(:disabled) {
-    background: var(--primary-hover-bg);
-    color: var(--primary-text);
-  }
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  &:focus,
-  &:active,
-  &:focus-visible {
-    box-shadow: none !important;
-  }
-
-  .icon {
-    font-size: 12px;
-  }
-}
-
-.search-btn {
-  &:first-child {
-    border-left: 1px solid var(--border);
-  }
+  flex: 1;
 }
 
 .content-state {
@@ -554,19 +362,18 @@ export default defineComponent({
 }
 
 .terminal-container {
-  border: 1px solid #444;
-  border-radius: var(--border-radius);
   background: #1a1a1a;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
 
   &.terminal-hidden {
     visibility: hidden;
   }
 
   :deep(.xterm) {
-    padding: 1rem;
     height: 100%;
   }
 

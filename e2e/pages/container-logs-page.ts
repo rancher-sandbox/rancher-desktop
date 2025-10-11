@@ -22,7 +22,7 @@ export class ContainerLogsPage {
     this.terminal = page.getByTestId('terminal');
 
     this.containerInfo = page.getByTestId('container-info');
-    this.containerName = page.getByTestId('container-name');
+    this.containerName = page.locator('[data-test="mainTitle"]');
     this.containerState = page.getByTestId('container-state');
 
     this.searchWidget = page.getByTestId('search-widget');
