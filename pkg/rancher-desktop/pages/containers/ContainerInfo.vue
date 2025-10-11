@@ -1,54 +1,85 @@
 <template>
-  <div class="container-info-page">
-    <div
-      class="header"
-      data-testid="container-info"
-    >
-      <h1
-        class="title"
-        data-testid="container-name"
-      >
-        {{ containerName || containerId }}
-      </h1>
-      <badge-state
-        :color="isRunning ? 'bg-success' : 'bg-darker'"
-        :label="containerState"
-        data-testid="container-state"
-      />
-    </div>
-
-    <div class="tabs-container">
-      <div class="tabs">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          :class="['tab', 'role-tertiary', { active: activeTab === tab.id }]"
-          :data-testid="`tab-${tab.id}`"
-          @click="activeTab = tab.id"
+  <div
+    class="container-info-page"
+    data-testid="container-info"
+  >
+    <div class="tab-header-row">
+      <ul class="tabs">
+        <li
+          class="tab active"
+          data-testid="tab-logs"
         >
-          {{ tab.label }}
+          <a>
+            <span>Logs</span>
+          </a>
+        </li>
+      </ul>
+      <div class="search-widget">
+        <input
+          ref="searchInput"
+          v-model="searchTerm"
+          aria-label="Search in logs"
+          class="search-input"
+          data-testid="search-input"
+          placeholder="Search logs..."
+          type="search"
+          @input="onSearchInput"
+          @keydown="handleSearchKeydown"
+        >
+        <button
+          :disabled="!searchTerm"
+          aria-label="Previous match"
+          class="search-btn btn role-tertiary"
+          data-testid="search-prev-btn"
+          title="Previous match"
+          @click="searchPrevious"
+        >
+          <i
+            aria-hidden="true"
+            class="icon icon-chevron-up"
+          />
+        </button>
+        <button
+          :disabled="!searchTerm"
+          aria-label="Next match"
+          class="search-btn btn role-tertiary"
+          data-testid="search-next-btn"
+          title="Next match"
+          @click="searchNext"
+        >
+          <i
+            aria-hidden="true"
+            class="icon icon-chevron-down"
+          />
+        </button>
+        <button
+          :disabled="!searchTerm"
+          aria-label="Clear search"
+          class="search-btn btn role-tertiary"
+          data-testid="search-clear-btn"
+          title="Clear search"
+          @click="clearSearch"
+        >
+          <i
+            aria-hidden="true"
+            class="icon icon-x"
+          />
         </button>
       </div>
-
-      <div class="tab-content">
-        <div
-          v-show="activeTab === 'logs'"
-          class="tab-panel"
-        >
-          <container-logs
-            v-if="containerId"
-            :container-id="containerId"
-            :is-container-running="isRunning"
-            :namespace="settings?.containers?.namespace"
-          />
-        </div>
-      </div>
+    </div>
+    <div class="tab-content">
+      <container-logs
+        v-if="containerId"
+        ref="containerLogs"
+        :container-id="containerId"
+        :is-container-running="isRunning"
+        :namespace="settings?.containers?.namespace"
+      />
     </div>
   </div>
 </template>
 
 <script>
-import { BadgeState } from '@rancher/components';
 import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
@@ -58,15 +89,15 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default defineComponent({
   name:       'ContainerInfo',
-  components: { BadgeState, ContainerLogs },
+  components: {
+    ContainerLogs,
+  },
   data() {
     return {
       activeTab:      'logs',
       settings:       undefined,
       subscribeTimer: undefined,
-      tabs:           [
-        { id: 'logs', label: 'Logs' },
-      ],
+      searchTerm:     '',
     };
   },
   computed: {
@@ -107,12 +138,19 @@ export default defineComponent({
       return this.currentContainer.state === 'running' || this.currentContainer.status === 'Up';
     },
   },
+  watch: {
+    containerName: {
+      handler(name) {
+        this.$store.dispatch('page/setHeader', {
+          title:       name || 'Container Info',
+          description: '',
+          action:      'ContainerStatusBadge',
+        });
+      },
+      immediate: true,
+    },
+  },
   mounted() {
-    this.$store.dispatch('page/setHeader', {
-      title:       'Container Info',
-      description: '',
-    });
-
     ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;
       this.subscribe().catch(console.error);
@@ -125,12 +163,16 @@ export default defineComponent({
     });
 
     this.subscribe().catch(console.error);
+
+    window.addEventListener('keydown', this.handleGlobalKeydown);
   },
   beforeUnmount() {
+    this.$store.dispatch('page/setHeader', { action: null });
     ipcRenderer.removeAllListeners('settings-update');
     ipcRenderer.removeAllListeners('settings-read');
     this.$store.dispatch('container-engine/unsubscribe').catch(console.error);
     clearTimeout(this.subscribeTimer);
+    window.removeEventListener('keydown', this.handleGlobalKeydown);
   },
   methods: {
     async subscribe() {
@@ -148,6 +190,54 @@ export default defineComponent({
         console.error('There was a problem subscribing to container events:', { error });
       }
     },
+    onSearchInput() {
+      if (this.$refs.containerLogs) {
+        this.$refs.containerLogs.performSearch(this.searchTerm);
+      }
+    },
+    searchNext() {
+      if (this.$refs.containerLogs) {
+        this.$refs.containerLogs.searchNext(this.searchTerm);
+      }
+    },
+    searchPrevious() {
+      if (this.$refs.containerLogs) {
+        this.$refs.containerLogs.searchPrevious(this.searchTerm);
+      }
+    },
+    clearSearch() {
+      this.searchTerm = '';
+      if (this.$refs.containerLogs) {
+        this.$refs.containerLogs.clearSearch();
+      }
+      this.$nextTick(() => {
+        if (this.$refs.searchInput) {
+          this.$refs.searchInput.focus();
+        }
+      });
+    },
+    handleSearchKeydown(event) {
+      if (event.key === 'Enter') {
+        if (event.shiftKey) {
+          this.searchPrevious();
+        } else {
+          this.searchNext();
+        }
+        event.preventDefault();
+      } else if (event.key === 'Escape') {
+        this.clearSearch();
+        event.preventDefault();
+      }
+    },
+    handleGlobalKeydown(event) {
+      if (event.key === '/') {
+        event.preventDefault();
+        if (this.$refs.searchInput) {
+          this.$refs.searchInput.focus();
+          this.$refs.searchInput.select();
+        }
+      }
+    },
   },
 });
 </script>
@@ -158,95 +248,139 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 1.25rem;
   overflow: hidden;
   min-height: 0;
 }
 
-.header {
+.tab-header-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding-bottom: 1rem;
+  justify-content: space-between;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 1rem;
-
-  .title {
-    flex: 1;
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--body-text);
-  }
-}
-
-.tabs-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+  flex-shrink: 0;
 }
 
 .tabs {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  background: var(--nav-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
-  margin-bottom: 1rem;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
 
   .tab {
-    padding: 0.75rem 1.5rem;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--border-radius);
+    position: relative;
     cursor: pointer;
-    color: var(--muted);
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s;
-    line-height: normal;
-    min-height: auto;
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
 
-    &:hover {
-      background: var(--dropdown-hover-bg);
+    a {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
       color: var(--body-text);
-      border-color: transparent;
-    }
-
-    &.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
+      text-decoration: none;
 
       &:hover {
-        background: var(--primary-hover);
-        border-color: var(--primary-hover);
+        color: var(--link);
+        text-decoration: none;
+
+        span {
+          text-decoration: none;
+        }
       }
     }
 
-    &:focus {
-      outline: none;
-      box-shadow: 0 0 0 var(--outline-width) var(--outline);
+    &.active {
+      border-bottom-color: var(--primary);
+
+      > a {
+        color: var(--link);
+        text-decoration: none;
+      }
     }
+  }
+}
+
+.search-widget {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  flex-shrink: 0;
+}
+
+.search-input {
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  background: var(--input-bg);
+  color: var(--body-text);
+  font-size: 13px;
+  padding: 0 0.75rem;
+  min-width: 200px;
+  height: 32px;
+  transition: border-color 0.2s ease;
+
+  &::placeholder {
+    color: var(--muted);
+  }
+
+  &:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+}
+
+.search-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  padding: 0;
+  cursor: pointer;
+  color: var(--body-text);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+
+  &:hover:not(:disabled) {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-text);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+
+  .icon {
+    font-size: 12px;
   }
 }
 
 .tab-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
-  background: var(--nav-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
   overflow: hidden;
 }
 
-.tab-panel {
-  height: 100%;
-  padding: 1rem;
-  overflow: hidden;
+:deep(.container-logs-component) {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 </style>
