@@ -32,8 +32,8 @@ export default function getCommandLineArgs(): string[] {
 
     return idx > -1 ? process.argv.slice(idx + 1) : [];
   } else if ((process.env.NODE_ENV ?? '').startsWith('dev')) {
-    // Are we running in dev mode?
-    const idx = process.argv.findIndex(arg => /[\\\/]dev.ts$/.test(arg));
+    // If we're running in dev mode, look for the injected marker.
+    const idx = process.argv.indexOf('## Rancher Desktop Command Line Marker ##');
 
     return idx >= 0 ? process.argv.slice(idx + 1) : [];
   }
