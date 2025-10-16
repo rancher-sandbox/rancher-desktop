@@ -22,7 +22,7 @@ jobs:
         - platform: mac
           # Use an x86_64 platform because arm64 runners don't have nested
           # virtualization available.
-          runs-on: macos-13
+          runs-on: macos-15-intel
         - platform: win
           runs-on: windows-latest
         - platform: linux

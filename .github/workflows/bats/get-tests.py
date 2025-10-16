@@ -18,7 +18,7 @@ import sys
 from typing import Iterator, List, Literal, get_args
 
 Platforms = Literal["linux", "mac", "win"]
-Hosts = Literal["ubuntu-latest", "macos-13", "windows-latest"]
+Hosts = Literal["ubuntu-latest", "macos-15-intel", "windows-latest"]
 Engines = Literal["containerd", "moby"]
 
 @dataclasses.dataclass
@@ -56,7 +56,7 @@ def skip_test(test: Result) -> bool:
     Check if a given test should be skipped.
     We skip some tests because the CI machines can't handle them.
     """
-    if test.host == "macos-13" and test.name.startswith("k8s/"):
+    if test.host == "macos-15-intel" and test.name.startswith("k8s/"):
         # The macOS CI runners are slow; skip some tests that can be tested on
         # other OSes.
         skipped_tests = ("verify-cached-images",)
@@ -73,7 +73,7 @@ for test in (os.environ.get("TESTS", None) or "*").split():
     for platform in platforms:
       host: Hosts = {
          "linux": "ubuntu-latest",
-         "mac": "macos-13",
+         "mac": "macos-15-intel",
          "win": "windows-latest",
       }[platform]
       for name in resolve_test(test, platform):
