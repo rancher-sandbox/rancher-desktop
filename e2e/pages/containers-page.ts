@@ -1,6 +1,6 @@
 import { Locator, Page, expect } from '@playwright/test';
 
-type ActionString = 'logs' | 'stop' | 'start' | 'delete';
+type ActionString = 'info' | 'stop' | 'start' | 'delete';
 
 export class ContainersPage {
   readonly page:              Page;
@@ -31,7 +31,7 @@ export class ContainersPage {
 
     // Wait for the action menu to appear and click the action by text
     const actionText = {
-      logs:   'Logs',
+      info:   'Info',
       stop:   'Stop',
       start:  'Start',
       delete: 'Delete',
@@ -44,7 +44,8 @@ export class ContainersPage {
   }
 
   async viewContainerLogs(containerId: string) {
-    await this.clickContainerAction(containerId, 'logs');
+    await this.clickContainerAction(containerId, 'info');
+    await this.page.getByTestId('tab-logs').click();
   }
 
   async stopContainer(containerId: string) {
