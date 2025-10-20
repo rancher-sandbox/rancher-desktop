@@ -40,7 +40,7 @@ jobs:
         include:
         - platform: mac
           arch: x86_64
-          runs-on: macos-13
+          runs-on: macos-15-intel
         - platform: mac
           arch: aarch64
           runs-on: macos-latest
