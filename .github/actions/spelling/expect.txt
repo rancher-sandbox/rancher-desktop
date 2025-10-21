@@ -877,6 +877,7 @@ UTCTIME
 vcenter
 vcpus
 vcs
+vde
 VDropdown
 VERSIONSTRING
 vertificate
