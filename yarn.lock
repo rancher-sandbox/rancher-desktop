@@ -8647,7 +8647,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:*, dompurify@npm:3.2.6":
+"dompurify@npm:*":
   version: 3.2.6
   resolution: "dompurify@npm:3.2.6"
   dependencies:
@@ -8656,6 +8656,18 @@ __metadata:
     "@types/trusted-types":
       optional: true
   checksum: 10c0/c8f8e5b0879a0d93c84a2e5e78649a47d0c057ed0f7850ca3d573d2cca64b84fb1ff85bd4b20980ade69c4e5b80ae73011340f1c2ff375c7ef98bb8268e1d13a
+  languageName: node
+  linkType: hard
+
+"dompurify@npm:3.3.0":
+  version: 3.3.0
+  resolution: "dompurify@npm:3.3.0"
+  dependencies:
+    "@types/trusted-types": "npm:^2.0.7"
+  dependenciesMeta:
+    "@types/trusted-types":
+      optional: true
+  checksum: 10c0/66b1787b0bc8250d8f58e13284cf7f5f6bb400a0a55515e7a2a030316a4bb0d8306fdb669c17ed86ed58ff7e53c62b5da4488c2f261d11c58870fe01b8fcc486
   languageName: node
   linkType: hard
 
@@ -14819,7 +14831,7 @@ __metadata:
     css-loader: "npm:7.1.2"
     dayjs: "npm:1.11.18"
     dmg-license: "npm:1.0.11"
-    dompurify: "npm:3.2.6"
+    dompurify: "npm:3.3.0"
     ejs: "npm:3.1.10"
     electron: "npm:38.0.0"
     electron-builder: "npm:26.0.12"
