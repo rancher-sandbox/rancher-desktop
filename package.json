@@ -120,7 +120,7 @@
     "@vue/cli-plugin-router": "5.0.9",
     "@vue/cli-plugin-vuex": "5.0.9",
     "@vue/cli-service": "5.0.9",
-    "@vue/compiler-sfc": "3.5.21",
+    "@vue/compiler-sfc": "3.5.22",
     "@vue/eslint-config-standard-with-typescript": "9.2.0",
     "@vue/eslint-config-typescript": "14.6.0",
     "@vue/test-utils": "2.4.6",
