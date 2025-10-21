@@ -3,7 +3,9 @@ updates:
 
 # Maintain dependencies for GitHub Actions
 - package-ecosystem: "github-actions"
-  directory: "/"
+  directories:
+    - "/"
+    - "/.github/actions/*/"
   schedule:
     interval: "daily"
   cooldown:
