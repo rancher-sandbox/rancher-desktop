@@ -1462,6 +1462,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     config.paths['socketVMNet'] = '/opt/rancher-desktop/bin/socket_vmnet';
 
+    // Clean up deprecated keys in config.paths, if present.
+    // These keys are no longer used and may cause errors
+    // during rdctl shutdown when upgrading to version
+    // 1.20.x or later.
+    delete (config.paths as any)['vdeSwitch'];
+    delete (config.paths as any)['vdeVMNet'];
+
     if (config.group === 'staff') {
       config.group = 'everyone';
     }
