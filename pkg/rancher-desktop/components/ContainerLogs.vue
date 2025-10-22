@@ -33,6 +33,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Terminal } from '@xterm/xterm';
+import { shell } from 'electron';
 import { defineComponent } from 'vue';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
@@ -105,7 +106,7 @@ export default defineComponent({
           theme: {
             background:    '#1a1a1a',
             foreground:    '#e0e0e0',
-            cursor:        '#8be9fd',
+            cursor:        '#1a1a1a', // same as the background to effectively hide the cursor.
             selection:     'rgba(139, 233, 253, 0.3)',
             black:         '#000000',
             red:           '#ff5555',
@@ -141,7 +142,7 @@ export default defineComponent({
 
         this.terminal.loadAddon(new WebLinksAddon((event, uri) => {
           event.preventDefault();
-          window.open(uri, '_blank');
+          shell.openExternal(uri);
         }));
 
         this.terminal.open(this.$refs.terminalContainer);
@@ -149,20 +150,14 @@ export default defineComponent({
         await this.$nextTick();
         this.fitAddon.fit();
 
-        this.terminal.write('\x1b[?25l');
-
         this.resizeHandler = () => {
-          if (this.fitAddon) {
-            this.fitAddon.fit();
-          }
+          this.fitAddon?.fit();
         };
         window.addEventListener('resize', this.resizeHandler);
 
         if (window.ResizeObserver) {
           this.resizeObserver = new ResizeObserver(() => {
-            if (this.fitAddon) {
-              this.fitAddon.fit();
-            }
+            this.fitAddon?.fit();
           });
           this.resizeObserver.observe(this.$refs.terminalContainer);
         }
@@ -197,9 +192,7 @@ export default defineComponent({
                   this.revealTimeout = setTimeout(() => {
                     this.waitingForInitialLogs = false;
                     this.$nextTick(() => {
-                      if (this.fitAddon) {
-                        this.fitAddon.fit();
-                      }
+                      this.fitAddon?.fit();
                       this.terminal.scrollToBottom();
                     });
                   }, 200);
@@ -269,9 +262,7 @@ export default defineComponent({
       }
     },
     clearSearch() {
-      if (this.searchAddon) {
-        this.searchAddon.clearDecorations();
-      }
+      this.searchAddon?.clearDecorations();
     },
     performSearch(searchTerm) {
       if (this.searchDebounceTimer) {

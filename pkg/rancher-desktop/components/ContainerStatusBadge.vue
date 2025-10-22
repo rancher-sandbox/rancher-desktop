@@ -16,7 +16,7 @@ import { mapTypedState } from '@pkg/entry/store';
 export default defineComponent({
   name:       'ContainerStatusBadge',
   components: { BadgeState },
-  computed: {
+  computed:   {
     ...mapTypedState('container-engine', ['containers']),
     containerId() {
       return this.$route.params.id || '';

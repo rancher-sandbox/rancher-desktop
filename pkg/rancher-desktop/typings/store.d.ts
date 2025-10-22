@@ -63,11 +63,17 @@ declare module 'vuex/types' {
       P extends { type: mutation } & Parameters<storeMutations[mutation]>[0],
     >(payloadWithType: P, options?: CommitOptions): void;
   }
+
+  export function useStore(): Store<{
+    [key in keyof Modules]: ReturnType<Modules[key]['state']>;
+  }>;
 }
 
 declare module 'vue' {
   // provide typings for `this.$store`
   interface ComponentCustomProperties {
-    $store: Store<object>
+    $store: Store<{
+      [key in keyof Modules]: ReturnType<Modules[key]['state']>;
+    }>;
   }
 }

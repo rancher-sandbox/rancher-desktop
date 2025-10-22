@@ -63,7 +63,7 @@
           <a
             v-tooltip="getTooltipConfig(row.containerName)"
             class="container-name-link"
-            @click.stop.prevent="navigateToInfo(row)"
+            @click.stop.prevent="viewInfo(row)"
           >
             {{ shortSha(row.containerName) }}
           </a>
@@ -392,9 +392,7 @@ export default defineComponent({
     viewInfo(container) {
       this.$router.push(`/containers/info/${ container.id }`);
     },
-    navigateToInfo(container) {
-      this.$router.push(`/containers/info/${ container.id }`);
-    },
+
     /** @param container {RowItem} */
     isRunning(container) {
       return container.state === 'running' || container.status === 'Up';

@@ -79,166 +79,161 @@
   </div>
 </template>
 
-<script>
-import { defineComponent } from 'vue';
-import { mapGetters } from 'vuex';
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 import ContainerLogs from '@pkg/components/ContainerLogs.vue';
-import { mapTypedState } from '@pkg/entry/store';
+import type { Container } from '@pkg/store/container-engine';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default defineComponent({
-  name:       'ContainerInfo',
-  components: {
-    ContainerLogs,
-  },
-  data() {
-    return {
-      activeTab:      'logs',
-      settings:       undefined,
-      subscribeTimer: undefined,
-      searchTerm:     '',
-    };
-  },
-  computed: {
-    ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
-    ...mapTypedState('container-engine', ['containers']),
-    containerId() {
-      return this.$route.params.id || '';
-    },
-    currentContainer() {
-      if (!this.containers || !this.containerId) {
-        return null;
-      }
-      return this.containers[this.containerId];
-    },
-    containerName() {
-      if (!this.currentContainer) {
-        return this.containerId.substring(0, 12);
-      }
-      const names = this.currentContainer.names || this.currentContainer.containerName;
-      if (Array.isArray(names)) {
-        return names[0]?.replace(/^\//, '').replace(/_[a-z0-9-]{36}_[0-9]+/, '') || this.containerId.substring(0, 12);
-      }
-      if (typeof names === 'string') {
-        return names.replace(/^\//, '').replace(/_[a-z0-9-]{36}_[0-9]+/, '') || this.containerId.substring(0, 12);
-      }
-      return this.containerId.substring(0, 12);
-    },
-    containerState() {
-      if (!this.currentContainer) {
-        return 'unknown';
-      }
-      return this.currentContainer.state || this.currentContainer.status || 'unknown';
-    },
-    isRunning() {
-      if (!this.currentContainer) {
-        return false;
-      }
-      return this.currentContainer.state === 'running' || this.currentContainer.status === 'Up';
-    },
-  },
-  watch: {
-    containerName: {
-      handler(name) {
-        this.$store.dispatch('page/setHeader', {
-          title:       name || 'Container Info',
-          description: '',
-          action:      'ContainerStatusBadge',
-        });
-      },
-      immediate: true,
-    },
-  },
-  mounted() {
-    ipcRenderer.on('settings-read', (event, settings) => {
-      this.settings = settings;
-      this.subscribe().catch(console.error);
+// Router and Store
+const route = useRoute();
+const store = useStore();
+
+// Template refs with proper typing
+const containerLogs = ref<InstanceType<typeof ContainerLogs> | null>(null);
+const searchInput = ref<HTMLInputElement | null>(null);
+
+// Reactive data
+const settings = ref<any>();
+const subscribeTimer = ref<ReturnType<typeof setTimeout>>();
+const searchTerm = ref('');
+
+// Vuex integration
+const isK8sReady = computed(() => store.getters['k8sManager/isReady']);
+const containers = computed(() => store.state['container-engine'].containers);
+
+// Computed properties
+const containerId = computed(() => route.params.id as string || '');
+
+const currentContainer = computed((): Container | null => {
+  if (!containers.value || !containerId.value) {
+    return null;
+  }
+  return containers.value[containerId.value] || null;
+});
+
+const containerName = computed(() => {
+  if (!currentContainer.value) {
+    return containerId.value.substring(0, 12);
+  }
+  const name = currentContainer.value.containerName;
+  return name.replace(/^\//, '') || containerId.value.substring(0, 12);
+});
+
+const isRunning = computed(() => {
+  if (!currentContainer.value) {
+    return false;
+  }
+  return currentContainer.value.state === 'running';
+});
+
+// Watchers
+watch(containerName, (name) => {
+  store.dispatch('page/setHeader', {
+    title:       name || 'Container Info',
+    description: '',
+    action:      'ContainerStatusBadge',
+  });
+}, { immediate: true });
+
+// Methods as functions
+const subscribe = async() => {
+  if (subscribeTimer.value) {
+    clearTimeout(subscribeTimer.value);
+  }
+  try {
+    if (!window.ddClient || !isK8sReady.value || !settings.value) {
+      subscribeTimer.value = setTimeout(subscribe, 1_000);
+      return;
+    }
+    await store.dispatch('container-engine/subscribe', {
+      type:   'containers',
+      client: window.ddClient,
     });
+  } catch (error) {
+    console.error('There was a problem subscribing to container events:', { error });
+  }
+};
 
-    ipcRenderer.send('settings-read');
+const onSearchInput = () => {
+  containerLogs.value?.performSearch(searchTerm.value);
+};
 
-    ipcRenderer.on('settings-update', (_event, settings) => {
-      this.settings = settings;
-    });
+const searchNext = () => {
+  containerLogs.value?.searchNext(searchTerm.value);
+};
 
-    this.subscribe().catch(console.error);
+const searchPrevious = () => {
+  containerLogs.value?.searchPrevious(searchTerm.value);
+};
 
-    window.addEventListener('keydown', this.handleGlobalKeydown);
-  },
-  beforeUnmount() {
-    this.$store.dispatch('page/setHeader', { action: null });
-    ipcRenderer.removeAllListeners('settings-update');
-    ipcRenderer.removeAllListeners('settings-read');
-    this.$store.dispatch('container-engine/unsubscribe').catch(console.error);
-    clearTimeout(this.subscribeTimer);
-    window.removeEventListener('keydown', this.handleGlobalKeydown);
-  },
-  methods: {
-    async subscribe() {
-      clearTimeout(this.subscribeTimer);
-      try {
-        if (!window.ddClient || !this.isK8sReady || !this.settings) {
-          this.subscribeTimer = setTimeout(() => this.subscribe(), 1_000);
-          return;
-        }
-        await this.$store.dispatch('container-engine/subscribe', {
-          type:   'containers',
-          client: window.ddClient,
-        });
-      } catch (error) {
-        console.error('There was a problem subscribing to container events:', { error });
-      }
-    },
-    onSearchInput() {
-      if (this.$refs.containerLogs) {
-        this.$refs.containerLogs.performSearch(this.searchTerm);
-      }
-    },
-    searchNext() {
-      if (this.$refs.containerLogs) {
-        this.$refs.containerLogs.searchNext(this.searchTerm);
-      }
-    },
-    searchPrevious() {
-      if (this.$refs.containerLogs) {
-        this.$refs.containerLogs.searchPrevious(this.searchTerm);
-      }
-    },
-    clearSearch() {
-      this.searchTerm = '';
-      if (this.$refs.containerLogs) {
-        this.$refs.containerLogs.clearSearch();
-      }
-      this.$nextTick(() => {
-        if (this.$refs.searchInput) {
-          this.$refs.searchInput.focus();
-        }
-      });
-    },
-    handleSearchKeydown(event) {
-      if (event.key === 'Enter') {
-        if (event.shiftKey) {
-          this.searchPrevious();
-        } else {
-          this.searchNext();
-        }
-        event.preventDefault();
-      } else if (event.key === 'Escape') {
-        this.clearSearch();
-        event.preventDefault();
-      }
-    },
-    handleGlobalKeydown(event) {
-      if (event.key === '/') {
-        event.preventDefault();
-        if (this.$refs.searchInput) {
-          this.$refs.searchInput.focus();
-          this.$refs.searchInput.select();
-        }
-      }
-    },
-  },
+const clearSearch = () => {
+  searchTerm.value = '';
+  containerLogs.value?.clearSearch();
+  nextTick(() => {
+    searchInput.value?.focus();
+  });
+};
+
+const handleSearchKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Enter') {
+    if (event.shiftKey) {
+      searchPrevious();
+    } else {
+      searchNext();
+    }
+    event.preventDefault();
+  } else if (event.key === 'Escape') {
+    clearSearch();
+    event.preventDefault();
+  }
+};
+
+const handleGlobalKeydown = (event: KeyboardEvent) => {
+  if (event.key === '/') {
+    // Don't trigger if search input is already focused
+    if (!searchInput.value?.contains(document.activeElement)) {
+      event.preventDefault();
+      searchInput.value?.focus();
+      searchInput.value?.select();
+    }
+  }
+};
+
+// Event handlers
+const handleSettingsUpdate = (_event: any, settingsData: any) => {
+  settings.value = settingsData;
+};
+
+const handleSettingsRead = (_event: any, settingsData: any) => {
+  settings.value = settingsData;
+  subscribe().catch(console.error);
+};
+
+// Lifecycle hooks
+onMounted(() => {
+  ipcRenderer.send('settings-read');
+
+  ipcRenderer.on('settings-update', handleSettingsUpdate);
+  ipcRenderer.on('settings-read', handleSettingsRead);
+
+  subscribe().catch(console.error);
+
+  window.addEventListener('keydown', handleGlobalKeydown);
+});
+
+onBeforeUnmount(() => {
+  store.dispatch('page/setHeader', { action: null });
+  ipcRenderer.removeListener('settings-update', handleSettingsUpdate);
+  ipcRenderer.removeListener('settings-read', handleSettingsRead);
+  store.dispatch('container-engine/unsubscribe').catch(console.error);
+  if (subscribeTimer.value) {
+    clearTimeout(subscribeTimer.value);
+  }
+  window.removeEventListener('keydown', handleGlobalKeydown);
 });
 </script>
 
@@ -344,8 +339,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  min-width: 32px;
   min-height: 32px;
 
   &:hover:not(:disabled) {

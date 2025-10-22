@@ -43,7 +43,7 @@ export class ContainersPage {
     await actionLocator.click();
   }
 
-  async viewContainerLogs(containerId: string) {
+  async viewContainerInfo(containerId: string) {
     await this.clickContainerAction(containerId, 'info');
     await this.page.getByTestId('tab-logs').click();
   }
