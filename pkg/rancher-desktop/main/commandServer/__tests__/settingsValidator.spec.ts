@@ -81,6 +81,7 @@ describe('SettingsValidator', () => {
       ['containerEngine', 'allowedImages', 'locked'],
       ['containerEngine', 'name'],
       ['experimental', 'kubernetes', 'options', 'spinkube'],
+      ['experimental', 'virtualMachine', 'diskSize'], // Special parsing.
       ['experimental', 'virtualMachine', 'mount', '9p', 'cacheMode'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'msizeInKib'],
       ['experimental', 'virtualMachine', 'mount', '9p', 'protocolVersion'],
@@ -705,6 +706,44 @@ describe('SettingsValidator', () => {
       const [, errors] = subject.validateSettings(cfg, { application: { extensions: { installed: input } } });
 
       expect(errors).toEqual(expectedErrors);
+    });
+  });
+
+  describe('experimental.virtual-machine.disk-size', () => {
+    describe('parsing inputs', () => {
+      test.each<['accept' | 'reject', string]>([
+        ['accept', '100GiB'], // default value
+        ['accept', '1.23GiB'], // with fractional number
+        ['reject', '1.GiB'], // Trailing dot on number
+        ['accept', '100 GiB'],  // with space between number and unit
+        ['accept', '1.23 GiB'], // fractional number with space
+        ['accept', '1234'], // no units
+        ['accept', '123k'], // kilobytes, no byte suffix
+        ['accept', '123mb'], // megabytes, with b suffix
+        ['accept', '1234 tib'], // terabytes (spellcheck-ignore-line)
+        ['reject', '1234 stuff'], // extra trailing text
+      ])('should %s %s', (outcome, input) => {
+        const errorMessage = `Invalid value for "experimental.virtualMachine.diskSize": <${ JSON.stringify(input) }>`;
+        const expectedErrors = outcome === 'accept' ? [] : [errorMessage];
+        const oldConfig = _.set(_.cloneDeep(cfg), 'experimental.virtualMachine.diskSize', 1);
+        const [, errors] = subject.validateSettings(oldConfig, { experimental: { virtualMachine: { diskSize: input } } });
+
+        expect(errors).toEqual(expectedErrors);
+      });
+    });
+    describe('rejecting smaller values', () => {
+      test.each<['accept' | 'reject', string, string]>([
+        ['accept', '100GiB', '100GiB'],
+        ['accept', '100GiB', '1TB'],
+        ['reject', '1G', '100M'],
+      ])('should %s going from %s to %s', (outcome, currentValue, desiredValue) => {
+        const errorMessage = `Cannot decrease "experimental.virtualMachine.diskSize" from ${ currentValue } to ${ desiredValue }`;
+        const expectedErrors = outcome === 'accept' ? [] : [errorMessage];
+        const oldConfig = _.set(_.cloneDeep(cfg), 'experimental.virtualMachine.diskSize', currentValue);
+        const [, errors] = subject.validateSettings(oldConfig, { experimental: { virtualMachine: { diskSize: desiredValue } } });
+
+        expect(errors).toEqual(expectedErrors);
+      });
     });
   });
 
