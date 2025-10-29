@@ -23,6 +23,6 @@ moproxy: 0.5.1
 spinShim: 0.20.0
 spinOperator: 0.6.1
 certManager: 1.19.1
-spinCLI: 3.4.0
+spinCLI: 3.5.0
 spinKubePlugin: 0.4.0
 check-spelling: 0.0.25
