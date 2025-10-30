@@ -66,9 +66,9 @@ test.describe.serial('Containers Tests', () => {
     await containersPage.waitForTableToLoad();
 
     await containersPage.waitForContainerToAppear(testContainerId);
-    await containersPage.viewContainerLogs(testContainerId);
+    await containersPage.viewContainerInfo(testContainerId);
 
-    await page.waitForURL(`**/containers/logs/${ testContainerId }`, {
+    await page.waitForURL(`**/containers/info/${ testContainerId }`, {
       timeout: 10_000,
     });
   });
@@ -164,9 +164,9 @@ test.describe.serial('Containers Tests', () => {
       await containersPage.waitForTableToLoad();
 
       await containersPage.waitForContainerToAppear(scrollTestContainerId);
-      await containersPage.viewContainerLogs(scrollTestContainerId);
+      await containersPage.viewContainerInfo(scrollTestContainerId);
 
-      await page.waitForURL(`**/containers/logs/${ scrollTestContainerId }`, {
+      await page.waitForURL(`**/containers/info/${ scrollTestContainerId }`, {
         timeout: 10_000,
       });
 
@@ -223,9 +223,9 @@ test.describe.serial('Containers Tests', () => {
       await containersPage.waitForTableToLoad();
 
       await containersPage.waitForContainerToAppear(longRunningContainerId);
-      await containersPage.viewContainerLogs(longRunningContainerId);
+      await containersPage.viewContainerInfo(longRunningContainerId);
 
-      await page.waitForURL(`**/containers/logs/${ longRunningContainerId }`, {
+      await page.waitForURL(`**/containers/info/${ longRunningContainerId }`, {
         timeout: 10000,
       });
 
