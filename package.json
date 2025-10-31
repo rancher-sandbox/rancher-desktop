@@ -160,7 +160,7 @@
     "tsconfig-paths": "4.2.0",
     "tsx": "4.20.6",
     "typescript": "5.9.3",
-    "webpack": "5.100.2"
+    "webpack": "5.102.1"
   },
   "resolutions": {
     "node-abi": "^4.11",
