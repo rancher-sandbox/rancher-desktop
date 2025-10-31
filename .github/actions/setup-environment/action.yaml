@@ -83,7 +83,7 @@ runs:
           suse|opensuse)
             ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install \
               fuse gawk git GraphicsMagick gtk3-tools jq mozilla-nss \
-              noto-sans-fonts password-store sudo xvfb-run
+              noto-sans-fonts password-store sudo xvfb-run xauth which
             if [[ ${GITHUB_JOB:-unknown} =~ appimage ]]; then
               ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install \
                 libasound2 openssh-clients
