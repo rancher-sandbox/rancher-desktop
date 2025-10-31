@@ -83,7 +83,7 @@ runs:
           suse|opensuse)
             ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install \
               fuse gawk git GraphicsMagick gtk3-tools jq mozilla-nss \
-              noto-sans-fonts password-store sudo xvfb-run
+              noto-sans-fonts password-store sudo xvfb-run xauth which
             if [[ ${GITHUB_JOB:-unknown} =~ appimage ]]; then
               ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install \
                 libasound2 openssh-clients
@@ -98,7 +98,8 @@ runs:
             ${{ steps.sudo.outputs.sudo }} dnf install --assumeyes \
               at-spi2-atk cups-libs git GraphicsMagick gtk3 jq \
               libva nss pass procps-ng sudo xorg-x11-server-Xvfb \
-              /usr/bin/script
+              /usr/bin/script \
+              --setopt=excludepkgs=systemd-standalone-tmpfiles
             exit 0;;
           debian|ubuntu)
             ${{ steps.sudo.outputs.sudo }} apt-get update
