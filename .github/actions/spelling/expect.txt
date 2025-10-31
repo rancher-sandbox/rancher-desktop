@@ -257,6 +257,7 @@ etcdbackup
 etest
 euid
 eula
+excludepkgs
 excludesection
 Executability
 EXITDIALOGOPTIONALCHECKBOX
@@ -839,6 +840,7 @@ timespan
 tini
 TKE
 tmpconfig
+tmpfiles
 tmpfs
 tmppath
 tmutil
@@ -931,6 +933,7 @@ wslutils
 WWID
 wwn
 wws
+xauth
 XAUTHORITY
 Xcomposite
 Xdamage
