@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import _ from 'lodash';
 import yaml from 'yaml';
 
 import { download } from '../lib/download';
@@ -37,11 +38,46 @@ export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
     for (const key of Object.keys(contents.definitions ?? {}).filter(k => /^Plugin./.test(k))) {
       delete contents.definitions[key]?.['x-go-name'];
     }
-    // This forces a go type that isn't defined; delete the override and just
-    // use strings instead.
-    if (contents.definitions?.Plugin?.properties?.Config?.properties?.Interface?.properties?.Types?.items?.['x-go-type']?.type === 'CapabilityID') {
-      delete contents.definitions.Plugin.properties.Config.properties.Interface.properties.Types.items['x-go-type'];
-    }
+
+    // Some type overrides end up with errors, override them here:
+    // noTypeOverride: This type does not actually exist in go, delete the override.
+    // noValidate: This does not implement the .Validate() method; add a 'noValidation' hint.
+    const perTypeActions: Record<string, 'noTypeOverride' | 'noValidate'> = {
+      'net/netip.Addr':           'noValidate',
+      'net/netip.Prefix':         'noValidate',
+      'time.Time':                'noValidate',
+      'undefined.int':            'noValidate',
+      'undefined.CapabilityID':   'noTypeOverride', // This type is not defined anywhere.
+      'undefined.SubnetStatuses': 'noTypeOverride', // This type is not defined anywhere.
+    };
+
+    (function checkTypes(obj: object, prefix = '') {
+      for (const [k, v] of Object.entries(obj)) {
+        if (k === 'x-go-type') {
+          const typeName = `${ v.import?.package }.${ v.type }`;
+          if (typeName in perTypeActions) {
+            switch (perTypeActions[typeName]) {
+            case 'noTypeOverride':
+              console.log(`\x1B[34m${ prefix } has invalid type ${ typeName }, removing.\x1B[0m`);
+              delete (obj as any)[k];
+              break;
+            case 'noValidate':
+              console.log(`\x1B[34m${ prefix } has type ${ typeName }, disabling validation.\x1B[0m`);
+              _.set(v, 'hints.noValidation', true);
+              break;
+            }
+          } else {
+            console.log(`\x1B[34m${ prefix } has unknown type ${ typeName }, ignoring.\x1B[0m`);
+          }
+        } else if (_.isPlainObject(v)) {
+          checkTypes(v, `${ prefix }.${ k }`.replace(/^\./, ''));
+        } else if (Array.isArray(v)) {
+          for (const [i, element] of Object.entries(v)) {
+            checkTypes(element, `${ prefix }[${ i }]`);
+          }
+        }
+      }
+    })(contents);
 
     await fs.promises.writeFile(modifiedPath, yaml.stringify(contents), 'utf-8');
 
