@@ -47,6 +47,10 @@ export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
     if (_.get(contents, 'definitions.Network.properties.Created.x-go-type.import.package') === 'time') {
       _.set(contents, 'definitions.Network.properties.Created.x-go-type.hints.noValidation', true);
     }
+    // Having the x-go-type here confuses swagger.
+    if (_.has(contents, 'definitions.IPAMStatus.properties.Subnets.x-go-type')) {
+      delete _.get(contents, 'definitions.IPAMStatus.properties.Subnets')['x-go-type'];
+    }
 
     await fs.promises.writeFile(modifiedPath, yaml.stringify(contents), 'utf-8');
 
