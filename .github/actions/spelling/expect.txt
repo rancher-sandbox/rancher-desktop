@@ -360,6 +360,7 @@ identitytoken
 ies
 iex
 ifaces
+ifname
 ifnotstart
 ifstarted
 iidfile
@@ -594,6 +595,7 @@ openssh
 openstack
 opensuse
 opentelekomcloudcontainerengine
+operstate
 opsgenie
 oracleoke
 orsection
