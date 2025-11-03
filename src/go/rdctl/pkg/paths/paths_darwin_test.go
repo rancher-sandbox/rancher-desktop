@@ -15,7 +15,17 @@ import (
 
 func TestGetPaths(t *testing.T) {
 	t.Run("should return correct paths without environment variables set", func(t *testing.T) {
-		t.Setenv("RD_LOGS_DIR", "")
+		// Ensure that these variables are not set in the testing environment
+		environment := map[string]string{
+			"RD_APP_HOME":    "",
+			"RD_CACHE_HOME":  "",
+			"RD_CONFIG_HOME": "",
+			"RD_DATA_HOME":   "",
+			"RD_LOGS_DIR":    "",
+		}
+		for key, value := range environment {
+			t.Setenv(key, value)
+		}
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			t.Errorf("Unexpected error getting user home directory: %s", err)
@@ -51,24 +61,33 @@ func TestGetPaths(t *testing.T) {
 		if err != nil {
 			t.Errorf("Unexpected error getting user home directory: %s", err)
 		}
-		rdLogsDir := filepath.Join(homeDir, "anotherLogsDir")
-		t.Setenv("RD_LOGS_DIR", rdLogsDir)
+		environment := map[string]string{
+			"RD_APP_HOME":     filepath.Join(homeDir, "anotherAppHome"),
+			"RD_CACHE_HOME":   filepath.Join(homeDir, "anotherCacheHome"),
+			"RD_CONFIG_HOME":  filepath.Join(homeDir, "anotherConfigHome"),
+			"RD_DATA_HOME":    filepath.Join(homeDir, "anotherDataHome"),
+			"RD_LOGS_DIR":     filepath.Join(homeDir, "anotherLogsDir"),
+		}
+		for key, value := range environment {
+			t.Setenv(key, value)
+		}
+
 		expectedPaths := Paths{
-			AppHome:                    filepath.Join(homeDir, "Library", "Application Support", appName),
+			AppHome:                    environment["RD_APP_HOME"],
 			AltAppHome:                 filepath.Join(homeDir, ".rd"),
-			Config:                     filepath.Join(homeDir, "Library", "Preferences", appName),
-			Logs:                       rdLogsDir,
-			Cache:                      filepath.Join(homeDir, "Library", "Caches", appName),
-			Lima:                       filepath.Join(homeDir, "Library", "Application Support", appName, "lima"),
-			Integration:                filepath.Join(homeDir, ".rd", "bin"),
+			Config:                     filepath.Join(environment["RD_CONFIG_HOME"], appName),
+			Logs:                       environment["RD_LOGS_DIR"],
+			Cache:                      filepath.Join(environment["RD_CACHE_HOME"], appName),
+			Lima:                       filepath.Join(environment["RD_DATA_HOME"], appName, "lima"),
+			Integration:                filepath.Join(homeDir, ".rd/bin"),
 			Resources:                  fakeResourcesPath,
-			DeploymentProfileSystem:    filepath.Join("/Library", "Managed Preferences"),
-			AltDeploymentProfileSystem: filepath.Join("/Library", "Preferences"),
-			DeploymentProfileUser:      filepath.Join(homeDir, "Library", "Preferences"),
-			ExtensionRoot:              filepath.Join(homeDir, "Library", "Application Support", appName, "extensions"),
-			Snapshots:                  filepath.Join(homeDir, "Library", "Application Support", appName, "snapshots"),
-			ContainerdShims:            filepath.Join(homeDir, "Library", "Application Support", appName, "containerd-shims"),
-			OldUserData:                filepath.Join(homeDir, "Library", "Application Support", "Rancher Desktop"),
+			DeploymentProfileSystem:    filepath.Join("/etc", appName),
+			AltDeploymentProfileSystem: filepath.Join("/usr/etc", appName),
+			DeploymentProfileUser:      environment["RD_CONFIG_HOME"],
+			ExtensionRoot:              filepath.Join(environment["RD_DATA_HOME"], appName, "extensions"),
+			Snapshots:                  filepath.Join(environment["RD_DATA_HOME"], appName, "snapshots"),
+			ContainerdShims:            filepath.Join(environment["RD_DATA_HOME"], appName, "containerd-shims"),
+			OldUserData:                filepath.Join(environment["RD_CONFIG_HOME"], "Rancher Desktop"),
 		}
 		actualPaths, err := GetPaths(mockGetResourcesPath)
 		if err != nil {
