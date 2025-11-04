@@ -83,13 +83,13 @@ jobs:
         RD_ENV_SCREENSHOT_SLEEP: 5000
         RD_LOGS_DIR: logs
     - name: Upload screenshots
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: screenshots-${{ matrix.platform }}.zip
         path: screenshots/output/
         if-no-files-found: error
     - name: Upload logs
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       if: always()
       with:
         name: logs-${{ matrix.platform }}.zip
@@ -143,7 +143,7 @@ jobs:
         sudo DEBIAN_FRONTEND=noninteractive apt-get install graphicsmagick # spellcheck-ignore-line
         mkdir -p out/getting-started
         gm convert in/darwin/light/main/*_intro.png in/win32/light/main/*_intro.png +append out/getting-started/introduction_preferences_tabKubernetes.png
-    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+    - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: screenshots.zip
         path: out
