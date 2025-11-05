@@ -23,4 +23,5 @@ import (
 	_ "github.com/go-openapi/strfmt" // spellcheck-ignore-line
 	_ "github.com/go-openapi/swag"
 	_ "github.com/go-openapi/validate"
+	_ "github.com/moby/moby/api/types/container"
 )

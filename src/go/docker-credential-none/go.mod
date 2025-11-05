@@ -17,5 +17,5 @@ require (
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	golang.org/x/sys v0.37.0 // indirect
-	gotest.tools/v3 v3.5.1 // indirect
+	gotest.tools/v3 v3.5.2 // indirect
 )
