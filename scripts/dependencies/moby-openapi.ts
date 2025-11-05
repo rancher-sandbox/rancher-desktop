@@ -39,35 +39,21 @@ export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
       delete contents.definitions[key]?.['x-go-name'];
     }
 
-    // Some type overrides end up with errors, override them here:
-    // noTypeOverride: This type does not actually exist in go, delete the override.
-    // noValidate: This does not implement the .Validate() method; add a 'noValidation' hint.
-    const perTypeActions: Record<string, 'noTypeOverride' | 'noValidate'> = {
-      'net/netip.Addr':           'noValidate',
-      'net/netip.Prefix':         'noValidate',
-      'time.Time':                'noValidate',
-      'undefined.int':            'noValidate',
-      'undefined.CapabilityID':   'noTypeOverride', // This type is not defined anywhere.
-      'undefined.SubnetStatuses': 'noTypeOverride', // This type is not defined anywhere.
-    };
-
+    // Moby is starting to add `x-go-type` annotations to the spec; however,
+    // none of the types implement validation, and some types are not actually
+    // defined in the file.  Override them here.
     (function checkTypes(obj: object, prefix = '') {
       for (const [k, v] of Object.entries(obj)) {
         if (k === 'x-go-type') {
-          const typeName = `${ v.import?.package }.${ v.type }`;
-          if (typeName in perTypeActions) {
-            switch (perTypeActions[typeName]) {
-            case 'noTypeOverride':
-              console.log(`\x1B[34m${ prefix } has invalid type ${ typeName }, removing.\x1B[0m`);
-              delete (obj as any)[k];
-              break;
-            case 'noValidate':
-              console.log(`\x1B[34m${ prefix } has type ${ typeName }, disabling validation.\x1B[0m`);
-              _.set(v, 'hints.noValidation', true);
-              break;
-            }
+          const pkg = v.import?.package ?? '';
+          if (!pkg && /^[A-Z]/.test(v.type)) {
+            // If a type is exported but has no package, it's undefined.
+            console.log(`\x1B[34;1m${ prefix }\x1B[22m has invalid type \x1B[1m${ v.type }\x1B[22m, removing.\x1B[0m`);
+            delete (obj as any)[k];
           } else {
-            console.log(`\x1B[34m${ prefix } has unknown type ${ typeName }, ignoring.\x1B[0m`);
+            // For all other types, skip validation.
+            console.log(`\x1B[34;1m${ prefix }\x1B[22m has type \x1B[1m${ pkg }.${ v.type }\x1B[22m, disabling validation.\x1B[0m`);
+            _.set(v, 'hints.noValidation', true);
           }
         } else if (_.isPlainObject(v)) {
           checkTypes(v, `${ prefix }.${ k }`.replace(/^\./, ''));
