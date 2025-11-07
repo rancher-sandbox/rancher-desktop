@@ -100,7 +100,7 @@
     "@babel/plugin-proposal-private-property-in-object": "7.21.11",
     "@electron/asar": "4.0.1",
     "@electron/fuses": "^2.0.0",
-    "@electron/notarize": "3.1.0",
+    "@electron/notarize": "3.1.1",
     "@eslint/compat": "1.4.1",
     "@playwright/test": "1.56.1",
     "@types/cross-spawn": "6.0.6",
