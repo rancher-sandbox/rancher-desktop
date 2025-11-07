@@ -6,7 +6,7 @@
 .:
 - Rancher Desktop.exe
 - wix-custom-action.dll
-- '!d3dcompiler_47.dll' # spellcheck-ignore-line
+- '!dxcompiler.dll'     # spellcheck-ignore-line
 - '!ffmpeg.dll'
 - '!libEGL.dll'         # spellcheck-ignore-line
 - '!libGLESv2.dll'      # spellcheck-ignore-line

@@ -15,6 +15,9 @@ import { simpleSpawn } from 'scripts/simple_process';
 /** signFileFn is a function that signs a single file. */
 type signFileFn = (...filePath: string[]) => Promise<void>;
 
+/** verifyFileFn checks if a given file has been signed already. */
+type verifyFileFn = (filePath: string) => Promise<boolean>;
+
 /**
  * Mandatory configuration for Windows.
  *
@@ -89,9 +92,19 @@ export async function sign(workDir: string): Promise<string[]> {
   const signFn: signFileFn = async(...fullPath) => {
     await simpleSpawn(toolPath, [...toolArgs, ...fullPath]);
   };
+  const verifyFn: verifyFileFn = async(fullPath) => {
+    try {
+      await simpleSpawn(toolPath, ['verify', '/pa', fullPath], { stdio: 'ignore' });
+
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const filesToSign = new Set<string>();
 
-  for await (const fullPath of findFilesToSign(unpackedDir, signingConfig)) {
+  for await (const fullPath of findFilesToSign(unpackedDir, signingConfig, verifyFn)) {
     // Fail if a whitelisted file doesn't exist
     await fs.promises.access(fullPath);
     filesToSign.add(fullPath);
@@ -107,7 +120,11 @@ export async function sign(workDir: string): Promise<string[]> {
  * @param unpackedDir The directory holding the unpacked zip file.
  * @param signingConfig The signing config from electron-builder.yaml
  */
-async function * findFilesToSign(unpackedDir: string, signingConfig: Record<string, string[]>): AsyncIterable<string> {
+async function * findFilesToSign(
+  unpackedDir: string,
+  signingConfig: Record<string, string[]>,
+  verifyFn: verifyFileFn = () => Promise.resolve(true),
+): AsyncIterable<string> {
   /** toSign is the set of files that we want to sign. */
   const toSign = new Set<string>();
   /** toSkip is the set of files we are explicitly skipping signing. */
@@ -129,10 +146,24 @@ async function * findFilesToSign(unpackedDir: string, signingConfig: Record<stri
     if (!['.exe', '.dll', '.ps1'].includes(path.extname(childPath))) {
       continue;
     }
+    const relPath = path.relative(unpackedDir, childPath);
+    const signed = await verifyFn(childPath);
+
     if (toSign.has(childPath)) {
+      if (signed) {
+        console.log(`Warning: ${ relPath } already signed.`);
+      }
       yield childPath;
-    } else if (!toSkip.has(childPath)) {
-      unexpectedFiles.add(path.relative(unpackedDir, childPath));
+    } else if (toSkip.has(childPath)) {
+      if (signed) {
+        console.log(`Unneeded exclusion of already-signed file ${ relPath }`);
+      }
+    } else {
+      if (signed) {
+        console.log(`Skipping already signed file ${ relPath }`);
+      } else {
+        unexpectedFiles.add(relPath);
+      }
     }
   }
 
