@@ -2,7 +2,7 @@ lima: 1.2.1.rd1
 qemu: 9.2.0.rd2
 socketVMNet: 1.2.1
 alpineLimaISO:
-  isoVersion: 0.2.46.rd1
+  isoVersion: 0.2.46.rd3
   alpineVersion: 3.22.2
 WSLDistro: "0.89"
 kuberlr: 0.6.1
