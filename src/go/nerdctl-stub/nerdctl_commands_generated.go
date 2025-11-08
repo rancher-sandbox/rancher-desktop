@@ -14,6 +14,7 @@ var commands = map[string]commandDefinition{
 			"attach":      {},
 			"build":       {},
 			"builder":     {},
+			"checkpoint":  {},
 			"commit":      {},
 			"completion":  {},
 			"compose":     {},
@@ -251,6 +252,41 @@ var commands = map[string]commandDefinition{
 			"--force":         nil,
 			"-a":              nil,
 			"-f":              nil,
+		},
+	},
+
+	"checkpoint": {
+		commandPath: "checkpoint",
+		subcommands: map[string]struct{}{
+			"create": {},
+			"ls":     {},
+			"rm":     {},
+		},
+		options: map[string]argHandler{},
+	},
+
+	"checkpoint create": {
+		commandPath: "checkpoint create",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--checkpoint-dir": ignoredArgHandler,
+			"--leave-running":  nil,
+		},
+	},
+
+	"checkpoint ls": {
+		commandPath: "checkpoint ls",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--checkpoint-dir": ignoredArgHandler,
+		},
+	},
+
+	"checkpoint rm": {
+		commandPath: "checkpoint rm",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--checkpoint-dir": ignoredArgHandler,
 		},
 	},
 
@@ -1102,11 +1138,13 @@ var commands = map[string]commandDefinition{
 		commandPath: "container start",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
-			"--attach":      nil,
-			"--detach-keys": ignoredArgHandler,
-			"--interactive": nil,
-			"-a":            nil,
-			"-i":            nil,
+			"--attach":         nil,
+			"--checkpoint":     ignoredArgHandler,
+			"--checkpoint-dir": ignoredArgHandler,
+			"--detach-keys":    ignoredArgHandler,
+			"--interactive":    nil,
+			"-a":               nil,
+			"-i":               nil,
 		},
 	},
 
@@ -1436,6 +1474,7 @@ var commands = map[string]commandDefinition{
 			"--estargz-chunk-size":            ignoredArgHandler,
 			"--estargz-compression-level":     ignoredArgHandler,
 			"--estargz-external-toc":          nil,
+			"--estargz-gzip-helper":           ignoredArgHandler,
 			"--estargz-keep-diff-id":          nil,
 			"--estargz-min-chunk-size":        ignoredArgHandler,
 			"--estargz-record-in":             ignoredArgHandler,
@@ -2202,11 +2241,13 @@ var commands = map[string]commandDefinition{
 		commandPath: "start",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
-			"--attach":      nil,
-			"--detach-keys": ignoredArgHandler,
-			"--interactive": nil,
-			"-a":            nil,
-			"-i":            nil,
+			"--attach":         nil,
+			"--checkpoint":     ignoredArgHandler,
+			"--checkpoint-dir": ignoredArgHandler,
+			"--detach-keys":    ignoredArgHandler,
+			"--interactive":    nil,
+			"-a":               nil,
+			"-i":               nil,
 		},
 	},
 
