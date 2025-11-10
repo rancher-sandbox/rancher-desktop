@@ -19,13 +19,6 @@ const console = Logging.update;
 const gCachePath = path.join(paths.cache, 'updater-longhorn.json');
 
 /**
- * If Upgrade Responder doesn't have a requestIntervalInMinutes field (or if
- * it's zero), use this value instead.  Note that the server can still set it to
- * be less than this value.
- */
-const defaultUpdateIntervalInMinutes = 60;
-
-/**
  * LonghornProviderOptions specifies the options available for LonghornProvider.
  */
 export interface LonghornProviderOptions extends CustomPublishOptions {
@@ -380,9 +373,15 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
 
     const queryResult = await queryUpgradeResponder(this.configuration.upgradeServer, this.updater.currentVersion);
     const { latest, unsupportedUpdateAvailable } = queryResult;
-    const requestIntervalInMinutes = queryResult.requestIntervalInMinutes || defaultUpdateIntervalInMinutes;
-    const requestIntervalInMs = requestIntervalInMinutes * 1000 * 60;
-    const nextRequestTime = Date.now() + requestIntervalInMs;
+
+    // Trigger the next check no earlier than some early time in the next calendar day.
+    const nextRequestTime = new Date();
+    nextRequestTime.setDate(nextRequestTime.getDate() + 1);
+    nextRequestTime.setHours(
+      Math.floor(Math.random() * 2),
+      Math.floor(Math.random() * 60),
+      Math.floor(Math.random() * 60),
+      Math.floor(Math.random() * 1_000));
 
     // Get release information from GitHub releases.
     const { owner, repo, vPrefixedTagName } = this.configuration;
@@ -427,7 +426,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     }
 
     const cache: LonghornCache = {
-      nextUpdateTime: nextRequestTime,
+      nextUpdateTime: nextRequestTime.getTime(),
       unsupportedUpdateAvailable,
       isInstallable:  false, // Always false, we'll update this later.
       release:        {
