@@ -121,7 +121,8 @@ export default class SettingsValidator {
         containerEngine: { webAssembly: { enabled: this.checkBoolean } },
         kubernetes:      { options: { spinkube: this.checkMulti(this.checkBoolean, this.checkSpinkube) } },
         virtualMachine:  {
-          mount: {
+          diskSize: this.checkLima(this.checkByteUnits),
+          mount:    {
             '9p': {
               securityModel:   this.checkLima(this.check9P(this.checkEnum(...Object.values(SecurityModel)))),
               protocolVersion: this.checkLima(this.check9P(this.checkEnum(...Object.values(ProtocolVersion)))),
@@ -493,6 +494,46 @@ export default class SettingsValidator {
     }
 
     return currentValue !== desiredValue;
+  }
+
+  /**
+   * Parse a string representing a number of bytes into a number, in a way that
+   * is compatible with `github.com/docker/go-units`.
+   * @param input The string to parse.
+   * @returns The parsed number, or `undefined` if the input is not valid.
+   */
+  protected parseByteUnits(input: string): number | undefined {
+    const expression = /^(\d+(?:\.\d+)?) ?([kmgtpezy]?)(i?b)?$/i; // spellcheck-ignore-line
+    const prefix = ['', 'k', 'm', 'g', 't', 'p', 'e', 'z', 'y'];
+    const match = expression.exec(input);
+
+    if (!match) {
+      return undefined;
+    }
+
+    const [, number, scale, unit] = match;
+    const base = unit?.startsWith('i') ? 1_024 : 1_000;
+    const exponent = prefix.indexOf(scale.toLowerCase() ?? '');
+
+    return parseFloat(number) * base ** exponent;
+  }
+
+  /**
+   * Check that the setting is a valid number of bytes, per `github.com/docker/go-units`.
+   */
+  protected checkByteUnits(_: Settings, currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
+    const current = this.parseByteUnits(currentValue);
+    const desired = this.parseByteUnits(desiredValue);
+
+    if (typeof desired === 'undefined') {
+      errors.push(this.invalidSettingMessage(fqname, desiredValue));
+    } else if (typeof current !== 'undefined' && desired < current) {
+      errors.push(`Cannot decrease "${ fqname }" from ${ currentValue } to ${ desiredValue }`);
+    } else {
+      return currentValue !== desiredValue;
+    }
+
+    return false;
   }
 
   protected checkKubernetesVersion(mergedSettings: Settings, currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {

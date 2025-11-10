@@ -85,6 +85,7 @@ class DevRunner extends events.EventEmitter {
         ...argv.filter(x => x.startsWith('--inspect')),
         buildUtils.rootDir,
         this.rendererPort.toString(),
+        '## Rancher Desktop Command Line Marker ##',
         ...argv.filter(x => !x.startsWith('--inspect')),
       );
       this.#mainProcess.on('exit', (code: number, signal: string) => {

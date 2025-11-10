@@ -158,6 +158,7 @@ test.describe.serial('KubernetesBackend', () => {
       if (['darwin', 'linux'].includes(process.platform)) {
         // Lima additions to expectedDefinition
         expectedDefinition['application.adminAccess'] = false;
+        expectedDefinition['experimental.virtualMachine.diskSize'] = false;
         expectedDefinition['virtualMachine.numberCPUs'] = false;
         expectedDefinition['virtualMachine.memoryInGB'] = false;
       }
