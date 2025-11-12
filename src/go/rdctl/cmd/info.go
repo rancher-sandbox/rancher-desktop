@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -27,6 +28,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/command"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/info"
 )
@@ -40,7 +42,7 @@ var infoSettings struct {
 var infoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Return information about Rancher Desktop",
-	Long:  makeLongHelp(),
+	Long:  infoLongHelp(),
 	RunE:  doInfoCommand,
 }
 
@@ -54,7 +56,7 @@ func init() {
 }
 
 // Generates help text for each field available.
-func makeLongHelp() string {
+func infoLongHelp() string {
 	var builder strings.Builder
 
 	_, _ = builder.WriteString("Returns information about Rancher Desktop.  The command returns all\n")
@@ -79,6 +81,8 @@ func doInfoCommand(cmd *cobra.Command, args []string) error {
 	var result info.Info
 	var rdClient client.RDClient
 
+	ctx := command.WithCommandName(cmd.Context(), cmd.CommandPath())
+
 	if connectionInfo, err := config.GetConnectionInfo(false); err == nil {
 		rdClient = client.NewRDClient(connectionInfo)
 	}
@@ -92,7 +96,14 @@ func doInfoCommand(cmd *cobra.Command, args []string) error {
 		// No longer emit usage info on errors
 		cmd.SilenceUsage = true
 
-		if err := handler(cmd.Context(), &result, rdClient); err != nil {
+		if err := handler(ctx, &result, rdClient); err != nil {
+			var fatalError command.FatalError
+			if errors.As(err, &fatalError) {
+				if fatalError.Error() != "" {
+					_, _ = fmt.Fprintln(os.Stderr, fatalError)
+				}
+				os.Exit(fatalError.ExitCode())
+			}
 			return err
 		}
 
@@ -117,7 +128,14 @@ func doInfoCommand(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
 	for _, handler := range info.Handlers {
-		if err := handler(cmd.Context(), &result, rdClient); err != nil {
+		if err := handler(ctx, &result, rdClient); err != nil {
+			var fatalError command.FatalError
+			if errors.As(err, &fatalError) {
+				if fatalError.Error() != "" {
+					_, _ = fmt.Fprintln(os.Stderr, fatalError)
+				}
+				os.Exit(fatalError.ExitCode())
+			}
 			return err
 		}
 	}

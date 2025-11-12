@@ -6,7 +6,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 )
 
-// An Info describes the output the user will receive when running `rdctl info`
+// Info describes the output the user will receive when running `rdctl info`
 // with no special options.
 type Info struct {
 	Version   string `json:"version" help:"Rancher Desktop application version"`

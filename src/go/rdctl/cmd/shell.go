@@ -17,10 +17,13 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/command"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/shell"
 )
 
@@ -54,8 +57,16 @@ func init() {
 func doShellCommand(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	shellCommand, err := shell.SpawnCommand(cmd.Context(), args...)
+	ctx := command.WithCommandName(cmd.Context(), cmd.CommandPath())
+	shellCommand, err := shell.SpawnCommand(ctx, args...)
 	if err != nil {
+		var fatalError command.FatalError
+		if errors.As(err, &fatalError) {
+			if fatalError.Error() != "" {
+				_, _ = fmt.Fprintln(os.Stderr, fatalError)
+			}
+			os.Exit(fatalError.ExitCode())
+		}
 		return err
 	}
 	shellCommand.Stdin = os.Stdin
