@@ -8,7 +8,7 @@ WSLDistro: "0.91"
 kuberlr: 0.6.1
 helm: 3.19.1
 dockerCLI: 29.0.0
-dockerBuildx: 0.29.1
+dockerBuildx: 0.30.0
 dockerCompose: 2.40.3
 golangci-lint: 2.6.1
 trivy: 0.67.2
