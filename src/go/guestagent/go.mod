@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	github.com/Masterminds/log-go v1.0.0
 	github.com/containerd/containerd v1.7.29
-	github.com/containerd/containerd/api v1.9.0
+	github.com/containerd/containerd/api v1.10.0
 	github.com/containernetworking/plugins v1.8.0
 	github.com/containers/gvisor-tap-vsock v0.8.7
 	github.com/docker/docker v28.5.1+incompatible
