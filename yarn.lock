@@ -12996,12 +12996,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nan@npm:2.23.0":
-  version: 2.23.0
-  resolution: "nan@npm:2.23.0"
+"nan@npm:2.23.1":
+  version: 2.23.1
+  resolution: "nan@npm:2.23.1"
   dependencies:
     node-gyp: "npm:latest"
-  checksum: 10c0/b986dd257dca53ab43a3b6ca6d0eafde697b69e1d63b242fa4aece50ce97eb169f9c4a5d8eb0eb5f58d118a9595fee11f3198fa210f023440053bb6f54109e73
+  checksum: 10c0/bda21d2eeea65d49d673d0ec63030212264a55b4a7e6546a73b5a1540dcfa3c3f3cc0e7f23940d2e8edd4dc58525e97941d533d3be55a2da2158489150de32b9
   languageName: node
   linkType: hard
 
@@ -14720,7 +14720,7 @@ __metadata:
     lodash: "npm:4.17.21"
     marked: "npm:16.4.1"
     mustache: "npm:4.2.0"
-    nan: "npm:2.23.0"
+    nan: "npm:2.23.1"
     native-reg: "npm:1.1.1"
     node-addon-api: "npm:8"
     node-forge: "npm:1.3.1"
