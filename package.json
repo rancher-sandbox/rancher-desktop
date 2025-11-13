@@ -144,7 +144,7 @@
     "jest-environment-jsdom": "30.2.0",
     "js-yaml-loader": "1.2.2",
     "mustache": "4.2.0",
-    "nan": "2.23.0",
+    "nan": "2.23.1",
     "node-addon-api": "8",
     "node-gyp": "11.5.0",
     "node-gyp-build": "4.8.4",
