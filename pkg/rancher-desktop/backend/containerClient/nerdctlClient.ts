@@ -206,7 +206,7 @@ export class NerdctlClient implements ContainerEngineClient {
         '--dereference', '--one-file-system', '--sparse', '--files-from', fileList,
       ].filter(defined);
 
-      await this.vm.execCommand({ root: true }, '/usr/bin/tar', ...args);
+      await this.vm.execCommand({ root: true }, '/bin/tar', ...args);
 
       // Copy the archive to the host
       const hostWorkDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-nerdctl-copy-'));
@@ -374,7 +374,7 @@ export class NerdctlClient implements ContainerEngineClient {
       await archiveFinished;
 
       await this.vm.copyFileIn(path.join(hostDir, archiveName), path.posix.join(workDir, archiveName));
-      await this.vm.execCommand('/usr/bin/tar', 'xf', path.posix.join(workDir, archiveName), '-C', resultDir);
+      await this.vm.execCommand('/bin/tar', 'xf', path.posix.join(workDir, archiveName), '-C', resultDir);
       succeeded = true;
 
       return resultDir;
