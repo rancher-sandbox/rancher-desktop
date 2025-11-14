@@ -102,8 +102,8 @@ github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zx
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/moby/docker-image-spec v1.3.1 h1:jMKff3w6PgbfSa69GfNg+zN/XLhfXJGnEx3Nl2EsFP0=
 github.com/moby/docker-image-spec v1.3.1/go.mod h1:eKmb5VW8vQEh/BAr2yvVNvuiJuY6UIocYsFu/DxxRpo=
-github.com/moby/moby/api v1.52.0-beta.4 h1:p05ztW787RcwcQx8YFcda1sb0ExqxDLHTjBQA3Jq6BY=
-github.com/moby/moby/api v1.52.0-beta.4/go.mod h1:v0K/motq8oWmx+rtApG1rBTIpQ8KUONUjpf+U73gags=
+github.com/moby/moby/api v1.52.0-rc.1 h1:yiNz/QzD4Jr1gyKl2iMo7OCZwwY+Xb3BltKv1xipwXo=
+github.com/moby/moby/api v1.52.0-rc.1/go.mod h1:v0K/motq8oWmx+rtApG1rBTIpQ8KUONUjpf+U73gags=
 github.com/oklog/ulid v1.3.1 h1:EGfNDEx6MqHz8B3uNV6QAib1UR2Lm97sHi3ocA6ESJ4=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
