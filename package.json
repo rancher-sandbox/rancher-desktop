@@ -124,7 +124,7 @@
     "@vue/eslint-config-standard-with-typescript": "9.2.0",
     "@vue/eslint-config-typescript": "14.6.0",
     "@vue/test-utils": "2.4.6",
-    "@yarnpkg/cli": "^4.10.3",
+    "@yarnpkg/cli": "^4.11.0",
     "@yarnpkg/core": "^4.4.4",
     "@yarnpkg/types": "^4.0.1",
     "babel-core": "7.0.0-bridge.0",
