@@ -77,13 +77,14 @@ verify_busybox() {
 
 verify_images() {
     if using_docker; then
-        run docker images
-        assert_output --partial "$IMAGE_NGINX" "$IMAGE_BUSYBOX"
+        run docker images --format '{{.Repository}}'
+        assert_line "$IMAGE_NGINX"
+        assert_line "$IMAGE_BUSYBOX"
     else
-        run nerdctl images --format json
-        assert_output --partial "\"Repository\":\"$IMAGE_NGINX"
-        run nerdctl --namespace k8s.io images
-        assert_output --partial "$IMAGE_BUSYBOX"
+        run nerdctl images --format '{{.Repository}}'
+        assert_line "$IMAGE_NGINX"
+        run nerdctl --namespace k8s.io images --format '{{.Repository}}'
+        assert_line "$IMAGE_BUSYBOX"
     fi
 }
 @test 'verify images before upgrade' {
