@@ -49,8 +49,10 @@ load '../helpers/load'
         if is_true "$(get_setting '.application.adminAccess')"; then
             # This is provided by the user's DHCP server
             output=$address assert_output --regexp '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
-        elif [[ $(get_setting .virtualMachine.type) == vz ]]; then
-            # macOS Virtualization.Framework NAT
+        elif [[ $RD_MOUNT_TYPE == virtiofs ]]; then
+            # macOS Virtualization.Framework NAT; not sure why this isn't used
+            # when using VZ + reverse-sshfs.  See
+            # https://github.com/rancher-sandbox/rancher-desktop/issues/9478
             output=$address assert_output --regexp '^192\.168\.205\.'
         else
             output=$address assert_output 192.168.5.15 # qemu SLIRP
