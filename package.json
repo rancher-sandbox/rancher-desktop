@@ -67,7 +67,7 @@
     "cross-spawn": "7.0.6",
     "dayjs": "1.11.19",
     "dompurify": "3.3.0",
-    "electron-updater": "6.6.2",
+    "electron-updater": "6.7.1",
     "express": "5.1.0",
     "floating-vue": "5.2.2",
     "fs-extra": "11.3.2",
@@ -134,7 +134,7 @@
     "css-loader": "7.1.2",
     "ejs": "3.1.10",
     "electron": "38.4.0",
-    "electron-builder": "26.0.12",
+    "electron-builder": "26.2.0",
     "eslint": "9.39.1",
     "eslint-plugin-vue": "10.5.1",
     "extract-zip": "2.0.1",
@@ -162,7 +162,6 @@
     "webpack": "5.100.2"
   },
   "resolutions": {
-    "node-abi": "^4.11",
     "string-width": "^4"
   },
   "optionalDependencies": {
