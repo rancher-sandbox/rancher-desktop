@@ -90,7 +90,7 @@ if [[ -n $RD_TIMEOUT ]]; then
 fi
 
 ########################################################################
-: "${RD_USE_VZ_EMULATION:=false}"
+: "${RD_USE_VZ_EMULATION:=$(bool is_macos)}"
 
 using_vz_emulation() {
     is_true "$RD_USE_VZ_EMULATION"
@@ -101,7 +101,7 @@ if using_vz_emulation && ! supports_vz_emulation; then
 fi
 
 ########################################################################
-: "${RD_USE_WINDOWS_EXE:=false}"
+: "${RD_USE_WINDOWS_EXE:=$(bool is_windows)}"
 
 using_windows_exe() {
     is_true "$RD_USE_WINDOWS_EXE"
