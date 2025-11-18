@@ -50,8 +50,10 @@ load '../helpers/load'
             # This is provided by the user's DHCP server
             output=$address assert_output --regexp '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
         elif [[ $(get_setting .virtualMachine.type) == vz ]]; then
-            # macOS Virtualization.Framework NAT
-            output=$address assert_output --regexp '^192\.168\.205\.'
+            # macOS Virtualization.Framework NAT; should be a local address
+            output=$address assert_output --regexp '^192\.168\.'
+            # but the address should not be from the regular SLIRP range
+            output=$address refute_output --regexp '^192\.168\.5\.'
         else
             output=$address assert_output 192.168.5.15 # qemu SLIRP
         fi
