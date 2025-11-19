@@ -4,11 +4,11 @@ go 1.24.2
 
 require (
 	github.com/Masterminds/log-go v1.0.0
-	github.com/containerd/containerd v1.7.28
-	github.com/containerd/containerd/api v1.9.0
+	github.com/containerd/containerd v1.7.29
+	github.com/containerd/containerd/api v1.10.0
 	github.com/containernetworking/plugins v1.8.0
 	github.com/containers/gvisor-tap-vsock v0.8.7
-	github.com/docker/docker v28.5.1+incompatible
+	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/lima-vm/lima v1.0.0-beta.0
 	github.com/stretchr/testify v1.11.1
@@ -16,7 +16,7 @@ require (
 	golang.org/x/sys v0.38.0
 	google.golang.org/protobuf v1.36.10
 	k8s.io/api v0.34.1
-	k8s.io/apimachinery v0.34.1
+	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.1
 )
 
@@ -45,7 +45,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.22.1 // indirect
-	github.com/go-openapi/jsonreference v0.21.2 // indirect
+	github.com/go-openapi/jsonreference v0.21.3 // indirect
 	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.25.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect

@@ -175,9 +175,11 @@ test.describe('WSL Integrations', () => {
       },
     });
 
+    const prefWindowPromise = electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+
     page = await electronApp.firstWindow();
     await new NavPage(page).preferencesButton.click();
-    preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
+    preferencesWindow = await prefWindowPromise;
   });
   test.afterAll(({ colorScheme }, testInfo) => teardown(electronApp, testInfo));
 

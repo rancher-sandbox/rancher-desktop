@@ -15,6 +15,7 @@ local_setup() {
     if using_containerd; then
         skip "this test only works on moby right now"
     fi
+    skip "spin shim is broken with docker 28+; see #9476"
 }
 
 local_teardown_file() {
@@ -27,7 +28,7 @@ local_teardown_file() {
 }
 
 @test 'start engine without wasm support' {
-    start_container_engine
+    start_container_engine --experimental.container-engine.web-assembly.enabled=false
     wait_for_container_engine
 }
 
@@ -65,8 +66,10 @@ hello() {
 
 @test 'verify shim is not configured in container engine' {
     run hello spin v2 rust 8080 80
+    assert_nothing                           # We assert after removing the container.
+    ctrctl rm --force spin-demo-8080 || true # Force delete the container if it got created.
     assert_failure
-    assert_output --partial "operating system is not supported"
+    assert_output --regexp 'operating system is not supported|binary not installed'
 }
 
 @test 'enable wasm support' {

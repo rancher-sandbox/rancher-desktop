@@ -191,10 +191,14 @@ start_container_engine() {
             --experimental.virtual-machine.mount.9p.security-model="$RD_9P_SECURITY_MODEL"
         )
     fi
-    if using_vz_emulation; then
-        args+=(--virtual-machine.type vz)
-        if is_macos aarch64; then
-            args+=(--virtual-machine.use-rosetta)
+    if is_macos; then
+        if using_vz_emulation; then
+            args+=(--virtual-machine.type vz)
+            if is_macos aarch64; then
+                args+=(--virtual-machine.use-rosetta)
+            fi
+        else
+            args+=(--virtual-machine.type qemu)
         fi
     fi
 
