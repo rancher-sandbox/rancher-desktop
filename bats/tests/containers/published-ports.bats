@@ -12,7 +12,7 @@ load '../helpers/load'
 }
 
 run_container_with_published_port() {
-    ctrctl pull "$IMAGE_NGINX"
+    ctrctl pull --quiet "$IMAGE_NGINX"
     ctrctl run -d -p "$@" --restart=no "$IMAGE_NGINX"
 }
 
