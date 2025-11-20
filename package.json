@@ -145,7 +145,7 @@
     "js-yaml-loader": "1.2.2",
     "mustache": "4.2.0",
     "node-addon-api": "8",
-    "node-gyp": "12.0.0",
+    "node-gyp": "12.1.0",
     "node-gyp-build": "4.8.4",
     "node-loader": "^2.1.0",
     "octokit": "5.0.5",
