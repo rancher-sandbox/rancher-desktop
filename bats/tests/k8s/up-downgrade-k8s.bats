@@ -39,7 +39,7 @@ local_setup_file() {
 }
 
 @test 'deploy nginx - always restart' {
-    ctrctl pull "$IMAGE_NGINX"
+    ctrctl pull --quiet "$IMAGE_NGINX"
     run ctrctl run -d -p 8585:80 --restart=always --name nginx-restart "$IMAGE_NGINX"
     assert_success
 }

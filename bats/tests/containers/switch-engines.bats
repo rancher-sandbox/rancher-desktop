@@ -14,6 +14,8 @@ switch_container_engine() {
 }
 
 pull_containers() {
+    ctrctl pull --quiet "$IMAGE_NGINX"
+    ctrctl pull --quiet "$IMAGE_BUSYBOX"
     ctrctl run -d -p 8085:80 --restart=no "$IMAGE_NGINX"
     ctrctl run -d --restart=always "$IMAGE_BUSYBOX" /bin/sh -c "sleep inf"
     run ctrctl ps --format '{{json .Image}}'

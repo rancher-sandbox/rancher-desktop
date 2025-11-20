@@ -21,7 +21,7 @@ local_setup() {
 
 run_container_with_host_network_driver() {
     local image="python:slim"
-    ctrctl pull "$image"
+    ctrctl pull --quiet "$image"
     ctrctl run -d --network=host --restart=no "$image" "$@"
 }
 

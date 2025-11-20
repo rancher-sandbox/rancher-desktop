@@ -16,7 +16,7 @@ RD_FILE_RAMDISK_SIZE=12 # We need more disk to run the Rancher image.
     local rancher_image
     rancher_image="rancher/rancher:$(rancher_image_tag)"
 
-    ctrctl pull "$rancher_image"
+    ctrctl pull --quiet "$rancher_image"
     ctrctl run --privileged -d --restart=no -p 8080:80 -p 8443:443 --name rancher "$rancher_image"
 }
 
