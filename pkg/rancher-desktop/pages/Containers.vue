@@ -134,6 +134,7 @@
 
 <script>
 import { BadgeState, Banner } from '@rancher/components';
+import dayjs from 'dayjs';
 import { shell } from 'electron';
 import merge from 'lodash/merge';
 import { defineComponent } from 'vue';
@@ -205,7 +206,7 @@ export default defineComponent({
           sort:  ['ports', 'containerName', 'imageName'],
         },
         {
-          name:  'started',
+          name:  'uptime',
           label: this.t('containers.manage.table.header.started'),
           sort:  ['si', 'containerName', 'imageName'],
           width: 120,
@@ -237,6 +238,7 @@ export default defineComponent({
           return a.state.localeCompare(b.state) || a.id.localeCompare(b.id);
         })
         .map(container => merge({}, container, {
+          uptime:           container.started && dayjs(container.started).toNow(true),
           availableActions: [
             {
               label:      'Info',
