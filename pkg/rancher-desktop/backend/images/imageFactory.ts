@@ -1,4 +1,4 @@
-import { VMExecutor } from '@pkg/backend/backend';
+import { VMBackend } from '@pkg/backend/backend';
 import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
 import MobyImageProcessor from '@pkg/backend/images/mobyImageProcessor';
 import NerdctlImageProcessor from '@pkg/backend/images/nerdctlImageProcessor';
@@ -9,7 +9,7 @@ const cachedImageProcessors: Partial<Record<ContainerEngine, ImageProcessor>> = 
 /**
  * Return the appropriate ImageProcessor singleton for the specified ContainerEngine.
  */
-export function getImageProcessor(engineName: ContainerEngine, executor: VMExecutor): ImageProcessor {
+export function getImageProcessor(engineName: ContainerEngine, executor: VMBackend): ImageProcessor {
   if (!(engineName in cachedImageProcessors)) {
     switch (engineName) {
     case ContainerEngine.MOBY:

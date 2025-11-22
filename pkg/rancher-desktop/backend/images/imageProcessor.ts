@@ -2,7 +2,7 @@ import { Buffer } from 'buffer';
 import { EventEmitter } from 'events';
 import timers from 'timers';
 
-import { VMExecutor } from '@pkg/backend/backend';
+import { VMBackend, VMExecutor } from '@pkg/backend/backend';
 import mainEvents from '@pkg/main/mainEvents';
 import { ChildProcess, ErrorCommand } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
@@ -70,7 +70,7 @@ interface ProcessChildOutputOptions {
  * an active ImageProcessor can be dropped.
  */
 export abstract class ImageProcessor extends EventEmitter {
-  protected executor:      VMExecutor;
+  protected backend:       VMBackend;
   // Sometimes the `images` subcommand repeatedly fires the same error message.
   // Instead of logging it every time, keep track of the current error and give a count instead.
   private lastErrorMessage = '';
@@ -90,9 +90,9 @@ export abstract class ImageProcessor extends EventEmitter {
   // which imageProcessor is currently active, and it can direct events to that.
   protected active = false;
 
-  protected constructor(executor: VMExecutor) {
+  protected constructor(backend: VMBackend) {
     super();
-    this.executor = executor;
+    this.backend = backend;
     this._refreshImages = this.refreshImages.bind(this);
     this.on('newListener', (event: string | symbol) => {
       if (!this.active) {
@@ -195,7 +195,7 @@ export abstract class ImageProcessor extends EventEmitter {
     }
 
     return await this.processChildOutput(
-      this.executor.spawn({ root: true }, ...args),
+      this.backend.executor.spawn({ root: true }, ...args),
       {
         commandName:    'trivy',
         subcommandName: 'image',

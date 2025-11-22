@@ -1,19 +1,17 @@
-import { spawn } from 'child_process';
 import path from 'path';
 
-import { VMBackend, VMExecutor } from '@pkg/backend/backend';
+import { VMBackend } from '@pkg/backend/backend';
 import * as imageProcessor from '@pkg/backend/images/imageProcessor';
 import * as K8s from '@pkg/backend/k8s';
 import mainEvents from '@pkg/main/mainEvents';
 import Logging from '@pkg/utils/logging';
-import { executable } from '@pkg/utils/resources';
 import * as window from '@pkg/window';
 
 const console = Logging.images;
 
 export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
-  constructor(executor: VMExecutor) {
-    super(executor);
+  constructor(backend: VMBackend) {
+    super(backend);
 
     mainEvents.on('k8s-check-state', (mgr: VMBackend) => {
       if (!this.active) {
@@ -31,12 +29,8 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     const subcommandName = args[0];
 
-    if (this.executor.backend !== 'wsl' && !args.includes('--context')) {
-      args.unshift('--context', 'rancher-desktop');
-    }
-
-    return await this.processChildOutput(
-      spawn(executable('docker'), args),
+    return this.processChildOutput(
+      this.backend.containerEngineClient.runClient(args, 'stream'),
       {
         subcommandName,
         notifications: {
