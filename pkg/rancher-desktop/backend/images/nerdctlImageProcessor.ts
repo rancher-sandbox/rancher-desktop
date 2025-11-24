@@ -1,7 +1,6 @@
-import { spawn } from 'child_process';
 import path from 'path';
 
-import { VMBackend, VMExecutor } from '@pkg/backend/backend';
+import { VMBackend } from '@pkg/backend/backend';
 import * as imageProcessor from '@pkg/backend/images/imageProcessor';
 import * as K8s from '@pkg/backend/k8s';
 import mainEvents from '@pkg/main/mainEvents';
@@ -12,8 +11,8 @@ import { executable } from '@pkg/utils/resources';
 const console = Logging.images;
 
 export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
-  constructor(executor: VMExecutor) {
-    super(executor);
+  constructor(backend: VMBackend) {
+    super(backend);
 
     mainEvents.on('k8s-check-state', (mgr: VMBackend) => {
       if (!this.active) {
@@ -30,10 +29,9 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
 
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     const subcommandName = args[0];
-    const namespacedArgs = ['--namespace', this.currentNamespace].concat(args);
 
     return await this.processChildOutput(
-      spawn(executable('nerdctl'), namespacedArgs),
+      this.backend.containerEngineClient.runClient(args, 'stream', { namespace: this.currentNamespace }),
       {
         subcommandName,
         notifications: {
