@@ -545,6 +545,7 @@ export class RDXClient implements v1.DockerDesktopClient {
           ...pick(details.State, ['Status', 'State'] as const),
           Names:      typeof c.Names === 'string' ? c.Names.split(/\s+/g) : Array.from(c.Names),
           Created:    Date.parse(c.CreatedAt).valueOf(),
+          Started:    Date.parse(details.State.StartedAt).valueOf(),
         };
       });
     },

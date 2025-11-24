@@ -17,6 +17,7 @@ interface ApiContainer {
   Id:      string;
   Command: string;
   Created: number;
+  Started: number;
   Image:   string;
   ImageID: string;
   Status:  string;
@@ -64,7 +65,7 @@ export interface Container {
   containerName: string;
   imageName:     string;
   state:         MobyContainer['State'] | NerdctlContainer['State'];
-  uptime:        string;
+  started:       Date | undefined;
   projectGroup:  string;
   labels:        Record<string, string>;
   ports:         Record<string, { HostIp: string, HostPort: string }[] | null>;
@@ -326,16 +327,14 @@ export const actions = {
           containerName: container.Names[0].replace(/_[a-z0-9-]{36}_[0-9]+/, ''),
           imageName:     container.Image,
           state,
-          uptime:        '',
+          started:       undefined,
           labels:        container.Labels ?? {},
           ports:         container.Ports,
           projectGroup,
         };
 
-        if (!isContainerd(container)) {
-          if (container.State === 'running') {
-            info.uptime = container.Status;
-          }
+        if (container.State === 'running' && container.Started) {
+          info.started = new Date(container.Started);
         }
         containers[container.Id] = merge(containers[container.Id] ?? {}, info);
         ids.add(container.Id);
