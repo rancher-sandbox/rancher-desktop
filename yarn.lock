@@ -14757,8 +14757,16 @@ __metadata:
   dependenciesMeta:
     dmg-license:
       optional: true
+    electron:
+      built: true
+    esbuild:
+      built: true
+    native-reg:
+      built: true
     posix-node:
       optional: true
+    unrs-resolver:
+      built: true
   languageName: unknown
   linkType: soft
 
