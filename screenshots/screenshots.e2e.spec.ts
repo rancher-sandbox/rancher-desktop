@@ -17,6 +17,7 @@ import {
 
 import { ContainerEngine, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
 import { Log } from '@pkg/utils/logging';
+import { ContainerLogsPage } from 'e2e/pages/container-logs-page';
 
 import type { ElectronApplication, Page } from '@playwright/test';
 
@@ -94,7 +95,7 @@ test.describe.serial('Main App Test', () => {
       const containersPage = await navPage.navigateTo('Containers');
 
       await containersPage.page.exposeFunction('listContainersMock', (options?: any) => {
-        return containersList;
+        return Promise.resolve(containersList);
       });
       await containersPage.page.evaluate(() => {
         const { ddClient } = window as any;
@@ -117,6 +118,7 @@ test.describe.serial('Main App Test', () => {
     test('Container Logs Page', async({ colorScheme }) => {
       const containersPage = await navPage.navigateTo('Containers');
 
+      await containersPage.waitForTableToLoad();
       await expect(containersPage.page.getByRole('row')).toHaveCount(11);
 
       await containersPage.page.evaluate(() => {
@@ -150,17 +152,18 @@ test.describe.serial('Main App Test', () => {
       });
 
       try {
-        const firstContainerRow = containersPage.page.locator('tr.main-row[data-node-id="b253b86ddaca501c0f542564d086b7535ed015faa323f0f8df8fccc38c0c8ee0"]');
-        const actionsButton = firstContainerRow.locator('.btn.role-multi-action.actions');
-        await actionsButton.click();
+        const containerId = containersList[0].Id;
 
-        const logsAction = containersPage.page.getByRole('listitem').filter({ hasText: 'Logs' });
-        await logsAction.click();
+        await containersPage.waitForContainerToAppear(containerId);
+        await containersPage.viewContainerInfo(containerId);
 
-        await containersPage.page.waitForURL('**/containers/logs/**');
-        await expect(containersPage.page.getByTestId('container-info')).toBeVisible();
-        await expect(containersPage.page.getByTestId('terminal')).toBeVisible();
-        await containersPage.page.waitForTimeout(1500);
+        await containersPage.page.waitForURL('**/containers/info/**');
+
+        const containerLogsPage = new ContainerLogsPage(containersPage.page);
+        await containerLogsPage.waitForLogsToLoad();
+        await expect(containerLogsPage.containerInfo).toBeVisible();
+        await expect(containerLogsPage.terminal).toBeVisible();
+        await expect(containerLogsPage.loadingIndicator).not.toBeVisible();
 
         await screenshot.take('Container-Logs');
       } finally {
