@@ -49,7 +49,8 @@ Requires: qemu-utils
 Requires: qemu-system-x86
 Requires: pass
 Requires: openssh-client
-Requires: gnutls-bin # To enumerate system certificates
+# To enumerate system certificates
+Requires: gnutls-bin
 Requires: libasound2
 Requires: libatk1.0-0
 Requires: libatk-bridge2.0-0
@@ -111,7 +112,8 @@ Requires: mesa-libgbm
 Requires: libgcc
 Requires: gdk-pixbuf2
 Requires: glib
-Requires: gnutls-utils # To enumerate system certificates
+# To enumerate system certificates
+Requires: gnutls-utils
 Requires: gtk3
 Requires: pango
 Requires: libxcb
@@ -119,7 +121,8 @@ Requires: libxkbcommon
 Requires: nspr
 Requires: nss
 %else
-Requires: gnutls # To enumerate system certificates
+# To enumerate system certificates
+Requires: gnutls
 Requires: libX11-6
 Requires: libXcomposite1
 Requires: libXdamage1
