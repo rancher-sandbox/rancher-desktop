@@ -188,6 +188,11 @@ cp -ra ./* "%{buildroot}/opt/%{name}"
 # Link to the binary
 ln -sf "/opt/%{name}/rancher-desktop" "%{buildroot}%{_bindir}/rancher-desktop"
 
+%post
+# This is needed to ensure Debian packages have proper file permissions;
+# otherwise the postinst script is not generated correctly.
+true
+
 %files
 %defattr(-,root,root,-)
 %dir /opt/%{name}
