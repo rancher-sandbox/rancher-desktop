@@ -644,7 +644,7 @@ components:
                 type:
                   type: string
                   enum: [reverse-sshfs, 9p, virtiofs]
-                  x-rd-usage: how directories are shared; 9p is experimental.
+                  x-rd-usage: how directories are shared; 9p is experimental
         kubernetes:
           type: object
           properties:
@@ -805,7 +805,7 @@ components:
                   type: integer
                   x-rd-usage: >-
                     Number of milliseconds before polling for network access;
-                    set this to zero to disable background connectivity checking.
+                    set this to zero to disable background connectivity checking
                 timeout:
                   type: integer
                   x-rd-usage: Number of milliseconds to wait before timing out
