@@ -29,7 +29,7 @@ jobs:
         # we may need to checkout an existing branch, so need the full history
         fetch-depth: 0
     # Setup go to be able to run `go run ./scripts/k3s-version.go`
-    - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+    - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
       with:
         go-version-file: go.work
     - run: ./scripts/k3s-versions.sh
