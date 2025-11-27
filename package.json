@@ -161,6 +161,20 @@
     "typescript": "5.9.3",
     "webpack": "5.100.2"
   },
+  "dependenciesMeta": {
+    "electron": {
+      "built": true
+    },
+    "esbuild": {
+      "built": true
+    },
+    "native-reg": {
+      "built": true
+    },
+    "unrs-resolver": {
+      "built": true
+    }
+  },
   "resolutions": {
     "string-width": "^4"
   },
