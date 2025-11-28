@@ -61,9 +61,6 @@ class E2ETestRunner extends events.EventEmitter {
     const args = processArgsForPlaywright(process.argv);
     const spawnArgs = ['node_modules/@playwright/test/cli.js', 'test', '--config=e2e/config/playwright-config.ts'];
 
-    if (process.env.CI) {
-      spawnArgs.push('--retries=2');
-    }
     this.#testProcess = this.spawn('Test process', 'node', ...spawnArgs, ...args);
 
     return new Promise((resolve, reject) => {
