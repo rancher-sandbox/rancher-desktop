@@ -284,12 +284,15 @@ export default defineComponent({
         }));
     },
     errorMessage() {
-      if (this.errorMessage) {
-        return this.errorMessage;
+      if (this.execError) {
+        return this.execError;
       }
       switch (this.error?.source) {
-      case 'containers': case 'namespaces':
-        return `${ this.error.error }`;
+      case 'containers': case 'namespaces': {
+        const error = this.error.error;
+
+        return `${ error?.stderr ?? error }`;
+      }
       }
       return null;
     },
@@ -307,15 +310,12 @@ export default defineComponent({
 
     ipcRenderer.send('settings-read');
 
-    ipcRenderer.on('settings-update', (_event, settings) => {
-      this.settings = settings;
-      this.checkSelectedNamespace();
-    });
+    ipcRenderer.on('settings-update', this.updateSettings);
 
     this.subscribe().catch(console.error);
   },
   beforeUnmount() {
-    ipcRenderer.removeAllListeners('settings-update');
+    ipcRenderer.removeListener('settings-update', this.updateSettings);
     this.$store.dispatch('container-engine/unsubscribe').catch(console.error);
     clearTimeout(this.subscribeTimer);
   },
@@ -334,6 +334,11 @@ export default defineComponent({
       } catch (error) {
         console.error('There was a problem subscribing to container events:', { error });
       }
+    },
+
+    updateSettings(_event, settings) {
+      this.settings = settings;
+      this.checkSelectedNamespace();
     },
 
     checkSelectedNamespace() {
@@ -514,6 +519,15 @@ export default defineComponent({
       switch (this.error?.source) {
       case 'namespaces': case 'containers':
         this.$store.commit('container-engine/SET_ERROR', null);
+      }
+    },
+  },
+  watch: {
+    isK8sReady(isK8sReady) {
+      if (!isK8sReady) {
+        // The backend went from ready -> unready, unsubscribe and restart.
+        this.$store.dispatch('container-engine/unsubscribe').catch(console.error);
+        this.subscribe().catch(console.error);
       }
     },
   },

@@ -59,8 +59,8 @@ export function mapTypedGetters
   N extends keyof Modules,
   M extends Modules[N] extends { getters: any } ? Modules[N]['getters'] : never,
   K extends keyof M,
-  G extends Record<K, string>,
->(namespace: N, mappings: G): { [key in keyof G as G[key]]: () => ReturnType<M[key]> };
+  G extends Record<string, K>,
+>(namespace: N, mappings: G): { [key in keyof G]: () => ReturnType<M[G[key]]> };
 // Actual implementation defers to mapGetters.
 export function mapTypedGetters(namespace: string, arg: any) {
   return mapGetters(namespace, arg);
