@@ -402,9 +402,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     if (os.platform().startsWith('linux')) {
       const cpuInfo = await fs.promises.readFile('/proc/cpuinfo', 'utf-8');
 
-      if (!/flags.*(vmx|svm)/g.test(cpuInfo)) {
-        console.log(`Virtualization support error: got ${ cpuInfo }`);
-        throw new Error('Virtualization does not appear to be supported on your machine.');
+      // On aarch64 (or maybe everywhere?) we should check if /dev/kvm exists
+      if (this.arch === 'x86_64') {
+        if (!/flags.*(vmx|svm)/g.test(cpuInfo)) {
+          console.log(`Virtualization support error: got ${ cpuInfo }`);
+          throw new Error('Virtualization does not appear to be supported on your machine.');
+        }
       }
     } else if (os.platform().startsWith('darwin')) {
       const { stdout } = await childProcess.spawnFile(

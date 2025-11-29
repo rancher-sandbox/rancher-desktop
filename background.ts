@@ -497,6 +497,7 @@ async function checkPrerequisites() {
         }
       } catch {}
     }
+    messageId = 'ok';
     break;
   }
   case 'darwin': {
