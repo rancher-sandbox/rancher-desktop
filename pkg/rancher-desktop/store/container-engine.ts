@@ -269,9 +269,12 @@ export const actions = {
       commit('SET_SUBSCRIBER', null);
     }
   },
-  unsubscribe({ state }) {
+  unsubscribe({ commit, state }) {
     state.subscriber?.destroy();
     state.subscriber = null;
+    // Clear the state; this is needed if the backend becomes unready.
+    state.containers = null;
+    state.volumes = null;
   },
   async fetchNamespaces({ commit, state, getters }) {
     try {

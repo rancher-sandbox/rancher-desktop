@@ -75,7 +75,6 @@
 import { Banner } from '@rancher/components';
 import merge from 'lodash/merge';
 import { defineComponent } from 'vue';
-import { mapGetters } from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
 import type { Settings } from '@pkg/config/settings';
@@ -136,7 +135,7 @@ export default defineComponent({
     };
   },
   computed: {
-    ...mapGetters('k8sManager', { isK8sReady: 'isReady' }),
+    ...mapTypedGetters('k8sManager', { isK8sReady: 'isReady' }),
     ...mapTypedState('container-engine', ['namespaces', 'volumes']),
     ...mapTypedGetters('container-engine', ['namespace', 'supportsNamespaces', 'error']),
     rows(): RowItem[] {
@@ -172,8 +171,11 @@ export default defineComponent({
         return this.execError;
       }
       switch (this.error?.source) {
-      case 'namespaces': case 'volumes':
-        return `${ this.error.error }`;
+      case 'namespaces': case 'volumes': {
+        const error: any = this.error.error;
+
+        return `${ error?.stderr ?? error }`;
+      }
       }
       return null;
     },
@@ -310,6 +312,15 @@ export default defineComponent({
       switch (this.error?.source) {
       case 'namespaces': case 'volumes':
         this.$store.commit('container-engine/SET_ERROR', null);
+      }
+    },
+  },
+  watch: {
+    isK8sReady(isK8sReady) {
+      if (!isK8sReady) {
+        // The backend went from ready -> unready, unsubscribe and restart.
+        this.$store.dispatch('container-engine/unsubscribe').catch(console.error);
+        this.subscribe().catch(console.error);
       }
     },
   },
