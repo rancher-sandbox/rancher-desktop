@@ -27,6 +27,95 @@ async function getModules(): Promise<string[]> {
   return (await listFiles('**/go.mod')).map(mod => path.dirname(mod));
 }
 
+/**
+ * Modules whose version depends on a different module.  The top level key is
+ * the directory containing `go.mod`, relative to the top of the source tree;
+ * for example, `src/go/wsl-helper`.  The second level is the go module to
+ * modify; the value is the go module in the same `go.mod` to refer to.
+ */
+const linkedModules: Record<string, Record<string, string>> = {
+  'src/go/wsl-helper': {
+    'github.com/go-openapi/swag': 'github.com/go-swagger/go-swagger',
+  },
+};
+
+/**
+ * The subset of `go mod edit -json` output that we care about.
+ */
+interface GoModule {
+  Require: {
+    Path:      string;
+    Version:   string;
+    Indirect?: boolean;
+  }[];
+};
+
+/**
+ * Tagged template function for use in error strings, highlighting all the expressions.
+ */
+function error(input: TemplateStringsArray, ...args: any[]): string {
+  const parts = input.map((s, i) => `${ s }\x1B[1;33;40m${ args[i] ?? '' }\x1B[0m`);
+  return `\x1B[0;1;31mERROR\x1B[0m ${ parts.join('') }`;
+}
+
+async function processLinkedModules(dir: string, fix: boolean): Promise<boolean> {
+  let noErrors = true;
+  const moduleMap = linkedModules[dir];
+
+  if (!moduleMap) {
+    // We do not have overrides for this directory.
+    return true;
+  }
+
+  /** Run `go` with the given arguments, returning standard output. */
+  async function go(...args: string[]): Promise<string> {
+    console.log(['go', ...args].join(' '));
+    const { stdout } = await spawnFile('go', args, { cwd: dir, stdio: ['ignore', 'pipe', 'inherit'] });
+
+    return stdout;
+  }
+
+  const modules: GoModule = JSON.parse(await go('mod', 'edit', '-json'));
+  const requires = Object.fromEntries(modules.Require.map(r => [r.Path, r]));
+
+  for (const [target, source] of Object.entries(moduleMap)) {
+    if (!(target in requires)) {
+      console.error(error`${ dir }: failed to find linked module ${ target }`);
+      noErrors = false;
+    }
+    if (!(source in requires)) {
+      console.error(error`${ dir }: linked module ${ target } has missing source ${ source }`);
+      noErrors = false;
+    }
+    if (!noErrors) {
+      continue;
+    }
+
+    const currentVersion = requires[target].Version;
+    const sourcePath = (await go('list', '-m', '-f', '{{ .GoMod }}', source)).trim();
+    const sourceModules: GoModule = await JSON.parse(await go('mod', 'edit', '-json', sourcePath));
+    const sourceRequires = Object.fromEntries(sourceModules.Require.map(r => [r.Path, r]));
+
+    if (target in sourceRequires) {
+      const wantedVersion = sourceRequires[target].Version;
+
+      if (currentVersion !== wantedVersion) {
+        if (fix) {
+          await go('get', `${ target }@${ wantedVersion }`);
+        } else {
+          console.error(error`${ dir }: linked module ${ target } has version ${ currentVersion }, should be ${ wantedVersion }`);
+          noErrors = false;
+        }
+      }
+    } else {
+      console.error(error`${ dir }: linked module ${ target } has source ${ source } but that does not require it`);
+      noErrors = false;
+    }
+  }
+
+  return noErrors;
+}
+
 async function syncModules(fix: boolean): Promise<boolean> {
   const modFiles = await listFiles('**/go.mod');
   const files = ['go.work', ...modFiles, ...await listFiles('**/go.sum')];
@@ -45,6 +134,11 @@ async function syncModules(fix: boolean): Promise<boolean> {
 
       return false;
     }
+  }
+
+  const linkedModulesOk = await Promise.all(modFiles.map(f => processLinkedModules(path.dirname(f), fix)));
+  if (linkedModulesOk.some(v => !v)) {
+    return false;
   }
 
   await spawnFile('go', ['work', 'sync']);
