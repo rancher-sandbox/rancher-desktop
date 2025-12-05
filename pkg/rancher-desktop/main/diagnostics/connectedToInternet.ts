@@ -31,10 +31,9 @@ mainEvents.on('settings-update', settings => {
  */
 async function checkNetworkConnectivity(): Promise<boolean> {
   const request = net.request({
-    // Using HTTP request that returns a 301 redirect response instead of a 20+ kB web page
-    url:         'http://docs.rancherdesktop.io/',
+    method:      'HEAD',
+    url:         'https://docs.rancherdesktop.io/',
     credentials: 'omit',
-    redirect:    'manual',
     cache:       'no-cache',
   });
   const timeoutId = setTimeout(() => {
