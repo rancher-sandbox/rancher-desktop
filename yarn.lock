@@ -3673,15 +3673,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rancher/components@npm:0.3.0-alpha.1":
-  version: 0.3.0-alpha.1
-  resolution: "@rancher/components@npm:0.3.0-alpha.1"
+"@rancher/components@npm:0.3.0-alpha.2":
+  version: 0.3.0-alpha.2
+  resolution: "@rancher/components@npm:0.3.0-alpha.2"
   dependencies:
     lodash.debounce: "npm:4.0.8"
   peerDependencies:
-    core-js: 3.25.3
-    vue: ~3.2.13
-  checksum: 10c0/ba6cef3e764671711c72042321c3129fbb75df8f0824b60acaf8c53da69adb9988994d6d1aba7604217ca510f6e8e36158abb785ec3148dd4fce42a746afab6f
+    core-js: 3.40.0
+    vue: ^3.2.13
+  checksum: 10c0/929126c7f3040823fc713d6a9ddc5019d9613beccb67ee186c10c25f29ccb7f9e310ddbe4a6dfbd677e1029739eb5639b83af75b551aab655f186f8cab5a2a83
   languageName: node
   linkType: hard
 
@@ -14709,7 +14709,7 @@ __metadata:
     "@kubernetes/client-node": "npm:1.4.0"
     "@napi-rs/xattr": "npm:^1.0.3"
     "@playwright/test": "npm:1.57.0"
-    "@rancher/components": "npm:0.3.0-alpha.1"
+    "@rancher/components": "npm:0.3.0-alpha.2"
     "@types/cross-spawn": "npm:6.0.6"
     "@types/dompurify": "npm:3.2.0"
     "@types/ejs": "npm:3.1.5"
