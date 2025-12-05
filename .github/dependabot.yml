@@ -43,6 +43,9 @@ updates:
     default-days: 7
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
+  ignore:
+  - # Swagger dependencies must match whatever the CLI generate.
+    dependency-name: "github.com/go-openapi/swag"
   groups:
     golang-x:
       patterns: ["golang.org/x/*"]
