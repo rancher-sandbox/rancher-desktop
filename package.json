@@ -68,7 +68,7 @@
     "dayjs": "1.11.19",
     "dompurify": "3.3.0",
     "electron-updater": "6.7.2",
-    "express": "5.1.0",
+    "express": "5.2.1",
     "floating-vue": "5.2.2",
     "fs-extra": "11.3.2",
     "http-proxy-middleware": "3.0.5",
