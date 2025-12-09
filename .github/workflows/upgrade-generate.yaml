@@ -18,7 +18,7 @@ jobs:
           runs-on: windows-latest
     runs-on: ${{ matrix.runs-on }}
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         persist-credentials: false
         # Needed to run `git describe` to get full version info
@@ -55,11 +55,11 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         persist-credentials: false
     - uses: ./.github/actions/yarn-install
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         ref: gh-pages
         path: pages
