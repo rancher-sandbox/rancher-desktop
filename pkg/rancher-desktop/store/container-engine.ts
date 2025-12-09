@@ -292,7 +292,7 @@ export const actions = {
   },
   async fetchContainers({ commit, getters, state }) {
     try {
-      const { backend, client, namespace } = state;
+      const { client, namespace } = state;
       const containers = state.containers ?? {};
       const options = { all: true, namespace: getters.supportsNamespaces ? namespace : undefined };
       const apiContainers = await client?.docker.listContainers(options) ?? [];
@@ -300,11 +300,6 @@ export const actions = {
 
       // Update containers in-place to maintain any UI state
       for (const container of apiContainers as (NerdctlContainer | MobyContainer)[]) {
-        /** isContainerd is used to cast the container info to the correct type. */
-        function isContainerd(container: NerdctlContainer | MobyContainer): container is NerdctlContainer {
-          return backend === ContainerEngine.CONTAINERD;
-        }
-
         const k8sPodName = container.Labels?.['io.kubernetes.pod.name'];
         const k8sNamespace = container.Labels?.['io.kubernetes.pod.namespace'];
         const composeProject = container.Labels?.['com.docker.compose.project'];
