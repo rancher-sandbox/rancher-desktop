@@ -5,6 +5,7 @@ import { test, expect, _electron } from '@playwright/test';
 
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 import { containersList } from './test-data/containers';
+import { imagesList } from './test-data/images';
 import { lockedSettings } from './test-data/preferences';
 import { snapshotsList } from './test-data/snapshots';
 import { volumesList } from './test-data/volumes';
@@ -186,6 +187,10 @@ test.describe.serial('Main App Test', () => {
     });
 
     test('Images Page', async({ colorScheme }) => {
+      await navPage.page.exposeFunction('imagesListMock', () => {
+        return imagesList;
+      });
+
       const imagesPage = await navPage.navigateTo('Images');
 
       await expect(imagesPage.rows).toBeVisible();
