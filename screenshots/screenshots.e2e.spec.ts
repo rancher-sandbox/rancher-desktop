@@ -372,14 +372,17 @@ test.describe.serial('Main App Test', () => {
           await e2ePreferences.virtualMachine.tabEmulation.click();
           await expect(e2ePreferences.virtualMachine.vmType).toBeVisible();
           await prefScreenshot.take('virtualMachine', 'tabEmulation');
+
+          // If applicable, switch to VZ so we can use virtiofs.
+          if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
+            await page.waitForTimeout(afterCheckedTimeout);
+            await expect(e2ePreferences.virtualMachine.vz).toBeVisible();
+            await e2ePreferences.virtualMachine.vz.click({ position: { x: 10, y: 10 } });
+            await expect(e2ePreferences.virtualMachine.vz).toBeChecked();
+          }
         });
 
         test('VolumesTab-virtiofs', async() => {
-          if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
-            await e2ePreferences.virtualMachine.vz.click();
-            await expect(e2ePreferences.virtualMachine.vz).toBeChecked();
-          }
-
           await e2ePreferences.virtualMachine.tabVolumes.click();
           if (await e2ePreferences.virtualMachine.virtiofs.isEnabled()) {
             await e2ePreferences.virtualMachine.virtiofs.click();
