@@ -143,12 +143,12 @@ export async function getKubeConfigPaths(): Promise<string[]> {
 // to save the context. The current version of the package targets k8s 1.18 and
 // there are new config file features (e.g., proxy) that may be lost by outputting
 // the config with the library. So, we drop down to kubectl for this.
-export function setCurrentContext(cxt: string, exitfunc: (code: number | null, signal: NodeJS.Signals | null) => void) {
+export function setCurrentContext(ctx: string, exitfunc: (code: number | null, signal: NodeJS.Signals | null) => void) {
   const opts: childProcess.SpawnOptions = {};
 
   opts.env = { ...process.env };
 
-  const bat = spawn(executable('kubectl'), ['config', 'use-context', cxt], opts);
+  const bat = spawn(executable('kubectl'), ['config', 'use-context', ctx], opts);
 
   // TODO: For data toggle this based on a debug mode
   bat.stdout?.on('data', (data) => {
