@@ -441,7 +441,7 @@ export default {
     },
 
     // Ensure we update live and delayed columns on first load
-    initalLoad: {
+    initialLoad: {
       handler(neu) {
         if (neu) {
           this._didinit = true;
@@ -499,7 +499,7 @@ export default {
       return this.$store.getters['activeNamespaceCache'];
     },
 
-    initalLoad() {
+    initialLoad() {
       return !!(!this.isLoading && !this._didinit && this.rows?.length);
     },
 
