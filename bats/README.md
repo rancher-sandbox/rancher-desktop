@@ -9,7 +9,7 @@ It's important to have a Rancher Desktop CI or release build installed and runni
 ### On Windows:
 
 Clone the Git repository of Rancher Desktop, whether directly inside a WSl distro or on the host Win32.
-If the repository will be cloned on Win32, prior to cloning it, it's important to setup the Git configuration by running the following commands:
+If the repository will be cloned on Win32, prior to cloning it, it's important to set up the Git configuration by running the following commands:
 
   ```powershell
   git config --global core.eol lf
