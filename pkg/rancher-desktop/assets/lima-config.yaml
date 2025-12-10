@@ -23,23 +23,46 @@ provision:
     mkdir -p /bootfs
     mount --bind / /bootfs
     # /bootfs/etc is empty on first boot because it has been moved to /mnt/data/etc by lima
-    if [ -f /bootfs/etc/os-release ] && ! diff -q /etc/os-release /bootfs/etc/os-release; then
-      cp /etc/machine-id /bootfs/etc
-      cp /etc/ssh/ssh_host* /bootfs/etc/ssh/
-      mkdir -p /etc/docker /etc/rancher
-      cp -pr /etc/docker /bootfs/etc
-      cp -pr /etc/rancher /bootfs/etc
+    if [ -f /bootfs/etc/os-release ]; then
+      # Alpine turned /etc/os-release into a symlink; we dereference it again. If we still have a symlink
+      # here, then this is an upgrade from an older version and needs to go through the migration.
+      if [ -L /etc/os-release ] || ! diff -q /etc/os-release /bootfs/etc/os-release; then
+        # When we are upgrading from an ISO we will install new packages during boot.
+        # But Lima will restore the old /etc/apk/world file and run `apk fix --no-network`
+        # to restore packages from cache that were installed manually. This will however
+        # uninstall all packages again that were not previously installed because they are
+        # not listed in the old world file. We need to install them once more from the
+        # boot media to update the world file.
+        # We are not bothering with uninstalling packages that are not part of the new release.
+        apk add --no-network --keys-dir /bootfs/etc/apk/keys --repositories-file /bootfs/etc/apk/repositories \
+          $(cat /bootfs/etc/apk/world)
 
-      rm -rf /mnt/data/etc.prev
-      mkdir /mnt/data/etc.prev
-      mv /etc/* /mnt/data/etc.prev
-      mv /bootfs/etc/* /etc
+        # Using a temp file just in case dereferencing a symlink onto itself has a race condition.
+        cp -L /etc/os-release /etc/os-release.tmp
+        mv /etc/os-release.tmp /etc/os-release
 
-      # install updated files from /usr/local, e.g. nerdctl, buildkit, cni plugins
-      cp -pr /bootfs/usr/local /usr
+        cp /etc/machine-id /bootfs/etc
+        cp /etc/ssh/ssh_host* /bootfs/etc/ssh/
+        mkdir -p /etc/docker /etc/rancher
+        cp -pr /etc/docker /bootfs/etc
+        cp -pr /etc/rancher /bootfs/etc
 
-      # lima has applied changes while the "old" /etc was in place; restart to apply them to the updated one.
-      reboot
+        rm -rf /mnt/data/etc.prev
+        mkdir /mnt/data/etc.prev
+        mv /etc/* /mnt/data/etc.prev
+        cp -L /bootfs/etc/os-release /tmp/os-release
+        mv /bootfs/etc/* /etc
+        mv /tmp/os-release /etc
+
+        # install updated files from /usr/local, e.g. nerdctl, buildkit, cni plugins
+        cp -pr /bootfs/usr/local /usr
+
+        # Keep the lima-init.log around for debugging    
+        cp /var/log/lima-init.log /mnt/data/lima-init-upgrade.log
+
+        # lima has applied changes while the "old" /etc was in place; restart to apply them to the updated one.
+        reboot
+      fi
     fi
     umount /bootfs
     rmdir /bootfs
