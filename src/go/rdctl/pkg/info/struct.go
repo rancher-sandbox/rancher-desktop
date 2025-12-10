@@ -22,8 +22,8 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/client"
 )
 
-// Info describes the output the user will receive when running `rdctl info`
-// with no special options.
+// Info describes the output `rdctl info` will generate when run with no
+// special options.
 type Info struct {
 	Version   string `json:"version" help:"Rancher Desktop application version"`
 	IPAddress string `json:"ip-address" help:"IP address to use to contact the VM"`
