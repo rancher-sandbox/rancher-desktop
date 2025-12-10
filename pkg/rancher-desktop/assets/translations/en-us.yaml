@@ -594,7 +594,7 @@ authConfig:
       tip: The Service Account Credentials JSON can be found in the service accounts section of the Google API developers console.
     steps:
       1:
-        title: 'Click <a href="https://console.developers.google.com/apis/credentials" target="_blank" rel="noopener noreferrer nofollow">here</a> to open applications settings in a new window'
+        title: 'Open <a href="https://console.developers.google.com/apis/credentials" target="_blank" rel="noopener noreferrer nofollow">applications settings</a> in a new window'
         body:
          1: Login to your account. Navigate to "APIs & Services" and then select "OAuth consent screen".
          2: 'Authorized domains:'
