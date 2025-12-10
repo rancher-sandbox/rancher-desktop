@@ -1397,7 +1397,7 @@ configmap:
 
 containerResourceLimit:
   cpuPlaceholder: e.g. 1000
-  helpText: Configure how much of the resources the container can consume by default.
+  helpText: Configure how much resources the container can consume by default.
   helpTextDetail: The amount of resources the container can consume by default.
   label: Container Default Resource Limit
   limitsCpu: CPU Limit
