@@ -314,7 +314,7 @@ test.describe.serial('Extensions', () => {
       test('ddClient.docker.listImages', async() => {
         const options = {
           digests:   true,
-          namesapce: isContainerd ? NAMESPACE : undefined,
+          namespace: isContainerd ? NAMESPACE : undefined,
         };
         const script = `ddClient.docker.listImages(${ JSON.stringify(options) })`;
         const result = await evalInView(script);

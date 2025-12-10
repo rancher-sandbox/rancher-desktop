@@ -122,9 +122,6 @@ regexp?\.MustCompile\(`[^`]*`\)
 # typos in translation keys
 ^\s*(?:calllback|objectReferance|requriedInt):$
 
-# bug https://github.com/rancher-sandbox/rancher-desktop/pull/5030#discussion_r1239065212
-\bnamesapce: isContainerd\b
-
 # adduser and friends
 \s-g (\w+)\s+\g{-1}\s
 # acceptable duplicates
