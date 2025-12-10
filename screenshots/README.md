@@ -49,7 +49,7 @@ Make sure you have run a "Factory Reset" before capturing screenshots, so they s
 default settings and not your current configuration.
 
 On macOS and Linux, after the "Factory Reset" run the app once manually (`yarn dev`)
-to disable admin access. Otherwise the `screenshots` script will hang when the password
+to disable admin access. Otherwise, the `screenshots` script will hang when the password
 prompt comes up.
 
 Then, capture screenshots in both dark & light mode:

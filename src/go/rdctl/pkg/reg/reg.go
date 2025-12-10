@@ -80,7 +80,7 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 				if len(newRetLines) == 0 {
 					continue
 				}
-				// If the first character of the first line is a '[' it's a struct. Otherwise it's a scalar.
+				// If the first character of the first line is a '[' it's a struct. Otherwise, it's a scalar.
 				// ']' placed here to appease my IDE's linter.
 				if newRetLines[0][0] == '[' {
 					nestedReturnedLines = append(nestedReturnedLines, newRetLines...)
