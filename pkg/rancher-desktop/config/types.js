@@ -135,7 +135,7 @@ export const MANAGEMENT = {
   CLUSTER_ROLE_TEMPLATE_BINDING: 'management.cattle.io.clusterroletemplatebinding',
   FEATURE:                       'management.cattle.io.feature',
   GROUP:                         'management.cattle.io.group',
-  KONTANIER_DRIVER:              'management.cattle.io.kontainerdriver',
+  KONTAINER_DRIVER:              'management.cattle.io.kontainerdriver',
   NODE_DRIVER:                   'management.cattle.io.nodedriver',
   NODE_POOL:                     'management.cattle.io.nodepool',
   NODE_TEMPLATE:                 'management.cattle.io.nodetemplate',
