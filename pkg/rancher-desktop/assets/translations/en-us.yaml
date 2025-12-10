@@ -655,7 +655,7 @@ authConfig:
     serviceAccountInfo: '{vendor} needs a service account that has read-only access to all of the domains that will be able to login, so that we can determine what groups a user is a member of when they make a request with an API key.'
     starttls:
       label: Start TLS
-      tip: Upgrades non-encrypted connections by wrapping with TLS during the connection process. Can not be used in conjunction with TLS.
+      tip: Upgrades non-encrypted connections by wrapping with TLS during the connection process. Cannot be used in conjunction with TLS.
     tls: TLS
     userEnabledAttribute: User Enabled Attribute
     userMemberAttribute: User Member Attribute

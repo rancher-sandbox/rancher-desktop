@@ -41,7 +41,7 @@ func GetVMGUID(ctx context.Context, signature string, handshakePort uint32, time
 
 	names, err := key.ReadSubKeyNames(0)
 	if err != nil {
-		return hvsock.GUIDZero, fmt.Errorf("machine IDs can not be read in registry: %v", err)
+		return hvsock.GUIDZero, fmt.Errorf("machine IDs cannot be read in registry: %v", err)
 	}
 	if len(names) == 0 {
 		return hvsock.GUIDZero, errors.New("no running WSL VM found")

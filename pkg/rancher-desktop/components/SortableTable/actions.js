@@ -53,7 +53,7 @@ export default {
       return this.t('sortableTable.actionAvailability.selected', { actionable: this.selectedRows.length });
     },
 
-    // Shows a tooltip if the bulk action that the user is hovering over can not be applied to all selected rows
+    // Shows a tooltip if the bulk action that the user is hovering over cannot be applied to all selected rows
     actionTooltip() {
       if (!this.selectedRows.length || !this.actionOfInterest) {
         return null;
