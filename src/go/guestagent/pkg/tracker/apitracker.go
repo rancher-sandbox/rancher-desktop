@@ -146,7 +146,7 @@ func (a *APITracker) Get(containerID string) nat.PortMap {
 }
 
 // Remove a single entry from the port storage and calls the
-// /services/forwarder/unexpose endpoint to remove the forwarded the port mappings.
+// /services/forwarder/unexpose endpoint to remove the forwarded port mappings.
 func (a *APITracker) Remove(containerID string) error {
 	portMap := a.portStorage.get(containerID)
 	defer a.portStorage.remove(containerID)
