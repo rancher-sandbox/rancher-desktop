@@ -1850,7 +1850,7 @@ logging:
     key: Key from Secret
   awsElasticsearch:
     url: URL
-    keyId: Key Id from Secret
+    keyId: Key ID from Secret
     secretKey: Secret Key from Secret
   azurestorage:
     storageAccount: Account from Secret
@@ -1859,7 +1859,7 @@ logging:
     path: Path
     storeAs: Store As
   cloudwatch:
-    keyId: Key Id from Secret
+    keyId: Key ID from Secret
     secretKey: Secret Key from Secret
     endpoint: Endpoint
     region: Region
@@ -1878,7 +1878,7 @@ logging:
     overwriteExistingPath: Overwrite Existing Path
   kinesisStream:
     streamName: Stream Name
-    keyId: Key Id from Secret
+    keyId: Key ID from Secret
     secretKey: Secret Key from Secret
   logdna:
     apiKey: API Key
@@ -1918,7 +1918,7 @@ logging:
       timekeyWait: Timekey Wait
       timekeyUseUTC: Timekey Use UTC
   s3:
-    keyId: Key Id from Secret
+    keyId: Key ID from Secret
     secretKey: Secret Key from Secret
     endpoint: Endpoint
     bucket: Bucket
