@@ -2216,7 +2216,7 @@ monitoringReceiver:
   pagerduty:
     label: PagerDuty
     title: PagerDuty Config
-    info: "You can find additional info on creating an Integration Key for PagerDuty <a href='https://www.pagerduty.com/docs/guides/prometheus-integration-guide/' target='_blank' rel='noopener nofollow' class='flex-right'>here</a>."
+    info: "See additional info on <a href='https://www.pagerduty.com/docs/guides/prometheus-integration-guide/' target='_blank' rel='noopener nofollow' class='flex-right'>creating an Integration Key for PagerDuty</a>."
   slack:
     label: Slack
     title: Slack Config
