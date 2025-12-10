@@ -119,11 +119,8 @@ export class AlpineLimaISO extends GlobalDependency(GitHubDependency) {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const edition = 'rd';
     const version = context.versions.alpineLimaISO;
-    let arch = 'x86_64';
+    const arch = process.env.M1 ? 'aarch64' : 'x86_64';
 
-    if (process.env.M1) {
-      arch = 'aarch64';
-    }
     const isoName = `alpine-lima-${ edition }-${ version.alpineVersion }-${ arch }.iso`;
     const url = `${ baseUrl }/v${ version.isoVersion }/${ isoName }`;
     const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-v${ version.isoVersion }-${ edition }-${ version.alpineVersion }.iso`);
