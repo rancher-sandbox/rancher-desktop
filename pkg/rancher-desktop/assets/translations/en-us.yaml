@@ -567,7 +567,7 @@ authConfig:
         label: Homepage URL
       instruction: 'Fill in the form with these values:'
       prefix:
-        1: <li><a href="{baseUrl}/settings/developers" target="_blank" rel="noopener noreferrer nofollow">Click here</a> to go to GitHub application settings in a new window.</li>
+        1: <li>Open <a href="{baseUrl}/settings/developers" target="_blank" rel="noopener noreferrer nofollow">GitHub application settings</a> in a new window.</li>
         2: <li>Click on the "OAuth Apps" tab.</li>
         3: <li>Click the "New OAuth App" button.</li>
       suffix:
