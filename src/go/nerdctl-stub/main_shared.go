@@ -64,7 +64,7 @@ func mountArgProcessor(arg string, mounter func(string) (string, error)) (string
 
 // builderCacheProcessor implements the details for handling the argument for
 // `nerdctl builder build --cache-from=...` and
-// `nerdctl builder builder --cache-to=...`
+// `nerdctl builder build --cache-to=...`
 func builderCacheProcessor(arg string, inputMounter, outputMounter func(string) (string, []cleanupFunc, error)) (string, []cleanupFunc, error) {
 	var cleanups []cleanupFunc
 
