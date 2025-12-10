@@ -196,7 +196,7 @@ async function updateRelease(octokit: Octokit, owner: string, repo: string, tag:
         data:       info.checksum,
       }),
       // We need a custom request for the  main file, as we need to stream it
-      // from a file strem.
+      // from a file stream.
       octokit.request({
         method:  'POST',
         url:     release.upload_url,
