@@ -542,13 +542,13 @@ accountAndKeys:
 
 authConfig:
   accessMode:
-    label: 'Configure who should be able to login and use {vendor}'
+    label: 'Configure who should be able to log in and use {vendor}'
     required: Restrict access to only the authorized users & groups
     restricted: 'Allow members of clusters and projects, plus authorized users & groups'
     unrestricted: Allow any valid user
   allowedPrincipalIds:
     title: Authorized Users & Groups
-  associatedWarning: 'Note: The {provider} user you authenticate as will be associated as an alternate way to login to the {vendor} user you are currently logged in as <code>{username}</code>; all the global permissions, project, and cluster role bindings of this {vendor} user will also apply to the {provider} user.'
+  associatedWarning: 'Note: The {provider} user you authenticate as will be associated as an alternate way to log in to the {vendor} user you are currently logged in as <code>{username}</code>; all the global permissions, project, and cluster role bindings of this {vendor} user will also apply to the {provider} user.'
   github:
     clientId:
       label: Client ID
