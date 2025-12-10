@@ -321,7 +321,7 @@ type requestMungerFunc func(*http.Request, *RequestContextValue, map[string]stri
 
 // responseMungerFunc is a munger for an outgoing response; it also receives an
 // arbitrary mapping that was initially passed to the matching request munger,
-// as well a a mapping of any path templating patterns that were matched.
+// as well as a mapping of any path templating patterns that were matched.
 type responseMungerFunc func(*http.Response, *RequestContextValue, map[string]string) error
 
 // mungerMethodMapping is a helper structure to find a munger given an API path,
