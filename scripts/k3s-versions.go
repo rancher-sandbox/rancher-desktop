@@ -84,7 +84,7 @@ type GithubRelease struct {
 }
 
 // getGithubReleasesPage fetches a single page of GitHub releases and returns a list
-// of all non-draft, non-prerelease releases higher than the minimumVersion.
+// of all non-draft, non-prerelease releases above the minimumVersion.
 func getGithubReleasesPage(ctx context.Context, page int) ([]GithubRelease, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/k3s-io/k3s/releases?page=%d", page)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)

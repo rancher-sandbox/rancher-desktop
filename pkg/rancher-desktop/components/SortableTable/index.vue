@@ -474,7 +474,7 @@ export default {
           if (neu) {
             this._altLoadingDelayTimer = setTimeout(() => {
               this.isLoading = true;
-            }, 200); // this should be higher than the targeted quick response
+            }, 200); // this should be above the targeted quick response
           } else {
             clearTimeout(this._altLoadingDelayTimer);
             this.isLoading = false;
