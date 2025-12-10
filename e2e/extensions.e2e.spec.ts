@@ -186,7 +186,7 @@ test.describe.serial('Extensions', () => {
     /** evaluate a short snippet in the extension context. */
     async function evalInView(script: string): Promise<any> {
       // view.evaluate doesn't pass rejections correctly; instead, we convert it
-      // to a resolved object, and convert it back to an rejection on the other end.
+      // to a resolved object, and convert it back to a rejection on the other end.
       const { rejected, result } = await view.evaluate(async(v, { script }) => {
         try {
           return { rejected: false, result: await v.webContents.executeJavaScript(script) };
