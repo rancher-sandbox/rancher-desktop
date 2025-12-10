@@ -44,7 +44,7 @@ function getInput(name: string) {
   return result;
 }
 
-/** Given a input variable that expects a single file, return it. */
+/** Given an input variable that expects a single file, return it. */
 async function getInputFile(name: string) {
   const inputPath = getInput(name);
   const stat = await fs.promises.stat(inputPath);

@@ -91,7 +91,7 @@ export default class MsiUpdater extends NsisUpdater {
     const installerPath = this.installerPath;
 
     if (!installerPath) {
-      this._logger.error('doInstall() called without a installer path');
+      this._logger.error('doInstall() called without an installer path');
       this.dispatchError(new Error("No valid update available, can't quit and install"));
 
       return false;
