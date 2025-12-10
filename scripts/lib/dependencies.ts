@@ -154,7 +154,7 @@ export abstract class VersionedDependency implements Dependency {
       const compare = this.rcompareVersions(current, latest);
 
       if (compare < 0) {
-        throw new Error(`${ this.name } at ${ current }, higher than latest version ${ latest }`);
+        throw new Error(`${ this.name } at ${ current }, is greater than latest version ${ latest }`);
       }
 
       return compare > 0;
