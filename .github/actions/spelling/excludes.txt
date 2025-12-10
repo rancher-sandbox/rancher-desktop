@@ -100,3 +100,5 @@ ignore$
 ^\Qpkg/rancher-desktop/assets/extension-data.yaml\E$
 # Mostly image names
 ^\Qscripts/assets/extension-data.yaml\E$
+# Test data
+^screenshots/test-data/

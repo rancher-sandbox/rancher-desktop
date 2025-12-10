@@ -5,6 +5,7 @@ import { test, expect, _electron } from '@playwright/test';
 
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
 import { containersList } from './test-data/containers';
+import { imagesList } from './test-data/images';
 import { lockedSettings } from './test-data/preferences';
 import { snapshotsList } from './test-data/snapshots';
 import { volumesList } from './test-data/volumes';
@@ -92,22 +93,23 @@ test.describe.serial('Main App Test', () => {
     });
 
     test('Containers Page', async() => {
-      const containersPage = await navPage.navigateTo('Containers');
-
-      await containersPage.page.exposeFunction('listContainersMock', (options?: any) => {
+      // Override the containers before the Vuex state is loaded.
+      await navPage.page.exposeFunction('listContainersMock', (options?: any) => {
         return Promise.resolve(containersList);
       });
-      await containersPage.page.evaluate(() => {
-        const { ddClient } = window as any;
+      await navPage.page.evaluate(() => {
+        const { ddClient, listContainersMock } = window as any;
         ddClient.docker._listContainers = ddClient.docker.listContainers;
         ddClient.docker.listContainers = listContainersMock;
       });
 
       try {
+        const containersPage = await navPage.navigateTo('Containers');
+
         await expect(containersPage.page.getByRole('row')).toHaveCount(11);
         await screenshot.take('Containers');
       } finally {
-        await containersPage.page.evaluate(() => {
+        await navPage.page.evaluate(() => {
           const { ddClient } = window as any;
           ddClient.docker.listContainers = ddClient.docker._listContainers;
           delete ddClient.docker._listContainers;
@@ -185,6 +187,10 @@ test.describe.serial('Main App Test', () => {
     });
 
     test('Images Page', async({ colorScheme }) => {
+      await navPage.page.exposeFunction('imagesListMock', () => {
+        return imagesList;
+      });
+
       const imagesPage = await navPage.navigateTo('Images');
 
       await expect(imagesPage.rows).toBeVisible();
@@ -192,23 +198,24 @@ test.describe.serial('Main App Test', () => {
     });
 
     test('Volumes Page', async({ colorScheme }) => {
-      const volumesPage = await navPage.navigateTo('Volumes');
-
-      await volumesPage.page.exposeFunction('listVolumesMock', (options?: any) => {
+      // Override the volumes before Vuex state is loaded.
+      await navPage.page.exposeFunction('listVolumesMock', (options?: any) => {
         return volumesList;
       });
-      await volumesPage.page.evaluate(() => {
-        const { ddClient } = window as any;
+      await navPage.page.evaluate(() => {
+        const { ddClient, listVolumesMock } = window as any;
         ddClient.docker._rdListVolumes = ddClient.docker.rdListVolumes;
         ddClient.docker.rdListVolumes = listVolumesMock;
       });
 
       try {
+        const volumesPage = await navPage.navigateTo('Volumes');
+
         await expect(volumesPage.page.locator('.volumesTable')).toBeVisible();
         await expect(volumesPage.page.getByRole('row')).toHaveCount(7);
         await screenshot.take('Volumes');
       } finally {
-        await volumesPage.page.evaluate(() => {
+        await navPage.page.evaluate(() => {
           const { ddClient } = window as any;
           ddClient.docker.rdListVolumes = ddClient.docker._rdListVolumes;
           delete ddClient.docker._rdListVolumes;

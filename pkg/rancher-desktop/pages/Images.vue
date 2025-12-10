@@ -45,6 +45,11 @@ export default {
 
   computed: {
     state() {
+      if (window.imagesListMock) {
+        // Override for screenshots
+        return ImageMangerStates.READY;
+      }
+
       if (![K8sState.STARTED, K8sState.DISABLED].includes(this.k8sState)) {
         return ImageMangerStates.UNREADY;
       }
@@ -94,7 +99,11 @@ export default {
   },
 
   mounted() {
-    ipcRenderer.on('images-changed', (event, images) => {
+    ipcRenderer.on('images-changed', async(event, images) => {
+      if (window.imagesListMock) {
+        // Override for screenshots
+        images = await window.imagesListMock();
+      }
       if (_.isEqual(images, this.images)) {
         return;
       }
