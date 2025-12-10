@@ -19,7 +19,7 @@ if (!$SkipVisualStudio) {
         # https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio#open-the-visual-studio-installer
         $installer = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe'
 
-        # Updating first is required, otherwise the installer just complains that
+        # Updating first is required; otherwise, the installer just complains that
         # the installer itself is out of date.
         Write-Information 'Updating Visual Studio components...'
         & $installer update --installPath $location --passive

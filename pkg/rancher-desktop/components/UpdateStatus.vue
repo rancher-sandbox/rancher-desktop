@@ -184,7 +184,7 @@ export default defineComponent({
       // Here's the explanation of the following unorthodox typecast:
       // The signature of `marked.marked` is, with version 11:
       // marked(src: string, options?: MarkedOptions): string | Promise<string>
-      // It returns a Promise<string> if `options.async` is true, otherwise a string.
+      // It returns a Promise<string> if `options.async` is true; otherwise, a string.
       const unsanitized = marked(markdown) as string;
 
       return DOMPurify.sanitize(unsanitized, { USE_PROFILES: { html: true } });

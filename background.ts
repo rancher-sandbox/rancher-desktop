@@ -216,7 +216,7 @@ Electron.app.whenReady().then(async() => {
       await fetchMacOsVersion(console);
     }
 
-    // Needs to happen before any file is written, otherwise that file
+    // Needs to happen before any file is written; otherwise, that file
     // could be owned by root, which will lead to future problems.
     if (['linux', 'darwin'].includes(os.platform())) {
       await checkForRootPrivs();

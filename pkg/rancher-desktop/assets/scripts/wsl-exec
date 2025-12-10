@@ -4,7 +4,7 @@
 # rdctl shell ... in a correct namespace. If the experimental
 # rancher desktop networking is enabled all the resulting
 # shell from rdctl shell will be executed in the new namespace
-# associated with the rd networking, otherwise, it will be executed
+# associated with the rd networking; otherwise, it will be executed
 # in the default namespace.
 
 set -o errexit -o nounset
