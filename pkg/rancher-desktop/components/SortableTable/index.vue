@@ -1775,7 +1775,7 @@ export default {
           border-bottom: 0;
         }
 
-        // if a main-row is hovered also hover it's sibling sub row. note - the reverse is handled in selection.js
+        // if a main-row is hovered also hover its sibling sub row. note - the reverse is handled in selection.js
         &.main-row:not(.row-selected):hover + .sub-row {
           background-color: var(--sortable-table-hover-bg);
         }

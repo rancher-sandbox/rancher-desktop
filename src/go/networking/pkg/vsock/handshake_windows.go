@@ -136,7 +136,7 @@ func tryFindGUID(cancel context.CancelFunc, found chan hvsock.GUID, timeout <-ch
 }
 
 // readSignature reads the signature that was received from the peer process
-// in the vm, and writes it's own signature immediately after read. This
+// in the vm, and writes its own signature immediately after read. This
 // will allow the peer process to also confirm the host daemon.
 func readSignature(conn net.Conn, signaturePhrase string) (string, error) {
 	signature := make([]byte, len(signaturePhrase))
