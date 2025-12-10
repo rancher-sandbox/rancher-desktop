@@ -532,7 +532,7 @@ describeWithCreds('Credentials server', () => {
       await expect(removeEntries('none', 'https://bobs.fish/clams')).resolves.not.toThrow();
     });
 
-    test('reading pre-populated entries through d-c-rd', async() => {
+    test('reading prepopulated entries through d-c-rd', async() => {
       await expect(addEntry(dockerConfig.credsStore, peopleEntries.bob)).resolves.not.toThrow();
       await expect(addEntry(dockerConfig.credsStore, peopleEntries.carol)).resolves.not.toThrow();
       await expect(addEntry('none', peopleEntries.ted)).resolves.not.toThrow();
