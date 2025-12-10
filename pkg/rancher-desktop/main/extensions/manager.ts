@@ -38,7 +38,7 @@ type IpcMainEventHandler<K extends keyof IpcMainInvokeEvents> =
 type ReadableChildProcess = ChildProcessByStdio<null, Readable, Readable>;
 
 /**
- * EXTENSION_APP is a fake extension ID the signifies the other end is not a
+ * EXTENSION_APP is a fake extension ID that signifies the other end is not a
  * real extension, but instead is our main application.
  */
 const EXTENSION_APP = '<app>';
