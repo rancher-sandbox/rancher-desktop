@@ -360,7 +360,7 @@ export default {
       loadingDelay:               false,
       debouncedPaginationChanged: null,
       /**
-       * The is the bool the DOM uses to show loading state. it's proxied from `loading` to avoid blipping the indicator (see usages)
+       * This bool controls showing loading state in the DOM; it's proxied from `loading` to avoid blipping the indicator (see usages)
        */
       isLoading:                  false,
     };
