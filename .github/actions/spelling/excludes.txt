@@ -1,24 +1,26 @@
 # See https://github.com/check-spelling/check-spelling/wiki/Configuration-Examples:-excludes
 (?:^|/)(?i)COPYRIGHT
 (?:^|/)(?i)LICEN[CS]E
+(?:^|/)(?i)third[-_]?party/
 (?:^|/)3rdparty/
+(?:^|/)generated/
 (?:^|/)go\.(?:work\.)?sum$
 (?:^|/)package(?:-lock|)\.json$
 (?:^|/)Pipfile$
 (?:^|/)pyproject.toml
-(?:^|/)requirements(?:-dev|-doc|-test|)\.txt$
 (?:^|/)vendor/
+(?:^|/|\b)requirements(?:-dev|-doc|-test|)\.txt$
+-lock\.yaml$
 \.a$
 \.ai$
 \.all-contributorsrc$
 \.avi$
 \.bmp$
 \.bz2$
-\.cer$
+\.cert?$|\.crt$
 \.class$
 \.coveragerc$
 \.crl$
-\.crt$
 \.csr$
 \.dll$
 \.docx?$
@@ -90,6 +92,7 @@
 ^pkg/rancher-desktop/assets/scripts/logrotate-k3s$
 ^pkg/rancher-desktop/assets/scripts/logrotate-lima-guestagent$
 ^pkg/rancher-desktop/sudo-prompt/
+^pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets/trivy-image-postgres
 ignore$
 /translations/(?!en)
 ^\Qpkg/rancher-desktop/router.js\E$
