@@ -2220,7 +2220,7 @@ monitoringReceiver:
   slack:
     label: Slack
     title: Slack Config
-    info: "You can find additional info on creating Incoming Webhooks for Slack <a href='https://rancher.slack.com/apps/A0F7XDUAZ-incoming-webhooks' target='_blank' rel='noopener noreferrer nofollow'>here</a> ."
+    info: "See additional info on <a href='https://rancher.slack.com/apps/A0F7XDUAZ-incoming-webhooks' target='_blank' rel='noopener noreferrer nofollow'>creating Incoming Webhooks for Slack</a> ."
   webhook:
     label: Webhook
     title: Webhook Config
