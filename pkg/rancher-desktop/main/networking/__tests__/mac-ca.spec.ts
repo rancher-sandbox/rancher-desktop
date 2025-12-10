@@ -124,7 +124,7 @@ testDarwin('getMacCertificates', async() => {
         expect(pemToKeychain).toHaveProperty(actualPEM);
         expect(testCerts[keychain]).toHaveProperty(actualPEM);
         if (!testCerts[keychain][actualPEM].acceptable) {
-          throw new Error('vertificate is not trusted, this should be caught');
+          throw new Error('certificate is not trusted, this should be caught');
         }
       },
     };
