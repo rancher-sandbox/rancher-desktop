@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
+import Electron from 'electron';
 import _ from 'lodash';
 import yaml from 'yaml';
 
@@ -291,6 +292,9 @@ export class ExtensionImpl implements Extension {
     const encodedId = Buffer.from(this.id).toString('hex');
 
     await mainEvents.invoke('extensions/register-protocol', `persist:rdx-${ encodedId }`);
+
+    // Clear the default session cache so updated icons are loaded fresh
+    Electron.session.defaultSession.clearCache();
 
     console.debug(`Install ${ this.id }: install complete.`);
 
