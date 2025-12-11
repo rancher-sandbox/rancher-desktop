@@ -285,11 +285,11 @@ test.describe('Command server', () => {
   });
 
   test('version-only path of a nonexistent version should 404', async() => {
-    const resp = await doRequest('/v99bottlesofbeeronthewall');
+    const resp = await doRequest('/v99-bottles-of-beer-on-the-wall');
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(404);
-    await expect(resp.text()).resolves.toContain('Unknown command: GET /v99bottlesofbeeronthewall');
+    await expect(resp.text()).resolves.toContain('Unknown command: GET /v99-bottles-of-beer-on-the-wall');
   });
 
   test('should not restart on unrelated changes', async() => {
