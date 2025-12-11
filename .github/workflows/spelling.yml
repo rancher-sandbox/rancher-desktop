@@ -95,7 +95,18 @@ jobs:
       with:
         persist-credentials: false
 
-    - uses: ./.github/actions/yarn-install
+    # We don't actually need the full `yarn install`; we just do enough to set
+    # up `yarn` to get `yarn lint:spelling` to work.
+    - name: Drop all dependencies
+      run: |
+        yq --inplace '.dependencies = {} | .devDependencies = {}' package.json
+        rm -f yarn.lock
+    - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+      with:
+        node-version-file: package.json
+    - run: corepack enable yarn
+    - run: yarn install --no-immutable --mode=skip-build
+
     - run: sudo apt-get install cpanminus
 
     - name: Check Spelling
