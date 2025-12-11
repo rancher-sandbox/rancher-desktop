@@ -142,7 +142,9 @@ export async function getResource(url: string): Promise<string> {
   const response = await fetchWithRetry(url);
 
   if (!response.ok) {
-    throw new Error(`Error downloading ${ url }: ${ response.statusText }`);
+    const requestId = response.headers.get('x-github-request-id');
+    const requestAnnotation = requestId ? ` [request: ${ requestId }]` : '';
+    throw new Error(`Error downloading ${ url } (${ response.status }) ${ response.statusText }${ requestAnnotation }`);
   }
 
   return await response.text();
