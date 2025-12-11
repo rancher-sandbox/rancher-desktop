@@ -816,6 +816,7 @@ subvar
 sumologic
 suse
 SVCNAME
+svm
 syscalls
 sysdeps
 sysfs

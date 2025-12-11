@@ -34,7 +34,7 @@ export class Lima extends GlobalDependency(GitHubDependency) {
     if (platform === 'darwin') {
       platform = `macos-15.${ process.env.M1 ? 'arm64' : 'amd64' }`;
     } else {
-      platform = 'linux.amd64';
+      platform = `linux.${ process.env.M1 ? 'arm64' : 'amd64' }`;
     }
 
     const url = `${ baseUrl }/v${ context.versions.lima }/lima.${ platform }.tar.gz`;
@@ -70,6 +70,11 @@ export class Qemu extends GlobalDependency(GitHubDependency) {
   readonly githubRepo = 'rancher-desktop-qemu';
 
   async download(context: DownloadContext): Promise<void> {
+    // TODO: we don't have an arm64 version of QEMU for Linux yet.
+    if (context.platform === 'linux' && context.isM1) {
+      return;
+    }
+
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const arch = context.isM1 ? 'aarch64' : 'x86_64';
 
@@ -114,11 +119,8 @@ export class AlpineLimaISO extends GlobalDependency(GitHubDependency) {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const edition = 'rd';
     const version = context.versions.alpineLimaISO;
-    let arch = 'x86_64';
+    const arch = process.env.M1 ? 'aarch64' : 'x86_64';
 
-    if (context.platform === 'darwin' && process.env.M1) {
-      arch = 'aarch64';
-    }
     const isoName = `alpine-lima-${ edition }-${ version.alpineVersion }-${ arch }.iso`;
     const url = `${ baseUrl }/v${ version.isoVersion }/${ isoName }`;
     const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-v${ version.isoVersion }-${ edition }-${ version.alpineVersion }.iso`);

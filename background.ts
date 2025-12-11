@@ -481,21 +481,26 @@ async function checkPrerequisites() {
     break;
   }
   case 'linux': {
-    // Required: Nested virtualization enabled
-    const nestedFiles = [
-      '/sys/module/kvm_amd/parameters/nested',
-      '/sys/module/kvm_intel/parameters/nested'];
+    // TODO: This whole testing for nested virtualization is wrong. All we should test for is if
+    // hardware acceleration is available, e.g. checking /proc/cpuinfo for "vmx" (Intel) or "svm" (AMD).
+    if (process.arch === 'x64') {
+      // Required: Nested virtualization enabled
+      const nestedFiles = [
+        '/sys/module/kvm_amd/parameters/nested',
+        '/sys/module/kvm_intel/parameters/nested'];
 
-    messageId = 'linux-nested';
-    for (const nestedFile of nestedFiles) {
-      try {
-        const data = await fs.promises.readFile(nestedFile, { encoding: 'utf8' });
+      messageId = 'linux-nested';
+      for (const nestedFile of nestedFiles) {
+        try {
+          const data = await fs.promises.readFile(nestedFile, { encoding: 'utf8' });
 
-        if (data && (data.toLowerCase().startsWith('y') || data.startsWith('1'))) {
-          messageId = 'ok';
-          break;
+          if (data && (data.toLowerCase().startsWith('y') || data.startsWith('1'))) {
+            messageId = 'ok';
+            break;
+          }
+        } catch {
         }
-      } catch {}
+      }
     }
     break;
   }
