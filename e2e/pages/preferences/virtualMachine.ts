@@ -38,8 +38,8 @@ export class VirtualMachineNav {
     this.qemu = page.locator('[data-test="QEMU"]');
     this.vz = page.locator('[data-test="VZ"]');
     this.useRosetta = page.locator('[data-test="useRosetta"]');
-    this.tabHardware = page.locator('.tab >> text=Hardware');
-    this.tabVolumes = page.locator('.tab >> text=Volumes');
-    this.tabEmulation = page.locator('.tab >> text=Emulation');
+    this.tabHardware = page.getByTestId('hardware');
+    this.tabVolumes = page.getByTestId('volumes');
+    this.tabEmulation = page.getByTestId('emulation');
   }
 }
