@@ -44,6 +44,14 @@ async function fetchWithRetry(url: string) {
   }
 }
 
+function checkDownloadStatusOrThrow(url: string, response: Response): void {
+  if (!response.ok) {
+    const requestId = response.headers.get('x-github-request-id');
+    const requestAnnotation = requestId ? ` [request: ${ requestId }]` : '';
+    throw new Error(`Error downloading ${ url } (${ response.status }) ${ response.statusText }${ requestAnnotation }`);
+  }
+}
+
 /**
  * Download the given URL, making the result executable.
  * @param url The URL to download
@@ -72,9 +80,7 @@ export async function download(url: string, destPath: string, options: DownloadO
   await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
   const response = await fetchWithRetry(url);
 
-  if (!response.ok) {
-    throw new Error(`Error downloading ${ url }: ${ response.statusText }`);
-  }
+  checkDownloadStatusOrThrow(url, response);
   if (!response.body) {
     throw new Error(`Error downloading ${ url }: did not receive response body`);
   }
@@ -141,9 +147,7 @@ async function getChecksumForFile(inputPath: string, checksumAlgorithm: Checksum
 export async function getResource(url: string): Promise<string> {
   const response = await fetchWithRetry(url);
 
-  if (!response.ok) {
-    throw new Error(`Error downloading ${ url }: ${ response.statusText }`);
-  }
+  checkDownloadStatusOrThrow(url, response);
 
   return await response.text();
 }
