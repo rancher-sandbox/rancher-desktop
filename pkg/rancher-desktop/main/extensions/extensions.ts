@@ -552,6 +552,14 @@ export class ExtensionImpl implements Extension {
       }
     }
 
+    // Clear memoized caches so that if the extension is reinstalled, fresh
+    // metadata will be extracted from the Docker image.
+    this._metadata = undefined;
+    this._labels = undefined;
+    this._iconName = undefined;
+    this._composeFile = undefined;
+    this._composeName = '';
+
     mainEvents.emit('settings-write', { application: { extensions: { installed: { [this.id]: undefined } } } });
 
     return true;
