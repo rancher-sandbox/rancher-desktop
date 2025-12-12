@@ -199,9 +199,13 @@ let lastOpenExtension: { id: string, relPath: string } | undefined;
  */
 function createView() {
   const mainWindow = getWindow('main');
+  const extensionId = currentExtension?.id ? Buffer.from(currentExtension.id, 'hex').toString() : undefined;
+  const extensionVersion = extensionId ? getSettings().application.extensions.installed[extensionId] : undefined;
   const hostInfo = {
-    arch:     process.arch,
-    hostname: os.hostname(),
+    arch:             process.arch,
+    hostname:         os.hostname(),
+    extensionId,
+    extensionVersion,
   };
 
   if (!mainWindow) {
