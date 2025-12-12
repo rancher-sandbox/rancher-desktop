@@ -90,7 +90,7 @@ export default {
 
   methods: {
     getPerPage() {
-      // perPage can not change while the list is displayed
+      // perPage cannot change while the list is displayed
       let out = this.rowsPerPage || 0;
 
       if ( out <= 0 ) {

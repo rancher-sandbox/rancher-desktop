@@ -15,7 +15,7 @@ export class Wix extends GlobalDependency(GitHubDependency) {
   readonly name = 'wix';
 
   // Wix4 is packaged really oddly (involves NuGet), and while there's a sketchy
-  // build in github.com/electron-userland/electron-builder-binaries it's rather
+  // build in https://github.com/electron-userland/electron-builder-binaries, it's rather
   // outdated (and has since-fixed bugs).
   readonly githubOwner = 'wixtoolset';
   readonly githubRepo = 'wix3';

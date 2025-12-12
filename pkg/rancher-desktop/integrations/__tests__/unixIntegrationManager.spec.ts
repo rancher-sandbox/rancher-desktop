@@ -275,7 +275,7 @@ describeUnix('UnixIntegrationManager', () => {
       const resourcesPath = path.join(dockerCLIPluginSource, credHelper);
       const srcPath = path.join(integrationDir, credHelper);
 
-      // create symlink in integration dir, otherwise it is dangling
+      // create symlink in integration dir; otherwise, it is dangling
       await fs.promises.mkdir(integrationDir);
       await fs.promises.symlink(resourcesPath, srcPath);
 

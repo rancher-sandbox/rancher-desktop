@@ -137,7 +137,7 @@ export default {
     })();
 
     ipcRenderer.on('images-namespaces', (event, namespaces) => {
-      // TODO: Use a specific message to indicate whether messages are supported or not.
+      // TODO: Use a specific message to indicate whether or not messages are supported.
       this.$data.imageNamespaces = namespaces;
       this.$data.supportsNamespaces = namespaces.length > 0;
       this.checkSelectedNamespace();

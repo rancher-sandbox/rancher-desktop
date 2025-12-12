@@ -44,7 +44,7 @@ function getInput(name: string) {
   return result;
 }
 
-/** Given a input variable that expects a single file, return it. */
+/** Given an input variable that expects a single file, return it. */
 async function getInputFile(name: string) {
   const inputPath = getInput(name);
   const stat = await fs.promises.stat(inputPath);
@@ -196,7 +196,7 @@ async function updateRelease(octokit: Octokit, owner: string, repo: string, tag:
         data:       info.checksum,
       }),
       // We need a custom request for the  main file, as we need to stream it
-      // from a file strem.
+      // from a file stream.
       octokit.request({
         method:  'POST',
         url:     release.upload_url,

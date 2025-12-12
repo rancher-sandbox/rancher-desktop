@@ -196,8 +196,8 @@
 .v-popper__popper.v-popper--theme-tooltip,
 .v-popper {
   &[aria-hidden='true'] {
-    // This removes it from the layout of ButtondropDown (so it doesn't render huge for SSR) but
-    // still allows it to maintain it's dimensions for v-tooltip to calculate the appropriate position.
+    // This removes it from the layout of ButtonDropDown (so it doesn't render huge for SSR) but
+    // still allows it to maintain its dimensions for v-tooltip to calculate the appropriate position.
     position: absolute;
     visibility: hidden;
     opacity: 0;

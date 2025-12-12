@@ -97,19 +97,19 @@ func SearchDomains() []string {
 // ParsePortForwarding converts the input format of HostIP:Port=GuestIP:Port
 // into a map of {"HostIP:Port" : "GuestIP:Port"}
 func ParsePortForwarding(ipPorts []string) (map[string]string, error) {
-	portForwardings := make(map[string]string)
+	portForwards := make(map[string]string)
 	for _, v := range ipPorts {
 		ipPort := strings.Split(v, "=")
 		if len(ipPort) != 2 {
-			return portForwardings, fmt.Errorf("input %q not in expected format: HostIP:Port=GuestIP:Port", ipPort)
+			return portForwards, fmt.Errorf("input %q not in expected format: HostIP:Port=GuestIP:Port", ipPort)
 		}
 		if err := validateIPPort(ipPort); err != nil {
-			return portForwardings, err
+			return portForwards, err
 		}
 		// "HostIP:Port" : "GuestIP:Port"
-		portForwardings[ipPort[0]] = ipPort[1]
+		portForwards[ipPort[0]] = ipPort[1]
 	}
-	return portForwardings, nil
+	return portForwards, nil
 }
 
 // TapDeviceIP returns the allocated IP address for

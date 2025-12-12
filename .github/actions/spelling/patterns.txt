@@ -1,120 +1,179 @@
 # See https://github.com/check-spelling/check-spelling/wiki/Configuration-Examples:-patterns
 
+^(?:Build|)Requires: [-.\w]+
+
+"\w+"(?= instead of ")
+
+NO_VOWELS:\s+'.+'
+
+\b(?:e2e|k3s)(?=[a-z])
+
+HTPASSWD='.+'
+
+\b(?:azure|docker|kontainer)(?=[a-z])
+
+\b(?:cluster|node)(?=[a-z]{2})
+
+# IServiceProvider / isAThing
+# - Altered to match `A`+`Foo`
+(?:(?:\b|_|(?<=[a-z]))A)(?=(?:[A-Z][a-z]{2,})+(?:[A-Z\d]|\b))
+
+\bamazon(?=[a-z])
+
 # Automatically suggested patterns
-# hit-count: 1262 file-count: 4
+
+# hit-count: 1264 file-count: 5
 # ANSI color codes
-(?:\\(?:u00|x)1[Bb]|\x1b|\\u\{1[Bb]\})\[\d+(?:;\d+|)m
+(?:\\(?:u00|x)1[Bb]|\\03[1-7]|\x1b|\\u\{1[Bb]\})\[\d+(?:;\d+)*m
 
-# hit-count: 743 file-count: 13
-# hex runs
-\b[0-9a-fA-F]{16,}\b
+# hit-count: 1086 file-count: 175
+# golang print-f-style functions
+(?i)(?<=append|comma|debug|equal|err|error|exit|fatal|format|info|log|name|panic|print|skip|scan|string|trace|true|warn|warning|wrap|write)(?:f|ln)[ (]
 
-# hit-count: 739 file-count: 6
-# base64 encoded content, possibly wrapped in mime
-(?:^|[\s=;:?])[-a-zA-Z=;:/0-9+]{50,}(?:[\s=;:?]|$)
-
-# hit-count: 215 file-count: 101
-# https/http/file urls
-(?:\b(?:https?|ftp|file)://)[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]
-
-# hit-count: 94 file-count: 3
+# hit-count: 740 file-count: 4
 # sha
-sha\d+:[0-9]*[a-f]{3,}[0-9a-f]*
+sha\d+:[0-9a-f]*?[a-f]{3,}[0-9a-f]*
 
-# hit-count: 46 file-count: 34
-# GitHub SHAs (markdown)
-(?:\[`?[0-9a-f]+`?\]\(https:/|)/(?:www\.|)github\.com(?:/[^/\s"]+){2,}(?:/[^/\s")]+)(?:[0-9a-f]+(?:[-0-9a-zA-Z/#.]*|)\b|)
+# hit-count: 323 file-count: 135
+# imports
+^import\s+(?:(?:static|type)\s+|)(?:[\w.]|\{\s*\w*?(?:,\s*(?:\w*|\*))+\s*\})+(?:\s+from (['"]).*?\g{-1}|)
 
-# hit-count: 44 file-count: 10
+# hit-count: 247 file-count: 111
+# https/http/file urls
+(?:\b(?:https?|ftp|file|oci)://)[-A-Za-z0-9+&@#/*%?=~_|!:,.;]+[-A-Za-z0-9+&@#/*%=~_|]
+
+# hit-count: 111 file-count: 20
 # version suffix <word>v#
 (?:(?<=[A-Z]{2})V|(?<=[a-z]{2}|[A-Z]{2})v)\d+(?:\b|(?=[a-zA-Z_]))
 
-# hit-count: 25 file-count: 25
-# node packages
-(["'])\@[^/'" ]+/[^/'" ]+\g{-1}
+# hit-count: 77 file-count: 9
+# Library prefix
+# e.g., `lib`+`archive`, `lib`+`raw`, `lib`+`unwind`
+# (ignores some words that happen to start with `lib`)
+(?:\b|_)[Ll]ib(?!era[lt])(?:re(?=office)|era|)(?!ero|erty|rar(?:i(?:an|es)|y))(?=[a-z])
 
-# hit-count: 16 file-count: 9
-# in a version of check-spelling after @0.0.21 printf markers won't be automatically consumed
+# hit-count: 50 file-count: 14
+# GitHub actions
+\buses:\s+(['"]?)[-\w.]+/[-\w./]+@[-\w.]+\g{-1}
+
+# hit-count: 44 file-count: 27
+# node packages
+(["'])@[^/'" ]+/[^/'" ]+\g{-1}
+
+# hit-count: 40 file-count: 22
+# C network byte conversions
+(?:\d|\bh)to(?!ken)(?=[a-z])|to(?=[adhiklpun]\()
+
+# hit-count: 29 file-count: 10
+# in check-spelling@v0.0.22+, printf markers aren't automatically consumed
 # printf markers
 (?<!\\)\\n(?=[a-z]{2,})
 
-# hit-count: 10 file-count: 2
+# hit-count: 28 file-count: 19
+# nolint
+nolint:\s*[\w,]+
+
+# hit-count: 14 file-count: 5
 # uuid:
 \b[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\b
+
+# hit-count: 12 file-count: 3
+# sha-... -- uses a fancy capture
+(\\?['"]|&quot;)[0-9a-f]{40,}\g{-1}
+
+# hit-count: 10 file-count: 7
+# hex digits including css/html color classes:
+(?:[\\0][xX]|\\u\{?|[uU]\+|#x?|%23|&H)[0-9_a-fA-FgGrR]*?[a-fA-FgGrR]{2,}[0-9_a-fA-FgGrR]*(?:[uUlL]{0,3}|[iu]\d+)\b
 
 # hit-count: 10 file-count: 1
 # css url wrappings
 \burl\([^)]+\)
 
-# hit-count: 8 file-count: 8
-# JavaScript regular expressions
-# javascript test regex
-/.*/[gim]*\.test\(
+# hit-count: 9 file-count: 9
+# regex choice
+\((?:\?:|)[^)|]+(?<! )\|(?!(?:jq|xargs)\b)[^)| ][^)]*\)
 
-# hit-count: 8 file-count: 6
-# javascript replace regex
-\.replace\(/[^/\s"]*/[gim]*\s*,
+# hit-count: 8 file-count: 2
+# css fonts
+\bfont(?:-family(?:[-\w+]*)|):[^;}]+
 
-# hit-count: 6 file-count: 4
-# tar arguments
-\b(?:\\n|)g?tar(?:\.exe|)"?(?:(?:\s+--[-a-zA-Z]+|\s+-[a-zA-Z]+|\s[ABGJMOPRSUWZacdfh-pr-xz]+\b)(?:=[^ ]*|))+
+# hit-count: 7 file-count: 6
+# assign regex
+= /[^*].*?(?:[a-z]{3,}|[A-Z]{3,}|[A-Z][a-z]{2,}).*/[gim]*(?=\W|$)
 
-# hit-count: 4 file-count: 3
-# base64 encoded content
-([`'"])[-a-zA-Z=;:/0-9+]+=\g{-1}
-
-# hit-count: 4 file-count: 2
-# URL escaped characters
-\%[0-9A-F][A-F]
-
-# hit-count: 4 file-count: 2
+# hit-count: 5 file-count: 3
 # go install
 go install(?:\s+[a-z]+\.[-@\w/.]+)+
 
+# hit-count: 4 file-count: 4
+# tar arguments
+\b(?:\\n|)g?tar(?:\.exe|)(?:\s-C \S+|(?:\s+--[-a-zA-Z]+|\s+-[a-zA-Z]+|\s[ABGJMOPRSUWZacdfh-pr-xz]+\b)(?:=[^ ]*|))+
+
+# hit-count: 4 file-count: 3
+# hex runs
+\b(?=(?:[a-fA-F]{0,2}\d)*[a-fA-F]{3})[0-9a-fA-F]{16,}\b
+
 # hit-count: 3 file-count: 3
-# stackexchange -- https://stackexchange.com/feeds/sites
-\b(?:askubuntu|serverfault|stack(?:exchange|overflow)|superuser).com/(?:questions/\w+/[-\w]+|a/)
+# Go regular expressions
+regexp?\.MustCompile\((?:`[^`]*`|".*"|'.*')\)
 
 # hit-count: 3 file-count: 2
-# hex digits including css/html color classes:
-(?:[\\0][xX]|\\u|[uU]\+|#x?|\%23)[0-9_a-fA-FgGrR]*?[a-fA-FgGrR]{2,}[0-9_a-fA-FgGrR]*(?:[uUlL]{0,3}|[iu]\d+)\b
+# Docker images
+^\s*(?i)FROM\s+\S+:\S+(?:\s+AS\s+\S+|)
 
 # hit-count: 3 file-count: 2
-# IServiceProvider / isAThing
-\b(?:I|isA)(?=(?:[A-Z][a-z]{2,})+\b)
+# Intel intrinsics
+_mm\d*_(?!dd)\w+
 
 # hit-count: 2 file-count: 2
-# sha-... -- uses a fancy capture
-(\\?['"]|&quot;)[0-9a-f]{40,}\g{-1}
+# JavaScript regular expressions
+# javascript exec/test regex
+/.{3,}?/[gim]*\.(?:exec|test)\(
 
 # hit-count: 2 file-count: 2
-# assign regex
-= /[^*]*?(?:[a-z]{3,}|[A-Z]{3,}|[A-Z][a-z]{2,}).*/
+# container images
+image: [-\w./:@]+
 
 # hit-count: 2 file-count: 2
-# regex choice
-\(\?:[^)]+\|[^)]+\)
+# Regular expression for word breaks
+\\b(?=[a-z]{2}.*/[^>])
+
+# hit-count: 2 file-count: 1
+# iSCSI iqn (approximate regex)
+\biqn\.[0-9]{4}-[0-9]{2}(?:[\.-][a-z][a-z0-9]*)*\b:[\w.]+
+
+# hit-count: 1 file-count: 1
+# copyright
+Copyright (?:\([Cc]\)|)(?:[-\d, ]|and)+(?: [A-Z][a-z]+ [A-Z][a-z]+,?)+
+
+# hit-count: 1 file-count: 1
+# IPv6
+\b(?:[0-9a-fA-F]{0,4}:){3,7}[0-9a-fA-F]{0,4}\b
+
+# hit-count: 1 file-count: 1
+# javascript match regex
+\.match\(/[^/\s"]{3,}/[gim]*\s*
+
+# hit-count: 1 file-count: 1
+# kubernetes crd patterns
+^\s*pattern: .*$
+
+# hit-count: 1 file-count: 1
+# Windows Resources with accelerators
+\b[A-Z]&[a-z]+\b(?!;)
 
 # hit-count: 1 file-count: 1
 # gist github
 \bgist\.github\.com/[^/\s"]+/[0-9a-f]+
 
 # hit-count: 1 file-count: 1
-# lower URL escaped characters
-\%[0-9a-f][a-f](?=[a-z]{2,})
-
-# hit-count: 1 file-count: 1
-# javascript match regex
-\.match\(/[^/\s"]*/[gim]*\s*
-
-# hit-count: 1 file-count: 1
-# Go regular expressions
-regexp?\.MustCompile\(`[^`]*`\)
+# marker to ignore all code on line
+^.*\bno-spell-check(?:-line|)(?:\s.*|)$
 
 # Questionably acceptable forms of `in to`
 # Personally, I prefer `log into`, but people object
 # https://www.tprteaching.com/log-into-log-in-to-login/
-\b(?:[Ll]og|[Ss]ign) in to\b
+\b(?:(?:[Ll]og(?:g(?=[a-z])|)|[Ss]ign)(?:ed|ing)?) in to\b
 
 # to opt in
 \bto opt in\b
@@ -122,21 +181,34 @@ regexp?\.MustCompile\(`[^`]*`\)
 # typos in translation keys
 ^\s*(?:calllback|objectReferance|requriedInt):$
 
-# adduser and friends
-\s-g (\w+)\s+\g{-1}\s
+# pass(ed|ing) in
+\bpass(?:ed|ing) in\b
+
 # acceptable duplicates
 # ls directory listings
-[-bcdlpsw](?:[-r][-w][-Ssx]){3}\s+\d+\s+\S+\s+\S+\s+\d+\s+
+[-bcdlpsw](?:[-r][-w][-SsTtx]){3}[\.+*]?\s+\d+\s+\S+\s+\S+\s+[.\d]+(?:[KMGT]|)\s+
 # mount
 \bmount\s+-t\s+(\w+)\s+\g{-1}\b
 # C types and repeated CSS values
-\s(auto|BUG|builder|center|div|inherit|long|LONG|none|normal|solid|thin|TODO|transparent|very)(?: \g{-1})+\s
-# C struct
-\bstruct\s+(\w+)\s+\g{-1}\b
+\s(auto|await|buffalo|BUG|center|div|inherit|long|LONG|nobody|none|normal|solid|thin|TODO|transparent|very)(?:\s\g{-1})+\s
+# C enum and struct
+\b(?:enum|struct)\s+(\w+)\s+\g{-1}\b
 # go templates
 \s(\w+)\s+\g{-1}\s+\`(?:graphql|inject|json|yaml):
 # doxygen / javadoc / .net
-(?:[\\@](?:brief|groupname|t?param|return|retval)|(?:public|private)(?:\s+static|\s+readonly)*)(?:\s+\{\w+\}|)\s+(\w+)\s+\g{-1}\s
+(?:[\\@](?:brief|defgroup|groupname|link|t?param|return|retval)|(?:public|private|\[Parameter(?:\(.+\)|)\])(?:\s+(?:static|override|readonly|required|virtual))*)(?:\s+\{\w+\}|)\s+(\w+)\s+\g{-1}\s
+
+# macOS file path
+(?:Contents\W+|(?!iOS)/)MacOS\b
+
+# Python package registry has incorrect spelling for macOS / Mac OS X
+"Operating System :: MacOS :: MacOS X"
+
+# "company" in Germany
+\bGmbH\b
+
+# IntelliJ
+\bIntelliJ\b
 
 # Commit message -- Signed-off-by and friends
 ^\s*(?:(?:Based-on-patch|Co-authored|Helped|Mentored|Reported|Reviewed|Signed-off)-by|Thanks-to): (?:[^<]*<[^>]*>|[^<]*)\s*$

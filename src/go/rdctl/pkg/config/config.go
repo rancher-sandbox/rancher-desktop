@@ -91,7 +91,7 @@ func GetConnectionInfo(mayBeMissing bool) (*ConnectionInfo, error) {
 	content, readFileError := os.ReadFile(configPath)
 	if readFileError != nil {
 		// It is ok if the default config path doesn't exist; the user may have specified the required settings on the commandline.
-		// But it is an error if the file specified via --config-path can not be read.
+		// But it is an error if the file specified via --config-path cannot be read.
 		if configPath != DefaultConfigPath || !errors.Is(readFileError, os.ErrNotExist) {
 			return nil, readFileError
 		}

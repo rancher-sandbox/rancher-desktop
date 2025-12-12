@@ -41,7 +41,7 @@ func GetVMGUID(ctx context.Context, signature string, handshakePort uint32, time
 
 	names, err := key.ReadSubKeyNames(0)
 	if err != nil {
-		return hvsock.GUIDZero, fmt.Errorf("machine IDs can not be read in registry: %v", err)
+		return hvsock.GUIDZero, fmt.Errorf("machine IDs cannot be read in registry: %v", err)
 	}
 	if len(names) == 0 {
 		return hvsock.GUIDZero, errors.New("no running WSL VM found")
@@ -136,7 +136,7 @@ func tryFindGUID(cancel context.CancelFunc, found chan hvsock.GUID, timeout <-ch
 }
 
 // readSignature reads the signature that was received from the peer process
-// in the vm, and writes it's own signature immediately after read. This
+// in the vm, and writes its own signature immediately after read. This
 // will allow the peer process to also confirm the host daemon.
 func readSignature(conn net.Conn, signaturePhrase string) (string, error) {
 	signature := make([]byte, len(signaturePhrase))

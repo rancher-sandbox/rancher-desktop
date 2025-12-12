@@ -263,7 +263,7 @@ func (m *requestMunger) MungeResponse(resp *http.Response, dialer func(ctx conte
 CanonicalizeContainerID makes a request upstream to inspect and resolve the full id of the container
 we use the provided id path template variable to make an upstream request to the docker engine api to inspect the container.
 Fortunately it supports both id or name as the container identifier.
-The Id returned will be the full long container id that is used to lookup in docker-binds.json.
+The ID returned will be the full long container id that is used to lookup in docker-binds.json.
 */
 func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, dialer func(ctx context.Context) (net.Conn, error)) (*containerInspectResponseBody, error) {
 	// url for inspecting container
@@ -321,7 +321,7 @@ type requestMungerFunc func(*http.Request, *RequestContextValue, map[string]stri
 
 // responseMungerFunc is a munger for an outgoing response; it also receives an
 // arbitrary mapping that was initially passed to the matching request munger,
-// as well a a mapping of any path templating patterns that were matched.
+// as well as a mapping of any path templating patterns that were matched.
 type responseMungerFunc func(*http.Response, *RequestContextValue, map[string]string) error
 
 // mungerMethodMapping is a helper structure to find a munger given an API path,

@@ -1,6 +1,6 @@
 /***
  * NOTE: @rancher/shell was removed from this project during the Nuxt removal.
- * I'm keeping this file around for it's eventual reintroduction; it was easier
+ * I'm keeping this file around for its eventual reintroduction; it was easier
  * to limit the potential scope of issues associated with the Nuxt removal by
  * removing @rancher/shell
  */

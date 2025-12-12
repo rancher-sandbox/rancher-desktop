@@ -403,15 +403,15 @@ export class Tray {
 
     const contextsMenu = this.contextMenuItems.find(item => item.id === 'contexts');
     const curr = kc.getCurrentContext();
-    const cxts = kc.getContexts();
+    const ctxs = kc.getContexts();
 
     if (!contextsMenu) {
       return;
     }
-    if (cxts.length === 0) {
+    if (ctxs.length === 0) {
       contextsMenu.submenu = [{ label: 'None found' }];
     } else {
-      contextsMenu.submenu = cxts.map(val => ({
+      contextsMenu.submenu = ctxs.map(val => ({
         label:   val.name,
         type:    'checkbox',
         click:   menuItem => this.contextClick(menuItem),

@@ -87,7 +87,7 @@ be rejected by the automated DCO check.
 
 Pull requests for a code change should reference the issue they are related to.
 This will enable issues to serve as a central point of reference for a change.
-For example, if a pull request fixes or completes an issue the commit or
+For example, if a pull request fixes or completes an issue, the commit or
 pull request should include:
 
 ```md

@@ -296,7 +296,7 @@ export class KubeClient extends events.EventEmitter {
     }
   }
 
-  // Notify that the client the underlying Kubernetes cluster is about to go
+  // Notify the client that the underlying Kubernetes cluster is about to go
   // away, and we should remove any pending work.
   destroy() {
     this.shutdown = true;

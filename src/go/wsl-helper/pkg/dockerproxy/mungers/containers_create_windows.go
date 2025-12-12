@@ -96,7 +96,7 @@ func mungeContainersCreate(req *http.Request, contextValue *dockerproxy.RequestC
 
 	buf, err := json.Marshal(body)
 	if err != nil {
-		return fmt.Errorf("could not re-marshel parameters: %w", err)
+		return fmt.Errorf("could not re-marshal parameters: %w", err)
 	}
 	req.Body = io.NopCloser(bytes.NewBuffer(buf))
 	req.ContentLength = int64(len(buf))

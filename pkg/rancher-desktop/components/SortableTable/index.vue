@@ -360,7 +360,7 @@ export default {
       loadingDelay:               false,
       debouncedPaginationChanged: null,
       /**
-       * The is the bool the DOM uses to show loading state. it's proxied from `loading` to avoid blipping the indicator (see usages)
+       * This bool controls showing loading state in the DOM; it's proxied from `loading` to avoid blipping the indicator (see usages)
        */
       isLoading:                  false,
     };
@@ -441,7 +441,7 @@ export default {
     },
 
     // Ensure we update live and delayed columns on first load
-    initalLoad: {
+    initialLoad: {
       handler(neu) {
         if (neu) {
           this._didinit = true;
@@ -474,7 +474,7 @@ export default {
           if (neu) {
             this._altLoadingDelayTimer = setTimeout(() => {
               this.isLoading = true;
-            }, 200); // this should be higher than the targeted quick response
+            }, 200); // this should be above the targeted quick response
           } else {
             clearTimeout(this._altLoadingDelayTimer);
             this.isLoading = false;
@@ -499,7 +499,7 @@ export default {
       return this.$store.getters['activeNamespaceCache'];
     },
 
-    initalLoad() {
+    initialLoad() {
       return !!(!this.isLoading && !this._didinit && this.rows?.length);
     },
 
@@ -1775,7 +1775,7 @@ export default {
           border-bottom: 0;
         }
 
-        // if a main-row is hovered also hover it's sibling sub row. note - the reverse is handled in selection.js
+        // if a main-row is hovered also hover its sibling sub row. note - the reverse is handled in selection.js
         &.main-row:not(.row-selected):hover + .sub-row {
           background-color: var(--sortable-table-hover-bg);
         }

@@ -127,7 +127,7 @@ export interface VMBackend extends EventEmitter<BackendEvents> {
 
   /**
    * Check if the current backend is valid.
-   * @returns Null if the backend is valid, otherwise an error describing why
+   * @returns Null if the backend is valid; otherwise, an error describing why
    * the backend is invalid that can be shown to the user.
    */
   getBackendInvalidReason(): Promise<BackendError | null>;

@@ -97,7 +97,7 @@ func main() {
 // buildSubcommand generates the option parser data for a given subcommand.
 // args provides the list of arguments to get to the subcommand; the last
 // element in the slice is the name of the subcommand.
-// writer is the file to write to for the result; it is expected that `go fmt`
+// writer is the file into which the result should be written; it is expected that `go fmt`
 // will be run on it eventually.
 func buildSubcommand(ctx context.Context, args []string, parentData helpData, writer io.Writer) error {
 	help, err := getHelp(ctx, args)

@@ -97,7 +97,7 @@ deploy_rancher() {
     fi
 
     helm upgrade \
-        --install cert-manager jetstack/cert-manager \
+        --install cert-manager oci://quay.io/jetstack/charts/cert-manager \
         --namespace cert-manager \
         --set installCRDs=true \
         --set "extraArgs[0]=--enable-certificate-owner-ref=true" \

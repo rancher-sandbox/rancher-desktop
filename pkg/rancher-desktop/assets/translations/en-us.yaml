@@ -542,13 +542,13 @@ accountAndKeys:
 
 authConfig:
   accessMode:
-    label: 'Configure who should be able to login and use {vendor}'
+    label: 'Configure who should be able to log in and use {vendor}'
     required: Restrict access to only the authorized users & groups
     restricted: 'Allow members of clusters and projects, plus authorized users & groups'
     unrestricted: Allow any valid user
   allowedPrincipalIds:
     title: Authorized Users & Groups
-  associatedWarning: 'Note: The {provider} user you authenticate as will be associated as an alternate way to login to the {vendor} user you are currently logged in as <code>{username}</code>; all the global permissions, project, and cluster role bindings of this {vendor} user will also apply to the {provider} user.'
+  associatedWarning: 'Note: The {provider} user you authenticate as will be associated as an alternate way to log in to the {vendor} user you are currently logged in as <code>{username}</code>; all the global permissions, project, and cluster role bindings of this {vendor} user will also apply to the {provider} user.'
   github:
     clientId:
       label: Client ID
@@ -567,7 +567,7 @@ authConfig:
         label: Homepage URL
       instruction: 'Fill in the form with these values:'
       prefix:
-        1: <li><a href="{baseUrl}/settings/developers" target="_blank" rel="noopener noreferrer nofollow">Click here</a> to go to GitHub application settings in a new window.</li>
+        1: <li>Open <a href="{baseUrl}/settings/developers" target="_blank" rel="noopener noreferrer nofollow">GitHub application settings</a> in a new window.</li>
         2: <li>Click on the "OAuth Apps" tab.</li>
         3: <li>Click the "New OAuth App" button.</li>
       suffix:
@@ -594,7 +594,7 @@ authConfig:
       tip: The Service Account Credentials JSON can be found in the service accounts section of the Google API developers console.
     steps:
       1:
-        title: 'Click <a href="https://console.developers.google.com/apis/credentials" target="_blank" rel="noopener noreferrer nofollow">here</a> to open applications settings in a new window'
+        title: 'Open <a href="https://console.developers.google.com/apis/credentials" target="_blank" rel="noopener noreferrer nofollow">applications settings</a> in a new window'
         body:
          1: Login to your account. Navigate to "APIs & Services" and then select "OAuth consent screen".
          2: 'Authorized domains:'
@@ -655,7 +655,7 @@ authConfig:
     serviceAccountInfo: '{vendor} needs a service account that has read-only access to all of the domains that will be able to login, so that we can determine what groups a user is a member of when they make a request with an API key.'
     starttls:
       label: Start TLS
-      tip: Upgrades non-encrypted connections by wrapping with TLS during the connection process. Can not be used in conjunction with TLS.
+      tip: Upgrades non-encrypted connections by wrapping with TLS during the connection process. Cannot be used in conjunction with TLS.
     tls: TLS
     userEnabledAttribute: User Enabled Attribute
     userMemberAttribute: User Member Attribute
@@ -1397,7 +1397,7 @@ configmap:
 
 containerResourceLimit:
   cpuPlaceholder: e.g. 1000
-  helpText: Configure how much of the resources the container can consume by default.
+  helpText: Configure how much resources the container can consume by default.
   helpTextDetail: The amount of resources the container can consume by default.
   label: Container Default Resource Limit
   limitsCpu: CPU Limit
@@ -1850,7 +1850,7 @@ logging:
     key: Key from Secret
   awsElasticsearch:
     url: URL
-    keyId: Key Id from Secret
+    keyId: Key ID from Secret
     secretKey: Secret Key from Secret
   azurestorage:
     storageAccount: Account from Secret
@@ -1859,7 +1859,7 @@ logging:
     path: Path
     storeAs: Store As
   cloudwatch:
-    keyId: Key Id from Secret
+    keyId: Key ID from Secret
     secretKey: Secret Key from Secret
     endpoint: Endpoint
     region: Region
@@ -1878,7 +1878,7 @@ logging:
     overwriteExistingPath: Overwrite Existing Path
   kinesisStream:
     streamName: Stream Name
-    keyId: Key Id from Secret
+    keyId: Key ID from Secret
     secretKey: Secret Key from Secret
   logdna:
     apiKey: API Key
@@ -1918,7 +1918,7 @@ logging:
       timekeyWait: Timekey Wait
       timekeyUseUTC: Timekey Use UTC
   s3:
-    keyId: Key Id from Secret
+    keyId: Key ID from Secret
     secretKey: Secret Key from Secret
     endpoint: Endpoint
     bucket: Bucket
@@ -2216,11 +2216,11 @@ monitoringReceiver:
   pagerduty:
     label: PagerDuty
     title: PagerDuty Config
-    info: "You can find additional info on creating an Integration Key for PagerDuty <a href='https://www.pagerduty.com/docs/guides/prometheus-integration-guide/' target='_blank' rel='noopener nofollow' class='flex-right'>here</a>."
+    info: "See additional info on <a href='https://www.pagerduty.com/docs/guides/prometheus-integration-guide/' target='_blank' rel='noopener nofollow' class='flex-right'>creating an Integration Key for PagerDuty</a>."
   slack:
     label: Slack
     title: Slack Config
-    info: "You can find additional info on creating Incoming Webhooks for Slack <a href='https://rancher.slack.com/apps/A0F7XDUAZ-incoming-webhooks' target='_blank' rel='noopener noreferrer nofollow'>here</a> ."
+    info: "See additional info on <a href='https://rancher.slack.com/apps/A0F7XDUAZ-incoming-webhooks' target='_blank' rel='noopener noreferrer nofollow'>creating Incoming Webhooks for Slack</a> ."
   webhook:
     label: Webhook
     title: Webhook Config

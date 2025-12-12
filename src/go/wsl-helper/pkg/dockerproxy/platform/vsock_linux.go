@@ -78,7 +78,7 @@ func (v *vsockListener) Close() error {
 	return unix.Close(v.fd)
 }
 
-// Addr returns the address the Listener is listening on
+// Addr returns the address listened to by the Listener
 func (v *vsockListener) Addr() net.Addr {
 	return v.local
 }

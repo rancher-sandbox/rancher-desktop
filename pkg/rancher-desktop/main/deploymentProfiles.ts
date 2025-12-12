@@ -34,7 +34,7 @@ const REGISTRY_PROFILE_PATHS = [
  * defaults or locked profile, the user directory will not be read.
  * @returns type validated defaults and locked deployment profiles, and throws
  *          an error if there is an error parsing the locked profile.
- * NOTE: The renderer process can not access the 'native-reg' library, so the
+ * NOTE: The renderer process cannot access the 'native-reg' library, so the
  *       win32 portions of the deployment profile reader functions must be
  *       located in the main process.
  */

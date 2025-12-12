@@ -12,7 +12,7 @@ export interface ContainerBasicOptions {
 }
 
 /**
- * ContainerRunOptions are the options the can be passed to
+ * ContainerRunOptions are the options that can be passed to
  * ContainerEngineClient.run().  All fields are optional.
  */
 export type ContainerRunOptions = ContainerBasicOptions & {

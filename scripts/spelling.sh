@@ -86,33 +86,36 @@ INPUTS=$(yq --output-format=json <<EOF
     check_file_names: 1
     post_comment: 0
     use_magic_file: 1
+    ignore-next-line: spell-checker:disable-next-line
     report-timing: 1
-    warnings: bad-regex,binary-file,deprecated-feature,large-file,limited-references,no-newline-at-eof,noisy-file,non-alpha-in-dictionary,token-is-substring,unexpected-line-ending,whitespace-in-dictionary,minified-file,unsupported-configuration,no-files-to-check
+    warnings: bad-regex,binary-file,deprecated-feature,ignored-expect-variant,large-file,limited-references,no-newline-at-eof,noisy-file,non-alpha-in-dictionary,token-is-substring,unexpected-line-ending,whitespace-in-dictionary,minified-file,unsupported-configuration,no-files-to-check
     use_sarif: ${CI:-0}
-    extra_dictionary_limit: 20
+    check_extra_dictionaries: ""
+    dictionary_source_prefixes: >
+        {
+        "cspell": "https://raw.githubusercontent.com/check-spelling/cspell-dicts/v20241114/dictionaries/",
+        "census": "https://raw.githubusercontent.com/check-spelling-sandbox/census/dictionaries-d90e686f89dd241ad61d30f26619e54d73e73c6e/dictionaries/"
+        }
     extra_dictionaries:
-        cspell:software-terms/dict/softwareTerms.txt
-        cspell:k8s/dict/k8s.txt
-        cspell:node/dict/node.txt
+        cspell:software-terms/softwareTerms.txt
+        census:census-5.txt
+        cspell:npm/npm.txt
+        cspell:k8s/k8s.txt
+        cspell:node/node.txt
         cspell:aws/aws.txt
-        cspell:golang/dict/go.txt
-        cspell:php/dict/php.txt
-        cspell:python/src/python/python-lib.txt
-        cspell:typescript/dict/typescript.txt
-        cspell:npm/dict/npm.txt
-        cspell:shell/dict/shell-all-words.txt
-        cspell:html/dict/html.txt
+        cspell:python/python/python-lib.txt
+        cspell:golang/go.txt
+        cspell:typescript/typescript.txt
+        cspell:shell/shell-all-words.txt
         cspell:filetypes/filetypes.txt
-        cspell:fullstack/dict/fullstack.txt
-        cspell:python/src/common/extra.txt
-        cspell:java/src/java.txt
-        cspell:dotnet/dict/dotnet.txt
-        cspell:css/dict/css.txt
-        cspell:django/dict/django.txt
-        cspell:docker/src/docker-words.txt
-        cspell:cpp/src/stdlib-cmath.txt
-        cspell:python/src/python/python.txt
-        cspell:powershell/dict/powershell.txt
+        cspell:html/html.txt
+        cspell:fonts/fonts.txt
+        cspell:php/php.txt
+        cspell:css/css.txt
+        cspell:fullstack/fullstack.txt
+        cspell:cpp/stdlib-cmath.txt
+        cspell:powershell/powershell.txt
+        cspell:dart/dart.txt
 EOF
 )
 
