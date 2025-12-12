@@ -127,6 +127,35 @@ export const getters = {
   installedExtensions(state): ExtensionState[] {
     return Object.values(state.extensions);
   },
+  /**
+   * Get the welcome extension if configured and installed.
+   * @param state Extension state
+   * @param _getters Unused
+   * @param rootState Root state to access preferences
+   */
+  welcomeExtension(state, _getters, rootState): ExtensionState | undefined {
+    const welcomeId = rootState.preferences?.preferences?.application?.extensions?.welcome;
+
+    if (!welcomeId) {
+      return undefined;
+    }
+
+    return state.extensions[welcomeId];
+  },
+  /**
+   * Get installed extensions excluding the welcome extension.
+   * These are shown in the regular extensions section of the nav.
+   */
+  regularExtensions(state, _getters, rootState): ExtensionState[] {
+    const welcomeId = rootState.preferences?.preferences?.application?.extensions?.welcome;
+    const extensions = Object.values(state.extensions);
+
+    if (!welcomeId) {
+      return extensions;
+    }
+
+    return extensions.filter(ext => ext.id !== welcomeId);
+  },
   marketData(): MarketplaceData[] {
     return MARKETPLACE_DATA;
   },

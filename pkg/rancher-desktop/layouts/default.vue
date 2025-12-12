@@ -8,7 +8,8 @@
     <rd-nav
       class="nav"
       :items="routes"
-      :extensions="installedExtensions"
+      :extensions="regularExtensions"
+      :welcome-extension="welcomeExtension"
       @open-dashboard="openDashboard"
       @open-preferences="openPreferences"
     />
@@ -84,7 +85,7 @@ export default {
     },
     ...mapState('credentials', ['credentials']),
     ...mapTypedState('diagnostics', ['diagnostics']),
-    ...mapGetters('extensions', ['installedExtensions']),
+    ...mapGetters('extensions', ['installedExtensions', 'regularExtensions', 'welcomeExtension']),
   },
 
   beforeMount() {
