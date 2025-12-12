@@ -680,6 +680,7 @@ vmwarevsphere
 vmx
 vnc
 vnode
+vpnkit
 vsock
 vtunnel
 vul
