@@ -554,6 +554,14 @@ export class ExtensionImpl implements Extension {
   }
 
   protected async uninstallContainers() {
+    const metadata = await this.metadata;
+
+    if (!isVMTypeImage(metadata.vm) && !isVMTypeComposefile(metadata.vm)) {
+      console.debug(`Extension ${ this.id } does not have containers to stop.`);
+
+      return;
+    }
+
     console.debug(`Running ${ this.id } compose down`);
     await this.client.composeDown({
       composeDir: path.join(this.dir, 'compose'),
