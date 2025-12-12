@@ -70,6 +70,8 @@ export const defaultSettings = {
       },
       /** Installed extensions, mapping to the installed version (tag). */
       installed: { } as Record<string, string>,
+      /** Welcome extension shown at top of sidebar, loaded first. */
+      welcome:   '' as string,
     },
     pathManagementStrategy: process.platform === 'win32' ? PathManagementStrategy.Manual : PathManagementStrategy.RcFiles,
     telemetry:              { enabled: true },

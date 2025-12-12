@@ -1552,6 +1552,21 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     if (!em) {
       return { status: 503, data: 'Extension manager is not ready yet.' };
     }
+
+    // Prevent uninstalling the welcome extension
+    if (state === 'uninstall') {
+      const welcomeImage = cfg.application.extensions.welcome;
+
+      if (welcomeImage) {
+        // Extract the image name without tag for comparison
+        const imageWithoutTag = image.includes(':') ? image.split(':')[0] : image;
+
+        if (imageWithoutTag === welcomeImage) {
+          return { status: 403, data: `The welcome extension ${ welcomeImage } cannot be uninstalled` };
+        }
+      }
+    }
+
     const extension = await em.getExtension(image, { preferInstalled: state === 'uninstall' });
 
     if (state === 'install') {

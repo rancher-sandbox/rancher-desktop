@@ -84,6 +84,7 @@ export default class SettingsValidator {
             list:    this.checkExtensionAllowList,
           },
           installed: this.checkInstalledExtensions,
+          welcome:   this.checkString,
         },
         pathManagementStrategy: this.checkLima(this.checkEnum(...Object.values(PathManagementStrategy))),
         telemetry:              { enabled: this.checkBoolean },
