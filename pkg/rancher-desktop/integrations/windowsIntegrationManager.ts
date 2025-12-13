@@ -30,6 +30,7 @@ const DISTRO_BLACKLIST = [
   'rancher-desktop-data', // Another internal distro
   'docker-desktop', // Not meant for interactive use
   'docker-desktop-data', // Not meant for interactive use
+  'wsl-vpnkit', // Our executable does not run
 ];
 
 /**

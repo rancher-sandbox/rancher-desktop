@@ -64,6 +64,7 @@ export class DiagnosticsManager {
           import('./pathManagement'),
           import('./rdBinInShell'),
           import('./testCheckers'),
+          import('./wslDistros'),
           import('./wslInfo'),
         ])).map(obj => obj.default);
 
