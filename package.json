@@ -67,7 +67,7 @@
     "cross-spawn": "7.0.6",
     "dayjs": "1.11.19",
     "dompurify": "3.3.0",
-    "electron-updater": "6.7.2",
+    "electron-updater": "6.7.3",
     "express": "5.2.1",
     "floating-vue": "5.2.2",
     "fs-extra": "11.3.2",
