@@ -272,10 +272,33 @@ export class ExtensionManagerImpl implements ExtensionManager {
     const { enabled: allowEnabled, list: allowListRaw } = config.application.extensions.allowed;
     const allowList = allowEnabled ? allowListRaw : undefined;
 
+    // Load welcome extension first if configured
+    const welcomeImage = config.application.extensions.welcome;
+
+    if (welcomeImage) {
+      const welcomeTag = config.application.extensions.installed[welcomeImage];
+
+      if (welcomeTag) {
+        const welcomeId = `${ welcomeImage }:${ welcomeTag }`;
+
+        console.log(`Loading welcome extension ${ welcomeId } first...`);
+        try {
+          await (await this.getExtension(welcomeId)).install(allowList);
+        } catch (ex) {
+          console.error(`Failed to install welcome extension ${ welcomeId }`, ex);
+        }
+      }
+    }
+
     for (const [repo, tag] of Object.entries(config.application.extensions.installed)) {
       if (!tag) {
         // If the tag is unset / falsy, we wanted to uninstall the extension.
         // There is no need to re-initialize it.
+        continue;
+      }
+
+      if (repo === welcomeImage) {
+        // Skip welcome extension as it was already loaded first.
         continue;
       }
 

@@ -50,8 +50,9 @@ export default defineComponent({
     emptyStateBody(): string {
       return this.t('extensions.installed.emptyState.body', { }, true);
     },
-    ...mapGetters('extensions', ['installedExtensions']) as {
-      installedExtensions: () => ExtensionState[],
+    // Use regularExtensions to exclude the welcome extension from the list
+    ...mapGetters('extensions', ['regularExtensions']) as {
+      regularExtensions: () => ExtensionState[],
     },
   },
   async beforeMount() {
@@ -104,7 +105,7 @@ export default defineComponent({
       key-field="id"
       :loading="loading"
       :headers="headers"
-      :rows="installedExtensions"
+      :rows="regularExtensions"
       :search="false"
       :table-actions="false"
       :row-actions="false"
