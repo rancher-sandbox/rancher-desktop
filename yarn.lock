@@ -14837,7 +14837,7 @@ __metadata:
     ps-tree: "npm:1.2.0"
     rancher-icons: "rancher/icons#v2.0.21"
     raw-loader: "npm:4.0.2"
-    sass: "npm:1.95.0"
+    sass: "npm:1.96.0"
     sass-loader: "npm:16.0.6"
     semver: "npm:7.7.3"
     tar-stream: "npm:3.1.7"
@@ -15396,9 +15396,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.95.0":
-  version: 1.95.0
-  resolution: "sass@npm:1.95.0"
+"sass@npm:1.96.0":
+  version: 1.96.0
+  resolution: "sass@npm:1.96.0"
   dependencies:
     "@parcel/watcher": "npm:^2.4.1"
     chokidar: "npm:^4.0.0"
@@ -15409,7 +15409,7 @@ __metadata:
       optional: true
   bin:
     sass: sass.js
-  checksum: 10c0/5f4093eb6fe569d65fbf30baf1fdd36b499ebc90a2f36fedf64aea2f5a72889a9df34cc96cd7cb640a10156708c9b8894b6f89953f26b57b44b96731e9c27fb5
+  checksum: 10c0/a932054bcee6935757417af6072d31b65ce3557798a53351b3e1369d7f06e24b0ec211e1617bdaaee998b429a44bf0f52acd240fd47f88422d5bc241eeb71672
   languageName: node
   linkType: hard
 
