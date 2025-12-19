@@ -374,16 +374,25 @@ export default class BackendHelper {
    * requested, or if we have not previously run the daemon.
    */
   static async writeMobyConfig(vmx: VMExecutor, configureWASM: boolean) {
+    // Note that DOCKER_DAEMON_JSON may not exist on Windows for an upgrade,
+    // because `/etc` is not persisted in the data distribution.
     let config: Record<string, any>;
     let found = false;
 
     try {
       config = JSON.parse(await vmx.readFile(DOCKER_DAEMON_JSON));
       found = true;
-    } catch (err: any) {
-      await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(DOCKER_DAEMON_JSON));
+    } catch {
+      try {
+        await vmx.execCommand({ root: true, expectFailure: true }, 'test', '-d', '/var/lib/docker/image/overlay2');
+        found = true; // Docker config does not exist, but data does.
+      } catch {
+        // No existing data.
+        await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(DOCKER_DAEMON_JSON));
+      }
       config = {};
     }
+
     config['features'] ??= {};
     config['features']['containerd-snapshotter'] ||= configureWASM || !found;
 
@@ -392,6 +401,7 @@ export default class BackendHelper {
       // to avoid breaking cri-dockerd.
       await vmx.execCommand({ root: true }, 'mkdir', '-p', '/var/lib/docker/image');
     }
+    await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(DOCKER_DAEMON_JSON));
     await vmx.writeFile(DOCKER_DAEMON_JSON, jsonStringifyWithWhiteSpace(config), 0o644);
   }
 
