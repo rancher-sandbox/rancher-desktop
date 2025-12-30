@@ -8,7 +8,7 @@
 # - `logo`: Overrides the logo URL.
 # - `github_repo`: GitHub repository, used for version updates.
 
-rancher/application-collection-extension:0.5.1:
+rancher/application-collection-extension:0.5.2:
   github_repo: rancherlabs/application-collection-extension
 ghcr.io/rancher-sandbox/rancher-desktop-rdx-open-webui:0.1.0:
   github_repo: rancher-sandbox/rancher-desktop-rdx-open-webui
