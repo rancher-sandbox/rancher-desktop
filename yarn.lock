@@ -5770,12 +5770,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@xterm/addon-web-links@npm:0.11.0":
-  version: 0.11.0
-  resolution: "@xterm/addon-web-links@npm:0.11.0"
-  peerDependencies:
-    "@xterm/xterm": ^5.0.0
-  checksum: 10c0/9426bed80afa954b0ea97771d041eb44e77a64e560ce8b8ef507a5d3a763979af18ae9f74ed54007bb7e235d0daf035be2a33f90d8edfecb431caf8ba0b0664e
+"@xterm/addon-web-links@npm:0.12.0":
+  version: 0.12.0
+  resolution: "@xterm/addon-web-links@npm:0.12.0"
+  checksum: 10c0/1c4847f43948483a6a0f59994090b8b9d9f6006a1e4a8deed7d9c28fcb47422d77eb418fb8fc63fbfb0c486c49e4646b73188ff2efac5290b680db34f298f334
   languageName: node
   linkType: hard
 
@@ -14848,7 +14846,7 @@ __metadata:
     "@vue/test-utils": "npm:2.4.6"
     "@xterm/addon-fit": "npm:0.10.0"
     "@xterm/addon-search": "npm:0.16.0"
-    "@xterm/addon-web-links": "npm:0.11.0"
+    "@xterm/addon-web-links": "npm:0.12.0"
     "@xterm/xterm": "npm:5.5.0"
     "@yarnpkg/cli": "npm:^4.12.0"
     "@yarnpkg/core": "npm:^4.5.0"
