@@ -70,7 +70,7 @@
     "electron-updater": "6.7.3",
     "express": "5.2.1",
     "floating-vue": "5.2.2",
-    "fs-extra": "11.3.2",
+    "fs-extra": "11.3.3",
     "http-proxy-middleware": "3.0.5",
     "intl-messageformat": "11.0.4",
     "jquery": "3.7.1",
