@@ -4,7 +4,7 @@ socketVMNet: 1.2.2
 alpineLimaISO:
   isoVersion: 0.2.46.rd4
   alpineVersion: 3.22.2
-WSLDistro: "0.92"
+WSLDistro: "0.93"
 kuberlr: 0.6.1
 helm: 4.0.4
 dockerCLI: 29.1.3
