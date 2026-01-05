@@ -487,6 +487,7 @@ export default class K3sHelper extends events.EventEmitter {
             entry.channels.push(channel);
             entry.channels.sort(this.compareChannels);
           }
+          this.versionFromChannel[channel] = version.version;
         }
       }
 
@@ -523,6 +524,7 @@ export default class K3sHelper extends events.EventEmitter {
    */
   initialize(): Promise<void> {
     if (!this.pendingInitialize) {
+      this.versionFromChannel = {};
       this.pendingInitialize = (async() => {
         await this.readCache();
         if (Object.keys(this.versions).length > 0) {
@@ -541,7 +543,6 @@ export default class K3sHelper extends events.EventEmitter {
         }
       })();
     }
-    this.versionFromChannel = {};
 
     return this.pendingInitialize;
   }

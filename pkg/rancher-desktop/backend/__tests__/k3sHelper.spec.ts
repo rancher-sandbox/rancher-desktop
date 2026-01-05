@@ -373,6 +373,15 @@ describe(K3sHelper, () => {
       new SemanticVersionEntry(new semver.SemVer('v1.96.1+k3s1')),
       new SemanticVersionEntry(new semver.SemVer('v1.96.0+k3s2')),
     ]);
+
+    // Verify versionFromChannel is updated after channel assignment
+    expect(subject['versionFromChannel']).toEqual({
+      'v1.96':  '1.96.3',
+      'v1.97':  '1.97.7',
+      'v1.98':  '1.98.3',
+      stable:  '1.97.7',
+      latest:  '1.98.3',
+    });
   });
 
   describe('initialize', () => {
@@ -401,6 +410,29 @@ describe(K3sHelper, () => {
         channels: undefined,
       });
       await pendingInit;
+    });
+
+    it('should not reset versionFromChannel when called multiple times', async() => {
+      const subject = new K3sHelper('x86_64');
+
+      // Mock readCache to populate versionFromChannel
+      jest.spyOn(subject as any, 'readCache').mockImplementation(function(this: InstanceType<typeof K3sHelper>) {
+        this.versions['1.99.3'] = new SemanticVersionEntry(semver.parse('1.99.3+k3s1')!, ['stable']);
+        this.versionFromChannel['stable'] = '1.99.3';
+
+        return Promise.resolve();
+      });
+
+      // Mock updateCache to not actually run
+      jest.spyOn(subject as any, 'updateCache').mockResolvedValue(undefined);
+
+      // First initialization
+      await subject.initialize();
+      expect(subject['versionFromChannel']).toEqual({ stable: '1.99.3' });
+
+      // Second initialization should not reset versionFromChannel
+      await subject.initialize();
+      expect(subject['versionFromChannel']).toEqual({ stable: '1.99.3' });
     });
   });
 
