@@ -91,8 +91,8 @@ describe('manageLinesInFile', () => {
       await expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], true)).resolves.not.toThrow();
 
       const allAttrs: string[] = await listAttributes(rcFilePath);
-      // filter out attributes like com.apple.provenance that the OS might add
-      const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.'));
+      // filter out system-provided attributes (macOS com.apple.*, SELinux security.*)
+      const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.') && !item.startsWith('security.'));
 
       expect(filteredAttrs).toEqual([attributeKey]);
       await expect(getAttribute(rcFilePath, attributeKey)).resolves.toEqual(Buffer.from(attributeValue, 'utf-8'));
@@ -120,8 +120,8 @@ describe('manageLinesInFile', () => {
       await expect(fs.promises.readFile(rcFilePath, 'utf8')).resolves.toEqual(expectedContents);
       if (process.platform !== 'win32') {
         const allAttrs: string[] = await listAttributes(rcFilePath);
-        // filter out attributes like com.apple.provenance that the OS might add
-        const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.'));
+        // filter out system-provided attributes (macOS com.apple.*, SELinux security.*)
+        const filteredAttrs = allAttrs.filter(item => !item.startsWith('com.apple.') && !item.startsWith('security.'));
 
         expect(filteredAttrs).toHaveLength(0);
       }
