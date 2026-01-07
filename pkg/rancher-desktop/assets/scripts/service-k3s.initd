@@ -49,9 +49,9 @@ start_pre() {
     fi
   else
     if [ -f ${IMAGEPATH}.tar.zst ]; then
-      nerdctl --namespace k8s.io load --all-platforms --input ${IMAGEPATH}.tar.zst
+      nerdctl --namespace k8s.io load ${ALLPLATFORMS} --input ${IMAGEPATH}.tar.zst
     elif [ -f ${IMAGEPATH}.tar ]; then
-      nerdctl --namespace k8s.io load --all-platforms --input ${IMAGEPATH}.tar
+      nerdctl --namespace k8s.io load ${ALLPLATFORMS} --input ${IMAGEPATH}.tar
     fi
   fi
 }
