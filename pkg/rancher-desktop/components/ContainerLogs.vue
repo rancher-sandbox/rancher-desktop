@@ -147,6 +147,9 @@ export default defineComponent({
 
         this.terminal.open(this.$refs.terminalContainer);
 
+        // Expose terminal instance for e2e testing
+        this.$refs.terminalContainer.__xtermTerminal = this.terminal;
+
         await this.$nextTick();
         this.fitAddon.fit();
 

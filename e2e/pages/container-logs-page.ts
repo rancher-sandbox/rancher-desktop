@@ -47,26 +47,25 @@ export class ContainerLogsPage {
 
   async scrollToBottom() {
     await this.page.evaluate(() => {
-      const viewport = document.querySelector('.xterm-viewport');
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
+      const container = document.querySelector('[data-testid="terminal"]');
+
+      container?.__xtermTerminal?.scrollToBottom();
     });
   }
 
   async scrollToTop() {
     await this.page.evaluate(() => {
-      const viewport = document.querySelector('.xterm-viewport');
-      if (viewport) {
-        viewport.scrollTop = 0;
-      }
+      const container = document.querySelector('[data-testid="terminal"]');
+
+      container?.__xtermTerminal?.scrollToTop();
     });
   }
 
   async getScrollPosition(): Promise<number> {
     return await this.page.evaluate(() => {
-      const viewport = document.querySelector('.xterm-viewport');
-      return viewport ? viewport.scrollTop : 0;
+      const container = document.querySelector('[data-testid="terminal"]');
+
+      return container?.__xtermTerminal?.buffer.active.viewportY ?? 0;
     });
   }
 }
