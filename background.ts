@@ -1259,7 +1259,7 @@ function newK8sManager() {
   mgr.on('state-changed', async(state: K8s.State) => {
     try {
       mainEvents.emit('k8s-check-state', mgr);
-      window.send('k8s-check-state', state);
+
       if ([K8s.State.STARTED, K8s.State.DISABLED].includes(state)) {
         if (!cfg.kubernetes.version) {
           writeSettings({ kubernetes: { version: mgr.kubeBackend.version } });
@@ -1270,6 +1270,10 @@ function newK8sManager() {
           await Steve.getInstance().start();
         }
       }
+
+      // Notify UI after Steve is ready, so the dashboard button is only enabled
+      // when Steve can accept connections.
+      window.send('k8s-check-state', state);
 
       if (state === K8s.State.STOPPING) {
         Steve.getInstance().stop();
