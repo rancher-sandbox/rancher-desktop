@@ -1,10 +1,13 @@
 import { ChildProcess, spawn } from 'child_process';
+import net from 'net';
 import os from 'os';
 import path from 'path';
 
 import K3sHelper from '@pkg/backend/k3sHelper';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+
+const STEVE_PORT = 9443;
 
 const console = Logging.steve;
 
@@ -83,16 +86,71 @@ export class Steve {
       console.error(`stderr: ${ data }`);
     });
 
-    this.process.on('spawn', () => {
-      this.isRunning = true;
-    });
-
     this.process.on('close', (code: any) => {
       console.log(`child process exited with code ${ code }`);
       this.isRunning = false;
     });
 
-    console.debug(`Spawned child pid: ${ this.process.pid }`);
+    await new Promise<void>((resolve, reject) => {
+      this.process.once('spawn', () => {
+        this.isRunning = true;
+        console.debug(`Spawned child pid: ${ this.process.pid }`);
+        resolve();
+      });
+      this.process.once('error', (err) => {
+        reject(new Error(`Failed to spawn Steve: ${ err.message }`));
+      });
+    });
+
+    await this.waitForReady();
+  }
+
+  /**
+   * Wait for Steve to be ready to accept connections.
+   */
+  private async waitForReady(): Promise<void> {
+    const maxAttempts = 60;
+    const delayMs = 500;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      if (!this.isRunning) {
+        throw new Error('Steve process exited before becoming ready');
+      }
+
+      if (await this.isPortReady()) {
+        console.debug(`Steve is ready after ${ attempt } attempt(s)`);
+
+        return;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+
+    throw new Error(`Steve did not become ready after ${ maxAttempts * delayMs / 1000 } seconds`);
+  }
+
+  /**
+   * Check if Steve is accepting connections on its port.
+   */
+  private isPortReady(): Promise<boolean> {
+    return new Promise((resolve) => {
+      const socket = new net.Socket();
+
+      socket.setTimeout(1000);
+      socket.once('connect', () => {
+        socket.destroy();
+        resolve(true);
+      });
+      socket.once('error', () => {
+        socket.destroy();
+        resolve(false);
+      });
+      socket.once('timeout', () => {
+        socket.destroy();
+        resolve(false);
+      });
+      socket.connect(STEVE_PORT, '127.0.0.1');
+    });
   }
 
   /**
