@@ -105,6 +105,8 @@ export class DashboardServer {
           return this.proxies['/v3'].upgrade(req, socket, head);
         } else if (req.url?.startsWith('/k8s/')) {
           return this.proxies['/k8s'].upgrade(req, socket, head);
+        } else if (req.url?.startsWith('/api/')) {
+          return this.proxies['/api'].upgrade(req, socket, head);
         } else {
           console.log(`Unknown Web socket upgrade request for ${ req.url }`);
         }

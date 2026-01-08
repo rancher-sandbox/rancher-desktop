@@ -151,7 +151,12 @@ class Builder {
     // Build the electron builder configuration to include the version data
     const config: ReadWrite<Configuration> = yaml.parse(await fs.promises.readFile('packaging/electron-builder.yml', 'utf-8'));
     const configPath = path.join(buildUtils.distDir, 'electron-builder.yaml');
-    const fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
+    let fullBuildVersion: string;
+    try {
+      fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
+    } catch {
+      fullBuildVersion = 'unknown';
+    }
     const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
     const distDir = path.join(process.cwd(), 'dist');
     const electronPlatform = ({

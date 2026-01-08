@@ -62,42 +62,42 @@ jobs:
       if: matrix.platform == 'linux'
       run: make -C bats bats.tar.gz
     - name: Upload bats.tar.gz
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: matrix.platform == 'linux'
       with:
         name: bats.tar.gz
         path: bats/bats.tar.gz
         if-no-files-found: error
     - name: Upload mac disk image
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: matrix.platform == 'mac'
       with:
         name: Rancher Desktop.${{ matrix.arch }}.dmg
         path: dist/Rancher Desktop*.dmg
         if-no-files-found: error
     - name: Upload mac zip
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: matrix.platform == 'mac'
       with:
         name: Rancher Desktop-mac.${{ matrix.arch }}.zip
         path: dist/Rancher Desktop*.zip
         if-no-files-found: error
     - name: Upload Windows installer
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: matrix.platform == 'win'
       with:
         name: Rancher Desktop Setup.msi
         path: dist/Rancher.Desktop*.msi
         if-no-files-found: error
     - name: Upload Windows zip
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: matrix.platform == 'win'
       with:
         name: Rancher Desktop-win.zip
         path: dist/Rancher Desktop-*-win.zip
         if-no-files-found: error
     - name: Upload Linux zip
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: matrix.platform == 'linux'
       with:
         name: Rancher Desktop-linux.zip
@@ -146,7 +146,7 @@ jobs:
       with:
         persist-credentials: false
     - uses: ./.github/actions/yarn-install
-    - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       name: Download artifact
       with:
         name: Rancher Desktop-win.zip
@@ -199,7 +199,7 @@ jobs:
       with:
         persist-credentials: false
     - uses: ./.github/actions/yarn-install
-    - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       name: Download artifact
       with:
         name: Rancher Desktop-mac.${{ matrix.arch }}.zip

@@ -1393,6 +1393,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
           if (kubernetesVersion) {
             const version = kubernetesVersion;
+            const allPlatformsThresholdVersion = '1.31.0';
 
             // We install containerd-shims as part of the container engine installation (see
             // BackendHelper#installContainerdShims); and we need that to finish first so that when
@@ -1407,6 +1408,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                   ENGINE:                 config.containerEngine.name,
                   ADDITIONAL_ARGS:        config.kubernetes.options.traefik ? '' : '--disable traefik',
                   USE_CRI_DOCKERD:        BackendHelper.requiresCRIDockerd(config.containerEngine.name, version).toString(),
+                  ALLPLATFORMS:           semver.lt(version, allPlatformsThresholdVersion) ? '--all-platforms' : '',
                 };
 
                 // Make sure the apiserver can be accessed from WSL through the internal gateway

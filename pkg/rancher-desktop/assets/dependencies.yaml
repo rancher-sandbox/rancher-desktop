@@ -2,19 +2,19 @@ lima: 1.2.1.rd2
 qemu: 9.2.0.rd2
 socketVMNet: 1.2.2
 alpineLimaISO:
-  isoVersion: 0.2.46.rd4
+  isoVersion: 0.2.46.rd5
   alpineVersion: 3.22.2
-WSLDistro: "0.92"
+WSLDistro: "0.93"
 kuberlr: 0.6.1
 helm: 4.0.4
 dockerCLI: 29.1.3
 dockerBuildx: 0.30.1
 dockerCompose: 5.0.1
-golangci-lint: 2.7.2
-trivy: 0.68.1
+golangci-lint: 2.8.0
+trivy: 0.68.2
 steve: 0.1.0-beta9.1
-rancherDashboard: 2.11.1.rd1
-dockerProvidedCredentialHelpers: 0.9.4
+rancherDashboard: 2.11.1.rd3
+dockerProvidedCredentialHelpers: 0.9.5
 ECRCredentialHelper: 0.11.0
 mobyOpenAPISpec: "1.52"
 wix: v3.14.1

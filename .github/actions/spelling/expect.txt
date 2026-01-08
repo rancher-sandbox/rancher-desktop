@@ -18,6 +18,7 @@ aliyunecs
 aliyunkubernetescontainerservice
 allcols
 allusers
+ALLPLATFORMS
 altgraph
 andsection
 apierrors
@@ -62,7 +63,6 @@ blockmap
 Blt
 bootfs
 bosco
-bottlesofbeeronthewall
 bpf
 bpffs
 browserhome

@@ -71,7 +71,7 @@ jobs:
         OBS_DOWNLOAD_URL: https://download.opensuse.org/download/repositories/isv:/Rancher:/dev/AppImage/
 
     - name: Upload macOS aarch-64 artifacts
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: application-macos-aarch64.zip
         if-no-files-found: error
@@ -79,7 +79,7 @@ jobs:
           *.aarch64.dmg
           *.aarch64.dmg.sha512sum
     - name: Upload macOS x86_64 artifacts
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: application-macos-x86_64.zip
         if-no-files-found: error
@@ -87,7 +87,7 @@ jobs:
           *.x86_64.dmg
           *.x86_64.dmg.sha512sum
     - name: Upload Windows artifacts
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: application-win32.zip
         if-no-files-found: error
@@ -95,7 +95,7 @@ jobs:
           *.msi
           *.msi.sha512sum
     - name: Upload Linux artifacts
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: application-linux.zip
         if-no-files-found: error
@@ -103,7 +103,7 @@ jobs:
           rancher-desktop-linux-*.zip
           rancher-desktop-linux-*.zip.sha512sum
     - name: Upload Linux AppImage
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: application-linux.AppImage
         if-no-files-found: error
@@ -147,13 +147,13 @@ jobs:
         >> "$GITHUB_ENV"
 
     - name: Download artifacts
-      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         name: application-${{ matrix.platform }}.zip
     - run: ${{ env.EXEC_COMMAND }} .github/workflows/smoke-test/smoke-test.sh
       shell: bash
     - name: Upload logs
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: always()
       with:
         name: logs-${{ matrix.platform }}.zip
@@ -240,7 +240,7 @@ jobs:
         gm import -window root -verbose $LOGS_DIR/screenshot-${{ matrix.id }}.png
 
     - name: Upload logs
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: always()
       with:
         name: logs-repo-${{ matrix.id }}.zip
@@ -278,7 +278,7 @@ jobs:
         user: ci-user
 
     - name: Download AppImage
-      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         name: application-linux.AppImage
 
@@ -317,7 +317,7 @@ jobs:
         gm import -window root -verbose $LOGS_DIR/screenshot-${{ matrix.id }}.png
 
     - name: Upload logs
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       if: always()
       with:
         name: logs-appimage-${{ matrix.id }}.zip

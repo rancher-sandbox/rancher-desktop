@@ -368,12 +368,14 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
    * Write the openrc script for k3s.
    */
   protected async writeServiceScript(cfg: BackendSettings, desiredVersion: semver.SemVer, allowSudo: boolean) {
+    const allPlatformsThresholdVersion = '1.31.0';
     const config: Record<string, string> = {
       PORT:            this.desiredPort.toString(),
       ENGINE:          cfg.containerEngine.name ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: `--node-ip ${ await this.vm.ipAddress }`,
       LOG_DIR:         paths.logs,
       USE_CRI_DOCKERD: BackendHelper.requiresCRIDockerd(cfg.containerEngine.name, desiredVersion.version).toString(),
+      ALLPLATFORMS:    semver.lt(desiredVersion, allPlatformsThresholdVersion) ? '--all-platforms' : '',
     };
 
     if (os.platform() === 'darwin') {
