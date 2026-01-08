@@ -1266,13 +1266,13 @@ function newK8sManager() {
         }
         currentImageProcessor?.relayNamespaces();
 
-        if (enabledK8s && state === K8s.State.STARTED) {
-          // Wait for Steve to be ready before notifying the UI that K8s is started,
-          // so the dashboard button is only enabled when Steve can accept connections.
+        if (enabledK8s) {
           await Steve.getInstance().start();
         }
       }
 
+      // Notify UI after Steve is ready, so the dashboard button is only enabled
+      // when Steve can accept connections.
       window.send('k8s-check-state', state);
 
       if (state === K8s.State.STOPPING) {

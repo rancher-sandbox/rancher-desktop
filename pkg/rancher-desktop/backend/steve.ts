@@ -2,6 +2,7 @@ import { ChildProcess, spawn } from 'child_process';
 import net from 'net';
 import os from 'os';
 import path from 'path';
+import { setTimeout } from 'timers/promises';
 
 import K3sHelper from '@pkg/backend/k3sHelper';
 import Logging from '@pkg/utils/logging';
@@ -38,6 +39,7 @@ export class Steve {
 
   /**
    * @description Starts the Steve API if one is not already running.
+   * Returns only after Steve is ready to accept connections.
    */
   public async start() {
     const { pid } = this.process || { };
@@ -91,18 +93,22 @@ export class Steve {
       this.isRunning = false;
     });
 
-    await new Promise<void>((resolve, reject) => {
-      this.process.once('spawn', () => {
-        this.isRunning = true;
-        console.debug(`Spawned child pid: ${ this.process.pid }`);
-        resolve();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        this.process.once('spawn', () => {
+          this.isRunning = true;
+          console.debug(`Spawned child pid: ${ this.process.pid }`);
+          resolve();
+        });
+        this.process.once('error', (err) => {
+          reject(new Error(`Failed to spawn Steve: ${ err.message }`, { cause: err }));
+        });
       });
-      this.process.once('error', (err) => {
-        reject(new Error(`Failed to spawn Steve: ${ err.message }`));
-      });
-    });
 
-    await this.waitForReady();
+      await this.waitForReady();
+    } catch (ex) {
+      console.error(ex);
+    }
   }
 
   /**
@@ -123,7 +129,7 @@ export class Steve {
         return;
       }
 
-      await new Promise(resolve => setTimeout(resolve, delayMs));
+      await setTimeout(delayMs);
     }
 
     throw new Error(`Steve did not become ready after ${ maxAttempts * delayMs / 1000 } seconds`);
