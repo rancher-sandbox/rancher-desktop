@@ -199,9 +199,12 @@ let lastOpenExtension: { id: string, relPath: string } | undefined;
  */
 function createView() {
   const mainWindow = getWindow('main');
-  const hostInfo = {
-    arch:     process.arch,
-    hostname: os.hostname(),
+  const decodedExtensionId = currentExtension?.id ? Buffer.from(currentExtension.id, 'hex').toString() : undefined;
+  const extensionVersion = decodedExtensionId ? getSettings().application.extensions.installed[decodedExtensionId] : undefined;
+  const extensionContext = {
+    arch:             process.arch,
+    hostname:         os.hostname(),
+    extensionVersion,
   };
 
   if (!mainWindow) {
@@ -212,7 +215,7 @@ function createView() {
     nodeIntegration:     false,
     contextIsolation:    true,
     sandbox:             true,
-    additionalArguments: [JSON.stringify(hostInfo)],
+    additionalArguments: [JSON.stringify(extensionContext)],
   };
 
   if (currentExtension?.id) {
