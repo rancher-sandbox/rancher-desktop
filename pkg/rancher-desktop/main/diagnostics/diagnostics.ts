@@ -38,6 +38,9 @@ export class DiagnosticsManager {
   /** Time stamp of when the last check occurred. */
   lastUpdate = new Date(0);
 
+  /** Last known applicable state, for message limiting. */
+  applicable: Record<DiagnosticsChecker['id'], boolean> = {};
+
   /** Last known check results, indexed by the checker id. */
   results: Record<DiagnosticsChecker['id'], DiagnosticsCheckerResult | DiagnosticsCheckerSingleResult[]> = {};
 
@@ -60,6 +63,7 @@ export class DiagnosticsManager {
           import('./kubeVersionsAvailable'),
           import('./limaDarwin'),
           import('./limaOverrides'),
+          import('./mobyImageStore'),
           import('./mockForScreenshots'),
           import('./pathManagement'),
           import('./rdBinInShell'),
@@ -118,7 +122,11 @@ export class DiagnosticsManager {
       }
     })))
       .map(([checker, applicable]) => {
-        console.debug(`${ checker.id } is ${ applicable ? '' : 'not ' }applicable`);
+        if (applicable !== this.applicable[checker.id]) {
+          const verb = this.applicable[checker.id] === undefined ? 'is' : 'turned';
+          console.debug(`${ checker.id } ${ verb } ${ applicable ? '' : 'not ' }applicable`);
+          this.applicable[checker.id] = applicable;
+        }
 
         return [checker, applicable] as const;
       })
