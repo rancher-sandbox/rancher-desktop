@@ -115,6 +115,17 @@ interface RDXSpawnOptions extends v1.SpawnOptions {
 const extensionId = location.protocol === 'app:' ? '<app>' : decodeURIComponent(location.hostname.replace(/(..)/g, '%$1'));
 
 /**
+ * Context passed from the main process via additionalArguments.
+ */
+const extensionContext: { arch?: string, hostname?: string, extensionVersion?: string } = (() => {
+  try {
+    return JSON.parse(process.argv.slice(-1).pop() ?? '{}');
+  } catch {
+    return {};
+  }
+})();
+
+/**
  * The processes that are waiting to complete, keyed by the process ID.
  * For compatibility reasons, we need a strong reference here.
  */
@@ -360,8 +371,10 @@ ipcRenderer.on('extensions/spawn/close', (_, id, returnValue) => {
 // During the nuxt removal, import/namespace started failing
 
 export class RDXClient implements v1.DockerDesktopClient {
-  constructor(info: { arch: string, hostname: string }) {
-    Object.assign(this.host, info);
+  constructor(info?: { arch: string, hostname: string }) {
+    if (info) {
+      Object.assign(this.host, info);
+    }
   }
 
   /**
@@ -412,7 +425,7 @@ export class RDXClient implements v1.DockerDesktopClient {
     }
   }
 
-  extension: v1.Extension = {
+  extension: v1.Extension & { id?: string, version?: string } = {
     vm: {
       cli:     { exec: getExec('container') },
       service: {
@@ -425,8 +438,10 @@ export class RDXClient implements v1.DockerDesktopClient {
         head:    (url: string) => this.makeRequest('HEAD', url),
       },
     },
-    host:  { cli: { exec: getExec('host') } },
-    image: extensionId,
+    host:    { cli: { exec: getExec('host') } },
+    image:   extensionContext.extensionVersion ? `${ extensionId }:${ extensionContext.extensionVersion }` : extensionId,
+    id:      extensionId,
+    version: extensionContext.extensionVersion ?? '',
   };
 
   desktopUI = {
@@ -456,8 +471,8 @@ export class RDXClient implements v1.DockerDesktopClient {
       ipcRenderer.send('extensions/open-external', url);
     },
     platform: process.platform,
-    arch:     '<unknown>',
-    hostname: '<unknown>',
+    arch:     extensionContext.arch ?? '<unknown>',
+    hostname: extensionContext.hostname ?? '<unknown>',
   };
 
   docker = {
@@ -704,9 +719,7 @@ export class RDXClient implements v1.DockerDesktopClient {
 export default function initExtensions(): void {
   switch (document.location.protocol) {
   case 'x-rd-extension:': {
-    const hostInfo: { arch: string, hostname: string } = JSON.parse(process.argv.slice(-1).pop() ?? '{}');
-
-    Electron.contextBridge.exposeInMainWorld('ddClient', new RDXClient(hostInfo));
+    Electron.contextBridge.exposeInMainWorld('ddClient', new RDXClient());
     break;
   }
   case 'app:': {
