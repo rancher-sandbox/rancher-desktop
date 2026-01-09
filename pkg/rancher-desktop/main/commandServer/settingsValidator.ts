@@ -413,9 +413,9 @@ export default class SettingsValidator {
         mergedSettings.containerEngine.mobyStorageDriver === 'classic'
     ) {
       const message: string = {
-        'containerEngine.name':                             'Cannot switch to moby container engine with classic storage when WASM is enabled.',
-        'experimental.containerEngine.webAssembly.enabled': 'Cannot enable WASM with classic storage for moby.',
-        'containerEngine.mobyStorageDriver':                'Cannot switch to classic storage for moby when WASM is enabled.',
+        'containerEngine.name':                             'Cannot switch to moby container engine with classic storage when WebAssembly is enabled.',
+        'experimental.containerEngine.webAssembly.enabled': 'Cannot enable WebAssembly with classic storage for moby.',
+        'containerEngine.mobyStorageDriver':                'Cannot switch to classic storage for moby when WebAssembly is enabled.',
       }[fqname];
 
       if (currentValue !== desiredValue) {

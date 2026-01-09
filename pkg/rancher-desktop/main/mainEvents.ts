@@ -174,6 +174,7 @@ interface MainEventNames {
 type DiagnosticsEventPayload =
   { id: 'integrations-windows', distro?: string, key: string, error?: Error } |
   { id: 'kube-versions-available', available: boolean } |
+  { id: 'moby-storage', hasClassicData: boolean, hasSnapshotterData: boolean, useSnapshotter: boolean } |
   { id: 'network-connectivity', connected: boolean } |
   { id: 'path-management', fileName: string; error: Error | undefined };
 
