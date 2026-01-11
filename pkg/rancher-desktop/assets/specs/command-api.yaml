@@ -563,6 +563,9 @@ components:
                   x-rd-usage: installed extensions and their tag
                   additionalProperties:
                     type: string
+                welcome:
+                  type: string
+                  x-rd-usage: welcome extension shown at top of sidebar
             pathManagementStrategy:
               type: string
               enum: [manual, rcfiles]

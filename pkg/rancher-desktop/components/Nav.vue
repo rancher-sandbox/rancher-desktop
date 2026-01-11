@@ -1,5 +1,21 @@
 <template>
   <nav>
+    <!-- Welcome extension shown at top, with icon -->
+    <RouterLink
+      v-if="welcomeExtensionWithUI"
+      :data-test="`extension-nav-welcome`"
+      :to="extensionRoute(welcomeExtensionWithUI)"
+    >
+      <nav-item
+        :id="`extension:${welcomeExtensionWithUI.id}`"
+        class="welcome-extension"
+      >
+        <template #before>
+          <nav-icon-extension :extension-id="welcomeExtensionWithUI.id" />
+        </template>
+        {{ welcomeExtensionWithUI.metadata.ui['dashboard-tab'].title }}
+      </nav-item>
+    </RouterLink>
     <ul>
       <li
         v-for="item in items"
@@ -114,6 +130,10 @@ export default defineComponent({
       type:     Array as PropType<ExtensionState[]>,
       required: true,
     },
+    welcomeExtension: {
+      type:    Object as PropType<ExtensionState | undefined>,
+      default: undefined,
+    },
   },
   data() {
     return {
@@ -136,6 +156,25 @@ export default defineComponent({
       }
 
       return this.extensions.filter<ExtensionWithUI>(hasUI);
+    },
+    welcomeExtensionWithUI(): ExtensionWithUI | undefined {
+      if (!this.welcomeExtension) {
+        return undefined;
+      }
+      if (!this.welcomeExtension.metadata.ui?.['dashboard-tab']?.title) {
+        return undefined;
+      }
+
+      return this.welcomeExtension as ExtensionWithUI;
+    },
+  },
+  watch: {
+    welcomeExtensionWithUI(newVal: ExtensionWithUI | undefined) {
+      // Auto-navigate to welcome extension when it becomes available,
+      // but only if the user is still on the General page
+      if (newVal && this.$route.path === '/General') {
+        this.$router.push(this.extensionRoute(newVal));
+      }
     },
   },
   methods: {
