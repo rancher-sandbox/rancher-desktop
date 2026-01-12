@@ -1,24 +1,27 @@
 package plist
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
 )
 
 func TestJsonToPlistFormat(t *testing.T) {
 	t.Run("handles empty bodies", func(t *testing.T) {
 		s, err := JSONToPlist("{}")
 		assert.NoError(t, err)
-		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
+		assert.Equal(t, fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>16</integer>
+    <integer>%d</integer>
   </dict>
 </plist>
-`, s)
+`, options.CURRENT_SETTINGS_VERSION), s)
 	})
 
 	t.Run("Handles arrays", func(t *testing.T) {
@@ -28,12 +31,12 @@ func TestJsonToPlistFormat(t *testing.T) {
      } } }, "containerEngine": { "name": "beatrice" }}`
 		s, err := JSONToPlist(jsonBody)
 		assert.NoError(t, err)
-		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
+		assert.Equal(t, fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>16</integer>
+    <integer>%d</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
@@ -58,7 +61,7 @@ func TestJsonToPlistFormat(t *testing.T) {
     </dict>
   </dict>
 </plist>
-`, s)
+`, options.CURRENT_SETTINGS_VERSION), s)
 	})
 
 	t.Run("Handles everything", func(t *testing.T) {
@@ -363,12 +366,12 @@ func TestJsonToPlistFormat(t *testing.T) {
 `
 		s, err := JSONToPlist(jsonBody)
 		assert.NoError(t, err)
-		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
+		assert.Equal(t, fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
     <key>version</key>
-    <integer>16</integer>
+    <integer>%d</integer>
     <key>application</key>
     <dict>
       <key>extensions</key>
@@ -406,6 +409,6 @@ func TestJsonToPlistFormat(t *testing.T) {
     </dict>
   </dict>
 </plist>
-`, s)
+`, options.CURRENT_SETTINGS_VERSION), s)
 	})
 }

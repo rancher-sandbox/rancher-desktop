@@ -99,8 +99,9 @@ export default class SettingsValidator {
           enabled:  this.checkBoolean,
           patterns: this.checkUniqueStringArray,
         },
+        mobyStorageDriver: this.checkEnum('classic', 'snapshotter', 'auto'),
         // 'docker' has been canonicalized to 'moby' already, but we want to include it as a valid value in the error message
-        name: this.checkEnum('containerd', 'moby', 'docker'),
+        name:              this.checkEnum('containerd', 'moby', 'docker'),
       },
       virtualMachine: {
         memoryInGB: this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),

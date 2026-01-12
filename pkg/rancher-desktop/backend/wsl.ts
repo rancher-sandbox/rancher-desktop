@@ -1281,6 +1281,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
                 .replace('/var/log', logPath);
               const configureWASM = !!this.cfg?.experimental?.containerEngine?.webAssembly?.enabled;
+              const mobyStorageDriver = this.cfg?.containerEngine?.mobyStorageDriver ?? 'auto';
 
               await Promise.all([
                 this.progressTracker.action('Installing the docker-credential helper', 10, async() => {
@@ -1314,7 +1315,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                   }
                 }),
                 this.progressTracker.action('container engine components', 50, async() => {
-                  await BackendHelper.configureContainerEngine(this, configureWASM);
+                  await BackendHelper.configureContainerEngine(this, configureWASM, mobyStorageDriver);
                   await this.writeConf('containerd', { log_owner: 'root' });
                   await this.writeFile('/usr/local/bin/nerdctl', NERDCTL, 0o755);
                   await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);

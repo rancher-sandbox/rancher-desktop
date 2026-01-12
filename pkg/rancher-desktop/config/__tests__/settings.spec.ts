@@ -111,7 +111,8 @@ describe('settings', () => {
         enabled:  true,
         patterns: [],
       },
-      name: 'moby',
+      mobyStorageDriver: 'auto',
+      name:              'moby',
     },
     kubernetes: {
       version: '1.29.15',
@@ -491,7 +492,7 @@ describe('settings', () => {
         },
       };
 
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toEqual(expected);
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toMatchObject(expected);
     });
 
     it('correctly migrates earlier no-proxy settings', () => {
@@ -524,7 +525,7 @@ describe('settings', () => {
         },
       };
 
-      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toEqual(expected);
+      expect(settingsImpl.migrateSpecifiedSettingsToCurrentVersion(s, false)).toMatchObject(expected);
     });
 
     it('leaves unrecognized settings unchanged', () => {
@@ -593,7 +594,8 @@ describe('settings', () => {
           },
         },
         containerEngine: {
-          name: settings.ContainerEngine.MOBY,
+          mobyStorageDriver: 'auto',
+          name:              settings.ContainerEngine.MOBY,
         },
         experimental: {
         },

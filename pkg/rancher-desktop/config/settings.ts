@@ -6,7 +6,7 @@ import os from 'os';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-export const CURRENT_SETTINGS_VERSION = 16 as const;
+export const CURRENT_SETTINGS_VERSION = 17 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -85,7 +85,8 @@ export const defaultSettings = {
       enabled:  false,
       patterns: [] as string[],
     },
-    name: ContainerEngine.MOBY,
+    mobyStorageDriver: 'auto' as 'classic' | 'snapshotter' | 'auto',
+    name:              ContainerEngine.MOBY,
   },
   virtualMachine: {
     memoryInGB: 2,
