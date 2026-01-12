@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import fs from 'fs';
+import net from 'net';
 import os from 'os';
 import path from 'path';
 import util from 'util';
@@ -66,6 +67,57 @@ Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
+
+/**
+ * Check if a port is accepting connections on localhost.
+ * @param port The port to check.
+ * @returns Promise that resolves to true if the port is accepting connections.
+ */
+function isPortReady(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+
+    socket.setTimeout(1000);
+    socket.once('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once('error', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.once('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.connect(port, '127.0.0.1');
+  });
+}
+
+/**
+ * Wait for the Kubernetes API to be ready to accept connections on localhost.
+ * This is needed because the VM's port forwarding might not be immediately ready
+ * even after the K8s server reports it's running.
+ * @param port The K8s API port to wait for.
+ */
+async function waitForK8sApiReady(port: number): Promise<void> {
+  const maxAttempts = 60;
+  const delayMs = 500;
+
+  console.debug(`Waiting for K8s API to be ready on port ${ port }...`);
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (await isPortReady(port)) {
+      console.debug(`K8s API is ready after ${ attempt } attempt(s)`);
+
+      return;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+
+  console.error(`K8s API did not become ready after ${ maxAttempts * delayMs / 1000 } seconds`);
+}
 
 // Do an early check for debugging enabled via the environment variable so that
 // we can turn on extra logging to troubleshoot startup issues.
@@ -1266,13 +1318,17 @@ function newK8sManager() {
         }
         currentImageProcessor?.relayNamespaces();
 
-        if (enabledK8s) {
-          await Steve.getInstance().start();
+        if (enabledK8s && state === K8s.State.STARTED) {
+          // Wait for Steve and K8s API to be ready before notifying the UI,
+          // so the dashboard button is only enabled when services can accept connections.
+          await Promise.all([
+            Steve.getInstance().start(),
+            waitForK8sApiReady(cfg.kubernetes.port),
+          ]);
         }
       }
 
-      // Notify UI after Steve is ready, so the dashboard button is only enabled
-      // when Steve can accept connections.
+      // Notify UI after services are ready.
       window.send('k8s-check-state', state);
 
       if (state === K8s.State.STOPPING) {
