@@ -1,5 +1,5 @@
 # copyright needs to stay in sync with message in About panel in background.ts
-copyright: Copyright © 2021-2025 SUSE LLC
+copyright: Copyright © 2021-2026 SUSE LLC
 productName: Rancher Desktop
 icon: ./resources/icons/logo-square-512.png
 appId: io.rancherdesktop.app

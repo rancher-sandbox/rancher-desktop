@@ -422,7 +422,7 @@ async function initUI() {
   Electron.app.setAboutPanelOptions({
     // TODO: Update this to 2021-... as dev progresses
     // also needs to be updated in electron-builder.yml
-    copyright:          'Copyright © 2021-2025 SUSE LLC',
+    copyright:          'Copyright © 2021-2026 SUSE LLC',
     applicationName:    `${ Electron.app.name } by SUSE`,
     applicationVersion: `Version ${ await getVersion() }`,
     iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
