@@ -48,22 +48,29 @@ class CheckMobyImageStore implements DiagnosticsChecker {
       };
     }
 
-    if (state.hasClassicData && state.useSnapshotter) {
-      if (state.hasSnapshotterData) {
-        return {
-          passed:        false,
-          description:   `There are images in both the moby classic storage driver and the containerd image store.  Currently using the containerd snapshotter.`,
-          fixes:         [],
-          documentation,
-        };
+    if (state.hasClassicData && state.hasSnapshotterData) {
+      let description = 'There are images in both the moby classic storage driver and the containerd image store.';
+      if (state.useSnapshotter) {
+        description += '  Currently using the containerd snapshotter.';
+      } else {
+        description += '  Currently using the moby classic storage driver.';
       }
+      return {
+        passed:        false,
+        description,
+        fixes:         [],
+        documentation,
+      };
+    }
+    if (state.hasClassicData && state.useSnapshotter) {
       return {
         passed:        false,
         description:   `There are images in the moby classic storage driver, but the containerd snapshotter is being used.`,
         fixes:         [],
         documentation,
       };
-    } else if (state.hasSnapshotterData && !state.useSnapshotter) {
+    }
+    if (state.hasSnapshotterData && !state.useSnapshotter) {
       return {
         passed:        false,
         description:   `There are images in the containerd image store, but the moby classic storage driver is being used.`,
