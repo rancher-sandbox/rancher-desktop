@@ -384,6 +384,7 @@ export default class BackendHelper {
       await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(DOCKER_DAEMON_JSON));
       config = {};
     }
+    config['min-api-version'] = '1.41';
     config['features'] ??= {};
     config['features']['containerd-snapshotter'] ||= configureWASM || !found;
 
