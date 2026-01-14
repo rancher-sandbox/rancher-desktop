@@ -17,8 +17,8 @@ describe('BackendHelper', () => {
   });
 
   describe('configureMobyStorage', () => {
-    const snapshotterFlagFile = '/var/lib/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/metadata.db';
-    const classicFlagFile = '/var/lib/docker/image/overlay2/repositories.json';
+    const snapshotterDir = '/var/lib/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/';
+    const classicDir = '/var/lib/docker/image/overlay2/imagedb/content/sha256/'; // no-spell-check
     const DOCKER_DAEMON_JSON = '/etc/docker/daemon.json';
 
     interface Options {
@@ -44,19 +44,17 @@ describe('BackendHelper', () => {
         if (typeof options === 'string') {
           command.unshift(options);
         }
-        if (_.isEqual(command, ['test', '-f', snapshotterFlagFile])) {
-          if (this.options.hasSnapshotter) {
-            return Promise.resolve(); // file exists
+        switch (command[0]) {
+        case '/usr/bin/find':
+          expect(options).toHaveProperty('capture', true);
+          if (command.includes(snapshotterDir)) {
+            return Promise.resolve(this.options.hasSnapshotter ? 'some text\n' : '\n');
           }
-          return Promise.reject<void>(new Error('file does not exist'));
-        }
-        if (_.isEqual(command, ['test', '-f', classicFlagFile])) {
-          if (this.options.hasClassic) {
-            return Promise.resolve(); // file exists
+          if (command.includes(classicDir)) {
+            return Promise.resolve(this.options.hasClassic ? 'not empty\n' : '\n');
           }
-          return Promise.reject<void>(new Error('file does not exist'));
-        }
-        if (command[0] === 'mkdir') {
+          break;
+        case 'mkdir':
           return Promise.resolve();
         }
         throw new Error(`Unexpected command: ${ JSON.stringify(command) }`);

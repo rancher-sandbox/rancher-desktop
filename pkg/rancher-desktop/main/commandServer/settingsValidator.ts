@@ -5,6 +5,7 @@ import semver from 'semver';
 
 import {
   CacheMode,
+  ContainerEngine,
   defaultSettings,
   LockedSettingsType,
   MountType,
@@ -99,9 +100,15 @@ export default class SettingsValidator {
           enabled:  this.checkBoolean,
           patterns: this.checkUniqueStringArray,
         },
-        mobyStorageDriver: this.checkEnum('classic', 'snapshotter', 'auto'),
-        // 'docker' has been canonicalized to 'moby' already, but we want to include it as a valid value in the error message
-        name:              this.checkEnum('containerd', 'moby', 'docker'),
+        mobyStorageDriver: this.checkMulti(
+          this.checkEnum('classic', 'snapshotter', 'auto'),
+          this.checkWASMWithMobyStorage,
+        ),
+        name: this.checkMulti(
+          // 'docker' has been canonicalized to 'moby' already, but we want to include it as a valid value in the error message
+          this.checkEnum('containerd', 'moby', 'docker'),
+          this.checkWASMWithMobyStorage,
+        ),
       },
       virtualMachine: {
         memoryInGB: this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
@@ -119,7 +126,7 @@ export default class SettingsValidator {
         },
       },
       experimental: {
-        containerEngine: { webAssembly: { enabled: this.checkBoolean } },
+        containerEngine: { webAssembly: { enabled: this.checkMulti(this.checkBoolean, this.checkWASMWithMobyStorage) } },
         kubernetes:      { options: { spinkube: this.checkMulti(this.checkBoolean, this.checkSpinkube) } },
         virtualMachine:  {
           diskSize: this.checkLima(this.checkByteUnits),
@@ -389,6 +396,29 @@ export default class SettingsValidator {
       }
     }
 
+    return currentValue !== desiredValue;
+  }
+
+  // checkWASMWithMobyStorage checks that we can't use classic storage for moby
+  // in combination with WASM.
+  protected checkWASMWithMobyStorage<T>(mergedSettings: Settings, currentValue: T, desiredValue: T, errors: string[], fqname: string): boolean {
+    if (mergedSettings.containerEngine.name === ContainerEngine.MOBY &&
+        mergedSettings.experimental.containerEngine.webAssembly.enabled &&
+        mergedSettings.containerEngine.mobyStorageDriver === 'classic'
+    ) {
+      const message = {
+        'containerEngine.name':                             'Cannot switch to moby container engine with classic storage when WASM is enabled.',
+        'experimental.containerEngine.webAssembly.enabled': 'Cannot enable WASM with classic storage for moby.',
+        'containerEngine.mobyStorageDriver':                'Cannot switch to classic storage for moby when WASM is enabled.',
+      }[fqname];
+
+      if (currentValue !== desiredValue) {
+        errors.push(message ?? `WASM cannot be used with classic storage for moby.`);
+      }
+      this.isFatal = true;
+
+      return false;
+    }
     return currentValue !== desiredValue;
   }
 

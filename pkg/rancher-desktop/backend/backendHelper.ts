@@ -379,12 +379,26 @@ export default class BackendHelper {
     // storage.  See https://github.com/rancher-sandbox/rancher-desktop/issues/9732
     // for more details.
 
-    // If this file exists, we assume that there is data in the snapshotter store.
-    const snapshotterFlagFile = '/var/lib/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/metadata.db';
-    // If this file exists, we assume that there is data in the classic storage.
-    const classicFlagFile = '/var/lib/docker/image/overlay2/repositories.json';
+    // If this directory is not empty, we assume that there is data in the containerd snapshotter.
+    const snapshotterDir = '/var/lib/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/';
+    // If this directory is not empty, we assume that there is data in the classic storage.
+    const classicDir = '/var/lib/docker/image/overlay2/imagedb/content/sha256/'; // no-spell-check
 
     let useSnapshotter: boolean | undefined;
+
+    // Check if a directory (in the VM) has any subdirectories or files.
+    async function dirHasChildren(dir: string): Promise<boolean> {
+      try {
+        const stdout = await vmx.execCommand(
+          { root: true, expectFailure: true, capture: true },
+          '/usr/bin/find', dir, '-maxdepth', '0', '-not', '-empty');
+
+        return stdout.trim().length > 0;
+      } catch {
+        // Directory does not exist.
+        return false;
+      }
+    }
 
     // If `storageDriver` is explicitly set, use that setting.
     if (storageDriver !== 'auto') {
@@ -394,23 +408,13 @@ export default class BackendHelper {
       useSnapshotter = true;
     } else {
       // If there is data in the containerd snapshotter store, use it.
-      try {
-        await vmx.execCommand({ root: true, expectFailure: true }, 'test', '-f', snapshotterFlagFile);
+      if (await dirHasChildren(snapshotterDir)) {
         useSnapshotter = true;
-      } catch {
-        // File does not exist; proceed to the next check.
       }
     }
     if (useSnapshotter === undefined) {
       // If there is no data in the classic storage, use containerd snapshotter.
-      try {
-        await vmx.execCommand({ root: true, expectFailure: true }, 'test', '-f', classicFlagFile);
-        // File exists; use classic storage.
-        useSnapshotter = false;
-      } catch {
-        // File does not exist; since there's no data either way, use containerd snapshotter.
-        useSnapshotter = true;
-      }
+      useSnapshotter = !(await dirHasChildren(classicDir));
     }
 
     let config: Record<string, any>;
