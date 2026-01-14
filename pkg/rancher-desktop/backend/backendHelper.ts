@@ -373,20 +373,61 @@ export default class BackendHelper {
    * Configure the Moby containerd-snapshotter feature if WASM support is
    * requested, or if we have not previously run the daemon.
    */
-  static async writeMobyConfig(vmx: VMExecutor, configureWASM: boolean) {
+  static async configureMobyStorage(vmx: VMExecutor, storageDriver: 'classic' | 'snapshotter' | 'auto', configureWASM: boolean) {
+    // Due to issues with a botched migration, we will need to provide more logic
+    // to determine whether to use the containerd-snapshotter backend for moby
+    // storage.  See https://github.com/rancher-sandbox/rancher-desktop/issues/9732
+    // for more details.
+
+    // If this directory is not empty, we assume that there is data in the containerd snapshotter.
+    const snapshotterDir = '/var/lib/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs/snapshots/';
+    // If this directory is not empty, we assume that there is data in the classic storage.
+    const classicDir = '/var/lib/docker/image/overlay2/imagedb/content/sha256/'; // no-spell-check
+
+    let useSnapshotter: boolean | undefined;
+
+    // Check if a directory (in the VM) has any subdirectories or files.
+    async function dirHasChildren(dir: string): Promise<boolean> {
+      try {
+        const stdout = await vmx.execCommand(
+          { root: true, expectFailure: true, capture: true },
+          '/usr/bin/find', dir, '-maxdepth', '0', '-not', '-empty');
+
+        return stdout.trim().length > 0;
+      } catch {
+        // Directory does not exist.
+        return false;
+      }
+    }
+
+    // If `storageDriver` is explicitly set, use that setting.
+    if (storageDriver !== 'auto') {
+      useSnapshotter = (storageDriver === 'snapshotter');
+    } else if (configureWASM) {
+      // WASM requires the containerd snapshotter.
+      useSnapshotter = true;
+    } else {
+      // If there is data in the containerd snapshotter store, use it.
+      if (await dirHasChildren(snapshotterDir)) {
+        useSnapshotter = true;
+      }
+    }
+    if (useSnapshotter === undefined) {
+      // If there is no data in the classic storage, use containerd snapshotter.
+      useSnapshotter = !(await dirHasChildren(classicDir));
+    }
+
     let config: Record<string, any>;
-    let found = false;
 
     try {
       config = JSON.parse(await vmx.readFile(DOCKER_DAEMON_JSON));
-      found = true;
     } catch (err: any) {
       await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(DOCKER_DAEMON_JSON));
       config = {};
     }
     config['min-api-version'] = '1.41';
     config['features'] ??= {};
-    config['features']['containerd-snapshotter'] ||= configureWASM || !found;
+    config['features']['containerd-snapshotter'] = useSnapshotter;
 
     if (config['features']['containerd-snapshotter']) {
       // If we are using the containerd snapshotter, create /var/lib/docker/image
@@ -396,9 +437,9 @@ export default class BackendHelper {
     await vmx.writeFile(DOCKER_DAEMON_JSON, jsonStringifyWithWhiteSpace(config), 0o644);
   }
 
-  static async configureContainerEngine(vmx: VMExecutor, configureWASM: boolean) {
+  static async configureContainerEngine(vmx: VMExecutor, configureWASM: boolean, mobyStorageDriver: 'classic' | 'snapshotter' | 'auto') {
     await BackendHelper.installContainerdShims(vmx, configureWASM);
     await BackendHelper.writeContainerdConfig(vmx, configureWASM);
-    await BackendHelper.writeMobyConfig(vmx, configureWASM);
+    await BackendHelper.configureMobyStorage(vmx, mobyStorageDriver, configureWASM);
   }
 }

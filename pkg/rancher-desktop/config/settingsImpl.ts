@@ -511,6 +511,11 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
 
     processReplacements(settings, replacements);
   },
+  16: (settings, locked) => {
+    if (!locked && !_.has(settings, 'containerEngine.mobyStorageDriver')) {
+      _.set(settings, 'containerEngine.mobyStorageDriver', 'auto');
+    }
+  },
 };
 
 function migrateSettingsToCurrentVersion(settings: Record<string, any>): Settings {

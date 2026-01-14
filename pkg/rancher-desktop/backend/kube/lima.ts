@@ -429,22 +429,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       currentConfig,
       desiredConfig,
       {
-        'kubernetes.version': (current: string, desired: string) => {
-          if (semver.gt(current || '0.0.0', desired)) {
-            return 'reset';
-          }
-
-          return 'restart';
-        },
-        'application.adminAccess':                          undefined,
-        'containerEngine.allowedImages.enabled':            undefined,
-        'containerEngine.name':                             undefined,
-        'experimental.containerEngine.webAssembly.enabled': undefined,
-        'experimental.kubernetes.options.spinkube':         undefined,
-        'kubernetes.port':                                  undefined,
-        'kubernetes.enabled':                               undefined,
-        'kubernetes.options.traefik':                       undefined,
-        'kubernetes.options.flannel':                       undefined,
+        'application.adminAccess': undefined,
       },
       extra,
     );

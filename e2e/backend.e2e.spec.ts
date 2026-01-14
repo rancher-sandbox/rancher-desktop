@@ -21,6 +21,9 @@ test.describe.serial('KubernetesBackend', () => {
 
   test.beforeAll(async({ colorScheme }, testInfo) => {
     [electronApp, page] = await startSlowerDesktop(testInfo, {
+      kubernetes: {
+        enabled: false,
+      },
       virtualMachine: {
         mount: {
           type: MountType.REVERSE_SSHFS,

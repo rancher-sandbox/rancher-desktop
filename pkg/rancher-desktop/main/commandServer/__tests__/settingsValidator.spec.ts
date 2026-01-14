@@ -79,6 +79,7 @@ describe('SettingsValidator', () => {
     const specialFields = [
       ['application', 'pathManagementStrategy'],
       ['containerEngine', 'allowedImages', 'locked'],
+      ['containerEngine', 'mobyStorageDriver'],
       ['containerEngine', 'name'],
       ['experimental', 'kubernetes', 'options', 'spinkube'],
       ['experimental', 'virtualMachine', 'diskSize'], // Special parsing.
@@ -295,6 +296,37 @@ describe('SettingsValidator', () => {
       expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       [expect.stringContaining('Invalid value for "containerEngine.name": <"pikachu">; must be one of ["containerd","moby","docker"]')],
+        isFatal:      true,
+      });
+    });
+  });
+
+  describe('containerEngine.mobyStorageDriver', () => {
+    describe('should accept valid values', () => {
+      const validValues = ['classic', 'snapshotter', 'auto'] as const;
+      const pairs = validValues.flatMap(l => validValues.map(r => [l, r] as const));
+
+      test.each(pairs)('%s -> %s', (from, to) => {
+        const [needToUpdate, errors] = subject.validateSettings(
+          _.merge({}, cfg, { containerEngine: { mobyStorageDriver: from } }),
+          { containerEngine: { mobyStorageDriver: to } },
+        );
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: from !== to,
+          errors:       [],
+        });
+      });
+    });
+    it('should reject invalid values', () => {
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(
+        cfg,
+        { containerEngine: { mobyStorageDriver: 'pikachu' as any } },
+      );
+
+      expect({ needToUpdate, errors, isFatal }).toEqual({
+        needToUpdate: false,
+        errors:       [expect.stringContaining('Invalid value for "containerEngine.mobyStorageDriver": <"pikachu">; must be one of ["classic","snapshotter","auto"]')],
         isFatal:      true,
       });
     });

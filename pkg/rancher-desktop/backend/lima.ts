@@ -1522,6 +1522,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   protected async configureContainerEngine(): Promise<void> {
     try {
       const configureWASM = !!this.cfg?.experimental?.containerEngine?.webAssembly?.enabled;
+      const mobyStorageDriver = this.cfg?.containerEngine?.mobyStorageDriver ?? 'auto';
 
       await this.writeFile('/usr/local/bin/nerdctl', NERDCTL, 0o755);
 
@@ -1532,7 +1533,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       const promises: Promise<unknown>[] = [];
 
-      promises.push(BackendHelper.configureContainerEngine(this, configureWASM));
+      promises.push(BackendHelper.configureContainerEngine(this, configureWASM, mobyStorageDriver));
       if (configureWASM) {
         const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
         const env = {

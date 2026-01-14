@@ -21,6 +21,7 @@ import { Architecture, VMExecutor } from './backend';
 import * as K8s from '@pkg/backend/k8s';
 import { KubeClient } from '@pkg/backend/kube/client';
 import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
+import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
 import { isUnixError } from '@pkg/typings/unix.interface';
 import DownloadProgressListener from '@pkg/utils/DownloadProgressListener';
@@ -32,7 +33,7 @@ import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
 import safeRename from '@pkg/utils/safeRename';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
-import { defined, RecursivePartial, RecursiveTypes } from '@pkg/utils/typeUtils';
+import { defined, RecursivePartial, RecursiveReadonly, RecursiveTypes } from '@pkg/utils/typeUtils';
 import { showMessageBox } from '@pkg/window';
 
 import type Electron from 'electron';
@@ -77,9 +78,17 @@ interface cacheData {
  * RequiresRestartSeverityChecker is a function that will be used to determine
  * whether a given settings change will require a reset (i.e. deleting user
  * workloads).
+ * @param currentValue The current value of the setting.
+ * @param desiredValue The desired value of the setting.
+ * @param allSettings The full merged settings object.
+ * @returns 'restart' if a restart is required, 'reset' if a reset is required,
+ *         or false if no restart is required.
  */
-type RequiresRestartSeverityChecker<K extends keyof RecursiveTypes<K8s.BackendSettings>> =
-  (currentValue: RecursiveTypes<K8s.BackendSettings>[K], desiredValue: RecursiveTypes<K8s.BackendSettings>[K]) => 'restart' | 'reset';
+type RequiresRestartSeverityChecker<K extends keyof RecursiveTypes<K8s.BackendSettings>> = (
+  currentValue: RecursiveTypes<K8s.BackendSettings>[K],
+  desiredValue: RecursiveTypes<K8s.BackendSettings>[K],
+  allSettings: RecursiveReadonly<K8s.BackendSettings>,
+) => 'restart' | 'reset' | false;
 
 /**
  * RequiresRestartCheckers defines a mapping of settings (in dot-separated form)
@@ -1199,6 +1208,36 @@ export default class K3sHelper extends events.EventEmitter {
   ): K8s.RestartReasons {
     const results: K8s.RestartReasons = {};
     const NotFound = Symbol('not-found');
+    const mergedSettings = _.merge({}, currentSettings, desiredSettings);
+
+    function restartIfKubernetesEnabled() {
+      return mergedSettings.kubernetes.enabled ? 'restart' : false;
+    }
+
+    /**
+     * defaultRestartReasonCheckers contains the restart reason checkers shared
+     * between backends.
+     */
+    const defaultRestartReasonCheckers: RequiresRestartCheckers = {
+      'containerEngine.mobyStorageDriver': (current, desired, allSettings) => {
+        // We only need to restart if running moby.
+        return allSettings.containerEngine.name === ContainerEngine.MOBY ? 'restart' : false;
+      },
+      'kubernetes.version': (current, desired, allSettings) => {
+        if (!allSettings.kubernetes.enabled) {
+          return false;
+        }
+        return semver.gt(current || '0.0.0', desired) ? 'reset' : 'restart';
+      },
+      'containerEngine.allowedImages.enabled':            undefined,
+      'containerEngine.name':                             undefined,
+      'experimental.containerEngine.webAssembly.enabled': undefined,
+      'experimental.kubernetes.options.spinkube':         undefined,
+      'kubernetes.enabled':                               undefined,
+      'kubernetes.options.flannel':                       restartIfKubernetesEnabled,
+      'kubernetes.options.traefik':                       restartIfKubernetesEnabled,
+      'kubernetes.port':                                  restartIfKubernetesEnabled,
+    };
 
     /**
      * Check the given settings against the last-applied settings to see if we
@@ -1217,13 +1256,19 @@ export default class K3sHelper extends events.EventEmitter {
         return;
       }
       if (!_.isEqual(current, desired)) {
-        results[key] = {
-          current, desired, severity: checker ? checker(current, desired) : 'restart',
-        };
+        const severity = checker ? checker(current, desired, mergedSettings) : 'restart';
+
+        if (severity) {
+          results[key] = { current, desired, severity };
+        }
       }
     }
 
-    for (const [key, checker] of Object.entries(checkers)) {
+    for (const [key, checker] of Object.entries({ ...defaultRestartReasonCheckers, ...checkers })) {
+      if (checker === null) {
+        // The custom checker wants to delete a default checker.
+        continue;
+      }
       // We need the casts here because TypeScript can't match up the key with
       // its corresponding checker.
       cmp(key as any, checker as any);

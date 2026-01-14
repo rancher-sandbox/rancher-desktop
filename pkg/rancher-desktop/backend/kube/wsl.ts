@@ -334,23 +334,8 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       oldConfig,
       newConfig,
       {
-        'kubernetes.version': (current: string, desired: string) => {
-          if (semver.gt(current || '0.0.0', desired)) {
-            return 'reset';
-          }
-
-          return 'restart';
-        },
-        'containerEngine.allowedImages.enabled':            undefined,
-        'containerEngine.name':                             undefined,
-        'experimental.containerEngine.webAssembly.enabled': undefined,
-        'experimental.kubernetes.options.spinkube':         undefined,
-        'kubernetes.enabled':                               undefined,
-        'kubernetes.ingress.localhostOnly':                 undefined,
-        'kubernetes.options.flannel':                       undefined,
-        'kubernetes.options.traefik':                       undefined,
-        'kubernetes.port':                                  undefined,
-        'WSL.integrations':                                 undefined,
+        'kubernetes.ingress.localhostOnly': undefined,
+        'WSL.integrations':                 undefined,
       },
       extras,
     ));

@@ -617,6 +617,10 @@ components:
                   x-rd-usage: allowed image names
                   items:
                     type: string
+            mobyStorageDriver:
+              type: string
+              enum: [classic, snapshotter, auto]
+              x-rd-usage: override Moby storage driver selection
         virtualMachine:
           type: object
           properties:

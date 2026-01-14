@@ -5,6 +5,7 @@ import semver from 'semver';
 
 import {
   CacheMode,
+  ContainerEngine,
   defaultSettings,
   LockedSettingsType,
   MountType,
@@ -32,8 +33,8 @@ type settingsLike = Record<string, any>;
  * @param fqname The fully qualified name of the setting, for formatting in error messages.
  * @returns boolean - true if the setting has been changed otherwise false.
  */
-type ValidatorFunc<S, C, D> =
-  (mergedSettings: S, currentValue: C, desiredValue: D, errors: string[], fqname: string) => boolean;
+type ValidatorFunc<S, C, D, N extends string> =
+  (mergedSettings: S, currentValue: C, desiredValue: D, errors: string[], fqname: N) => boolean;
 
 /**
  * SettingsValidationMapEntry describes validators that are valid for some
@@ -41,13 +42,16 @@ type ValidatorFunc<S, C, D> =
  * for that subtree, or an object containing validators for each member of the
  * subtree.
  */
-type SettingsValidationMapEntry<S, T> = {
+type SettingsValidationMapEntry<S, T, N extends string = ''> = {
   [k in keyof T]:
-  T[k] extends string | string[] | number | boolean ?
-    ValidatorFunc<S, T[k], T[k]> :
-    T[k] extends Record<string, infer V> ?
-  SettingsValidationMapEntry<S, T[k]> | ValidatorFunc<S, T[k], Record<string, V>> :
-      never;
+  k extends string ?
+    T[k] extends string | string[] | number | boolean ?
+      ValidatorFunc<S, T[k], T[k], N extends '' ? k : `${ N }.${ k }`> :
+      T[k] extends Record<string, infer V> ?
+        SettingsValidationMapEntry<S, T[k], N extends '' ? k : `${ N }.${ k }`> |
+          ValidatorFunc<S, T[k], Record<string, V>, N extends '' ? k : `${ N }.${ k }`> :
+        never :
+    never;
 };
 
 /**
@@ -99,8 +103,15 @@ export default class SettingsValidator {
           enabled:  this.checkBoolean,
           patterns: this.checkUniqueStringArray,
         },
-        // 'docker' has been canonicalized to 'moby' already, but we want to include it as a valid value in the error message
-        name: this.checkEnum('containerd', 'moby', 'docker'),
+        mobyStorageDriver: this.checkMulti(
+          this.checkEnum('classic', 'snapshotter', 'auto'),
+          this.checkWASMWithMobyStorage,
+        ),
+        name: this.checkMulti(
+          // 'docker' has been canonicalized to 'moby' already, but we want to include it as a valid value in the error message
+          this.checkEnum('containerd', 'moby', 'docker'),
+          this.checkWASMWithMobyStorage,
+        ),
       },
       virtualMachine: {
         memoryInGB: this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
@@ -118,7 +129,7 @@ export default class SettingsValidator {
         },
       },
       experimental: {
-        containerEngine: { webAssembly: { enabled: this.checkBoolean } },
+        containerEngine: { webAssembly: { enabled: this.checkMulti(this.checkBoolean, this.checkWASMWithMobyStorage) } },
         kubernetes:      { options: { spinkube: this.checkMulti(this.checkBoolean, this.checkSpinkube) } },
         virtualMachine:  {
           diskSize: this.checkLima(this.checkByteUnits),
@@ -248,7 +259,7 @@ export default class SettingsValidator {
       } else if (typeof (newSettings[k]) === 'object') {
         if (typeof allowedSettings[k] === 'function') {
           // Special case for things like `.WSLIntegrations` which have unknown fields.
-          const validator: ValidatorFunc<S, any, any> = allowedSettings[k];
+          const validator: ValidatorFunc<S, any, any, any> = allowedSettings[k];
 
           changeNeededHere = validator.call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname);
         } else {
@@ -257,7 +268,7 @@ export default class SettingsValidator {
           errors.push(`Setting "${ fqname }" should be a simple value, but got <${ JSON.stringify(newSettings[k]) }>.`);
         }
       } else if (typeof allowedSettings[k] === 'function') {
-        const validator: ValidatorFunc<S, any, any> = allowedSettings[k];
+        const validator: ValidatorFunc<S, any, any, any> = allowedSettings[k];
 
         changeNeededHere = validator.call(this, mergedSettings, currentSettings[k], newSettings[k], errors, fqname);
       } else {
@@ -287,8 +298,8 @@ export default class SettingsValidator {
    * checkLima ensures that the given parameter is only set on Lima-based platforms.
    * @note This should not be used for things with default values.
    */
-  protected checkLima<C, D>(validator: ValidatorFunc<Settings, C, D>) {
-    return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
+  protected checkLima<C, D, N extends string>(validator: ValidatorFunc<Settings, C, D, N>) {
+    return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: N) => {
       if (!['darwin', 'linux'].includes(os.platform())) {
         if (!_.isEqual(currentValue, desiredValue)) {
           this.isFatal = true;
@@ -391,8 +402,32 @@ export default class SettingsValidator {
     return currentValue !== desiredValue;
   }
 
-  protected checkPlatform<C, D>(platform: NodeJS.Platform, validator: ValidatorFunc<Settings, C, D>) {
-    return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
+  // checkWASMWithMobyStorage checks that we can't use classic storage for moby
+  // in combination with WASM.
+  protected checkWASMWithMobyStorage<
+    T,
+    N extends 'containerEngine.name' | 'containerEngine.mobyStorageDriver' | 'experimental.containerEngine.webAssembly.enabled',
+  >(mergedSettings: Settings, currentValue: T, desiredValue: T, errors: string[], fqname: N): boolean {
+    if (mergedSettings.containerEngine.name === ContainerEngine.MOBY &&
+        mergedSettings.experimental.containerEngine.webAssembly.enabled &&
+        mergedSettings.containerEngine.mobyStorageDriver === 'classic'
+    ) {
+      const message: string = {
+        'containerEngine.name':                             'Cannot switch to moby container engine with classic storage when WASM is enabled.',
+        'experimental.containerEngine.webAssembly.enabled': 'Cannot enable WASM with classic storage for moby.',
+        'containerEngine.mobyStorageDriver':                'Cannot switch to classic storage for moby when WASM is enabled.',
+      }[fqname];
+
+      if (currentValue !== desiredValue) {
+        errors.push(message);
+        this.isFatal = true;
+      }
+    }
+    return currentValue !== desiredValue;
+  }
+
+  protected checkPlatform<C, D, N extends string>(platform: NodeJS.Platform, validator: ValidatorFunc<Settings, C, D, N>) {
+    return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: N) => {
       if (os.platform() !== platform) {
         if (!_.isEqual(currentValue, desiredValue)) {
           errors.push(this.notSupported(fqname));
@@ -406,8 +441,8 @@ export default class SettingsValidator {
     };
   }
 
-  protected check9P<C, D>(validator: ValidatorFunc<Settings, C, D>) {
-    return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
+  protected check9P<C, D, N extends string>(validator: ValidatorFunc<Settings, C, D, N>) {
+    return (mergedSettings: Settings, currentValue: C, desiredValue: D, errors: string[], fqname: N) => {
       if (mergedSettings.virtualMachine.mount.type !== MountType.NINEP) {
         if (!_.isEqual(currentValue, desiredValue)) {
           errors.push(`Setting ${ fqname } can only be changed when virtualMachine.mount.type is "${ MountType.NINEP }".`);
@@ -421,8 +456,8 @@ export default class SettingsValidator {
     };
   }
 
-  protected checkMulti<S, C, D>(...validators: ValidatorFunc<S, C, D>[]) {
-    return (mergedSettings: S, currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
+  protected checkMulti<S, C, D, N extends string>(...validators: ValidatorFunc<S, C, D, N>[]) {
+    return (mergedSettings: S, currentValue: C, desiredValue: D, errors: string[], fqname: N) => {
       let retval = false;
 
       for (const validator of validators) {
