@@ -14,6 +14,7 @@ import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import * as settingsImpl from '@pkg/config/settingsImpl';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
+import mainEvents from '@pkg/main/mainEvents';
 import { minimumUpgradeVersion, SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -400,22 +401,28 @@ export default class BackendHelper {
       }
     }
 
+    const hasSnapshotterData = await dirHasChildren(snapshotterDir);
+    const hasClassicData = await dirHasChildren(classicDir);
+
     // If `storageDriver` is explicitly set, use that setting.
     if (storageDriver !== 'auto') {
       useSnapshotter = (storageDriver === 'snapshotter');
     } else if (configureWASM) {
       // WASM requires the containerd snapshotter.
       useSnapshotter = true;
-    } else {
+    } else if (hasSnapshotterData) {
       // If there is data in the containerd snapshotter store, use it.
-      if (await dirHasChildren(snapshotterDir)) {
-        useSnapshotter = true;
-      }
-    }
-    if (useSnapshotter === undefined) {
+      useSnapshotter = true;
+    } else {
       // If there is no data in the classic storage, use containerd snapshotter.
-      useSnapshotter = !(await dirHasChildren(classicDir));
+      useSnapshotter = !hasClassicData;
     }
+    mainEvents.emit('diagnostics-event', {
+      id: 'moby-storage',
+      hasClassicData,
+      hasSnapshotterData,
+      useSnapshotter,
+    });
 
     let config: Record<string, any>;
 
