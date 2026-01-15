@@ -4,7 +4,7 @@ import { ContainerEngine } from '@pkg/config/settings';
 import mainEvents from '@pkg/main/mainEvents';
 
 const id = 'MOBY_IMAGE_STORE';
-const documentation = 'https://docs.rancherdesktop.io/troubleshooting/migrating-images/';
+const documentation = 'https://docs.rancherdesktop.io/how-to-guides/migrating-images/';
 
 let containerEngine: ContainerEngine = ContainerEngine.NONE;
 let state = {
