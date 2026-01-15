@@ -4,7 +4,7 @@ go 1.24.0
 
 toolchain go1.24.2
 
-require github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
+require github.com/sirupsen/logrus v1.9.4
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
