@@ -23,7 +23,9 @@ export default async function * getMacCertificates(): AsyncIterable<string> {
   try {
     const keychains = await Array.fromAsync(listKeychains());
     const certLists = await Promise.all(keychains.map(async keychain => {
-      return await Array.fromAsync(getFilteredCertificates(workdir, keychain));
+      const keychainWorkDir = await fs.promises.mkdtemp(workdir + path.sep);
+
+      return await Array.fromAsync(getFilteredCertificates(keychainWorkDir, keychain));
     }));
     for (const certList of certLists) {
       yield * certList;
@@ -71,20 +73,22 @@ async function * getFilteredCertificates(workdir: string, keychain: string): Asy
     try {
       const cert = new crypto.X509Certificate(certPEM);
       const certPath = path.join(workdir, 'cert.pem');
+      const subject = cert.subject.replace(/[\r\n]+/g, ' ');
 
       if (!cert.ca) {
-        console.debug('Skipping non-CA certificate', cert.subject);
+        console.debug('Skipping non-CA certificate', subject);
         continue;
       }
       await fs.promises.writeFile(certPath, certPEM, 'utf-8');
       try {
-        await spawnFile('/usr/bin/security', ['verify-cert', `-c${ certPath }`, '-L', '-l', '-Roffline'], { stdio: console });
-      } catch (ex) {
-        console.debug('Skipping untrusted certificate', cert.subject);
+        await spawnFile('/usr/bin/security', ['verify-cert', `-c${ certPath }`, '-L', '-l', '-Roffline'], { stdio: ['ignore', 'ignore', 'pipe'] });
+      } catch (ex: any) {
+        console.debug(`Skipping untrusted certificate ${ subject }: ${ (ex.stderr?.toString() ?? ex.toString()).trim() }`);
         continue;
       }
+      console.debug('Including certificate', subject);
     } catch (ex) {
-      console.debug('Skipping certificate that could not be parsed', ex);
+      console.debug('Skipping certificate that could not be parsed', ex, certPEM);
       continue;
     }
     yield certPEM;
