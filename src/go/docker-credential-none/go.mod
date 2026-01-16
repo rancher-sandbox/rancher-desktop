@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/docker/cli v29.1.4+incompatible
-	github.com/docker/docker-credential-helpers v0.9.4
+	github.com/docker/docker-credential-helpers v0.9.5
 )
 
 require (
