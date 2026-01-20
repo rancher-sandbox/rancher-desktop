@@ -247,9 +247,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/eslint-parser@npm:7.28.5":
-  version: 7.28.5
-  resolution: "@babel/eslint-parser@npm:7.28.5"
+"@babel/eslint-parser@npm:7.28.6":
+  version: 7.28.6
+  resolution: "@babel/eslint-parser@npm:7.28.6"
   dependencies:
     "@nicolo-ribaudo/eslint-scope-5-internals": "npm:5.1.1-v1"
     eslint-visitor-keys: "npm:^2.1.0"
@@ -257,7 +257,7 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.11.0
     eslint: ^7.5.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/4d13f765434b6be83ab3917f06ad712dedf0d5bfa80fe54cd6cea44adac6a0d2519020ad307d66b4490e46a435874829eac6a9fd3a9cad54d7616c47d288aaed
+  checksum: 10c0/58a85f67a056ba8389978c4654b690b890a6dcd19aa9655c5d7d9349a0c25f124cabad8a190b6bf7045a063aeee1b8e2ab23cfe4d8fa0e0517716a8b70e758bc
   languageName: node
   linkType: hard
 
@@ -14761,7 +14761,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "rancher-desktop@workspace:."
   dependencies:
-    "@babel/eslint-parser": "npm:7.28.5"
+    "@babel/eslint-parser": "npm:7.28.6"
     "@babel/plugin-proposal-class-properties": "npm:7.18.6"
     "@babel/plugin-proposal-nullish-coalescing-operator": "npm:7.18.6"
     "@babel/plugin-proposal-optional-chaining": "npm:7.21.0"
