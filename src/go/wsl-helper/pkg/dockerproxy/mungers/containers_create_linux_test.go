@@ -162,7 +162,7 @@ func TestContainersCreate(t *testing.T) {
 			Consistency: "cached",
 			Source:      bindPath,
 			Target:      "/host",
-			Type:        "bind",
+			Type:        struct{ models.MountType }{"bind"},
 		}
 		buf, err := json.Marshal(&containersCreateRequestBody{
 			HostConfig: models.HostConfig{
@@ -219,7 +219,7 @@ func TestContainersCreate(t *testing.T) {
 				Consistency: "cached",
 				Source:      path.Join(bindManager.mountRoot, mountID),
 				Target:      "/host",
-				Type:        "bind",
+				Type:        struct{ models.MountType }{"bind"},
 			},
 		}, requestBody.HostConfig.Mounts)
 		assert.Equal(t, "hello", responseBody.ID)
