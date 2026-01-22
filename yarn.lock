@@ -8801,7 +8801,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ejs@npm:3.1.10, ejs@npm:^3.1.8":
+"ejs@npm:4.0.1":
+  version: 4.0.1
+  resolution: "ejs@npm:4.0.1"
+  dependencies:
+    jake: "npm:^10.9.1"
+  bin:
+    ejs: bin/cli.js
+  checksum: 10c0/e937a011c5776e6a4775d79317caa9d5b4c64331d62214ff82de97de555ed338bc435d4fa54798ccc0a6e8a2e9096395cbeb79940ab2c3b29f11213ea79b48d6
+  languageName: node
+  linkType: hard
+
+"ejs@npm:^3.1.8":
   version: 3.1.10
   resolution: "ejs@npm:3.1.10"
   dependencies:
@@ -11462,6 +11473,19 @@ __metadata:
   bin:
     jake: bin/cli.js
   checksum: 10c0/c4597b5ed9b6a908252feab296485a4f87cba9e26d6c20e0ca144fb69e0c40203d34a2efddb33b3d297b8bd59605e6c1f44f6221ca1e10e69175ecbf3ff5fe31
+  languageName: node
+  linkType: hard
+
+"jake@npm:^10.9.1":
+  version: 10.9.4
+  resolution: "jake@npm:10.9.4"
+  dependencies:
+    async: "npm:^3.2.6"
+    filelist: "npm:^1.0.4"
+    picocolors: "npm:^1.1.1"
+  bin:
+    jake: bin/cli.js
+  checksum: 10c0/bb52f000340d4a32f1a3893b9abe56ef2b77c25da4dbf2c0c874a8159d082dddda50a5ad10e26060198bd645b928ba8dba3b362710f46a247e335321188c5a9c
   languageName: node
   linkType: hard
 
@@ -14815,7 +14839,7 @@ __metadata:
     dayjs: "npm:1.11.19"
     dmg-license: "npm:1.0.11"
     dompurify: "npm:3.3.1"
-    ejs: "npm:3.1.10"
+    ejs: "npm:4.0.1"
     electron: "npm:39.2.7"
     electron-builder: "npm:26.4.0"
     electron-updater: "npm:6.7.3"
