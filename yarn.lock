@@ -4300,12 +4300,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.7.7":
-  version: 22.18.10
-  resolution: "@types/node@npm:22.18.10"
+"@types/node@npm:^24.9.0":
+  version: 24.10.9
+  resolution: "@types/node@npm:24.10.9"
   dependencies:
-    undici-types: "npm:~6.21.0"
-  checksum: 10c0/37b34553f1953ab8fc25b7467d44701446400f62547adb62c842cebac091350985470aeed87acd60f5295778c370d9721d477310e643677a7eab03a8dc6ed74f
+    undici-types: "npm:~7.16.0"
+  checksum: 10c0/e9e436fcd2136bddb1bbe3271a89f4653910bcf6ee8047c4117f544c7905a106c039e2720ee48f28505ef2560e22fb9ead719f28bf5e075fdde0c1120e38e3b2
   languageName: node
   linkType: hard
 
@@ -8883,16 +8883,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:39.2.7":
-  version: 39.2.7
-  resolution: "electron@npm:39.2.7"
+"electron@npm:40.0.0":
+  version: 40.0.0
+  resolution: "electron@npm:40.0.0"
   dependencies:
     "@electron/get": "npm:^2.0.0"
-    "@types/node": "npm:^22.7.7"
+    "@types/node": "npm:^24.9.0"
     extract-zip: "npm:^2.0.1"
   bin:
     electron: cli.js
-  checksum: 10c0/5923992063245f4b9593edd4186d9d7738f808120b60592bce16bd2e53815c551b2fc824a633597e7a542bd1b456760df0dbdf02d18dde5b1d77eb037979037c
+  checksum: 10c0/acd42835a64f007817ba43969d7bdd1281f109f26fbf4c6639208a8262b80ee1b89dfb844a30de694baa152ff4afc1be1d1e09b0a69629a57be03f9bbf3f9416
   languageName: node
   linkType: hard
 
@@ -14840,7 +14840,7 @@ __metadata:
     dmg-license: "npm:1.0.11"
     dompurify: "npm:3.3.1"
     ejs: "npm:4.0.1"
-    electron: "npm:39.2.7"
+    electron: "npm:40.0.0"
     electron-builder: "npm:26.4.0"
     electron-updater: "npm:6.7.3"
     eslint: "npm:9.39.2"
