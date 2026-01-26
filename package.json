@@ -136,7 +136,7 @@
     "electron": "40.0.0",
     "electron-builder": "26.4.0",
     "eslint": "9.39.2",
-    "eslint-plugin-vue": "10.6.2",
+    "eslint-plugin-vue": "10.7.0",
     "extract-zip": "2.0.1",
     "glob": "^13.0.0",
     "globals": "17.0.0",
