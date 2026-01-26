@@ -14881,7 +14881,7 @@ __metadata:
     "@vue/cli-plugin-router": "npm:5.0.9"
     "@vue/cli-plugin-vuex": "npm:5.0.9"
     "@vue/cli-service": "npm:5.0.9"
-    "@vue/compiler-sfc": "npm:3.5.26"
+    "@vue/compiler-sfc": "npm:3.5.27"
     "@vue/eslint-config-standard-with-typescript": "npm:9.2.0"
     "@vue/eslint-config-typescript": "npm:14.6.0"
     "@vue/test-utils": "npm:2.4.6"
