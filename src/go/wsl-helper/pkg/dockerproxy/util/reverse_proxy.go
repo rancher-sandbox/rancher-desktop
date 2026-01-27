@@ -168,6 +168,7 @@ func (proxy *ReverseProxy) forwardRequest(w http.ResponseWriter, r *http.Request
 	// long-running, streaming connections like "docker log -f"
 	fw := newFlushedWriter(ctx, w)
 	_, err = io.Copy(fw, backendResponse.Body)
+	fw.stopFlushing()
 	if err != nil {
 		proxy.logf("failed to stream the response body to the client: %v", err)
 	}
@@ -274,6 +275,7 @@ type flushedWriter struct {
 	w     io.Writer       // Underlying writer to which data is written.
 	mu    sync.Mutex      // Mutex to protect concurrent access to the writer and dirty flag.
 	ctx   context.Context // Context to control the lifecycle of the periodic flusher.
+	cancel context.CancelFunc
 	dirty bool            // Flag indicating whether the writer may have unflushed data.
 }
 
@@ -284,9 +286,11 @@ type flushedWriter struct {
 // that w implements http.Flusher before instantiation if periodic flushing
 // is required.
 func newFlushedWriter(ctx context.Context, w io.Writer) *flushedWriter {
+	flushCtx, flushCancel := context.WithCancel(ctx)
 	fw := &flushedWriter{
-		w:   w,
-		ctx: ctx,
+		w:      w,
+		ctx:    flushCtx,
+		cancel: flushCancel,
 	}
 
 	// periodicFlusher runs a loop that periodically flushes the writer
@@ -328,4 +332,11 @@ func (fw *flushedWriter) Write(p []byte) (n int, err error) {
 		fw.dirty = true
 	}
 	return n, err
+}
+
+func (fw *flushedWriter) stopFlushing() {
+	fw.mu.Lock()
+	fw.dirty = false
+	fw.cancel()
+	fw.mu.Unlock()
 }
