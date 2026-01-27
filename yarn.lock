@@ -2197,14 +2197,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/icu-messageformat-parser@npm:3.4.0":
-  version: 3.4.0
-  resolution: "@formatjs/icu-messageformat-parser@npm:3.4.0"
+"@formatjs/icu-messageformat-parser@npm:3.5.0":
+  version: 3.5.0
+  resolution: "@formatjs/icu-messageformat-parser@npm:3.5.0"
   dependencies:
     "@formatjs/ecma402-abstract": "npm:3.1.0"
     "@formatjs/icu-skeleton-parser": "npm:2.1.0"
     tslib: "npm:^2.8.1"
-  checksum: 10c0/3abebddb57bcfce8fe69ecd0b916db6356ed001ab102b885b09f2eebf57c8500287916f87a1874a601ecfa2aff5afd8f73ed67cf24802082ab328ca861b711fc
+  checksum: 10c0/3f7866739abeb42fba8fdab2e43f7d7e7f371870fb55a1da3757c7d487c0e5de706f36ca960f41be3f83192e57ba76b6de5728af9f93aaa90805d74b5f4af1ad
   languageName: node
   linkType: hard
 
@@ -10739,15 +10739,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"intl-messageformat@npm:11.1.0":
-  version: 11.1.0
-  resolution: "intl-messageformat@npm:11.1.0"
+"intl-messageformat@npm:11.1.1":
+  version: 11.1.1
+  resolution: "intl-messageformat@npm:11.1.1"
   dependencies:
     "@formatjs/ecma402-abstract": "npm:3.1.0"
     "@formatjs/fast-memoize": "npm:3.1.0"
-    "@formatjs/icu-messageformat-parser": "npm:3.4.0"
+    "@formatjs/icu-messageformat-parser": "npm:3.5.0"
     tslib: "npm:^2.8.1"
-  checksum: 10c0/219f1306d80df8e88e55c79c43c1938534afb9c383f023120bab562f74e907b7357bb538f02dd8b820f8bd6601404608656e0681e0cb6524a7f3da3a41b65263
+  checksum: 10c0/a847b03192a84a2568cd4f5fbadfd85d76f7b2f69d5382d745e770c65e32c35b4f2870e48c2604e6d8d922e95dc64cfe23af78707990b174270c09efc23fa812
   languageName: node
   linkType: hard
 
@@ -14406,7 +14406,7 @@ __metadata:
     glob: "npm:^13.0.0"
     globals: "npm:17.0.0"
     http-proxy-middleware: "npm:3.0.5"
-    intl-messageformat: "npm:11.1.0"
+    intl-messageformat: "npm:11.1.1"
     jest: "npm:30.2.0"
     jest-environment-jsdom: "npm:30.2.0"
     jquery: "npm:4.0.0"
