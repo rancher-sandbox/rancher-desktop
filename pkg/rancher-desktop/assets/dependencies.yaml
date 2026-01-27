@@ -16,7 +16,7 @@ steve: 0.1.0-beta9.1
 rancherDashboard: 2.11.1.rd3
 dockerProvidedCredentialHelpers: 0.9.5
 ECRCredentialHelper: 0.11.0
-mobyOpenAPISpec: "1.52"
+mobyOpenAPISpec: "1.53"
 wix: v3.14.1
 hostSwitch: 1.2.7
 moproxy: 0.5.1
