@@ -131,7 +131,6 @@ export default defineComponent({
           disableStdin: true,
           convertEol:   true,
           scrollback:   50000,
-          wordWrap:     true,
         });
 
         this.fitAddon = new FitAddon();
@@ -144,6 +143,11 @@ export default defineComponent({
           event.preventDefault();
           shell.openExternal(uri);
         }));
+
+        // Disable key events to allow normal behaviour such as copy/paste.
+        this.terminal.attachCustomKeyEventHandler(event => {
+          return false;
+        });
 
         this.terminal.open(this.$refs.terminalContainer);
 
