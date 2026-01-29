@@ -53,7 +53,8 @@ var (
 	DefaultConfigPath string
 
 	wslDistroEnvs = []string{"WSL_DISTRO_NAME", "WSL_INTEROP", "WSLENV"}
-	lstatFunc    = os.Lstat
+	// lstatFunc allows tests to inject a stub for /bin/wslpath checks.
+	lstatFunc = os.Lstat
 )
 
 // DefineGlobalFlags sets up the global flags, available for all sub-commands
