@@ -17,7 +17,8 @@ limitations under the License.
 package util
 
 import (
-	"context"
+	"io"
+	"sync"
 	"testing"
 	"time"
 
@@ -27,11 +28,8 @@ import (
 func TestFlushedWriterPeriodicFlush(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	flusher := newRecordingFlusher()
-	writer := newFlushedWriter(ctx, flusher)
+	writer := newFlushedWriter(t.Context(), flusher)
 
 	_, err := writer.Write([]byte("data"))
 	assert.NoError(t, err)
@@ -46,43 +44,43 @@ func TestFlushedWriterPeriodicFlush(t *testing.T) {
 func TestFlushedWriterStopFlushingSuppressesPeriodicFlush(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	flusher := newRecordingFlusher()
-	writer := newFlushedWriter(ctx, flusher)
+	writer := newFlushedWriter(t.Context(), flusher)
 
 	_, err := writer.Write([]byte("data"))
 	assert.NoError(t, err)
 
+	writer.mu.Lock()
+	writer.dirty = true
+	writer.mu.Unlock()
+
 	writer.stopFlushing()
 
+	assert.False(t, writer.dirty)
 	select {
-	case <-flusher.flushCh:
-		t.Fatal("unexpected flush after stopFlushing")
-	case <-time.After(flushInterval * flushTestTimeoutMultiplier):
+	case <-writer.ctx.Done():
+	default:
+		t.Fatal("expected flush context to be canceled")
 	}
 }
 
 const flushTestTimeoutMultiplier = 5
 
 type recordingFlusher struct {
-	flushCh chan struct{}
+	io.Writer
+	flushCh   chan struct{}
+	closeOnce sync.Once
 }
 
 func newRecordingFlusher() *recordingFlusher {
 	return &recordingFlusher{
-		flushCh: make(chan struct{}, 1),
+		Writer:  io.Discard,
+		flushCh: make(chan struct{}),
 	}
-}
-
-func (writer *recordingFlusher) Write(p []byte) (int, error) {
-	return len(p), nil
 }
 
 func (writer *recordingFlusher) Flush() {
-	select {
-	case writer.flushCh <- struct{}{}:
-	default:
-	}
+	writer.closeOnce.Do(func() {
+		close(writer.flushCh)
+	})
 }
