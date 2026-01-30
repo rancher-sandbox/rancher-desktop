@@ -23,19 +23,15 @@ func (info fakeFileInfo) Sys() any           { return nil }
 
 func saveWSLEnvs(t *testing.T) {
 	originalEnvs := map[string]string{}
-	originalPresent := map[string]bool{}
 	for _, envName := range wslDistroEnvs {
 		if value, ok := os.LookupEnv(envName); ok {
 			originalEnvs[envName] = value
-			originalPresent[envName] = true
-		} else {
-			originalPresent[envName] = false
 		}
 	}
 	t.Cleanup(func() {
 		for _, envName := range wslDistroEnvs {
-			if originalPresent[envName] {
-				os.Setenv(envName, originalEnvs[envName])
+			if value, present := originalEnvs[envName]; present {
+				os.Setenv(envName, value)
 			} else {
 				os.Unsetenv(envName)
 			}
