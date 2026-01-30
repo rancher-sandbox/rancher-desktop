@@ -150,6 +150,7 @@ func isWSLDistro() bool {
 	return hasWSLEnvs()
 }
 
+// hasWSLEnvs reports whether any WSL environment marker is present.
 func hasWSLEnvs() bool {
 	for _, envName := range wslDistroEnvs {
 		if _, ok := os.LookupEnv(envName); ok {
