@@ -3494,15 +3494,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rancher/components@npm:0.3.0-alpha.1":
-  version: 0.3.0-alpha.1
-  resolution: "@rancher/components@npm:0.3.0-alpha.1"
+"@rancher/components@npm:0.3.0-alpha.4":
+  version: 0.3.0-alpha.4
+  resolution: "@rancher/components@npm:0.3.0-alpha.4"
   dependencies:
+    "@rancher/icons": "npm:^2.0.54"
     lodash.debounce: "npm:4.0.8"
   peerDependencies:
-    core-js: 3.25.3
-    vue: ~3.2.13
-  checksum: 10c0/ba6cef3e764671711c72042321c3129fbb75df8f0824b60acaf8c53da69adb9988994d6d1aba7604217ca510f6e8e36158abb785ec3148dd4fce42a746afab6f
+    core-js: 3.40.0
+    vue: ^3.2.13
+  checksum: 10c0/24752e322bb1ff10dc823e17411f29691f7691b600b8c94fc483a40509a42ba4cc00623491e872697cbf4d57ff831d3b6c72cfcfe6317cdb557e9e0da0c42e73
+  languageName: node
+  linkType: hard
+
+"@rancher/icons@npm:^2.0.54":
+  version: 2.0.54
+  resolution: "@rancher/icons@npm:2.0.54"
+  checksum: 10c0/300f2f9520a4707b25d87143989c83755ce4cc732863691ddca8772927723f0096aa5d369244d83513c4834f3e6b9a6226b203d0022d7568cec42d84e38e7758
   languageName: node
   linkType: hard
 
@@ -14360,7 +14368,7 @@ __metadata:
     "@kubernetes/client-node": "npm:1.4.0"
     "@napi-rs/xattr": "npm:^1.0.3"
     "@playwright/test": "npm:1.57.0"
-    "@rancher/components": "npm:0.3.0-alpha.1"
+    "@rancher/components": "npm:0.3.0-alpha.4"
     "@types/cross-spawn": "npm:6.0.6"
     "@types/dompurify": "npm:3.2.0"
     "@types/ejs": "npm:3.1.5"
