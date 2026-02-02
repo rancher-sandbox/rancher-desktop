@@ -202,7 +202,7 @@ export interface IpcRendererEvents {
   'images-process-output':    (data: string, isStdErr: boolean) => void;
   'ok:images-process-output': (data: string) => void;
   'images-changed': (
-    images: { imageName: string; tag: string; imageID: string; size: string }[]
+    images: (import('@pkg/backend/images/imageProcessor').imageType)[]
   ) => void;
   'images-check-state':       (state: boolean) => void;
   'images-namespaces':        (namespaces: string[]) => void;
