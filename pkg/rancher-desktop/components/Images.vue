@@ -99,7 +99,7 @@ import ImagesOutputWindow from '@pkg/components/ImagesOutputWindow.vue';
 import SortableTable from '@pkg/components/SortableTable';
 import { mapTypedState } from '@pkg/entry/store';
 import type { IpcRendererEvents } from '@pkg/typings/electron-ipc';
-import getImageOutputCuller from '@pkg/utils/imageOutputCuller';
+import getImageOutputCuller, { ImageOutputCuller } from '@pkg/utils/imageOutputCuller';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { parseSi } from '@pkg/utils/units';
 
@@ -186,10 +186,10 @@ export default {
         },
       ],
       keepImageManagerOutputWindowOpen: false,
-      imageOutputCuller:                null as ReturnType<typeof getImageOutputCuller> | null,
+      imageOutputCuller:                undefined as ImageOutputCuller | undefined,
       mainWindowScroll:                 -1,
       selected:                         [] as RowItem[],
-      imageToPull:                      null,
+      imageToPull:                      undefined,
     };
   },
   computed: {

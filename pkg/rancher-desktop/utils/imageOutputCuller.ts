@@ -2,7 +2,7 @@ import ImageBuildOutputCuller from '@pkg/utils/processOutputInterpreters/image-b
 import ImageNonBuildOutputCuller from '@pkg/utils/processOutputInterpreters/image-non-build-output';
 import TrivyScanImageOutputCuller from '@pkg/utils/processOutputInterpreters/trivy-image-output';
 
-interface ImageOutputCuller {
+export interface ImageOutputCuller {
   addData(data: string): void;
   getProcessedData(): string;
 }

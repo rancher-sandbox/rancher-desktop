@@ -1,11 +1,13 @@
-<script>
+<script lang="ts">
 
 import { Banner } from '@rancher/components';
+import { defineComponent, PropType } from 'vue';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
+import { ImageOutputCuller } from '@pkg/utils/imageOutputCuller';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
-export default {
+export default defineComponent({
   name: 'images-output-window',
 
   components: {
@@ -15,7 +17,7 @@ export default {
 
   props: {
     currentCommand: {
-      type:    String,
+      type:    String as PropType<string | null>,
       default: null,
     },
     action: {
@@ -23,30 +25,30 @@ export default {
       default: '',
     },
     imageOutputCuller: {
-      type:    Object,
-      default: null,
+      type:    Object as PropType<ImageOutputCuller | undefined>,
+      default: undefined,
     },
     showStatus: {
       type:    Boolean,
       default: true,
     },
     imageToPull: {
-      type:    String,
-      default: null,
+      type:    String as PropType<string | undefined>,
+      default: undefined,
     },
   },
 
   data() {
     return {
       keepImageManagerOutputWindowOpen: false,
-      postCloseOutputWindowHandler:     null,
+      postCloseOutputWindowHandler:     null as (() => void) | null,
       imageManagerOutput:               '',
       completionStatus:                 false,
     };
   },
 
   computed: {
-    imageManagerProcessIsFinished() {
+    imageManagerProcessIsFinished(): boolean {
       return !this.currentCommand;
     },
     imageManagerProcessFinishedWithSuccess() {
@@ -55,12 +57,12 @@ export default {
     imageManagerProcessFinishedWithFailure() {
       return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
-    actionCapitalized() {
+    actionCapitalized(): string {
       const action = this.action;
 
       return `${ action?.charAt(0).toUpperCase() }${ action.slice(1) }`;
     },
-    loadingText() {
+    loadingText(): string {
       return this.t('images.add.loadingText', { action: this.actionCapitalized });
     },
     successText() {
@@ -68,21 +70,21 @@ export default {
 
       return this.t('images.add.successText', { action: pastTense });
     },
-    errorText() {
+    errorText(): string {
       return this.t('images.add.errorText', { action: this.action, image: this.imageToPull }, true);
     },
   },
 
   mounted() {
-    ipcRenderer.on('images-process-output', (_event, data, isStderr) => {
-      this.appendImageManagerOutput(data, isStderr);
+    ipcRenderer.on('images-process-output', (_event, data) => {
+      this.appendImageManagerOutput(data);
     });
 
     ipcRenderer.on('images-process-ended', (_event, status) => {
       this.handleProcessEnd(status);
     });
 
-    ipcRenderer.on('images-process-cancelled', (event) => {
+    ipcRenderer.on('images-process-cancelled', () => {
       this.handleProcessCancelled();
     });
   },
@@ -98,7 +100,7 @@ export default {
         this.imageManagerOutput = '';
       }
     },
-    appendImageManagerOutput(data) {
+    appendImageManagerOutput(data: string) {
       if (!this.imageOutputCuller) {
         this.imageManagerOutput += data;
       } else {
@@ -115,7 +117,7 @@ export default {
         this.$emit('ok:show', this.keepImageManagerOutputWindowOpen);
       }
     },
-    handleProcessEnd(status) {
+    handleProcessEnd(status: number) {
       if (this.imageOutputCuller) {
         // Don't know what would make this null, but it happens on windows sometimes
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
@@ -128,11 +130,11 @@ export default {
       }
     },
     handleProcessCancelled() {
-      this.closeOutputWindow(null);
+      this.closeOutputWindow();
       this.$emit('ok:process-end');
     },
   },
-};
+});
 </script>
 
 <template>
