@@ -127,7 +127,7 @@ export interface IpcMainInvokeEvents {
   'k8s-progress':              () => Readonly<{ current: number, max: number, description?: string, transitionTime?: Date }>;
 
   // #region main/imageEvents
-  'images-mounted':     (mounted: boolean) => { imageName: string, tag: string, imageID: string, size: string }[];
+  'images-mounted':     (mounted: boolean) => (import('@pkg/backend/images/imageProcessor').imageType)[];
   'images-check-state': () => boolean;
   // #endregion
 
