@@ -27,7 +27,8 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import v1 from '@docker/extension-api-client-types/dist/v1';
 import { Banner } from '@rancher/components';
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
@@ -37,6 +38,10 @@ import { shell } from 'electron';
 import { defineComponent } from 'vue';
 
 import LoadingIndicator from '@pkg/components/LoadingIndicator.vue';
+
+interface RDXSpawnOptions extends v1.SpawnOptions {
+  namespace?: string;
+}
 
 export default defineComponent({
   name:       'ContainerLogs',
@@ -61,18 +66,18 @@ export default defineComponent({
   data() {
     return {
       isLoading:              true,
-      error:                  null,
-      terminal:               null,
-      fitAddon:               null,
-      searchAddon:            null,
-      streamProcess:          null,
-      resizeHandler:          null,
-      resizeObserver:         null,
+      error:                  null as string | null,
+      terminal:               null as Terminal | null,
+      fitAddon:               null as FitAddon | null,
+      searchAddon:            null as SearchAddon | null,
+      streamProcess:          null as v1.ExecProcess | null,
+      resizeHandler:          null as (() => void) | null,
+      resizeObserver:         null as ResizeObserver | null,
       reconnectAttempts:      0,
       maxReconnectAttempts:   5,
-      searchDebounceTimer:    null,
+      searchDebounceTimer:    null as ReturnType<typeof setTimeout> | null,
       waitingForInitialLogs:  true,
-      revealTimeout:          null,
+      revealTimeout:          null as ReturnType<typeof setTimeout> | null,
       hasReceivedLogs:        false,
     };
   },
@@ -93,12 +98,12 @@ export default defineComponent({
     this.cleanup();
   },
   methods: {
-    async initializeLogs() {
+    async initializeLogs(): Promise<void> {
       if (window.ddClient) {
         await this.startStreaming();
       }
     },
-    async initializeTerminal() {
+    async initializeTerminal(): Promise<void> {
       this.isLoading = false;
       await this.$nextTick();
       if (this.$refs.terminalContainer) {
@@ -107,7 +112,6 @@ export default defineComponent({
             background:    '#1a1a1a',
             foreground:    '#e0e0e0',
             cursor:        '#1a1a1a', // same as the background to effectively hide the cursor.
-            selection:     'rgba(139, 233, 253, 0.3)',
             black:         '#000000',
             red:           '#ff5555',
             green:         '#50fa7b',
@@ -126,11 +130,11 @@ export default defineComponent({
             brightWhite:   '#ffffff',
           },
           fontSize:     14,
-          fontFamily:   '\'Courier New\', \'Monaco\', monospace',
+          fontFamily:   '"Courier New", "Monaco", monospace',
           cursorBlink:  false,
           disableStdin: true,
           convertEol:   true,
-          scrollback:   50000,
+          scrollback:   50_000,
         });
 
         this.fitAddon = new FitAddon();
@@ -149,10 +153,10 @@ export default defineComponent({
           return false;
         });
 
-        this.terminal.open(this.$refs.terminalContainer);
+        this.terminal.open(this.$refs.terminalContainer as HTMLElement);
 
         // Expose terminal instance for e2e testing
-        this.$refs.terminalContainer.__xtermTerminal = this.terminal;
+        (this.$refs.terminalContainer as any).__xtermTerminal = this.terminal;
 
         await this.$nextTick();
         this.fitAddon.fit();
@@ -166,11 +170,11 @@ export default defineComponent({
           this.resizeObserver = new ResizeObserver(() => {
             this.fitAddon?.fit();
           });
-          this.resizeObserver.observe(this.$refs.terminalContainer);
+          this.resizeObserver.observe(this.$refs.terminalContainer as HTMLElement);
         }
       }
     },
-    async startStreaming() {
+    async startStreaming(): Promise<void> {
       try {
         this.error = null;
         this.waitingForInitialLogs = true;
@@ -180,12 +184,12 @@ export default defineComponent({
           await this.initializeTerminal();
         }
 
-        const streamOptions = {
+        const streamOptions: RDXSpawnOptions = {
           cwd:    '/',
           stream: {
             onOutput: (data) => {
               if (this.terminal && (data.stdout || data.stderr)) {
-                const output = data.stdout || data.stderr;
+                const output = (data.stdout || data.stderr) ?? '';
 
                 this.hasReceivedLogs = true;
 
@@ -200,17 +204,17 @@ export default defineComponent({
                     this.waitingForInitialLogs = false;
                     this.$nextTick(() => {
                       this.fitAddon?.fit();
-                      this.terminal.scrollToBottom();
+                      this.terminal?.scrollToBottom();
                     });
                   }, 200);
                 }
               }
             },
-            onError: (error) => {
+            onError: (error: Error) => {
               console.error('Stream error:', error);
               this.handleStreamError(error);
             },
-            onClose: (code) => {
+            onClose: (code: number) => {
               this.streamProcess = null;
               if (code !== 0 && this.isContainerRunning) {
                 this.handleStreamError(new Error(`Stream closed with code ${ code }`));
@@ -237,17 +241,18 @@ export default defineComponent({
         console.error('Error starting log stream:', error);
         this.waitingForInitialLogs = false;
 
-        const errorMessages = {
+        const errorMessages: Record<string, string> = {
           'No such container':  'Container not found. It may have been removed.',
           'permission denied':  'Permission denied. Check Docker access permissions.',
           'connection refused': 'Cannot connect to Docker. Is Docker running?',
         };
 
-        const errorKey = Object.keys(errorMessages).find(key => error.message.includes(key));
-        this.error = errorKey ? errorMessages[errorKey] : (error.message || 'Failed to fetch logs');
+        this.error = Object.entries(errorMessages)
+          .find(([key]) => error instanceof Error && error.message.includes(key))?.[1] ??
+          (error instanceof Error ? error.message : 'Failed to fetch logs');
       }
     },
-    stopStreaming() {
+    stopStreaming(): void {
       if (this.streamProcess) {
         try {
           this.streamProcess.close();
@@ -257,7 +262,7 @@ export default defineComponent({
         this.streamProcess = null;
       }
     },
-    handleStreamError(error) {
+    handleStreamError(error: Error): void {
       if (this.reconnectAttempts < this.maxReconnectAttempts && this.isContainerRunning) {
         this.reconnectAttempts++;
         const delay = Math.pow(2, this.reconnectAttempts - 1) * 1000;
@@ -268,10 +273,10 @@ export default defineComponent({
         this.error = 'Streaming error: ' + error.message + (this.reconnectAttempts >= this.maxReconnectAttempts ? ' (max retries exceeded)' : '');
       }
     },
-    clearSearch() {
+    clearSearch(): void {
       this.searchAddon?.clearDecorations();
     },
-    performSearch(searchTerm) {
+    performSearch(searchTerm: string): void {
       if (this.searchDebounceTimer) {
         clearTimeout(this.searchDebounceTimer);
       }
@@ -289,22 +294,22 @@ export default defineComponent({
         }
       }, 300);
     },
-    searchNext(searchTerm) {
+    searchNext(searchTerm: string): void {
       if (!this.searchAddon || !searchTerm) return;
-      this.executeSearch(() => this.searchAddon.findNext(searchTerm));
+      this.executeSearch(() => this.searchAddon?.findNext(searchTerm));
     },
-    searchPrevious(searchTerm) {
+    searchPrevious(searchTerm: string): void {
       if (!this.searchAddon || !searchTerm) return;
-      this.executeSearch(() => this.searchAddon.findPrevious(searchTerm));
+      this.executeSearch(() => this.searchAddon?.findPrevious(searchTerm));
     },
-    executeSearch(searchFn) {
+    executeSearch(searchFn: () => void): void {
       try {
         searchFn();
       } catch (error) {
         console.error('Search error:', error);
       }
     },
-    cleanup() {
+    cleanup(): void {
       this.stopStreaming();
       if (this.terminal) {
         try {
