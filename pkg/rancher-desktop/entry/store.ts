@@ -118,7 +118,7 @@ export function mapTypedMutations
 >(namespace: N, mappings: G): {
   [key in keyof G]: (payload: Parameters<M[G[key]]>[1]) => ReturnType<M[G[key]]>;
 };
-// Actual implementation defers to mapState
+// Actual implementation defers to mapMutations
 export function mapTypedMutations(namespace: string, arg: any) {
   return mapMutations(namespace, arg);
 }

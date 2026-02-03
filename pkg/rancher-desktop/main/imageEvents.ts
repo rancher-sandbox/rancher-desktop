@@ -6,7 +6,7 @@ import path from 'path';
 
 import Electron from 'electron';
 
-import { ImageProcessor } from '@pkg/backend/images/imageProcessor';
+import { ImageProcessor, ImageType } from '@pkg/backend/images/imageProcessor';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import { isUnixError } from '@pkg/typings/unix.interface';
 import Logging from '@pkg/utils/logging';
@@ -14,14 +14,6 @@ import * as window from '@pkg/window';
 
 const console = Logging.images;
 const ipcMainProxy = getIpcMainProxy(console);
-
-interface ImageContents {
-  imageName: string;
-  tag:       string;
-  imageID:   string;
-  size:      string;
-  digest:    string;
-}
 
 // Map image-related events to the associated image processor's methods
 // TODO: export the factory function to make this a singleton
@@ -42,7 +34,7 @@ export class ImageEventHandler {
     this.initEventHandlers();
   }
 
-  protected onImagesChanged(images: ImageContents[]) {
+  protected onImagesChanged(images: ImageType[]) {
     window.send('images-changed', images);
   }
 

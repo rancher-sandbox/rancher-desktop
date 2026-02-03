@@ -116,15 +116,15 @@ export default defineComponent({
       }
     });
 
-    ipcRenderer.on('images-check-state', (event, state: any) => {
+    ipcRenderer.on('images-check-state', (event, state) => {
       this.setImageManagerState(state);
     });
 
-    ipcRenderer.invoke('images-check-state').then((state: any) => {
+    ipcRenderer.invoke('images-check-state').then((state) => {
       this.setImageManagerState(state);
     });
 
-    ipcRenderer.on('settings-update', (event, settings: any) => {
+    ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
       this.$data.settings = settings;
       this.checkSelectedNamespace();
@@ -134,14 +134,14 @@ export default defineComponent({
       this.images = await ipcRenderer.invoke('images-mounted', true);
     })();
 
-    ipcRenderer.on('images-namespaces', (event, namespaces: string[]) => {
+    ipcRenderer.on('images-namespaces', (event, namespaces) => {
       // TODO: Use a specific message to indicate whether or not messages are supported.
       this.imageNamespaces = namespaces;
       this.supportsNamespaces = namespaces.length > 0;
       this.checkSelectedNamespace();
     });
     ipcRenderer.send('images-namespaces-read');
-    ipcRenderer.on('settings-read', (event, settings: any) => {
+    ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;
     });
     ipcRenderer.send('settings-read');

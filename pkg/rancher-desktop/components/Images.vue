@@ -226,15 +226,11 @@ export default {
         .map(this.getTaggedImage);
     },
     rows(): RowItem[] {
-      const filteredImages = _.cloneDeep(this.filteredImages);
-
-      return filteredImages
-        .map<RowItem>((image: Image & Partial<RowItem>) => ({
+      return this.filteredImages
+        .map(image => ({
           ...image,
           // The `availableActions` property is used by the ActionMenu to fill
-          // out the menu entries.  Note that we need to modify the items
-          // in-place, as SortableTable depends on object identity to manage its
-          // selection state.
+          // out the menu entries.
           availableActions: [
             {
               label:   this.t('images.manager.table.action.push'),
@@ -259,10 +255,10 @@ export default {
           ].filter(x => x.enabled),
           // ActionMenu callbacks - SortableTable assumes that these methods live
           // on the rows directly.
-          doPush:       image.doPush ?? this.doPush.bind(this, image),
-          deleteImage:  image.deleteImage ?? this.deleteImage.bind(this, image),
-          deleteImages: image.deleteImages ?? this.deleteImages.bind(this),
-          scanImage:    image.scanImage ?? this.scanImage.bind(this, image),
+          doPush:       this.doPush.bind(this, image),
+          deleteImage:  this.deleteImage.bind(this, image),
+          deleteImages: this.deleteImages.bind(this),
+          scanImage:    this.scanImage.bind(this, image),
         }));
     },
     showImageManagerOutput() {
