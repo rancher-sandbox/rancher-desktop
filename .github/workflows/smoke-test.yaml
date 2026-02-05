@@ -111,6 +111,30 @@ jobs:
           rancher-desktop.AppImage
           rancher-desktop.AppImage.sha512sum
 
+    - name: Build Snap package
+      run: |
+        sudo snap install snapcraft --classic
+        sudo snap install multipass
+        sudo snap set snapcraft provider=multipass
+        
+        cp rancher-desktop-linux-*.zip packaging/linux/rancher-desktop-linux.zip
+        
+        cd packaging/linux
+        snapcraft pack
+        cd ../..
+        
+        sha512sum packaging/linux/rancher-desktop*.snap > rancher-desktop.snap.sha512sum
+        mv packaging/linux/rancher-desktop*.snap rancher-desktop.snap
+
+    - name: Upload Linux Snap
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: application-linux.snap
+        if-no-files-found: error
+        path: |
+          rancher-desktop.snap
+          rancher-desktop.snap.sha512sum
+
   smoke-test:
     name: Smoke test
     needs: download-artifacts
@@ -321,5 +345,44 @@ jobs:
       if: always()
       with:
         name: logs-appimage-${{ matrix.id }}.zip
+        path: ${{ github.workspace }}/logs
+        if-no-files-found: warn
+
+  snap-smoke-test:
+    name: Smoke test Snap
+    needs: download-artifacts
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - name: Set up environment
+      uses: ./.github/actions/setup-environment
+
+    - name: Set log directory
+      run: |
+        echo "RD_LOGS_DIR=$PWD/logs" >> "$GITHUB_ENV"
+        mkdir -p "$PWD/logs"
+
+    - name: Download Snap
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      with:
+        name: application-linux.snap
+
+    - name: Run smoke test
+      run: >-
+        xvfb-run --auto-servernum
+        --server-args='-screen 0 1280x960x24'
+        .github/workflows/smoke-test/smoke-test.sh
+      env:
+        RD_DEBUG_ENABLED: '1'
+        RD_TEST: smoke
+
+    - name: Upload logs
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      if: always()
+      with:
+        name: logs-snap.zip
         path: ${{ github.workspace }}/logs
         if-no-files-found: warn

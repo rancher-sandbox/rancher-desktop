@@ -117,6 +117,7 @@ copypac
 coredns
 cpanm
 cpanminus
+craftctl
 crds
 credfwd
 CREDHELPER
@@ -341,6 +342,7 @@ logdna
 loglines
 logz
 lte
+lzo
 mabels
 macarm
 machinedeployment
@@ -407,6 +409,7 @@ nothrow
 notifempty
 notset
 npipe
+nspr
 nsenter
 nsis
 NSISUNINSTALLCOMMAND
@@ -417,6 +420,7 @@ oapi
 objectset
 octicons
 openapitools
+opengl
 openldapconfig
 openrc
 openresty
@@ -587,6 +591,7 @@ SLSA
 smanager
 smokris
 snakize
+snapcraft
 softmmu
 someothername
 somepaththatshouldnevereverexist

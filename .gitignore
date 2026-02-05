@@ -21,3 +21,5 @@
 /src/go/rdctl/pkg/options/generated/*.go
 /e2e/e2e/test-results/.last-run.json
 /.yarn/
+/packaging/linux/*.zip
+/packaging/linux/*.snap

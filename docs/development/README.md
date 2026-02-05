@@ -12,3 +12,4 @@ ask around!
 [Signing Rancher Desktop Releases](signing.md)  
 [Generating Screenshots for User Documentation](../../screenshots/README.md)  
 [Information on how to setup and run BATS tests](../../bats/README.md)  
+[Build and install the Snapcraft package locally](snapcraft.md)

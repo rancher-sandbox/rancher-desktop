@@ -1,0 +1,167 @@
+name: rancher-desktop
+title: Rancher Desktop
+summary: Kubernetes and container management on the desktop
+description: |
+  Rancher Desktop is an open-source project to bring Kubernetes and
+  container management to the desktop.
+  
+  Features:
+  - Run Kubernetes locally with containerd or dockerd (moby)
+  - Build, push, and pull container images
+  - Access kubectl and other Kubernetes CLI tools
+  - Manage container workloads with nerdctl or docker CLI
+license: Apache-2.0
+adopt-info: rancher-desktop
+grade: stable
+confinement: strict
+contact: https://github.com/rancher-sandbox/rancher-desktop/discussions
+issues: https://github.com/rancher-sandbox/rancher-desktop/issues
+source-code: https://github.com/rancher-sandbox/rancher-desktop
+website: https://rancherdesktop.io
+donation: https://github.com/sponsors/rancher
+base: core24
+lint:
+  ignore:
+    - library
+compression: lzo
+
+platforms:
+  amd64:
+    build-on: [amd64]
+    build-for: [amd64]
+
+apps:
+  rancher-desktop:
+    command: opt/rancher-desktop/rancher-desktop --no-sandbox
+    desktop: usr/share/applications/rancher-desktop.desktop
+    extensions:
+      - gnome
+    plugs:
+      - home
+      - network
+      - network-bind
+      - desktop
+      - desktop-legacy
+      - x11
+      - wayland
+      - opengl
+      - browser-support
+      - mount-observe
+      - process-control
+      - system-observe
+      - kvm
+  rdctl:
+    command: opt/rancher-desktop/resources/resources/linux/bin/rdctl
+    extensions:
+      - gnome
+    plugs:
+      - home
+      - network
+    aliases:
+      - rdctl
+  docker:
+    command: opt/rancher-desktop/resources/resources/linux/bin/docker
+    plugs:
+      - home
+      - network
+    aliases:
+      - docker
+  nerdctl:
+    command: opt/rancher-desktop/resources/resources/linux/bin/nerdctl
+    plugs:
+      - home
+      - network
+    aliases:
+      - nerdctl
+  kubectl:
+    command: opt/rancher-desktop/resources/resources/linux/bin/kubectl
+    plugs:
+      - home
+      - network
+    aliases:
+      - kubectl
+  helm:
+    command: opt/rancher-desktop/resources/resources/linux/bin/helm
+    plugs:
+      - home
+      - network
+    aliases:
+      - helm
+  spin:
+    command: opt/rancher-desktop/resources/resources/linux/bin/spin
+    plugs:
+      - home
+      - network
+    aliases:
+      - spin
+  kuberlr:
+    command: opt/rancher-desktop/resources/resources/linux/bin/kuberlr
+    plugs:
+      - home
+      - network
+    aliases:
+      - kuberlr
+  docker-credential-ecr-login:
+    command: opt/rancher-desktop/resources/resources/linux/bin/docker-credential-ecr-login
+    plugs:
+      - home
+      - network
+    aliases:
+      - docker-credential-ecr-login
+  docker-credential-none:
+    command: opt/rancher-desktop/resources/resources/linux/bin/docker-credential-none
+    plugs:
+      - home
+    aliases:
+      - docker-credential-none
+  docker-credential-pass:
+    command: opt/rancher-desktop/resources/resources/linux/bin/docker-credential-pass
+    plugs:
+      - home
+    aliases:
+      - docker-credential-pass
+  docker-credential-secretservice:
+    command: opt/rancher-desktop/resources/resources/linux/bin/docker-credential-secretservice
+    plugs:
+      - home
+    aliases:
+      - docker-credential-secretservice
+
+parts:
+  rancher-desktop:
+    plugin: dump
+    source: rancher-desktop-linux.zip
+    source-type: zip
+    organize:
+      '*': opt/rancher-desktop/
+    override-prime: |
+      craftctl default
+      
+      APPDATA="${CRAFT_PRIME}/opt/rancher-desktop/resources/resources/linux/rancher-desktop.appdata.xml"
+      VERSION=$(sed -n 's/.*<release version="\([^"]*\)".*/\1/p' "$APPDATA" | head -1)
+      if [ -z "$VERSION" ]; then
+        echo "ERROR: Failed to extract version from appdata.xml"
+        exit 1
+      fi
+      craftctl set version="$VERSION"
+      
+      icon="${CRAFT_PRIME}/opt/rancher-desktop/resources/resources/icons/logo-square-512.png"
+      for size in 512x512 256x256 128x128 96x96 64x64 48x48 32x32 24x24 16x16; do
+        mkdir -p "${CRAFT_PRIME}/usr/share/icons/hicolor/${size}/apps"
+        convert -resize "${size}" "${icon}" \
+          "${CRAFT_PRIME}/usr/share/icons/hicolor/${size}/apps/rancher-desktop.png"
+      done
+      
+      mkdir -p "${CRAFT_PRIME}/usr/share/applications"
+      mkdir -p "${CRAFT_PRIME}/usr/share/metainfo"
+      cp "${CRAFT_PRIME}/opt/rancher-desktop/resources/resources/linux/rancher-desktop.desktop" \
+        "${CRAFT_PRIME}/usr/share/applications/rancher-desktop.desktop"
+      sed -i 's|Icon=rancher-desktop|Icon=/usr/share/icons/hicolor/512x512/apps/rancher-desktop.png|' \
+        "${CRAFT_PRIME}/usr/share/applications/rancher-desktop.desktop"
+      
+      chmod 4755 "${CRAFT_PRIME}/opt/rancher-desktop/chrome-sandbox"
+    build-packages:
+      - imagemagick
+    stage-packages:
+      - libnspr4
+      - libnss3
