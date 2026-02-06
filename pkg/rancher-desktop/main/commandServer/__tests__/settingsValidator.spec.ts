@@ -7,7 +7,7 @@ import _ from 'lodash';
 import { SemVer } from 'semver';
 
 import * as settings from '@pkg/config/settings';
-import { MountType, VMType } from '@pkg/config/settings';
+import { MountType, Theme, VMType } from '@pkg/config/settings';
 import { getDefaultMemory } from '@pkg/config/settingsImpl';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import mockModules from '@pkg/utils/testUtils/mockModules';
@@ -78,6 +78,7 @@ describe('SettingsValidator', () => {
     // Special fields that cannot be checked here; this includes enums and maps.
     const specialFields = [
       ['application', 'pathManagementStrategy'],
+      ['application', 'theme'],
       ['containerEngine', 'allowedImages', 'locked'],
       ['containerEngine', 'mobyStorageDriver'],
       ['containerEngine', 'name'],
@@ -431,6 +432,34 @@ describe('SettingsValidator', () => {
         needToUpdate: false,
         errors:       [`Kubernetes version "pikachu" not found.`],
         isFatal:      false,
+      });
+    });
+  });
+
+  describe('application.theme', () => {
+    describe('should accept valid settings', () => {
+      test.each(Object.keys(Theme))('%s', (key) => {
+        const value = Theme[key as keyof typeof Theme];
+        const [needToUpdate, errors] = subject.validateSettings({
+          ...cfg,
+          application: { ...cfg.application, theme: Theme.SYSTEM },
+        }, { application: { theme: value } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: value !== Theme.SYSTEM,
+          errors:       [],
+        });
+      });
+    });
+
+    it('should reject invalid values', () => {
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg,
+        { application: { theme: 'invalid' as Theme } });
+
+      expect({ needToUpdate, errors, isFatal }).toEqual({
+        needToUpdate: false,
+        errors:       [`Invalid value for "application.theme": <"invalid">; must be one of ["system","light","dark"]`],
+        isFatal:      true,
       });
     });
   });

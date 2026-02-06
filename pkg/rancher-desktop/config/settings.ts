@@ -6,7 +6,7 @@ import os from 'os';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-export const CURRENT_SETTINGS_VERSION = 17 as const;
+export const CURRENT_SETTINGS_VERSION = 18 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -50,6 +50,12 @@ export enum CacheMode {
   MMAP = 'mmap',
 }
 
+export enum Theme {
+  SYSTEM = 'system',
+  LIGHT = 'light',
+  DARK = 'dark',
+}
+
 export class SettingsError extends Error {
   toString() {
     // This is needed on linux. Without it, we get a randomish replacement
@@ -79,6 +85,7 @@ export const defaultSettings = {
     startInBackground:      false,
     hideNotificationIcon:   false,
     window:                 { quitOnClose: false },
+    theme:                  Theme.SYSTEM,
   },
   containerEngine: {
     allowedImages: {

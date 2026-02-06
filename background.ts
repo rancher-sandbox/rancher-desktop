@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import Electron, { MessageBoxOptions } from 'electron';
+import Electron, { MessageBoxOptions, nativeTheme } from 'electron';
 import _ from 'lodash';
 import semver from 'semver';
 
@@ -149,6 +149,7 @@ Electron.app.on('second-instance', async() => {
 // when settings change
 mainEvents.on('settings-update', async(newSettings) => {
   console.log(`mainEvents settings-update: ${ JSON.stringify(newSettings) }`);
+  nativeTheme.themeSource = newSettings.application.theme;
   const runInDebugMode = settingsImpl.runInDebugMode(newSettings.application.debug);
 
   if (runInDebugMode) {
@@ -241,6 +242,7 @@ Electron.app.whenReady().then(async() => {
     }
     try {
       cfg = settingsImpl.load(deploymentProfiles);
+      nativeTheme.themeSource = cfg.application.theme;
       settingsImpl.updateLockedFields(deploymentProfiles.locked);
     } catch (err: any) {
       const titlePart = err.name || 'Failed to load settings';
