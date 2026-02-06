@@ -9,6 +9,7 @@
 //   GITHUB_PR_TOKEN: GitHub authorization token.
 //     Must have write permissions for `actions` and `pull_requests`.
 
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 
 import { RequestError } from 'octokit';
@@ -144,6 +145,50 @@ async function findExisting(owner: string, repo: string, branch: string) {
   }
 }
 
+/**
+ * Run `yarn dedupe` on the given branch and push a commit if the lockfile
+ * changes.
+ * @param branchName The branch to deduplicate.
+ */
+function deduplicateDependencies(branchName: string): void {
+  const gitEnv = {
+    ...process.env,
+    GIT_AUTHOR_NAME:     'github-actions[bot]',
+    GIT_AUTHOR_EMAIL:    'github-actions[bot]@users.noreply.github.com',
+    GIT_COMMITTER_NAME:  'github-actions[bot]',
+    GIT_COMMITTER_EMAIL: 'github-actions[bot]@users.noreply.github.com',
+  };
+
+  function run(command: string, args: string[], env?: typeof gitEnv): void {
+    console.log(`Running: ${ command } ${ args.join(' ') }`);
+    const result = spawnSync(command, args, { stdio: 'inherit', env });
+
+    if (result.error) {
+      throw result.error;
+    }
+    if (result.status !== 0) {
+      throw new Error(`${ command } ${ args.join(' ') } exited with status ${ result.status }`);
+    }
+  }
+
+  run('git', ['fetch', 'origin', branchName]);
+  run('git', ['checkout', branchName]);
+  run('yarn', ['dedupe']);
+
+  const diff = spawnSync('git', ['diff', '--quiet', 'yarn.lock']);
+
+  if (diff.status === 0) {
+    console.log('yarn dedupe made no changes.');
+
+    return;
+  }
+
+  console.log('yarn dedupe modified yarn.lock, committing...');
+  run('git', ['add', 'yarn.lock']);
+  run('git', ['commit', '--message', 'Run yarn dedupe'], gitEnv);
+  run('git', ['push', 'origin', branchName]);
+}
+
 (async() => {
   const rawPayload = await fs.promises.readFile(getEnv('GITHUB_EVENT_PATH'), 'utf-8');
   const payload: GitHubReleasePayload = JSON.parse(rawPayload);
@@ -182,6 +227,8 @@ async function findExisting(owner: string, repo: string, branch: string) {
   });
 
   console.log(`Created PR #${ item.number }: ${ item.html_url }`);
+
+  deduplicateDependencies(branchName);
 })().catch((ex) => {
   console.error(ex);
   process.exit(1);
