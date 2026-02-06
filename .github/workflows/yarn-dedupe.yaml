@@ -1,0 +1,34 @@
+name: Deduplicate yarn.lock
+
+on:
+  schedule:
+  - cron: '0 9 1 * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-for-token:
+    outputs:
+      has-token: ${{ steps.calc.outputs.HAS_SECRET }}
+    runs-on: ubuntu-latest
+    steps:
+    - id: calc
+      run: echo "HAS_SECRET=${HAS_SECRET}" >> "${GITHUB_OUTPUT}"
+      env:
+        HAS_SECRET: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
+
+  yarn-dedupe:
+    needs: check-for-token
+    if: needs.check-for-token.outputs.has-token == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        fetch-depth: 0
+    - uses: ./.github/actions/yarn-install
+    - run: ./scripts/yarn-dedupe.sh --push
+      env:
+        GITHUB_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
