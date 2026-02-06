@@ -29,6 +29,6 @@ jobs:
       with:
         fetch-depth: 0
     - uses: ./.github/actions/yarn-install
-    - run: ./scripts/yarn-dedupe.sh
+    - run: ./scripts/yarn-dedupe.sh --push
       env:
         GITHUB_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
