@@ -66,11 +66,18 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 		if ctx == nil {
 			ctx = context.Background()
 		}
-		if configDir, err = wslifyConfigDir(ctx); err != nil {
-			log.Fatalf("Can't get WSL config-dir: %v", err)
+		if configDir, err = wslifyConfigDir(ctx); err == nil {
+			windowsConfigPath := filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
+			if _, statErr := os.Stat(windowsConfigPath); statErr != nil {
+				configDir = ""
+			} else {
+				configDir = filepath.Join(configDir, "rancher-desktop")
+			}
+		} else {
+			configDir = ""
 		}
-		configDir = filepath.Join(configDir, "rancher-desktop")
-	} else {
+	}
+	if configDir == "" {
 		appPaths, err := paths.GetPaths()
 		if err != nil {
 			log.Fatalf("failed to get paths: %s", err)
