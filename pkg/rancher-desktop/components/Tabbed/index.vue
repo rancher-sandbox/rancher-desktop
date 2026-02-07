@@ -122,8 +122,6 @@ export default {
           } else if (firstTab?.name) {
             this.select(firstTab.name);
           }
-        } else if (useHash && activeTab?.name === windowHash) {
-          this.select(activeTab.name);
         }
       },
       deep: true,

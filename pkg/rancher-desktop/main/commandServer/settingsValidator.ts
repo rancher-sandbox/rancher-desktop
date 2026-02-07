@@ -97,6 +97,7 @@ export default class SettingsValidator {
         startInBackground:      this.checkBoolean,
         hideNotificationIcon:   this.checkBoolean,
         window:                 { quitOnClose: this.checkBoolean },
+        theme:                  this.checkEnum('system', 'light', 'dark'),
       },
       containerEngine: {
         allowedImages: {

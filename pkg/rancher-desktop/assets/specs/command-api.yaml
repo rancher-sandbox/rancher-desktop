@@ -595,6 +595,10 @@ components:
                 quitOnClose:
                   type: boolean
                   x-rd-usage: terminate app when the main window is closed
+            theme:
+              type: string
+              enum: [system, light, dark]
+              x-rd-usage: set the color theme (system follows OS setting)
         containerEngine:
           type: object
           properties:
