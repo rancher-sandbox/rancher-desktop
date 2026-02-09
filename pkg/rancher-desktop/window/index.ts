@@ -194,6 +194,12 @@ let currentExtension: { id: string, relPath: string } | undefined;
 /** The extension that has been loaded. */
 let lastOpenExtension: { id: string, relPath: string } | undefined;
 
+function updateViewBackground() {
+  if (view) {
+    view.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#202c33' : '#f4f4f6');
+  }
+}
+
 /**
  * Attaches a browser view to the main window
  */
@@ -285,6 +291,8 @@ function createView() {
     });
   }
   view = new WebContentsView({ webPreferences });
+  nativeTheme.off('updated', updateViewBackground);
+  nativeTheme.on('updated', updateViewBackground);
   mainWindow.contentView.addChildView(view);
   mainWindow.contentView.addListener('bounds-changed', () => {
     setImmediate(() => mainWindow.webContents.send('extensions/getContentArea'));
@@ -465,6 +473,7 @@ export function closeExtension() {
   }
 
   view.webContents.close();
+  nativeTheme.off('updated', updateViewBackground);
 
   const window = getWindow('main');
 

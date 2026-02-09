@@ -363,6 +363,18 @@ application:
     notificationIcon:
       legendText: Notification Icon
       label: Hide Notification Icon
+    theme:
+      legendText: Appearance
+      options:
+        system:
+          label: System
+          description: Follow the operating system setting
+        light:
+          label: Light
+          description: Always use light mode
+        dark:
+          label: Dark
+          description: Always use dark mode
 
 virtualMachine:
   networkingTunnel:
