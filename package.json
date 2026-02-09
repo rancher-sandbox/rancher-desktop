@@ -102,7 +102,7 @@
     "@electron/fuses": "^2.0.0",
     "@electron/notarize": "3.1.1",
     "@eslint/compat": "2.0.1",
-    "@playwright/test": "1.58.0",
+    "@playwright/test": "1.58.1",
     "@types/cross-spawn": "6.0.6",
     "@types/dompurify": "3.2.0",
     "@types/ejs": "3.1.5",
