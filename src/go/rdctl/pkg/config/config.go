@@ -60,21 +60,16 @@ var (
 // DefineGlobalFlags sets up the global flags, available for all sub-commands
 func DefineGlobalFlags(rootCmd *cobra.Command) {
 	var configDir string
-	var err error
 	if runtime.GOOS == "linux" && isWSLDistro() {
 		ctx := rootCmd.Context()
 		if ctx == nil {
 			ctx = context.Background()
 		}
-		if configDir, err = wslifyConfigDir(ctx); err == nil {
-			windowsConfigPath := filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
-			if _, statErr := os.Stat(windowsConfigPath); statErr != nil {
-				configDir = ""
-			} else {
-				configDir = filepath.Join(configDir, "rancher-desktop")
+		if wslConfigDir, err := wslifyConfigDir(ctx); err == nil {
+			windowsConfigPath := filepath.Join(wslConfigDir, "rancher-desktop", "rd-engine.json")
+			if _, statErr := os.Stat(windowsConfigPath); statErr == nil {
+				configDir = filepath.Join(wslConfigDir, "rancher-desktop")
 			}
-		} else {
-			configDir = ""
 		}
 	}
 	if configDir == "" {

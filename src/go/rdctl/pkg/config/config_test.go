@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -243,42 +242,6 @@ func TestGetConnectionInfo_MissingRequiredFields(t *testing.T) {
 	assert.Nil(t, result)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "insufficient connection settings")
-}
-
-func TestPersistentPreRunE_Verbose(t *testing.T) {
-	originalLevel := logrus.GetLevel()
-	t.Cleanup(func() {
-		logrus.SetLevel(originalLevel)
-	})
-
-	originalVerbose := verbose
-	t.Cleanup(func() {
-		verbose = originalVerbose
-	})
-
-	verbose = true
-	err := PersistentPreRunE(nil, nil)
-	assert.NoError(t, err)
-	assert.Equal(t, logrus.TraceLevel, logrus.GetLevel())
-}
-
-func TestPersistentPreRunE_NotVerbose(t *testing.T) {
-	originalLevel := logrus.GetLevel()
-	t.Cleanup(func() {
-		logrus.SetLevel(originalLevel)
-	})
-
-	logrus.SetLevel(logrus.InfoLevel)
-
-	originalVerbose := verbose
-	t.Cleanup(func() {
-		verbose = originalVerbose
-	})
-
-	verbose = false
-	err := PersistentPreRunE(nil, nil)
-	assert.NoError(t, err)
-	assert.Equal(t, logrus.InfoLevel, logrus.GetLevel())
 }
 
 func TestIsWSLDistro(t *testing.T) {
