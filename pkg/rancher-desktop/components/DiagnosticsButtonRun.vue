@@ -21,6 +21,9 @@ export default defineComponent({
       // We can't update this.currentTime because computed methods can't have side-effects, so treat an
       // older currentTime the same as timeLastRun.
 
+      if (this.timeLastRun.valueOf() === 0) {
+        return '(Never)';
+      }
       if (this.currentTime.valueOf() >= this.timeLastRun.valueOf()) {
         return this.currentTime.to(dayjs(this.timeLastRun));
       } else {
