@@ -7,7 +7,7 @@ require (
 	github.com/containerd/containerd v1.7.30
 	github.com/containerd/containerd/api v1.10.0
 	github.com/containernetworking/plugins v1.9.0
-	github.com/containers/gvisor-tap-vsock v0.8.7
+	github.com/containers/gvisor-tap-vsock v0.8.8
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/lima-vm/lima v1.0.0-beta.0
@@ -90,7 +90,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/mod v0.32.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/term v0.39.0 // indirect
