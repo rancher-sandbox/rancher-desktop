@@ -54,7 +54,7 @@ module.exports = {
      * @type Record<string, string>
      */
     const overrides = {
-      'esprima@npm:1.2.2': 'BSD-2-Clause', // https://github.com/jquery/esprima/pull/1181
+      'esprima@npm:1.2.5': 'BSD-2-Clause', // https://github.com/jquery/esprima/pull/1181
     };
 
     /**
