@@ -5134,6 +5134,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vue/compiler-core@npm:3.5.28":
+  version: 3.5.28
+  resolution: "@vue/compiler-core@npm:3.5.28"
+  dependencies:
+    "@babel/parser": "npm:^7.29.0"
+    "@vue/shared": "npm:3.5.28"
+    entities: "npm:^7.0.1"
+    estree-walker: "npm:^2.0.2"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c0/60af1cf82781a87e676d75b504c1f096c5784ae6b881104e793f1b431a80633e893c72b58d599bbf25d3ecf13b3d55c5957e446382a3ddb84b64d0485cff88a2
+  languageName: node
+  linkType: hard
+
 "@vue/compiler-dom@npm:3.5.27":
   version: 3.5.27
   resolution: "@vue/compiler-dom@npm:3.5.27"
@@ -5141,6 +5154,16 @@ __metadata:
     "@vue/compiler-core": "npm:3.5.27"
     "@vue/shared": "npm:3.5.27"
   checksum: 10c0/0a91a1b93a0f25936c83a2881da7222d22c6ad160f3405f9aed86668b66f4c7ff1611bcc769441fccd0fecb3c83607c0c1c78a43d8acf3aa106b87034de54e50
+  languageName: node
+  linkType: hard
+
+"@vue/compiler-dom@npm:3.5.28":
+  version: 3.5.28
+  resolution: "@vue/compiler-dom@npm:3.5.28"
+  dependencies:
+    "@vue/compiler-core": "npm:3.5.28"
+    "@vue/shared": "npm:3.5.28"
+  checksum: 10c0/b42ce0eba34a552500f6047ae57abcce9761c4a4ca8b18839ef957fff67d01eb228be56ef88519c5a3984f8da42894fb3797ad56c2fd4b98975c60b35df7ff80
   languageName: node
   linkType: hard
 
@@ -5161,6 +5184,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vue/compiler-sfc@npm:3.5.28":
+  version: 3.5.28
+  resolution: "@vue/compiler-sfc@npm:3.5.28"
+  dependencies:
+    "@babel/parser": "npm:^7.29.0"
+    "@vue/compiler-core": "npm:3.5.28"
+    "@vue/compiler-dom": "npm:3.5.28"
+    "@vue/compiler-ssr": "npm:3.5.28"
+    "@vue/shared": "npm:3.5.28"
+    estree-walker: "npm:^2.0.2"
+    magic-string: "npm:^0.30.21"
+    postcss: "npm:^8.5.6"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10c0/9277cbb63d689fdfa24a85c6b485515e4aa144190da4ab8adbd668c9367b17ffdf57ef88a06b1ca1035a0811168ed1093c0382d52eaf3d5e6abc64d508a5f067
+  languageName: node
+  linkType: hard
+
 "@vue/compiler-ssr@npm:3.5.27":
   version: 3.5.27
   resolution: "@vue/compiler-ssr@npm:3.5.27"
@@ -5168,6 +5208,16 @@ __metadata:
     "@vue/compiler-dom": "npm:3.5.27"
     "@vue/shared": "npm:3.5.27"
   checksum: 10c0/a5880245502892fc3360c686f7b46c15bb4195c5c9fa550ab768eb7b5be8f50cf021cedaaebbf9384c2e8e3e30a11f50b02f8f9f036c7f360ac54e3dc9caf62b
+  languageName: node
+  linkType: hard
+
+"@vue/compiler-ssr@npm:3.5.28":
+  version: 3.5.28
+  resolution: "@vue/compiler-ssr@npm:3.5.28"
+  dependencies:
+    "@vue/compiler-dom": "npm:3.5.28"
+    "@vue/shared": "npm:3.5.28"
+  checksum: 10c0/e8bf2afa786ffe01d9a401e5dddc208f9e30e63bcb50bf3bbcd782e9dfc7169144c4e1d7273daccc647fcfcbd024eee3d2cd8fabef8ec120829d1687fe8aedbc
   languageName: node
   linkType: hard
 
@@ -5335,6 +5385,13 @@ __metadata:
   version: 3.5.27
   resolution: "@vue/shared@npm:3.5.27"
   checksum: 10c0/c80a84464530d51cf3d5fa1aab6c3e9717e5901fbc1b8a8eb9962edfc02985c1e03e6dc6d0d205d10cdff067c1c5f689d7156446d2a4c7686a8409a40e3a5f20
+  languageName: node
+  linkType: hard
+
+"@vue/shared@npm:3.5.28":
+  version: 3.5.28
+  resolution: "@vue/shared@npm:3.5.28"
+  checksum: 10c0/678a927ae45144cae2f070289e03d50cec61841278f7d18800c0890e97383a369e324bb4a8fc8ee001c29ed6e5a5a44b08220f562e6cdae3a14473f5e227d0f7
   languageName: node
   linkType: hard
 
@@ -8785,6 +8842,13 @@ __metadata:
   version: 7.0.0
   resolution: "entities@npm:7.0.0"
   checksum: 10c0/4e7cc40cd00b64adede81780fd85c0bd0a905e863b5ef0b01718028ffbc113886c281deb57e1ce0e13a6e349a2d404ff383c876673b81d6dc56e87bf3e5a022a
+  languageName: node
+  linkType: hard
+
+"entities@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "entities@npm:7.0.1"
+  checksum: 10c0/b4fb9937bb47ecb00aaaceb9db9cdd1cc0b0fb649c0e843d05cf5dbbd2e9d2df8f98721d8b1b286445689c72af7b54a7242fc2d63ef7c9739037a8c73363e7ca
   languageName: node
   linkType: hard
 
@@ -14582,7 +14646,7 @@ __metadata:
     "@vue/cli-plugin-router": "npm:5.0.9"
     "@vue/cli-plugin-vuex": "npm:5.0.9"
     "@vue/cli-service": "npm:5.0.9"
-    "@vue/compiler-sfc": "npm:3.5.27"
+    "@vue/compiler-sfc": "npm:3.5.28"
     "@vue/eslint-config-standard-with-typescript": "npm:9.2.0"
     "@vue/eslint-config-typescript": "npm:14.6.0"
     "@vue/test-utils": "npm:2.4.6"
