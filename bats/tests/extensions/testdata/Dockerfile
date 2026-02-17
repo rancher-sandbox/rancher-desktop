@@ -1,16 +1,16 @@
-FROM registry.opensuse.org/opensuse/bci/golang:stable AS builder
+FROM registry.suse.com/bci/golang:latest AS builder
 WORKDIR /usr/src/app
 COPY bin/dummy.go .
 ENV GOOS=windows
 RUN go build -o /dummy.exe -ldflags '-s -w' dummy.go
 
-FROM registry.opensuse.org/opensuse/bci/golang:stable AS server-builder
+FROM registry.suse.com/bci/golang:latest AS server-builder
 WORKDIR /usr/src/app
 COPY bin/server.go .
 ENV GOOS=linux
 RUN go build -o /server -ldflags '-s -w' server.go
 
-FROM registry.opensuse.org/opensuse/bci/bci-minimal
+FROM registry.suse.com/bci/bci-minimal:16.0
 ARG variant=basic
 
 ADD ${variant}.json /metadata.json
