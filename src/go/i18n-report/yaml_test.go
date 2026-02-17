@@ -248,6 +248,20 @@ func TestWriteNestedYAML(t *testing.T) {
 			},
 			want: "a:\n  z: first\n\nz:\n  a: last\n",
 		},
+		{
+			name: "multiline value",
+			entries: []mergeEntry{
+				{key: "a.b", value: "line one\nline two\n"},
+			},
+			want: "a:\n  b: |\n    line one\n    line two\n",
+		},
+		{
+			name: "multiline value at depth 3",
+			entries: []mergeEntry{
+				{key: "a.b.c.d", value: "first\nsecond\n"},
+			},
+			want: "a:\n  b:\n    c:\n      d: |\n        first\n        second\n",
+		},
 	}
 
 	for _, tc := range tests {

@@ -20,6 +20,7 @@ var subcommands = map[string]func([]string) error{
 	"merge":        runMerge,
 	"untranslated": runUntranslated,
 	"references":   runReferences,
+	"dynamic":      runDynamic,
 	"check":        runCheck,
 	"remove":       runRemove,
 }
@@ -61,6 +62,7 @@ Subcommands:
   remove        Remove keys from translation files (stdin or --stale)
   untranslated  Hardcoded English strings in Vue/TS files (heuristic)
   references    Where each en-us.yaml key is used (file:line)
+  dynamic       Template literal patterns that reference keys dynamically
   check         Lint check: unused + stale + missing translations
 
 Run "i18n-report <subcommand> -h" for subcommand-specific flags.`)

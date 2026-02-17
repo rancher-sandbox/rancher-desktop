@@ -210,8 +210,28 @@ func writeNestedYAML(w *strings.Builder, entries []mergeEntry) {
 		w.WriteString(indent)
 		w.WriteString(leaf)
 		w.WriteString(": ")
-		w.WriteString(yamlScalar(e.value))
-		w.WriteString("\n")
+		scalar := yamlScalar(e.value)
+		if strings.Contains(scalar, "\n") {
+			// Block scalar (e.g. "|\n  line1\n  line2"): re-indent the body
+			// lines to match the current YAML tree depth.
+			lines := strings.Split(scalar, "\n")
+			w.WriteString(lines[0]) // block indicator ("|" or ">")
+			w.WriteString("\n")
+			bodyIndent := indent + "  "
+			for _, line := range lines[1:] {
+				trimmed := strings.TrimLeft(line, " ")
+				if trimmed == "" {
+					w.WriteString("\n")
+				} else {
+					w.WriteString(bodyIndent)
+					w.WriteString(trimmed)
+					w.WriteString("\n")
+				}
+			}
+		} else {
+			w.WriteString(scalar)
+			w.WriteString("\n")
+		}
 
 		prevParts = parts
 	}

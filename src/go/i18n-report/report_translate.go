@@ -27,12 +27,13 @@ func runTranslate(args []string) error {
 }
 
 // reportTranslate outputs key=value pairs for keys in en-us.yaml that are
-// missing from a locale file. This is the input for translation agents.
+// missing from a locale file. Annotations (@context, @meaning, @no-translate)
+// from en-us.yaml are included so translators have context.
 func reportTranslate(root, locale, format string, batch, batches int) error {
 	enPath := translationsPath(root, "en-us.yaml")
 	localePath := translationsPath(root, locale+".yaml")
 
-	enKeys, err := loadYAMLFlat(enPath)
+	enEntries, err := loadYAMLWithComments(enPath)
 	if err != nil {
 		return err
 	}
@@ -41,14 +42,21 @@ func reportTranslate(root, locale, format string, batch, batches int) error {
 		return err
 	}
 
+	// Build a flat key list for sorting.
+	enKeyMap := make(map[string]string, len(enEntries))
+	for k, e := range enEntries {
+		enKeyMap[k] = e.value
+	}
+
 	type kv struct {
-		Key   string `json:"key"`
-		Value string `json:"value"`
+		Key     string `json:"key"`
+		Value   string `json:"value"`
+		Comment string `json:"comment,omitempty"`
 	}
 	var pairs []kv
-	for _, k := range sortedKeys(enKeys) {
+	for _, k := range sortedKeys(enKeyMap) {
 		if _, found := localeKeys[k]; !found {
-			pairs = append(pairs, kv{k, enKeys[k]})
+			pairs = append(pairs, kv{k, enEntries[k].value, enEntries[k].comment})
 		}
 	}
 
@@ -93,6 +101,9 @@ func reportTranslate(root, locale, format string, batch, batches int) error {
 	}
 	fmt.Printf("%s:\n\n", label)
 	for _, p := range pairs {
+		if p.Comment != "" {
+			fmt.Println(p.Comment)
+		}
 		fmt.Printf("%s=%s\n", p.Key, p.Value)
 	}
 	return nil
