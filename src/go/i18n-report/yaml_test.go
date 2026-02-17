@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -148,6 +149,51 @@ func TestIsValidDottedKey(t *testing.T) {
 				t.Errorf("isValidDottedKey(%q) = %v, want %v", tc.input, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestLoadYAMLWithComments(t *testing.T) {
+	// Write a temp YAML file with comments and load it.
+	input := `status:
+  # @reason "checking" = standard term
+  versionChecking: Checking...
+  # @reason multi-line reason;
+  #   continued here
+  updating: Updating...
+  noComment: plain value
+locale:
+  name: English
+`
+	tmpFile := t.TempDir() + "/test.yaml"
+	if err := os.WriteFile(tmpFile, []byte(input), 0644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := loadYAMLWithComments(tmpFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		key     string
+		value   string
+		comment string
+	}{
+		{"status.versionChecking", "Checking...", "# @reason \"checking\" = standard term"},
+		{"status.updating", "Updating...", "# @reason multi-line reason;\n#   continued here"},
+		{"status.noComment", "plain value", ""},
+		{"locale.name", "English", ""},
+	}
+	for _, tc := range tests {
+		e, ok := got[tc.key]
+		if !ok {
+			t.Errorf("missing key %q", tc.key)
+			continue
+		}
+		if e.value != tc.value {
+			t.Errorf("key %q: value = %q, want %q", tc.key, e.value, tc.value)
+		}
+		if e.comment != tc.comment {
+			t.Errorf("key %q: comment = %q, want %q", tc.key, e.comment, tc.comment)
+		}
 	}
 }
 

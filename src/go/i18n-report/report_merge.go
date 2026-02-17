@@ -8,8 +8,6 @@ import (
 	"io"
 	"os"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 // mergeEntry holds a translated key-value pair with an optional @reason comment.
@@ -42,12 +40,12 @@ func runMerge(args []string) error {
 func reportMerge(root, locale string, files []string) error {
 	localePath := translationsPath(root, locale+".yaml")
 
-	// Read existing locale entries.
-	existing := make(map[string]string)
-	if data, err := os.ReadFile(localePath); err == nil {
-		var raw map[string]interface{}
-		if err := yaml.Unmarshal(data, &raw); err == nil {
-			existing = flattenYAML("", raw)
+	// Read existing locale entries, preserving comments.
+	existing := make(map[string]mergeEntry)
+	if _, err := os.Stat(localePath); err == nil {
+		existing, err = loadYAMLWithComments(localePath)
+		if err != nil {
+			return fmt.Errorf("loading existing %s: %w", localePath, err)
 		}
 	}
 
@@ -80,8 +78,8 @@ func reportMerge(root, locale string, files []string) error {
 
 	// Build merged entry list: existing + new (new entries override existing).
 	merged := make(map[string]mergeEntry, len(existing)+len(newEntries))
-	for k, v := range existing {
-		merged[k] = mergeEntry{key: k, value: v}
+	for k, e := range existing {
+		merged[k] = e
 	}
 	added := 0
 	for _, e := range newEntries {

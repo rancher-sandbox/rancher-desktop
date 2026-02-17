@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -123,6 +125,62 @@ a.b=hello
 				}
 			}
 		})
+	}
+}
+
+func TestMergePreservesExistingComments(t *testing.T) {
+	dir := t.TempDir()
+
+	// Simulate a repo structure: translations dir with en-us.yaml and de.yaml.
+	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
+	os.MkdirAll(transDir, 0755)
+
+	enUS := `status:
+  checking: Checking...
+  updating: Updating...
+  done: Done
+`
+	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte(enUS), 0644)
+
+	// Existing de.yaml with @reason comments.
+	existingDE := `status:
+  # @reason "wird geprüft" = standard German
+  checking: Wird geprüft…
+  updating: Aktualisieren…
+`
+	os.WriteFile(filepath.Join(transDir, "de.yaml"), []byte(existingDE), 0644)
+
+	// Merge new input that adds "done" but doesn't touch "checking".
+	newInput := `# @reason Standard completion message
+status.done=Fertig
+`
+	inputFile := filepath.Join(dir, "input.txt")
+	os.WriteFile(inputFile, []byte(newInput), 0644)
+
+	err := reportMerge(dir, "de", []string{inputFile})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Read the result and verify comments are preserved.
+	result, err := loadYAMLWithComments(filepath.Join(transDir, "de.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Existing comment preserved.
+	if e := result["status.checking"]; e.comment != `# @reason "wird geprüft" = standard German` {
+		t.Errorf("existing comment lost: got %q", e.comment)
+	}
+
+	// New comment applied.
+	if e := result["status.done"]; e.comment != "# @reason Standard completion message" {
+		t.Errorf("new comment missing: got %q", e.comment)
+	}
+
+	// Uncommented key has no comment.
+	if e := result["status.updating"]; e.comment != "" {
+		t.Errorf("unexpected comment on updating: got %q", e.comment)
 	}
 }
 

@@ -46,6 +46,49 @@ func loadYAMLFlat(path string) (map[string]string, error) {
 	return flattenYAML("", raw), nil
 }
 
+// loadYAMLWithComments loads a YAML file and returns flattened entries
+// that preserve YAML comments (e.g. @reason, @context annotations).
+func loadYAMLWithComments(path string) (map[string]mergeEntry, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var doc yaml.Node
+	if err := yaml.Unmarshal(data, &doc); err != nil {
+		return nil, fmt.Errorf("parsing %s: %w", path, err)
+	}
+	result := make(map[string]mergeEntry)
+	if doc.Kind == yaml.DocumentNode && len(doc.Content) > 0 {
+		flattenNodeWithComments("", doc.Content[0], result)
+	}
+	return result, nil
+}
+
+// flattenNodeWithComments recursively flattens a yaml.Node tree into
+// dotted keys, preserving HeadComment from leaf key nodes.
+func flattenNodeWithComments(prefix string, node *yaml.Node, result map[string]mergeEntry) {
+	if node.Kind != yaml.MappingNode {
+		return
+	}
+	for i := 0; i < len(node.Content)-1; i += 2 {
+		keyNode := node.Content[i]
+		valNode := node.Content[i+1]
+		key := keyNode.Value
+		if prefix != "" {
+			key = prefix + "." + key
+		}
+		if valNode.Kind == yaml.MappingNode {
+			flattenNodeWithComments(key, valNode, result)
+		} else {
+			result[key] = mergeEntry{
+				key:     key,
+				value:   valNode.Value,
+				comment: keyNode.HeadComment,
+			}
+		}
+	}
+}
+
 // sortedKeys returns sorted keys of a string map.
 func sortedKeys(m map[string]string) []string {
 	keys := make([]string, 0, len(m))
