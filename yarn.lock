@@ -14625,6 +14625,7 @@ __metadata:
     "@electron/fuses": "npm:^2.0.0"
     "@electron/notarize": "npm:3.1.1"
     "@eslint/compat": "npm:2.0.2"
+    "@eslint/js": "npm:9.39.2"
     "@kubernetes/client-node": "npm:1.4.0"
     "@napi-rs/xattr": "npm:^1.0.3"
     "@playwright/test": "npm:1.58.2"
