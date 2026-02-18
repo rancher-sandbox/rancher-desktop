@@ -213,7 +213,7 @@ export default class UnixIntegrationManager implements IntegrationManager {
 // a) is a symlink
 // b) has a target path of srcPath
 export async function ensureSymlink(srcPath: string, dstPath: string): Promise<void> {
-  let linkedTo = '';
+  let linkedTo: string;
 
   try {
     linkedTo = await fs.promises.readlink(dstPath);

@@ -30,7 +30,7 @@ const KubeContextDefaultChecker: DiagnosticsChecker = {
     const config = JSON.parse(stdout);
     const contexts = config['contexts'] as any[] ?? [];
     const passed = contexts.some(context => context.name === 'rancher-desktop');
-    let description = 'Unknown issue determining default Kubernetes context.';
+    let description: string;
 
     console.debug(`${ this.id }: using ${ kubectl }`);
     console.debug(`${ this.id }: defaults to RD context? ${ passed }`);

@@ -530,15 +530,15 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       const wslHelper = await this.getLinuxToolPath(distro, executable('wsl-helper-linux'));
 
       await this.execCommand({ distro }, wslHelper, 'kubeconfig', '--verify');
-    } catch (err: any) {
+    } catch (cause: any) {
       // Only throw for a specific error code 1, since we control that from the
       // kubeconfig --verify command. The logic here is to bubble up this error
       // so that the diagnostic is very specific to this issue. Any other errors
       // are captured as log messages.
-      if (err && 'code' in err && err.code === 1) {
-        throw new Error(`The kubeConfig contains non-Rancher Desktop configuration in distro ${ distro }`);
+      if (cause && 'code' in cause && cause.code === 1) {
+        throw new Error(`The kubeConfig contains non-Rancher Desktop configuration in distro ${ distro }`, { cause });
       } else {
-        console.error(`Verifying kubeconfig in distro ${ distro } failed: ${ err }`);
+        console.error(`Verifying kubeconfig in distro ${ distro } failed: ${ cause }`);
       }
     }
     console.debug(`Verified kubeconfig in the following distro: ${ distro }`);

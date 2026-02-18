@@ -108,8 +108,8 @@ export function updateFromCommandLine(cfg: Settings, lockedFields: LockedSetting
     if (['boolean', 'number'].includes(currentValueType)) {
       try {
         finalValue = JSON.parse(finalValue);
-      } catch (err) {
-        throw new Error(`Can't evaluate --${ fqFieldName }=${ finalValue } as ${ currentValueType }: ${ err }`);
+      } catch (cause) {
+        throw new Error(`Can't evaluate --${ fqFieldName }=${ finalValue } as ${ currentValueType }: ${ cause }`, { cause });
       }
       // We know the current value's type is either boolean or number, so a constrained comparison is ok
       // eslint-disable-next-line valid-typeof

@@ -124,8 +124,8 @@ export async function verifyNoRegistrySubtree(hive: string): Promise<void> {
     }
     try {
       await childProcess.spawnFile('reg', ['delete', registryPath, '/f'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    } catch (ex: any) {
-      throw new Error(`Need to remove registry hive "${ registryPath }" (tried, got error ${ ex }`);
+    } catch (cause: any) {
+      throw new Error(`Need to remove registry hive "${ registryPath }" (tried, got error ${ cause })`, { cause });
     }
   }
 }
