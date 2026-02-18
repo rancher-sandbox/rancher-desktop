@@ -430,7 +430,6 @@ func TerminateProcessInDirectory(directory string, force bool) error {
 		if err != nil {
 			pid = 0
 		}
-		//nolint:gosec // pids cannot be negative
 		if pid == uint32(os.Getpid()) {
 			// Skip terminating the current process.
 			return nil
