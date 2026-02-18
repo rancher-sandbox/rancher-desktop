@@ -1125,7 +1125,7 @@ export default class K3sHelper extends events.EventEmitter {
               name,
             });
           }
-        }));
+        }).filter(defined));
 
         return;
       } catch (ex) {

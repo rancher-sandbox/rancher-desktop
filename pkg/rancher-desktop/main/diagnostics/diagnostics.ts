@@ -72,6 +72,8 @@ export class DiagnosticsManager {
           import('./wslInfo'),
         ])).map(obj => obj.default);
 
+        // Only some of the imports return promises.
+        // eslint-disable-next-line @typescript-eslint/await-thenable
         return (await Promise.all(imports)).flat();
       })();
     this.checkers.then((checkers) => {
