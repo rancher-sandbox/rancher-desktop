@@ -40,6 +40,21 @@ linters:
         - performance
         - style
     gosec:
+      excludes:
+        # Taint analysis rules (G7xx) produce only false positives in this codebase
+        - G702 # command injection via taint analysis - stub binaries forwarding args
+        - G703 # path traversal via taint analysis - os.CreateTemp paths
+        - G704 # SSRF via taint analysis - hardcoded URLs
+        - G705 # XSS via taint analysis - stdout writes
+        - G706 # log injection via taint analysis - internal log calls
+
+        # G115 flags every int↔uintptr cast on file descriptors (os.NewFile,
+        # syscall.Shutdown, IoctlFileClone). File descriptors are always
+        # non-negative and these casts are idiomatic Go.
+        - G115 # integer overflow conversion
+        # G117 matches exported struct fields named "Password" etc. The
+        # ConnectionInfo.Password field in rdctl/pkg/config is intentional.
+        - G117 # exported field matches secret pattern
       config:
         G306: "0644"
     mnd:

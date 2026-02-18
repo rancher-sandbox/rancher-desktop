@@ -214,7 +214,6 @@ func rx(ctx context.Context, conn io.Writer, tap *water.Interface, errCh chan er
 			frame = frame[:n]
 
 			size := make([]byte, 2)
-			//nolint:gosec // We guard above that the MTU fits in a uint16
 			binary.LittleEndian.PutUint16(size, uint16(n))
 
 			if _, err := conn.Write(size); err != nil {
