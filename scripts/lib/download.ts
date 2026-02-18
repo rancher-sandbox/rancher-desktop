@@ -34,7 +34,7 @@ async function fetchWithRetry(url: string) {
     try {
       return await fetch(url, { redirect: 'follow' });
     } catch (ex: any) {
-      if (ex && ex.errno === 'EAI_AGAIN') {
+      if (ex?.errno === 'EAI_AGAIN') {
         console.log(`Recoverable error downloading ${ url }, retrying...`);
         continue;
       }

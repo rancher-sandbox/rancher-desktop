@@ -1356,12 +1356,13 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
                   await this.execCommand({ root: true }, 'rm', '-f', obsoleteImageAllowListConf);
                 }),
-                await this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
+                this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
                 // Remove any residual rc artifacts from previous version
-                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/vtunnel-peer', '/etc/runlevels/default/vtunnel-peer'),
-                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/host-resolver', '/etc/runlevels/default/host-resolver'),
-                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/dnsmasq-generate', '/etc/runlevels/default/dnsmasq-generate'),
-                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/dnsmasq', '/etc/runlevels/default/dnsmasq'),
+                this.execCommand({ root: true }, 'rm', '-f',
+                  '/etc/init.d/vtunnel-peer', '/etc/runlevels/default/vtunnel-peer',
+                  '/etc/init.d/host-resolver', '/etc/runlevels/default/host-resolver',
+                  '/etc/init.d/dnsmasq-generate', '/etc/runlevels/default/dnsmasq-generate',
+                  '/etc/init.d/dnsmasq', '/etc/runlevels/default/dnsmasq'),
               ]);
 
               await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
