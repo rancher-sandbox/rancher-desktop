@@ -41,7 +41,7 @@ type DispatchFunctionType = (request: express.Request, response: express.Respons
 type HttpMethod = 'get' | 'put' | 'post';
 
 const console = Logging.server;
-const SERVER_PORT = 6107;
+const SERVER_PORT = 6207;
 const SERVER_FILE_BASENAME = 'rd-engine.json';
 const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
 
