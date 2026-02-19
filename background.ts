@@ -368,7 +368,7 @@ function updateBackendLockState(backendIsLocked: string, action?: string): void 
  * status.
  */
 async function doesBackendLockExist(): Promise<boolean> {
-  let backendIsLocked = '';
+  let backendIsLocked: string;
 
   const lockFileContents = await readBackendLockFile();
 

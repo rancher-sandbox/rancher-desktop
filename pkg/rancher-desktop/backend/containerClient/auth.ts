@@ -61,7 +61,7 @@ class RegistryAuth {
       }
     }
 
-    let knownAuths: Record<string, { Username: string, Secret: string }> = {};
+    let knownAuths: Record<string, { Username: string, Secret: string }>;
 
     try {
       knownAuths = JSON.parse(await runCredentialCommand('list'));

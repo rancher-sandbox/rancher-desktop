@@ -35,7 +35,7 @@ export class RDBinInShellPath implements DiagnosticsChecker {
 
   async check(): Promise<DiagnosticsCheckerResult> {
     const fixes: { description: string }[] = [];
-    let passed = false;
+    let passed: boolean;
     let description: string;
 
     try {

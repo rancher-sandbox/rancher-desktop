@@ -442,7 +442,6 @@ class Win32DeploymentReader {
       return null;
     }
     const expectingArray = Array.isArray(schemaVal);
-    let parsedValue: any = null;
 
     switch (rawValue.type) {
     case nativeReg.ValueType.SZ:
@@ -467,7 +466,7 @@ class Win32DeploymentReader {
         this.errors.push(msg);
       } else if (isUserDefinedObject || (typeof schemaVal) === 'boolean' || (typeof schemaVal) === 'number') {
         // Otherwise the schema type is number or boolean. If it's boolean, reduce it to true/false
-        parsedValue = nativeReg.parseValue(rawValue) as number;
+        const parsedValue = nativeReg.parseValue(rawValue) as number;
 
         return (typeof schemaVal === 'boolean') ? !!parsedValue : parsedValue;
       } else {
