@@ -76,7 +76,7 @@
     "jquery": "4.0.0",
     "jsonpath-plus": "10.3.0",
     "lodash": "4.17.23",
-    "marked": "17.0.1",
+    "marked": "17.0.2",
     "native-reg": "1.1.1",
     "node-forge": "1.3.3",
     "proxy-agent": "^6.5.0",
