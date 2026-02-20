@@ -88,7 +88,7 @@
     "vue-router": "5.0.2",
     "vue-select": "3.20.4",
     "vuex": "4.1.0",
-    "which": "6.0.0",
+    "which": "6.0.1",
     "yaml": "2.8.2"
   },
   "devDependencies": {
