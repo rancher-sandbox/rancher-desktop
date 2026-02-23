@@ -1,6 +1,7 @@
 import { expect, test, ElectronApplication, Page } from '@playwright/test';
 
 import { ContainerLogsPage } from './pages/container-logs-page';
+import { ContainerShellPage } from './pages/container-shell-page';
 import { ContainersPage } from './pages/containers-page';
 import { NavPage } from './pages/nav-page';
 import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
@@ -297,5 +298,79 @@ test.describe.serial('Containers Tests', () => {
         } catch {}
       }
     }
+  });
+});
+
+test.describe.serial('Container Shell Tab', () => {
+  let electronApp: ElectronApplication;
+  let shellContainerId: string;
+
+  test.beforeAll(async({}, testInfo) => {
+    [electronApp, page] = await startSlowerDesktop(testInfo, {
+      kubernetes:      { enabled: false },
+      containerEngine: { name: ContainerEngine.MOBY, allowedImages: { enabled: false } },
+    });
+
+    const navPage = new NavPage(page);
+    await navPage.progressBecomesReady();
+
+    // Start a long-running Alpine container for the shell tests.
+    const output = await tool('docker', 'run', '--detach', 'alpine', 'sleep', '3600');
+    shellContainerId = output.trim();
+  });
+
+  test.afterAll(async({}, testInfo) => {
+    if (shellContainerId) {
+      try {
+        await tool('docker', 'rm', '-f', shellContainerId);
+      } catch {}
+    }
+    await teardown(electronApp, testInfo);
+  });
+
+  async function navigateToShellTab() {
+    const navPage = new NavPage(page);
+    const containersPage = new ContainersPage(page);
+    await navPage.navigateTo('Containers');
+    await containersPage.waitForTableToLoad();
+    await containersPage.waitForContainerToAppear(shellContainerId);
+    await containersPage.clickContainerAction(shellContainerId, 'info');
+    await page.waitForURL(`**/containers/info/${ shellContainerId }`, { timeout: 10_000 });
+    const shellPage = new ContainerShellPage(page);
+    await shellPage.clickTab();
+    await shellPage.waitForTerminal();
+    await shellPage.waitForShellReady();
+
+    return shellPage;
+  }
+
+  test('should show the Shell tab on a running container', async() => {
+    const shellPage = await navigateToShellTab();
+    await expect(shellPage.tab).toBeVisible();
+    await expect(shellPage.terminal).toBeVisible();
+    await expect(shellPage.notRunningBanner).not.toBeVisible();
+  });
+
+  test('should execute a command and display its output', async() => {
+    const shellPage = new ContainerShellPage(page);
+    const marker = `RDTEST_${ Date.now() }`;
+    await shellPage.runCommand(`echo ${ marker }`);
+    await shellPage.waitForOutput(marker);
+  });
+
+  test('should preserve the session when switching between Logs and Shell tabs', async() => {
+    const shellPage    = new ContainerShellPage(page);
+    const logsTab      = page.getByTestId('tab-logs');
+    const marker       = `RDTEST_PERSIST_${ Date.now() }`;
+
+    await shellPage.runCommand(`echo ${ marker }`);
+    await shellPage.waitForOutput(marker);
+
+    // Switch to Logs and back.
+    await logsTab.click();
+    await shellPage.clickTab();
+
+    // History must still be visible — session was preserved.
+    await shellPage.waitForOutput(marker);
   });
 });
