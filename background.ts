@@ -30,6 +30,7 @@ import { DashboardServer } from '@pkg/main/dashboardServer';
 import { DeploymentProfileError, readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { ExtensionErrorCode, isExtensionError } from '@pkg/main/extensions';
+import { ContainerExecHandler } from '@pkg/main/containerExec';
 import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
@@ -89,6 +90,7 @@ let cfg: settings.Settings;
 let firstRunDialogComplete = false;
 let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler | null = null;
+let containerExecHandler: ContainerExecHandler | null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
@@ -588,6 +590,12 @@ async function startK8sManager() {
 
   await initializeExtensionManager(k8smanager.containerEngineClient, cfg);
   window.send('extensions/changed');
+
+  if (!containerExecHandler) {
+    containerExecHandler = new ContainerExecHandler(k8smanager.containerEngineClient);
+  } else {
+    containerExecHandler.updateClient(k8smanager.containerEngineClient);
+  }
 }
 
 /**
