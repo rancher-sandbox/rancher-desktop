@@ -1,9 +1,14 @@
 /**
  * This module handles interactive container exec sessions for the Shell tab.
  * It manages bidirectional IPC between the renderer (xterm.js) and docker exec.
+ *
+ * Sessions survive frontend navigation: on "detach" the process keeps running
+ * and stdout is buffered (ring buffer, 50 KB).  On reconnect the buffer is
+ * replayed so the user sees the full terminal history.
  */
 
 import Electron from 'electron';
+import crypto from 'crypto';
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import type { WritableReadableProcess } from '@pkg/backend/containerClient/types';
@@ -13,13 +18,24 @@ import Logging from '@pkg/utils/logging';
 const console = Logging.containerExec;
 const ipcMainProxy = getIpcMainProxy(console);
 
+const MAX_OUTPUT_BUF = 50 * 1024; // 50 KB ring buffer
+
+function generateExecId(): string {
+  return crypto.randomBytes(12).toString('hex');
+}
+
 interface ExecSession {
-  process: WritableReadableProcess;
-  frame:   Electron.WebFrameMain | null;
+  process:     WritableReadableProcess;
+  frame:       Electron.WebFrameMain | null;
+  containerId: string;
+  hasPty:      boolean | null;  // null until sentinel found
+  outputBuf:   string;          // ring buffer of recent stdout
+  detached:    boolean;
 }
 
 export class ContainerExecHandler {
-  protected sessions = new Map<string, ExecSession>();
+  protected sessions            = new Map<string, ExecSession>(); // execId → session
+  protected sessionsByContainer = new Map<string, string>();      // containerId → execId
 
   constructor(protected client: ContainerEngineClient) {
     this.initHandlers();
@@ -39,10 +55,37 @@ export class ContainerExecHandler {
       }
     }
     this.sessions.clear();
+    this.sessionsByContainer.clear();
   }
 
   protected initHandlers() {
-    ipcMainProxy.on('container-exec/start', (event, execId, containerId, namespace) => {
+    ipcMainProxy.on('container-exec/start', (event, containerId, namespace) => {
+      const sendToFrame = (channel: string, ...args: any[]) => {
+        try {
+          event.senderFrame?.send?.(channel, ...args);
+        } catch (ex) {
+          console.debug(`Failed to send ${ channel } to frame:`, ex);
+        }
+      };
+
+      // Reconnect path: an existing session for this container is alive.
+      const existingId = this.sessionsByContainer.get(containerId);
+
+      if (existingId) {
+        const session = this.sessions.get(existingId);
+
+        if (session) {
+          session.frame    = event.senderFrame ?? null;
+          session.detached = false;
+          sendToFrame('container-exec/ready', existingId, session.outputBuf, session.hasPty ?? false);
+
+          return;
+        }
+        // Stale entry (process exited while detached); fall through to create new.
+        this.sessionsByContainer.delete(containerId);
+      }
+
+      // New session path.
       try {
         // Try `script` inside the container for a proper PTY (echo + line-
         // buffered output).  Fall back to plain `sh -i` on images that don't
@@ -65,11 +108,21 @@ export class ContainerExecHandler {
           'interactive',
           { namespace },
         );
-        const session: ExecSession = { process: proc, frame: event.senderFrame ?? null };
+
+        const execId = generateExecId();
+        const session: ExecSession = {
+          process:     proc,
+          frame:       event.senderFrame ?? null,
+          containerId,
+          hasPty:      null,
+          outputBuf:   '',
+          detached:    false,
+        };
 
         this.sessions.set(execId, session);
+        this.sessionsByContainer.set(containerId, execId);
 
-        const sendToFrame = (channel: string, ...args: any[]) => {
+        const sendToSession = (channel: string, ...args: any[]) => {
           try {
             session.frame?.send?.(channel, ...args);
           } catch (ex) {
@@ -78,7 +131,15 @@ export class ContainerExecHandler {
         };
 
         proc.stdout.on('data', (data: Buffer) => {
-          sendToFrame('container-exec/output', execId, data.toString('utf-8'));
+          const text = data.toString('utf-8');
+
+          // Accumulate in ring buffer.
+          session.outputBuf += text;
+          if (session.outputBuf.length > MAX_OUTPUT_BUF) {
+            session.outputBuf = session.outputBuf.slice(-MAX_OUTPUT_BUF);
+          }
+
+          sendToSession('container-exec/output', execId, text);
         });
 
         // Buffer stderr until the sentinel arrives so we can detect PTY mode
@@ -93,7 +154,14 @@ export class ContainerExecHandler {
             .join('\r\n');
 
           if (filtered.trim()) {
-            sendToFrame('container-exec/output', execId, filtered);
+            sendToSession('container-exec/output', execId, filtered);
+            // Also buffer stderr for history replay (e.g. shell prompts in
+            // non-PTY mode arrive via stderr, not stdout).  The content
+            // already uses \r\n so the replay conversion leaves it untouched.
+            session.outputBuf += filtered;
+            if (session.outputBuf.length > MAX_OUTPUT_BUF) {
+              session.outputBuf = session.outputBuf.slice(-MAX_OUTPUT_BUF);
+            }
           }
         };
 
@@ -113,7 +181,10 @@ export class ContainerExecHandler {
 
           if (hasPty || hasNpty) {
             sentinelFound = true;
-            sendToFrame('container-exec/pty', execId, hasPty);
+            session.hasPty = hasPty;
+            // For new sessions: send ready (empty history) then pty event.
+            sendToSession('container-exec/ready', execId, '', hasPty);
+            sendToSession('container-exec/pty', execId, hasPty);
             // Strip the sentinel, then process any remaining content.
             const remaining = stderrBuf
               .replace(SENTINEL_PTY, '')
@@ -125,20 +196,22 @@ export class ContainerExecHandler {
         });
 
         proc.on('exit', (code) => {
-          sendToFrame('container-exec/exit', execId, code ?? -1);
+          sendToSession('container-exec/exit', execId, code ?? -1);
           this.sessions.delete(execId);
+          this.sessionsByContainer.delete(containerId);
         });
 
         proc.on('error', (err) => {
           console.error(`Exec session ${ execId } error:`, err);
-          sendToFrame('container-exec/output', execId, `\r\nError: ${ err.message }\r\n`);
-          sendToFrame('container-exec/exit', execId, -1);
+          sendToSession('container-exec/output', execId, `\r\nError: ${ err.message }\r\n`);
+          sendToSession('container-exec/exit', execId, -1);
           this.sessions.delete(execId);
+          this.sessionsByContainer.delete(containerId);
         });
       } catch (ex) {
-        console.error(`Failed to start exec session ${ execId }:`, ex);
+        console.error(`Failed to start exec session for ${ containerId }:`, ex);
         try {
-          event.senderFrame?.send?.('container-exec/exit', execId, -1);
+          sendToFrame('container-exec/exit', '', -1);
         } catch {}
       }
     });
@@ -147,6 +220,31 @@ export class ContainerExecHandler {
       const session = this.sessions.get(execId);
 
       if (session) {
+        // In non-PTY mode the frontend echoes keystrokes locally (they never
+        // appear in proc.stdout).  Mirror the echo into outputBuf so that
+        // the replay on reconnect shows both input and output.
+        // The frontend already converted \r→\n before sending, so \n means
+        // "Enter was pressed".  Backspace (\x7f) is echoed as \b \b.
+        if (session.hasPty === false) {
+          let echoed = '';
+
+          for (const ch of data) {
+            if (ch === '\n') {
+              echoed += '\r\n';
+            } else if (ch === '\x7f') {
+              echoed += '\b \b';
+            } else if (ch >= ' ') {
+              echoed += ch;
+            }
+          }
+          if (echoed) {
+            session.outputBuf += echoed;
+            if (session.outputBuf.length > MAX_OUTPUT_BUF) {
+              session.outputBuf = session.outputBuf.slice(-MAX_OUTPUT_BUF);
+            }
+          }
+        }
+
         try {
           session.process.stdin?.write(data);
         } catch (ex) {
@@ -165,6 +263,16 @@ export class ContainerExecHandler {
           console.debug(`Failed to kill exec session ${ execId }:`, ex);
         }
         this.sessions.delete(execId);
+        this.sessionsByContainer.delete(session.containerId);
+      }
+    });
+
+    ipcMainProxy.on('container-exec/detach', (_, execId) => {
+      const session = this.sessions.get(execId);
+
+      if (session) {
+        session.frame    = null;
+        session.detached = true;
       }
     });
   }

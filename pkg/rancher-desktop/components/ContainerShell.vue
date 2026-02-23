@@ -55,12 +55,6 @@ let resizeObserver: ResizeObserver | undefined;
 let execId = '';
 let hasPty = false;
 
-function generateExecId(): string {
-  return Array.from(window.crypto.getRandomValues(new Uint8Array(12)))
-    .map(v => `00${ v.toString(16) }`.slice(-2))
-    .join('');
-}
-
 async function initializeTerminal() {
   isLoading.value = false;
   await nextTick();
@@ -140,6 +134,17 @@ function handlePty(_event: any, id: string, isPty: boolean) {
   }
 }
 
+function handleReady(_event: any, id: string, history: string, ptyKnown: boolean) {
+  execId = id;
+  hasPty = ptyKnown;
+  if (history) {
+    // Apply the same \n → \r\n conversion as handleOutput: the ring buffer
+    // stores raw stdout bytes (bare \n in non-PTY mode).
+    const out = !ptyKnown ? history.replace(/(?<!\r)\n/g, '\r\n') : history;
+    terminal?.write(out);
+  }
+}
+
 function handleOutput(_event: any, id: string, data: string) {
   if (id !== execId) {
     return;
@@ -170,12 +175,13 @@ async function startShell() {
   }
 
   error.value = null;
-  execId = generateExecId();
+  execId = '';   // will be assigned by handleReady
   hasPty = false;
 
+  ipcRenderer.on('container-exec/ready',  handleReady);
   ipcRenderer.on('container-exec/output', handleOutput);
-  ipcRenderer.on('container-exec/exit', handleExit);
-  ipcRenderer.on('container-exec/pty', handlePty);
+  ipcRenderer.on('container-exec/exit',   handleExit);
+  ipcRenderer.on('container-exec/pty',    handlePty);
 
   if (!terminal) {
     await initializeTerminal();
@@ -185,17 +191,18 @@ async function startShell() {
     fitAddon?.fit();
   }
 
-  ipcRenderer.send('container-exec/start', execId, props.containerId, props.namespace ?? undefined);
+  ipcRenderer.send('container-exec/start', props.containerId, props.namespace ?? undefined);
 }
 
 function stopShell() {
   if (execId) {
-    ipcRenderer.send('container-exec/kill', execId);
+    ipcRenderer.send('container-exec/detach', execId);
     execId = '';
   }
+  ipcRenderer.removeListener('container-exec/ready',  handleReady);
   ipcRenderer.removeListener('container-exec/output', handleOutput);
-  ipcRenderer.removeListener('container-exec/exit', handleExit);
-  ipcRenderer.removeListener('container-exec/pty', handlePty);
+  ipcRenderer.removeListener('container-exec/exit',   handleExit);
+  ipcRenderer.removeListener('container-exec/pty',    handlePty);
 }
 
 function cleanup() {

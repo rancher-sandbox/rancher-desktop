@@ -40,9 +40,10 @@ export interface IpcMainEvents {
   // #endregion
 
   // #region main/containerExec
-  'container-exec/start':  (execId: string, containerId: string, namespace?: string) => void;
+  'container-exec/start':  (containerId: string, namespace?: string) => void;
   'container-exec/input':  (execId: string, data: string) => void;
   'container-exec/kill':   (execId: string) => void;
+  'container-exec/detach': (execId: string) => void;
   // #endregion
 
   // #region main/imageEvents
@@ -219,6 +220,7 @@ export interface IpcRendererEvents {
   'container-exec/output': (execId: string, data: string) => void;
   'container-exec/exit':   (execId: string, code: number) => void;
   'container-exec/pty':    (execId: string, hasPty: boolean) => void;
+  'container-exec/ready':  (execId: string, history: string, hasPty: boolean) => void;
   // #endregion
 
   // #region dialog
