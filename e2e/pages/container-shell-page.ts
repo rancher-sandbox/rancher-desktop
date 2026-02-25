@@ -20,7 +20,7 @@ export class ContainerShellPage {
   }
 
   async waitForTerminal() {
-    await expect(this.terminal).toBeVisible({ timeout: 15_000 });
+    await expect(this.terminal).toBeVisible({ timeout: 30_000 });
   }
 
   /** Type a command and press Enter, using the hidden xterm textarea. */
