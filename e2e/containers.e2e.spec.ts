@@ -278,7 +278,7 @@ test.describe.serial('Containers Tests', () => {
         autoRefreshContainerName,
         'alpine',
         'sleep',
-        'inf',
+        'infinity',
       );
       autoRefreshContainerId = output.trim();
 
@@ -305,7 +305,7 @@ test.describe.serial('Container Shell Tab', () => {
   let electronApp: ElectronApplication;
   let shellContainerId: string;
 
-  test.beforeAll(async({}, testInfo) => {
+  test.beforeAll(async({ colorScheme }, testInfo) => {
     [electronApp, page] = await startSlowerDesktop(testInfo, {
       kubernetes:      { enabled: false },
       containerEngine: { name: ContainerEngine.MOBY, allowedImages: { enabled: false } },
@@ -315,7 +315,7 @@ test.describe.serial('Container Shell Tab', () => {
     await navPage.progressBecomesReady();
 
     // Start a long-running Alpine container for the shell tests.
-    const output = await tool('docker', 'run', '--detach', 'alpine', 'sleep', '3600');
+    const output = await tool('docker', 'run', '--detach', 'alpine', 'sleep', 'infinity');
     shellContainerId = output.trim();
   });
 
@@ -330,8 +330,8 @@ test.describe.serial('Container Shell Tab', () => {
 
   async function navigateToShellTab() {
     const navPage = new NavPage(page);
-    const containersPage = new ContainersPage(page);
     await navPage.navigateTo('Containers');
+    const containersPage = new ContainersPage(page);
     await containersPage.waitForTableToLoad();
     await containersPage.waitForContainerToAppear(shellContainerId);
     await containersPage.clickContainerAction(shellContainerId, 'info');
