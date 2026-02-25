@@ -20,6 +20,19 @@ const ipcMainProxy = getIpcMainProxy(console);
 
 const MAX_OUTPUT_BUF = 50 * 1024; // 50 KB ring buffer
 
+// List of shell diagnostic lines we want to ignore/suppress to avoid
+// confusing users about our internal sausage factory as those messages are
+// due to us not running with a real TTY because electron's main stdin is a pipe.
+// By setting LC_ALL=C on the exec call we ensure they are always in English
+// so we do not have to worry about i10n
+const ignoredLines = [
+  'input device is not a TTY',
+  "can't access tty",
+  'job control turned off',
+  'cannot set terminal process group',
+  'no job control in this shell',
+];
+
 function generateExecId(): string {
   return crypto.randomBytes(12).toString('hex');
 }
@@ -104,7 +117,7 @@ export class ContainerExecHandler {
         ].join(' ');
 
         const proc = this.client.runClient(
-          ['exec', '-i', containerId, 'sh', '-c', shellCmd],
+          ['exec', '-i', '-e', 'LC_ALL=C', containerId, 'sh', '-c', shellCmd],
           'interactive',
           { namespace },
         );
@@ -150,7 +163,7 @@ export class ContainerExecHandler {
         const processStderr = (text: string) => {
           const filtered = text
             .split(/\r?\n/)
-            .filter(line => !/input device is not a TTY|can't access tty|job control turned off|cannot set terminal process group|no job control in this shell/i.test(line))
+            .filter(line => !ignoredLines.some(l => line.includes(l)))
             .join('\r\n');
 
           if (filtered.trim()) {
