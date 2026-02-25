@@ -44,6 +44,8 @@ module.exports = {
       'Zlib',
       // The default CNCF license, not in the above list.
       'Apache-2.0',
+      // Blue-Oak has been approved by SUSE Legal
+      'BlueOak-1.0.0',
       // Extra accepted licenses.
       'Unlicense',
     ]);

@@ -9,7 +9,7 @@ kuberlr: 0.6.1
 helm: 4.1.1
 dockerCLI: 29.2.1
 dockerBuildx: 0.31.1
-dockerCompose: 5.0.2
+dockerCompose: 5.1.0
 golangci-lint: 2.10.1
 trivy: 0.69.1
 steve: 0.1.0-beta9.1
@@ -22,7 +22,7 @@ hostSwitch: 1.2.7
 moproxy: 0.5.1
 spinShim: 0.22.0
 spinOperator: 0.6.1
-certManager: 1.19.3
+certManager: 1.19.4
 spinCLI: 3.6.1
 spinKubePlugin: 0.4.0
 check-spelling: 0.0.25
