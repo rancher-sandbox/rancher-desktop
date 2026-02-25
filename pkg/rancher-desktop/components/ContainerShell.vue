@@ -1,16 +1,6 @@
 <template>
   <div class="container-shell-component">
     <banner
-      v-if="!isContainerRunning"
-      class="content-state"
-      color="warning"
-      data-testid="shell-not-running"
-    >
-      <span class="icon icon-info-circle icon-lg" />
-      Shell is only available for running containers.
-    </banner>
-
-    <banner
       v-if="error"
       class="content-state"
       color="error"
@@ -18,6 +8,16 @@
     >
       <span class="icon icon-info-circle icon-lg" />
       {{ error }}
+    </banner>
+
+    <banner
+      v-if="!isContainerRunning && !error"
+      class="content-state"
+      color="warning"
+      data-testid="shell-not-running"
+    >
+      <span class="icon icon-info-circle icon-lg" />
+      Shell is only available for running containers.
     </banner>
 
     <div
