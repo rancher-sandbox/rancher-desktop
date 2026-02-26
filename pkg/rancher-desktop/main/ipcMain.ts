@@ -17,7 +17,7 @@ function removeCircularReferences(property: string | symbol, value: any): any {
 export function makeArgsPrintable(args: any[]): string[] {
   const maxPrintableArgLength = 500;
   const printableArgs = args.map((arg) => {
-    let printableArg = JSON.stringify(arg, removeCircularReferences);
+    let printableArg = JSON.stringify(arg, removeCircularReferences) ?? 'undefined';
 
     if (printableArg.length > maxPrintableArgLength) {
       printableArg = printableArg.slice(0, maxPrintableArgLength);

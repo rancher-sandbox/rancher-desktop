@@ -41,9 +41,9 @@ export interface IpcMainEvents {
 
   // #region main/containerExec
   'container-exec/start':  (containerId: string, namespace?: string) => void;
-  'container-exec/input':  (execId: string, data: string) => void;
-  'container-exec/kill':   (execId: string) => void;
-  'container-exec/detach': (execId: string) => void;
+  'container-exec/input':  (containerId: string, data: string) => void;
+  'container-exec/kill':   (containerId: string) => void;
+  'container-exec/detach': (containerId: string) => void;
   // #endregion
 
   // #region main/imageEvents
@@ -217,10 +217,10 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region main/containerExec
-  'container-exec/output': (execId: string, data: string) => void;
-  'container-exec/exit':   (execId: string, code: number) => void;
-  'container-exec/pty':    (execId: string, hasPty: boolean) => void;
-  'container-exec/ready':  (execId: string, history: string, hasPty: boolean) => void;
+  'container-exec/output':      (execId: string, data: string) => void;
+  'container-exec/exit':        (execId: string, code: number) => void;
+  'container-exec/ready':       (execId: string, history: string) => void;
+  'container-exec/unsupported': () => void;
   // #endregion
 
   // #region dialog

@@ -17,7 +17,11 @@ mockModules({
   '@pkg/main/ipcMain':  { getIpcMainProxy: jest.fn(() => fakeProxy) },
 });
 
-const { ContainerExecHandler } = await import('@pkg/main/containerExec');
+let ContainerExecHandler: Awaited<typeof import('@pkg/main/containerExec')>['ContainerExecHandler'];
+
+beforeAll(async() => {
+  ({ ContainerExecHandler } = await import('@pkg/main/containerExec'));
+});
 
 // ── test helpers ───────────────────────────────────────────────────────────────
 
@@ -33,6 +37,21 @@ function makeProcess() {
   return proc;
 }
 
+/**
+ * Fake return value for the pre-check runClient call.
+ * 'ignore' mode returns a Promise that resolves on exit 0 and rejects otherwise.
+ */
+function makeCheckProcess(exitCode = 0) {
+  if (exitCode === 0) {
+    return Promise.resolve({});
+  }
+  const err: any = new Error(`Exited with exit code ${ exitCode }`);
+
+  err.code = exitCode;
+
+  return Promise.reject(err);
+}
+
 /** Fake Electron WebFrameMain. */
 function makeFrame() {
   return { send: jest.fn() } as any;
@@ -40,24 +59,32 @@ function makeFrame() {
 
 /** Fake IPC event (the first arg passed to ipcMain.on handlers). */
 function makeEvent(frame = makeFrame()) {
-  return { senderFrame: frame } as any;
+  return { sender: frame } as any;
 }
 
-/** Start a session and trigger the PTY/non-PTY sentinel, returning context. */
-function startSession(handler: any, containerId: string, pty: boolean) {
-  const proc  = makeProcess();
-  const frame = makeFrame();
+/**
+ * Start a session where the `script` pre-check succeeds.
+ * runClient is called twice: first for the check (exits 0), then for the
+ * real shell session.  Returns the session proc and frame for further setup.
+ */
+async function startSession(handler: any, containerId: string) {
+  const checkProc = makeCheckProcess(0);
+  const shellProc = makeProcess();
+  const frame     = makeFrame();
 
-  handler._mockClient.runClient.mockReturnValue(proc);
+  handler._mockClient.runClient
+    .mockReturnValueOnce(checkProc)
+    .mockReturnValueOnce(shellProc);
+
   fakeProxy.emit('container-exec/start', makeEvent(frame), containerId, undefined);
-  proc.stderr.emit('data', Buffer.from(pty ? 'RDSHELL:pty\r\n' : 'RDSHELL:npty\r\n'));
 
-  const sessions: Map<string, any> = handler.sessions;
-  const execId  = [...sessions.keys()].at(-1)!;
-  const session = sessions.get(execId)!;
+  // Let the async handler (pre-check await) run.
+  await new Promise(setImmediate);
+
+  const session = handler.sessions.get(containerId)!;
 
   return {
-    proc, frame, session, execId,
+    shellProc, frame, session, containerId,
   };
 }
 
@@ -77,20 +104,58 @@ describe('ContainerExecHandler', () => {
   // ── new session ─────────────────────────────────────────────────────────────
 
   describe('container-exec/start — new session', () => {
-    it('calls runClient with docker exec -i and the container id', () => {
-      mockClient.runClient.mockReturnValue(makeProcess());
-      fakeProxy.emit('container-exec/start', makeEvent(), 'ctr1', undefined);
+    it('runs a pre-check for script availability before starting the session', async () => {
+      const checkProc = makeCheckProcess(0);
+      const shellProc = makeProcess();
 
-      expect(mockClient.runClient).toHaveBeenCalledWith(
-        expect.arrayContaining(['exec', '-i', 'ctr1']),
+      mockClient.runClient
+        .mockReturnValueOnce(checkProc)
+        .mockReturnValueOnce(shellProc);
+
+      fakeProxy.emit('container-exec/start', makeEvent(), 'ctr1', undefined);
+      await new Promise(setImmediate);
+
+      expect(mockClient.runClient).toHaveBeenCalledTimes(2);
+      // First call: pre-check (uses 'ignore' so all stdio goes to /dev/null)
+      expect(mockClient.runClient).toHaveBeenNthCalledWith(
+        1,
+        expect.arrayContaining(['exec', 'ctr1', 'sh', '-c', 'command -v script']),
+        'ignore',
+        expect.any(Object),
+      );
+      // Second call: real session with `script`
+      expect(mockClient.runClient).toHaveBeenNthCalledWith(
+        2,
+        expect.arrayContaining(['exec', '-i', 'ctr1', 'script']),
         'interactive',
         expect.any(Object),
       );
     });
 
-    it('passes namespace through to runClient', () => {
-      mockClient.runClient.mockReturnValue(makeProcess());
+    it('sends container-exec/unsupported when script is not available', async () => {
+      const checkProc = makeCheckProcess(127);
+      const frame     = makeFrame();
+
+      mockClient.runClient.mockReturnValueOnce(checkProc);
+
+      fakeProxy.emit('container-exec/start', makeEvent(frame), 'ctr1', undefined);
+      await new Promise(setImmediate);
+
+      expect(frame.send).toHaveBeenCalledWith('container-exec/unsupported', '');
+      expect(mockClient.runClient).toHaveBeenCalledTimes(1);
+      expect(handler.sessions.size).toBe(0);
+    });
+
+    it('passes namespace through to runClient', async () => {
+      const checkProc = makeCheckProcess(0);
+      const shellProc = makeProcess();
+
+      mockClient.runClient
+        .mockReturnValueOnce(checkProc)
+        .mockReturnValueOnce(shellProc);
+
       fakeProxy.emit('container-exec/start', makeEvent(), 'ctr1', 'my-ns');
+      await new Promise(setImmediate);
 
       expect(mockClient.runClient).toHaveBeenCalledWith(
         expect.any(Array),
@@ -99,135 +164,92 @@ describe('ContainerExecHandler', () => {
       );
     });
 
-    it('detects PTY mode from RDSHELL:pty sentinel', () => {
-      const { frame } = startSession(handler, 'ctr1', true);
+    it('sends container-exec/ready immediately after the session is spawned', async () => {
+      const { frame, containerId } = await startSession(handler, 'ctr1');
 
-      expect(frame.send).toHaveBeenCalledWith('container-exec/ready', expect.any(String), '', true);
-      expect(frame.send).toHaveBeenCalledWith('container-exec/pty',   expect.any(String), true);
+      expect(frame.send).toHaveBeenCalledWith('container-exec/ready', containerId, '');
     });
 
-    it('detects non-PTY mode from RDSHELL:npty sentinel', () => {
-      const { frame } = startSession(handler, 'ctr1', false);
+    it('forwards stdout chunks to renderer as container-exec/output', async () => {
+      const { shellProc, frame, containerId } = await startSession(handler, 'ctr1');
 
-      expect(frame.send).toHaveBeenCalledWith('container-exec/ready', expect.any(String), '', false);
-      expect(frame.send).toHaveBeenCalledWith('container-exec/pty',   expect.any(String), false);
+      shellProc.stdout.emit('data', Buffer.from('hello\n'));
+
+      expect(frame.send).toHaveBeenCalledWith('container-exec/output', containerId, 'hello\n');
     });
 
-    it('forwards stdout chunks to renderer as container-exec/output', () => {
-      const { proc, frame, execId } = startSession(handler, 'ctr1', true);
+    it('sends container-exec/exit with the process exit code', async () => {
+      const { shellProc, frame, containerId } = await startSession(handler, 'ctr1');
 
-      proc.stdout.emit('data', Buffer.from('hello\n'));
+      shellProc.emit('exit', 42);
 
-      expect(frame.send).toHaveBeenCalledWith('container-exec/output', execId, 'hello\n');
+      expect(frame.send).toHaveBeenCalledWith('container-exec/exit', containerId, 42);
     });
 
-    it('sends container-exec/exit with the process exit code', () => {
-      const { proc, frame, execId } = startSession(handler, 'ctr1', true);
+    it('cleans up both session maps on process exit', async () => {
+      const { shellProc } = await startSession(handler, 'ctr1');
 
-      proc.emit('exit', 42);
-
-      expect(frame.send).toHaveBeenCalledWith('container-exec/exit', execId, 42);
-    });
-
-    it('cleans up both session maps on process exit', () => {
-      const { proc } = startSession(handler, 'ctr1', true);
-
-      proc.emit('exit', 0);
+      shellProc.emit('exit', 0);
 
       expect(handler.sessions.size).toBe(0);
-      expect(handler.sessionsByContainer.size).toBe(0);
     });
   });
 
   // ── output ring buffer ───────────────────────────────────────────────────────
 
   describe('output ring buffer', () => {
-    it('accumulates stdout in outputBuf', () => {
-      const { proc, session } = startSession(handler, 'ctr1', true);
+    it('accumulates stdout in outputBuf', async () => {
+      const { shellProc, session } = await startSession(handler, 'ctr1');
 
-      proc.stdout.emit('data', Buffer.from('line1\n'));
-      proc.stdout.emit('data', Buffer.from('line2\n'));
+      shellProc.stdout.emit('data', Buffer.from('line1\n'));
+      shellProc.stdout.emit('data', Buffer.from('line2\n'));
 
       expect(session.outputBuf).toContain('line1\n');
       expect(session.outputBuf).toContain('line2\n');
     });
 
-    it('caps outputBuf at 50 KB', () => {
-      const { proc, session } = startSession(handler, 'ctr1', true);
+    it('caps outputBuf at 50 KB', async () => {
+      const { shellProc, session } = await startSession(handler, 'ctr1');
 
-      const MAX  = 50 * 1024;
-      const big  = Buffer.alloc(MAX + 4096, 'x');
+      const MAX = 50 * 1024;
+      const big = Buffer.alloc(MAX + 4096, 'x');
 
-      proc.stdout.emit('data', big);
+      shellProc.stdout.emit('data', big);
 
       expect(session.outputBuf.length).toBeLessThanOrEqual(MAX);
     });
   });
 
-  // ── non-PTY input echo buffering ─────────────────────────────────────────────
+  // ── input ────────────────────────────────────────────────────────────────────
 
-  describe('container-exec/input — non-PTY echo buffering', () => {
-    it('echoes printable characters into outputBuf', () => {
-      const { session, execId } = startSession(handler, 'ctr1', false);
+  describe('container-exec/input', () => {
+    it('writes data to stdin', async () => {
+      const { shellProc, containerId } = await startSession(handler, 'ctr1');
 
-      fakeProxy.emit('container-exec/input', {}, execId, 'ls /');
+      fakeProxy.emit('container-exec/input', {}, containerId, 'ls\n');
 
-      expect(session.outputBuf).toContain('ls /');
-    });
-
-    it('converts \\n (Enter) to \\r\\n in outputBuf', () => {
-      const { session, execId } = startSession(handler, 'ctr1', false);
-
-      fakeProxy.emit('container-exec/input', {}, execId, '\n');
-
-      expect(session.outputBuf).toContain('\r\n');
-    });
-
-    it('converts \\x7f (backspace) to \\b \\b in outputBuf', () => {
-      const { session, execId } = startSession(handler, 'ctr1', false);
-
-      fakeProxy.emit('container-exec/input', {}, execId, '\x7f');
-
-      expect(session.outputBuf).toContain('\b \b');
-    });
-
-    it('does NOT echo into outputBuf for PTY sessions', () => {
-      const { session, execId } = startSession(handler, 'ctr1', true);
-      const bufBefore = session.outputBuf;
-
-      fakeProxy.emit('container-exec/input', {}, execId, 'ls\n');
-
-      // PTY handles its own echo — buffer must not change due to input
-      expect(session.outputBuf).toBe(bufBefore);
-    });
-
-    it('always writes data to stdin regardless of PTY mode', () => {
-      const { proc, execId } = startSession(handler, 'ctr1', false);
-
-      fakeProxy.emit('container-exec/input', {}, execId, 'ls\n');
-
-      expect(proc.stdin.write).toHaveBeenCalledWith('ls\n');
+      expect(shellProc.stdin.write).toHaveBeenCalledWith('ls\n');
     });
   });
 
   // ── detach ────────────────────────────────────────────────────────────────────
 
   describe('container-exec/detach', () => {
-    it('nulls the frame and marks the session as detached', () => {
-      const { session, execId } = startSession(handler, 'ctr1', true);
+    it('nulls the frame and marks the session as detached', async () => {
+      const { session, containerId } = await startSession(handler, 'ctr1');
 
-      fakeProxy.emit('container-exec/detach', {}, execId);
+      fakeProxy.emit('container-exec/detach', {}, containerId);
 
-      expect(session.frame).toBeNull();
+      expect(session.sender).toBeNull();
       expect(session.detached).toBe(true);
     });
 
-    it('keeps the process alive after detach', () => {
-      const { proc, execId } = startSession(handler, 'ctr1', true);
+    it('keeps the process alive after detach', async () => {
+      const { shellProc, containerId } = await startSession(handler, 'ctr1');
 
-      fakeProxy.emit('container-exec/detach', {}, execId);
+      fakeProxy.emit('container-exec/detach', {}, containerId);
 
-      expect(proc.kill).not.toHaveBeenCalled();
+      expect(shellProc.kill).not.toHaveBeenCalled();
       expect(handler.sessions.size).toBe(1);
     });
   });
@@ -235,66 +257,72 @@ describe('ContainerExecHandler', () => {
   // ── reconnect ─────────────────────────────────────────────────────────────────
 
   describe('container-exec/start — reconnect', () => {
-    it('reattaches the frame and replays buffered history without spawning a new process', () => {
-      const { proc, execId } = startSession(handler, 'ctr1', false);
+    it('reattaches the frame and replays buffered history without spawning a new process', async () => {
+      const { shellProc, containerId } = await startSession(handler, 'ctr1');
 
-      proc.stdout.emit('data', Buffer.from('hello\n'));
-      fakeProxy.emit('container-exec/detach', {}, execId);
+      shellProc.stdout.emit('data', Buffer.from('hello\n'));
+      fakeProxy.emit('container-exec/detach', {}, containerId);
 
       const frame2 = makeFrame();
 
       fakeProxy.emit('container-exec/start', makeEvent(frame2), 'ctr1', undefined);
+      await new Promise(setImmediate);
 
-      expect(mockClient.runClient).toHaveBeenCalledTimes(1);
+      // runClient was called twice for the initial session (check + shell);
+      // no additional calls for the reconnect.
+      expect(mockClient.runClient).toHaveBeenCalledTimes(2);
       expect(frame2.send).toHaveBeenCalledWith(
         'container-exec/ready',
-        execId,
+        containerId,
         expect.stringContaining('hello'),
-        false,
       );
     });
 
-    it('spawns a fresh process when the previous session was killed', () => {
-      const proc2 = makeProcess();
+    it('spawns a fresh process when the previous session was killed', async () => {
+      const { containerId } = await startSession(handler, 'ctr1');
 
-      const { execId } = startSession(handler, 'ctr1', true);
+      fakeProxy.emit('container-exec/kill', {}, containerId);
 
-      fakeProxy.emit('container-exec/kill', {}, execId);
+      // Two more runClient calls for the new session (check + shell).
+      const checkProc2 = makeCheckProcess(0);
+      const shellProc2 = makeProcess();
 
-      mockClient.runClient.mockReturnValue(proc2);
+      mockClient.runClient
+        .mockReturnValueOnce(checkProc2)
+        .mockReturnValueOnce(shellProc2);
+
       fakeProxy.emit('container-exec/start', makeEvent(), 'ctr1', undefined);
+      await new Promise(setImmediate);
 
-      expect(mockClient.runClient).toHaveBeenCalledTimes(2);
+      expect(mockClient.runClient).toHaveBeenCalledTimes(4); // 2 initial + 2 new
     });
   });
 
   // ── kill ──────────────────────────────────────────────────────────────────────
 
   describe('container-exec/kill', () => {
-    it('terminates the process and removes both session entries', () => {
-      const { proc, execId } = startSession(handler, 'ctr1', true);
+    it('terminates the process and removes both session entries', async () => {
+      const { shellProc, containerId } = await startSession(handler, 'ctr1');
 
-      fakeProxy.emit('container-exec/kill', {}, execId);
+      fakeProxy.emit('container-exec/kill', {}, containerId);
 
-      expect(proc.kill).toHaveBeenCalledWith('SIGTERM');
+      expect(shellProc.kill).toHaveBeenCalledWith('SIGTERM');
       expect(handler.sessions.size).toBe(0);
-      expect(handler.sessionsByContainer.size).toBe(0);
     });
   });
 
   // ── killAll ───────────────────────────────────────────────────────────────────
 
   describe('killAll', () => {
-    it('kills all sessions and clears both maps', () => {
-      const { proc: proc1 } = startSession(handler, 'ctr1', true);
-      const { proc: proc2 } = startSession(handler, 'ctr2', true);
+    it('kills all sessions and clears both maps', async () => {
+      const { shellProc: proc1 } = await startSession(handler, 'ctr1');
+      const { shellProc: proc2 } = await startSession(handler, 'ctr2');
 
       handler.killAll();
 
       expect(proc1.kill).toHaveBeenCalledWith('SIGTERM');
       expect(proc2.kill).toHaveBeenCalledWith('SIGTERM');
       expect(handler.sessions.size).toBe(0);
-      expect(handler.sessionsByContainer.size).toBe(0);
     });
   });
 });

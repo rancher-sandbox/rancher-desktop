@@ -11,7 +11,17 @@
     </banner>
 
     <banner
-      v-if="!isContainerRunning && !error"
+      v-else-if="unsupported"
+      class="content-state"
+      color="warning"
+      data-testid="shell-unsupported"
+    >
+      <span class="icon icon-info-circle icon-lg" />
+      Shell is not supported in this container (the <code>script</code> command is not available).
+    </banner>
+
+    <banner
+      v-else-if="!isContainerRunning"
       class="content-state"
       color="warning"
       data-testid="shell-not-running"
@@ -21,10 +31,12 @@
     </banner>
 
     <div
-      v-if="isContainerRunning && !isLoading"
+      v-if="!isLoading && !unsupported"
+      v-show="isContainerRunning"
       ref="terminalContainer"
       class="terminal-container"
       data-testid="terminal"
+      :data-session-active="sessionActive ? 'true' : undefined"
     />
   </div>
 </template>
@@ -47,13 +59,13 @@ const props = defineProps<{
 
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const unsupported = ref(false);
 const terminalContainer = ref<HTMLElement | null>(null);
 
 let terminal: Terminal | undefined;
 let fitAddon: FitAddon | undefined;
 let resizeObserver: ResizeObserver | undefined;
-let execId = '';
-let hasPty = false;
+const sessionActive = ref(false);
 
 async function initializeTerminal() {
   isLoading.value = false;
@@ -106,59 +118,32 @@ async function initializeTerminal() {
   fitAddon.fit();
 
   // Forward keyboard input to the shell process.
-  // In non-PTY mode (sh -i fallback, e.g. Alpine without `script`) there is
-  // no TTY line discipline to echo characters, so we mirror printable input
-  // locally so the user can see what they are typing.
   terminal.onData((data) => {
-    if (execId) {
-      if (!hasPty) {
-        if (data === '\r') {
-          terminal?.write('\r\n');
-        } else if (data === '\x7f') {
-          terminal?.write('\b \b');
-        } else if (data.length === 1 && data >= ' ') {
-          terminal?.write(data);
-        }
-      }
-      // Without a PTY the TTY line discipline is absent, so the shell never
-      // sees a newline to terminate the command line.  Convert \r → \n.
-      const shellData = !hasPty ? data.replace(/\r/g, '\n') : data;
-      ipcRenderer.send('container-exec/input', execId, shellData);
+    if (sessionActive.value) {
+      ipcRenderer.send('container-exec/input', props.containerId, data);
     }
   });
 }
 
-function handlePty(_event: any, id: string, isPty: boolean) {
-  if (id === execId) {
-    hasPty = isPty;
+function handleReady(_event: any, id: string, history: string) {
+  if (id !== props.containerId) {
+    return;
   }
-}
-
-function handleReady(_event: any, id: string, history: string, ptyKnown: boolean) {
-  execId = id;
-  hasPty = ptyKnown;
+  sessionActive.value = true;
   if (history) {
-    // Apply the same \n → \r\n conversion as handleOutput: the ring buffer
-    // stores raw stdout bytes (bare \n in non-PTY mode).
-    const out = !ptyKnown ? history.replace(/(?<!\r)\n/g, '\r\n') : history;
-    terminal?.write(out);
+    terminal?.write(history);
   }
 }
 
 function handleOutput(_event: any, id: string, data: string) {
-  if (id !== execId) {
+  if (id !== props.containerId) {
     return;
   }
-  // In non-PTY mode the shell emits bare \n.  xterm.js with convertEol:false
-  // only moves the cursor down on \n (not back to column 0), producing
-  // stairstepped output.  Add the missing \r, skipping \n already preceded
-  // by \r so we don't double-convert any \r\n from stderr processing.
-  const out = !hasPty ? data.replace(/(?<!\r)\n/g, '\r\n') : data;
-  terminal?.write(out);
+  terminal?.write(data);
 }
 
 function handleExit(_event: any, id: string, code: number) {
-  if (id !== execId) {
+  if (id !== props.containerId) {
     return;
   }
   const msg = code === 0
@@ -166,7 +151,11 @@ function handleExit(_event: any, id: string, code: number) {
     : `\r\n\x1b[31mShell session ended (exit code: ${ code }).\x1b[0m\r\n`;
 
   terminal?.write(msg);
-  execId = '';
+  sessionActive.value = false;
+}
+
+function handleUnsupported() {
+  unsupported.value = true;
 }
 
 async function startShell() {
@@ -175,13 +164,18 @@ async function startShell() {
   }
 
   error.value = null;
-  execId = '';   // will be assigned by handleReady
-  hasPty = false;
+  unsupported.value = false;
+  sessionActive.value = false;
 
-  ipcRenderer.on('container-exec/ready',  handleReady);
-  ipcRenderer.on('container-exec/output', handleOutput);
-  ipcRenderer.on('container-exec/exit',   handleExit);
-  ipcRenderer.on('container-exec/pty',    handlePty);
+  // Remove before re-adding to prevent duplicate listeners on reconnect.
+  ipcRenderer.removeListener('container-exec/ready',       handleReady);
+  ipcRenderer.removeListener('container-exec/output',      handleOutput);
+  ipcRenderer.removeListener('container-exec/exit',        handleExit);
+  ipcRenderer.removeListener('container-exec/unsupported', handleUnsupported);
+  ipcRenderer.on('container-exec/ready',       handleReady);
+  ipcRenderer.on('container-exec/output',      handleOutput);
+  ipcRenderer.on('container-exec/exit',        handleExit);
+  ipcRenderer.on('container-exec/unsupported', handleUnsupported);
 
   if (!terminal) {
     await initializeTerminal();
@@ -191,18 +185,23 @@ async function startShell() {
     fitAddon?.fit();
   }
 
-  ipcRenderer.send('container-exec/start', props.containerId, props.namespace ?? undefined);
+  console.log('[ContainerShell] sending container-exec/start for:', props.containerId);
+  if (props.namespace) {
+    ipcRenderer.send('container-exec/start', props.containerId, props.namespace);
+  } else {
+    ipcRenderer.send('container-exec/start', props.containerId);
+  }
 }
 
 function stopShell() {
-  if (execId) {
-    ipcRenderer.send('container-exec/detach', execId);
-    execId = '';
+  if (sessionActive.value) {
+    ipcRenderer.send('container-exec/detach', props.containerId);
+    sessionActive.value = false;
   }
-  ipcRenderer.removeListener('container-exec/ready',  handleReady);
-  ipcRenderer.removeListener('container-exec/output', handleOutput);
-  ipcRenderer.removeListener('container-exec/exit',   handleExit);
-  ipcRenderer.removeListener('container-exec/pty',    handlePty);
+  ipcRenderer.removeListener('container-exec/ready',       handleReady);
+  ipcRenderer.removeListener('container-exec/output',      handleOutput);
+  ipcRenderer.removeListener('container-exec/exit',        handleExit);
+  ipcRenderer.removeListener('container-exec/unsupported', handleUnsupported);
 }
 
 function cleanup() {
@@ -242,7 +241,14 @@ watch(() => props.isContainerRunning, (running) => {
   if (running) {
     startShell();
   } else {
-    stopShell();
+    // Keep IPC listeners alive so a late container-exec/ready (e.g. when
+    // checkScriptAvailable completes while isContainerRunning briefly dips)
+    // can still set data-session-active.  Only detach the session so the
+    // background process is released from this frame.
+    if (sessionActive.value) {
+      ipcRenderer.send('container-exec/detach', props.containerId);
+      sessionActive.value = false;
+    }
   }
 });
 </script>

@@ -518,7 +518,7 @@ export class MobyClient implements ContainerEngineClient {
     case 'stream':
       return spawn(executable, args, { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
     case 'interactive':
-      return spawn(executable, args, { ...opts, stdio: ['pipe', 'pipe', 'pipe'] });
+      return spawn(executable, args, { ...opts, stdio: 'pipe' });
     case 'pipe':
       return spawnFile(executable, args, { ...opts, stdio: 'pipe' });
     }

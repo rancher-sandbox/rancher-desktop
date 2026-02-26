@@ -552,7 +552,7 @@ export class NerdctlClient implements ContainerEngineClient {
     case 'stream':
       return spawn(this.executable, args, { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
     case 'interactive':
-      return spawn(this.executable, args, { ...opts, stdio: ['pipe', 'pipe', 'pipe'] });
+      return spawn(this.executable, args, { ...opts, stdio: 'pipe' });
     case 'pipe':
       return spawnFile(this.executable, args, { ...opts, stdio: 'pipe' });
     }
