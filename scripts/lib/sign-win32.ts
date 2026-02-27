@@ -5,7 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { getSignVendorPath } from 'app-builder-lib/out/codeSign/windowsSignToolManager';
+import { getSignToolPath } from 'app-builder-lib/out/toolsets/windows';
 import defaults from 'lodash/defaultsDeep';
 import merge from 'lodash/merge';
 import yaml from 'yaml';
@@ -73,7 +73,7 @@ export async function sign(workDir: string): Promise<string[]> {
   merge(config.win, REQUIRED_WINDOWS_CONFIG);
   config.win.certificateSha1 = certFingerprint;
 
-  const toolPath = path.join(await getSignVendorPath(), 'windows-10', process.arch, 'signtool.exe');
+  const { path: toolPath } = await getSignToolPath(null, true);
   const toolArgs = [
     'sign',
     '/debug',

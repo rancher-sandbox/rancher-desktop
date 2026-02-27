@@ -639,6 +639,7 @@ tmutil
 toggleable
 togglefullscreen
 tonistiigi
+toolsets
 topmenu
 TQF
 traefik
