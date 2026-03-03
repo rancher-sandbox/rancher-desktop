@@ -66,25 +66,25 @@ jobs:
         persist-credentials: true
     - name: Download installer (msi)
       id: msi
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
       with:
         name: Rancher Desktop Setup.msi
         path: RD_SETUP_MSI
     - name: Download mac x86_64 archive
       id: mac_x86_64
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
       with:
         name: Rancher Desktop-mac.x86_64.zip
         path: MACX86_ZIP
     - name: Download mac aarch64 archive
       id: mac_aarch64
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
       with:
         name: Rancher Desktop-mac.aarch64.zip
         path: MACARM_ZIP
     - name: Download build information
       id: info
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
       with:
         name: build-info.yml
         path: RD_BUILD_INFO
