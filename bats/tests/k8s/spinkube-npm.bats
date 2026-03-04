@@ -41,7 +41,7 @@ local_setup() {
 }
 
 @test 'deploy app to kubernetes' {
-    spin kube deploy --from "$MY_APP_IMAGE"
+    spin kube deploy --context rancher-desktop --from "$MY_APP_IMAGE"
 }
 
 # TODO replace ingress with port-forwarding
