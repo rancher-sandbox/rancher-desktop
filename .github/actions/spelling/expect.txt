@@ -237,6 +237,7 @@ googlegke
 googleoauth
 gopacket
 GOTOOLCHAIN
+GOWORK
 govet
 gpu
 gtk
