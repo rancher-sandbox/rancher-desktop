@@ -141,7 +141,6 @@ async function syncModules(fix: boolean): Promise<boolean> {
     return false;
   }
 
-  await spawnFile('go', ['work', 'sync']);
   await Promise.all((await getModules()).map(cwd => spawnFile('go', ['mod', 'tidy'], { stdio: 'inherit', cwd })));
   if (!fix) {
     const changes = await getChanges();
