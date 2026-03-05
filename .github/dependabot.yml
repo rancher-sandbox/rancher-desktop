@@ -40,7 +40,7 @@ updates:
   schedule:
     interval: "daily"
   cooldown:
-    default-days: 7
+    default-days: 0
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   ignore:
