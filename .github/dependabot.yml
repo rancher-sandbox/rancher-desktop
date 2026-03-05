@@ -39,8 +39,8 @@ updates:
   - "/scripts"
   schedule:
     interval: "daily"
-  cooldown:
-    default-days: 0
+# cooldown:
+#   default-days: 7
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   ignore:
