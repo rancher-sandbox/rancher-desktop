@@ -28,7 +28,7 @@ jobs:
     - run: yarn package
     - name: Upload Windows installer
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: Rancher Desktop Setup.msi
         path: dist/Rancher.Desktop*.msi
@@ -37,13 +37,13 @@ jobs:
       run: cat dist/electron-builder.yaml
     - name: Upload Windows build information
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: build-info.yml
         path: dist/electron-builder.yaml
         if-no-files-found: error
     - name: Upload macOS archive
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       if: matrix.platform == 'mac'
       with:
         name: Rancher Desktop-mac.${{ matrix.arch }}.zip
