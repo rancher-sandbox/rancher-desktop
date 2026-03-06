@@ -39,7 +39,7 @@ function makeProcess() {
 
 /**
  * Fake return value for the pre-check runClient call.
- * 'ignore' mode returns a Promise that resolves on exit 0 and rejects otherwise.
+ * Resolves on exit code 0, rejects with the exit code otherwise.
  */
 function makeCheckProcess(exitCode = 0) {
   if (exitCode === 0) {
@@ -64,14 +64,14 @@ function makeEvent(frame = makeFrame()) {
 
 /**
  * Start a session where the `script` pre-check succeeds.
- * runClient is called twice: first for the check (exits 0), then for the
- * real shell session.  Returns the session proc and frame for further setup.
+ * Returns the session proc and frame for further setup.
  */
 async function startSession(handler: any, containerId: string) {
   const checkProc = makeCheckProcess(0);
   const shellProc = makeProcess();
   const frame = makeFrame();
 
+  // runClient is called twice: first for the pre-check (exits 0), then for the real shell session.
   handler._mockClient.runClient
     .mockReturnValueOnce(checkProc)
     .mockReturnValueOnce(shellProc);

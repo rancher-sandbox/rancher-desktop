@@ -12,6 +12,7 @@ import Electron from 'electron';
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import type { WritableReadableProcess } from '@pkg/backend/containerClient/types';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
+import type { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import Logging from '@pkg/utils/logging';
 
 const console = Logging.containerExec;
@@ -39,11 +40,11 @@ export class ContainerExecHandler {
   }
 
   killAll() {
-    for (const [, session] of this.sessions) {
+    for (const [containerId, session] of this.sessions) {
       try {
         session.process.kill('SIGTERM');
       } catch (ex) {
-        console.debug('Error killing exec session:', ex);
+        console.debug(`Error killing exec session ${ containerId }:`, ex);
       }
     }
     this.sessions.clear();
@@ -68,7 +69,7 @@ export class ContainerExecHandler {
 
   protected initHandlers() {
     ipcMainProxy.on('container-exec/start', async(event, containerId, namespace) => {
-      const sendToFrame = (channel: string, ...args: any[]) => {
+      const sendToFrame = <ch extends keyof IpcRendererEvents>(channel: ch, ...args: Parameters<IpcRendererEvents[ch]>) => {
         try {
           event.sender.send(channel, ...args);
         } catch (ex) {
@@ -80,7 +81,7 @@ export class ContainerExecHandler {
       const session = this.sessions.get(containerId);
 
       if (session) {
-        console.log(`[ContainerExec] reconnecting existing session for ${ containerId }`);
+        console.debug(`[ContainerExec] reconnecting existing session for ${ containerId }`);
         session.sender = event.sender;
         session.detached = false;
         sendToFrame('container-exec/ready', containerId, session.outputBuf);
@@ -97,7 +98,7 @@ export class ContainerExecHandler {
         const scriptAvailable = await this.checkScriptAvailable(containerId, namespace);
 
         if (!scriptAvailable) {
-          sendToFrame('container-exec/unsupported', '');
+          sendToFrame('container-exec/unsupported');
 
           return;
         }
@@ -117,7 +118,7 @@ export class ContainerExecHandler {
 
         this.sessions.set(containerId, newSession);
 
-        const sendToSession = (channel: string, ...args: any[]) => {
+        const sendToSession = <ch extends keyof IpcRendererEvents>(channel: ch, ...args: Parameters<IpcRendererEvents[ch]>) => {
           try {
             newSession.sender?.send(channel, ...args);
           } catch (ex) {
@@ -171,12 +172,10 @@ export class ContainerExecHandler {
     ipcMainProxy.on('container-exec/input', (_, containerId, data) => {
       const session = this.sessions.get(containerId);
 
-      if (session) {
-        try {
-          session.process.stdin?.write(data);
-        } catch (ex) {
-          console.debug(`Failed to write to exec session ${ containerId }:`, ex);
-        }
+      try {
+        session?.process.stdin?.write(data);
+      } catch (ex) {
+        console.debug(`Failed to write to exec session ${ containerId }:`, ex);
       }
     });
 
