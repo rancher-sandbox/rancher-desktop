@@ -327,7 +327,7 @@ test.describe.serial('Container Shell Tab', () => {
     unsupportedContainerId = alpineOutput.trim();
   });
 
-  test.afterAll(async({}, testInfo) => {
+  test.afterAll(async(_, testInfo) => {
     if (shellContainerId) {
       try {
         await tool('docker', 'rm', '-f', shellContainerId);
