@@ -141,7 +141,7 @@ describe('ContainerExecHandler', () => {
       fakeProxy.emit('container-exec/start', makeEvent(frame), 'ctr1', undefined);
       await new Promise(setImmediate);
 
-      expect(frame.send).toHaveBeenCalledWith('container-exec/unsupported', '');
+      expect(frame.send).toHaveBeenCalledWith('container-exec/unsupported');
       expect(mockClient.runClient).toHaveBeenCalledTimes(1);
       expect(handler.sessions.size).toBe(0);
     });
