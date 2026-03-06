@@ -327,7 +327,7 @@ test.describe.serial('Container Shell Tab', () => {
     unsupportedContainerId = alpineOutput.trim();
   });
 
-  test.afterAll(async(_, testInfo) => {
+  test.afterAll(async({ colorScheme }, testInfo) => {
     if (shellContainerId) {
       try {
         await tool('docker', 'rm', '-f', shellContainerId);
