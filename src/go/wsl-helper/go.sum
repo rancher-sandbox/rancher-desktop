@@ -26,8 +26,8 @@ github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/go-openapi/analysis v0.24.1 h1:Xp+7Yn/KOnVWYG8d+hPksOYnCYImE3TieBa7rBOesYM=
 github.com/go-openapi/analysis v0.24.1/go.mod h1:dU+qxX7QGU1rl7IYhBC8bIfmWQdX4Buoea4TGtxXY84=
-github.com/go-openapi/errors v0.22.6 h1:eDxcf89O8odEnohIXwEjY1IB4ph5vmbUsBMsFNwXWPo=
-github.com/go-openapi/errors v0.22.6/go.mod h1:z9S8ASTUqx7+CP1Q8dD8ewGH/1JWFFLX/2PmAYNQLgk=
+github.com/go-openapi/errors v0.22.7 h1:JLFBGC0Apwdzw3484MmBqspjPbwa2SHvpDm0u5aGhUA=
+github.com/go-openapi/errors v0.22.7/go.mod h1://QW6SD9OsWtH6gHllUCddOXDL0tk0ZGNYHwsw4sW3w=
 github.com/go-openapi/inflect v0.21.3 h1:TmQvw+9eLrsNp4X0BBQacEZZtAnzk2z1FaLdQQJsDiU=
 github.com/go-openapi/inflect v0.21.3/go.mod h1:INezMuUu7SJQc2AyR3WO0DqqYUJSj8Kb4hBd7WtjlAw=
 github.com/go-openapi/jsonpointer v0.22.1 h1:sHYI1He3b9NqJ4wXLoJDKmUmHkWy/L7rtEo92JUxBNk=
@@ -66,8 +66,8 @@ github.com/go-openapi/swag/yamlutils v0.25.1 h1:mry5ez8joJwzvMbaTGLhw8pXUnhDK91o
 github.com/go-openapi/swag/yamlutils v0.25.1/go.mod h1:cm9ywbzncy3y6uPm/97ysW8+wZ09qsks+9RS8fLWKqg=
 github.com/go-openapi/testify/enable/yaml/v2 v2.0.2 h1:0+Y41Pz1NkbTHz8NngxTuAXxEodtNSI1WG1c/m5Akw4=
 github.com/go-openapi/testify/enable/yaml/v2 v2.0.2/go.mod h1:kme83333GCtJQHXQ8UKX3IBZu6z8T5Dvy5+CW3NLUUg=
-github.com/go-openapi/testify/v2 v2.0.2 h1:X999g3jeLcoY8qctY/c/Z8iBHTbwLz7R2WXd6Ub6wls=
-github.com/go-openapi/testify/v2 v2.0.2/go.mod h1:HCPmvFFnheKK2BuwSA0TbbdxJ3I16pjwMkYkP4Ywn54=
+github.com/go-openapi/testify/v2 v2.4.0 h1:8nsPrHVCWkQ4p8h1EsRVymA2XABB4OT40gcvAu+voFM=
+github.com/go-openapi/testify/v2 v2.4.0/go.mod h1:HCPmvFFnheKK2BuwSA0TbbdxJ3I16pjwMkYkP4Ywn54=
 github.com/go-openapi/validate v0.25.1 h1:sSACUI6Jcnbo5IWqbYHgjibrhhmt3vR6lCzKZnmAgBw=
 github.com/go-openapi/validate v0.25.1/go.mod h1:RMVyVFYte0gbSTaZ0N4KmTn6u/kClvAFp+mAVfS/DQc=
 github.com/go-swagger/go-swagger v0.33.1 h1:BdtmxCvMxkrYIGAyn/qXPi4j85mFTwG4c9ED/27jtq4=
