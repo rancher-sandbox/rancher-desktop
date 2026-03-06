@@ -47,8 +47,6 @@ name: Check Spelling
 # on:
 #   push:
 #     ...
-#   pull_request_target:
-#     ...
 # jobs:
 #   # you only want the spelling job, all others should be omitted
 #   spelling:
