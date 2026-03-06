@@ -11,9 +11,9 @@ export class ContainerShellPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.tab               = page.getByTestId('tab-shell');
-    this.terminal          = page.getByTestId('terminal');
-    this.notRunningBanner  = page.getByTestId('shell-not-running');
+    this.tab = page.getByTestId('tab-shell');
+    this.terminal = page.getByTestId('terminal');
+    this.notRunningBanner = page.getByTestId('shell-not-running');
     this.unsupportedBanner = page.getByTestId('shell-unsupported');
   }
 

@@ -52,9 +52,9 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 defineOptions({ name: 'ContainerShell' });
 
 const props = defineProps<{
-  containerId:          string;
-  isContainerRunning?:  boolean;
-  namespace?:           string | null;
+  containerId:         string;
+  isContainerRunning?: boolean;
+  namespace?:          string | null;
 }>();
 
 const isLoading = ref(true);
@@ -168,13 +168,13 @@ async function startShell() {
   sessionActive.value = false;
 
   // Remove before re-adding to prevent duplicate listeners on reconnect.
-  ipcRenderer.removeListener('container-exec/ready',       handleReady);
-  ipcRenderer.removeListener('container-exec/output',      handleOutput);
-  ipcRenderer.removeListener('container-exec/exit',        handleExit);
+  ipcRenderer.removeListener('container-exec/ready', handleReady);
+  ipcRenderer.removeListener('container-exec/output', handleOutput);
+  ipcRenderer.removeListener('container-exec/exit', handleExit);
   ipcRenderer.removeListener('container-exec/unsupported', handleUnsupported);
-  ipcRenderer.on('container-exec/ready',       handleReady);
-  ipcRenderer.on('container-exec/output',      handleOutput);
-  ipcRenderer.on('container-exec/exit',        handleExit);
+  ipcRenderer.on('container-exec/ready', handleReady);
+  ipcRenderer.on('container-exec/output', handleOutput);
+  ipcRenderer.on('container-exec/exit', handleExit);
   ipcRenderer.on('container-exec/unsupported', handleUnsupported);
 
   if (!terminal) {
@@ -198,9 +198,9 @@ function stopShell() {
     ipcRenderer.send('container-exec/detach', props.containerId);
     sessionActive.value = false;
   }
-  ipcRenderer.removeListener('container-exec/ready',       handleReady);
-  ipcRenderer.removeListener('container-exec/output',      handleOutput);
-  ipcRenderer.removeListener('container-exec/exit',        handleExit);
+  ipcRenderer.removeListener('container-exec/ready', handleReady);
+  ipcRenderer.removeListener('container-exec/output', handleOutput);
+  ipcRenderer.removeListener('container-exec/exit', handleExit);
   ipcRenderer.removeListener('container-exec/unsupported', handleUnsupported);
 }
 

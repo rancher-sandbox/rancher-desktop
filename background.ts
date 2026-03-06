@@ -25,12 +25,12 @@ import { PathManagementStrategy, PathManager } from '@pkg/integrations/pathManag
 import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
 import { BackendState, CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
+import { ContainerExecHandler } from '@pkg/main/containerExec';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import { DashboardServer } from '@pkg/main/dashboardServer';
 import { DeploymentProfileError, readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { ExtensionErrorCode, isExtensionError } from '@pkg/main/extensions';
-import { ContainerExecHandler } from '@pkg/main/containerExec';
 import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';

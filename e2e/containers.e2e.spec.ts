@@ -373,11 +373,11 @@ test.describe.serial('Container Shell Tab', () => {
   });
 
   test('should preserve the session when switching between Logs and Shell tabs', async() => {
-    const shellPage    = new ContainerShellPage(page);
-    const logsTab      = page.getByTestId('tab-logs');
+    const shellPage = new ContainerShellPage(page);
+    const logsTab = page.getByTestId('tab-logs');
     // A unique marker is required: we must distinguish "this exact output is
     // still in the buffer" from "the shell printed something similar".
-    const marker       = `RDTEST_PERSIST_${ Date.now() }`;
+    const marker = `RDTEST_PERSIST_${ Date.now() }`;
 
     await shellPage.runCommand(`echo ${ marker }`);
     await shellPage.waitForOutput(marker);

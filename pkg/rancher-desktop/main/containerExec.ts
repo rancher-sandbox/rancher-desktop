@@ -67,7 +67,7 @@ export class ContainerExecHandler {
   }
 
   protected initHandlers() {
-    ipcMainProxy.on('container-exec/start', async (event, containerId, namespace) => {
+    ipcMainProxy.on('container-exec/start', async(event, containerId, namespace) => {
       const sendToFrame = (channel: string, ...args: any[]) => {
         try {
           event.sender.send(channel, ...args);
@@ -81,7 +81,7 @@ export class ContainerExecHandler {
 
       if (session) {
         console.log(`[ContainerExec] reconnecting existing session for ${ containerId }`);
-        session.sender   = event.sender;
+        session.sender = event.sender;
         session.detached = false;
         sendToFrame('container-exec/ready', containerId, session.outputBuf);
 
@@ -197,7 +197,7 @@ export class ContainerExecHandler {
       const session = this.sessions.get(containerId);
 
       if (session) {
-        session.sender   = null;
+        session.sender = null;
         session.detached = true;
       }
     });

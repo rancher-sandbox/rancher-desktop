@@ -31,8 +31,8 @@ function makeProcess() {
 
   proc.stdout = new EventEmitter();
   proc.stderr = new EventEmitter();
-  proc.stdin  = { write: jest.fn() };
-  proc.kill   = jest.fn();
+  proc.stdin = { write: jest.fn() };
+  proc.kill = jest.fn();
 
   return proc;
 }
@@ -70,7 +70,7 @@ function makeEvent(frame = makeFrame()) {
 async function startSession(handler: any, containerId: string) {
   const checkProc = makeCheckProcess(0);
   const shellProc = makeProcess();
-  const frame     = makeFrame();
+  const frame = makeFrame();
 
   handler._mockClient.runClient
     .mockReturnValueOnce(checkProc)
@@ -104,7 +104,7 @@ describe('ContainerExecHandler', () => {
   // ── new session ─────────────────────────────────────────────────────────────
 
   describe('container-exec/start — new session', () => {
-    it('runs a pre-check for script availability before starting the session', async () => {
+    it('runs a pre-check for script availability before starting the session', async() => {
       const checkProc = makeCheckProcess(0);
       const shellProc = makeProcess();
 
@@ -132,9 +132,9 @@ describe('ContainerExecHandler', () => {
       );
     });
 
-    it('sends container-exec/unsupported when script is not available', async () => {
+    it('sends container-exec/unsupported when script is not available', async() => {
       const checkProc = makeCheckProcess(127);
-      const frame     = makeFrame();
+      const frame = makeFrame();
 
       mockClient.runClient.mockReturnValueOnce(checkProc);
 
@@ -146,7 +146,7 @@ describe('ContainerExecHandler', () => {
       expect(handler.sessions.size).toBe(0);
     });
 
-    it('passes namespace through to runClient', async () => {
+    it('passes namespace through to runClient', async() => {
       const checkProc = makeCheckProcess(0);
       const shellProc = makeProcess();
 
@@ -164,13 +164,13 @@ describe('ContainerExecHandler', () => {
       );
     });
 
-    it('sends container-exec/ready immediately after the session is spawned', async () => {
+    it('sends container-exec/ready immediately after the session is spawned', async() => {
       const { frame, containerId } = await startSession(handler, 'ctr1');
 
       expect(frame.send).toHaveBeenCalledWith('container-exec/ready', containerId, '');
     });
 
-    it('forwards stdout chunks to renderer as container-exec/output', async () => {
+    it('forwards stdout chunks to renderer as container-exec/output', async() => {
       const { shellProc, frame, containerId } = await startSession(handler, 'ctr1');
 
       shellProc.stdout.emit('data', Buffer.from('hello\n'));
@@ -178,7 +178,7 @@ describe('ContainerExecHandler', () => {
       expect(frame.send).toHaveBeenCalledWith('container-exec/output', containerId, 'hello\n');
     });
 
-    it('sends container-exec/exit with the process exit code', async () => {
+    it('sends container-exec/exit with the process exit code', async() => {
       const { shellProc, frame, containerId } = await startSession(handler, 'ctr1');
 
       shellProc.emit('exit', 42);
@@ -186,7 +186,7 @@ describe('ContainerExecHandler', () => {
       expect(frame.send).toHaveBeenCalledWith('container-exec/exit', containerId, 42);
     });
 
-    it('cleans up both session maps on process exit', async () => {
+    it('cleans up both session maps on process exit', async() => {
       const { shellProc } = await startSession(handler, 'ctr1');
 
       shellProc.emit('exit', 0);
@@ -198,7 +198,7 @@ describe('ContainerExecHandler', () => {
   // ── output ring buffer ───────────────────────────────────────────────────────
 
   describe('output ring buffer', () => {
-    it('accumulates stdout in outputBuf', async () => {
+    it('accumulates stdout in outputBuf', async() => {
       const { shellProc, session } = await startSession(handler, 'ctr1');
 
       shellProc.stdout.emit('data', Buffer.from('line1\n'));
@@ -208,7 +208,7 @@ describe('ContainerExecHandler', () => {
       expect(session.outputBuf).toContain('line2\n');
     });
 
-    it('caps outputBuf at 50 KB', async () => {
+    it('caps outputBuf at 50 KB', async() => {
       const { shellProc, session } = await startSession(handler, 'ctr1');
 
       const MAX = 50 * 1024;
@@ -223,7 +223,7 @@ describe('ContainerExecHandler', () => {
   // ── input ────────────────────────────────────────────────────────────────────
 
   describe('container-exec/input', () => {
-    it('writes data to stdin', async () => {
+    it('writes data to stdin', async() => {
       const { shellProc, containerId } = await startSession(handler, 'ctr1');
 
       fakeProxy.emit('container-exec/input', {}, containerId, 'ls\n');
@@ -235,7 +235,7 @@ describe('ContainerExecHandler', () => {
   // ── detach ────────────────────────────────────────────────────────────────────
 
   describe('container-exec/detach', () => {
-    it('nulls the frame and marks the session as detached', async () => {
+    it('nulls the frame and marks the session as detached', async() => {
       const { session, containerId } = await startSession(handler, 'ctr1');
 
       fakeProxy.emit('container-exec/detach', {}, containerId);
@@ -244,7 +244,7 @@ describe('ContainerExecHandler', () => {
       expect(session.detached).toBe(true);
     });
 
-    it('keeps the process alive after detach', async () => {
+    it('keeps the process alive after detach', async() => {
       const { shellProc, containerId } = await startSession(handler, 'ctr1');
 
       fakeProxy.emit('container-exec/detach', {}, containerId);
@@ -257,7 +257,7 @@ describe('ContainerExecHandler', () => {
   // ── reconnect ─────────────────────────────────────────────────────────────────
 
   describe('container-exec/start — reconnect', () => {
-    it('reattaches the frame and replays buffered history without spawning a new process', async () => {
+    it('reattaches the frame and replays buffered history without spawning a new process', async() => {
       const { shellProc, containerId } = await startSession(handler, 'ctr1');
 
       shellProc.stdout.emit('data', Buffer.from('hello\n'));
@@ -278,7 +278,7 @@ describe('ContainerExecHandler', () => {
       );
     });
 
-    it('spawns a fresh process when the previous session was killed', async () => {
+    it('spawns a fresh process when the previous session was killed', async() => {
       const { containerId } = await startSession(handler, 'ctr1');
 
       fakeProxy.emit('container-exec/kill', {}, containerId);
@@ -301,7 +301,7 @@ describe('ContainerExecHandler', () => {
   // ── kill ──────────────────────────────────────────────────────────────────────
 
   describe('container-exec/kill', () => {
-    it('terminates the process and removes both session entries', async () => {
+    it('terminates the process and removes both session entries', async() => {
       const { shellProc, containerId } = await startSession(handler, 'ctr1');
 
       fakeProxy.emit('container-exec/kill', {}, containerId);
@@ -314,7 +314,7 @@ describe('ContainerExecHandler', () => {
   // ── killAll ───────────────────────────────────────────────────────────────────
 
   describe('killAll', () => {
-    it('kills all sessions and clears both maps', async () => {
+    it('kills all sessions and clears both maps', async() => {
       const { shellProc: proc1 } = await startSession(handler, 'ctr1');
       const { shellProc: proc2 } = await startSession(handler, 'ctr2');
 
