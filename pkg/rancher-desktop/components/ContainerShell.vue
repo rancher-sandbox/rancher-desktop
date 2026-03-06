@@ -54,7 +54,7 @@ defineOptions({ name: 'ContainerShell' });
 const props = defineProps<{
   containerId:         string;
   isContainerRunning?: boolean;
-  namespace?:          string | null;
+  namespace?:          string;
 }>();
 
 const isLoading = ref(true);
