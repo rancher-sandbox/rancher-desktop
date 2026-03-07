@@ -16,6 +16,12 @@ export default defineComponent({
     class="action-tabs"
   >
     <slot name="tabs" />
+    <template
+      v-if="$slots['tab-row-extras']"
+      #tab-row-extras
+    >
+      <slot name="tab-row-extras" />
+    </template>
     <slot />
   </tabbed>
 </template>
