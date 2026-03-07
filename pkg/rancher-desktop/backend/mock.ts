@@ -18,6 +18,7 @@ import {
   ContainerRunOptions,
   ContainerStopOptions,
   ReadableProcess,
+  WritableReadableProcess,
 } from './containerClient';
 import { KubernetesBackend, KubernetesBackendEvents, KubernetesError } from './k8s';
 import ProgressTracker from './progressTracker';
@@ -304,6 +305,7 @@ class MockContainerEngineClient implements ContainerEngineClient {
   runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
   runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string; stderr: string; }>;
   runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
+  runClient(args: string[], stdio: 'interactive', options?: ContainerRunClientOptions): WritableReadableProcess;
   runClient(args: string[], stdio?: unknown, options?: ContainerRunClientOptions): unknown {
     return Promise.resolve({ stdout: '', stderr: '' });
   }

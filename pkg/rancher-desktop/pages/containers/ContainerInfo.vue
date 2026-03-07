@@ -6,15 +6,28 @@
     <div class="tab-header-row">
       <ul class="tabs">
         <li
-          class="tab active"
+          :class="['tab', { active: activeTab === 'logs' }]"
           data-testid="tab-logs"
+          @click="activeTab = 'logs'"
         >
           <a>
             <span>Logs</span>
           </a>
         </li>
+        <li
+          :class="['tab', { active: activeTab === 'shell', disabled: !isRunning }]"
+          data-testid="tab-shell"
+          @click="isRunning && (activeTab = 'shell')"
+        >
+          <a>
+            <span>Shell</span>
+          </a>
+        </li>
       </ul>
-      <div class="search-widget">
+      <div
+        v-if="activeTab === 'logs'"
+        class="search-widget"
+      >
         <input
           ref="searchInput"
           v-model="searchTerm"
@@ -69,11 +82,18 @@
     </div>
     <div class="tab-content">
       <container-logs
-        v-if="containerId"
+        v-if="containerId && activeTab === 'logs'"
         ref="containerLogs"
         :container-id="containerId"
         :is-container-running="isRunning"
         :namespace="namespace"
+      />
+      <container-shell
+        v-if="shellEverActivated && containerId"
+        v-show="activeTab === 'shell'"
+        :container-id="containerId"
+        :is-container-running="isRunning"
+        :namespace="settings?.containers?.namespace"
       />
     </div>
   </div>
@@ -85,6 +105,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
 import ContainerLogs from '@pkg/components/ContainerLogs.vue';
+import ContainerShell from '@pkg/components/ContainerShell.vue';
 import type { Container } from '@pkg/store/container-engine';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -100,6 +121,8 @@ const searchInput = ref<HTMLInputElement | null>(null);
 const settings = ref<any>();
 const subscribeTimer = ref<ReturnType<typeof setTimeout>>();
 const searchTerm = ref('');
+const activeTab = ref<'logs' | 'shell'>('logs');
+const shellEverActivated = ref(false);
 
 // Vuex integration
 const isK8sReady = computed(() => store.getters['k8sManager/isReady']);
@@ -140,6 +163,17 @@ watch(containerName, (name) => {
     action:      'ContainerStatusBadge',
   });
 }, { immediate: true });
+
+watch(activeTab, (tab) => {
+  if (tab === 'shell') {
+    shellEverActivated.value = true;
+  }
+});
+
+watch(containerId, () => {
+  activeTab.value = 'logs';
+  shellEverActivated.value = false;
+});
 
 // Methods as functions
 const subscribe = async() => {
@@ -298,6 +332,15 @@ onBeforeUnmount(() => {
         text-decoration: none;
       }
     }
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+
+      a {
+        pointer-events: none;
+      }
+    }
   }
 }
 
@@ -373,7 +416,8 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-:deep(.container-logs-component) {
+:deep(.container-logs-component),
+:deep(.container-shell-component) {
   flex: 1;
   display: flex;
   flex-direction: column;

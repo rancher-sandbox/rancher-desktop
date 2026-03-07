@@ -8,7 +8,7 @@ import _ from 'lodash';
 import tar from 'tar-stream';
 
 import {
-  ContainerComposeExecOptions, ReadableProcess, ContainerComposeOptions,
+  ContainerComposeExecOptions, ReadableProcess, WritableReadableProcess, ContainerComposeOptions,
   ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
   ContainerRunClientOptions, ContainerComposePortOptions, ContainerBasicOptions,
 } from './types';
@@ -537,7 +537,8 @@ export class NerdctlClient implements ContainerEngineClient {
   runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
   runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string; stderr: string; }>;
   runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
-  runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | Log, options?: ContainerRunClientOptions) {
+  runClient(args: string[], stdio: 'interactive', options?: ContainerRunClientOptions): WritableReadableProcess;
+  runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | 'interactive' | Log, options?: ContainerRunClientOptions) {
     const opts = _.merge({ env: process.env }, options);
 
     if (opts.namespace) {
@@ -550,6 +551,8 @@ export class NerdctlClient implements ContainerEngineClient {
       return spawnFile(this.executable, args, { ...opts, stdio: 'ignore' });
     case 'stream':
       return spawn(this.executable, args, { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
+    case 'interactive':
+      return spawn(this.executable, args, { ...opts, stdio: 'pipe' });
     case 'pipe':
       return spawnFile(this.executable, args, { ...opts, stdio: 'pipe' });
     }

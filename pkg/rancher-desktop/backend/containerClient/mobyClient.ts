@@ -8,7 +8,7 @@ import _ from 'lodash';
 import tar from 'tar-stream';
 
 import {
-  ContainerComposeExecOptions, ReadableProcess, ContainerComposeOptions,
+  ContainerComposeExecOptions, ReadableProcess, WritableReadableProcess, ContainerComposeOptions,
   ContainerEngineClient, ContainerRunOptions, ContainerStopOptions,
   ContainerRunClientOptions, ContainerComposePortOptions, ContainerBasicOptions,
 } from './types';
@@ -488,7 +488,8 @@ export class MobyClient implements ContainerEngineClient {
   runClient(args: string[], stdio: Log, options?: runClientOptions): Promise<Record<string, never>>;
   runClient(args: string[], stdio: 'pipe', options?: runClientOptions): Promise<{ stdout: string; stderr: string; }>;
   runClient(args: string[], stdio: 'stream', options?: runClientOptions): ReadableProcess;
-  runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | Log, options?: runClientOptions) {
+  runClient(args: string[], stdio: 'interactive', options?: runClientOptions): WritableReadableProcess;
+  runClient(args: string[], stdio?: 'ignore' | 'pipe' | 'stream' | 'interactive' | Log, options?: runClientOptions) {
     // Always add the `bin` directory, as docker CLI plugins may need them too.
     const dirsToAdd = [path.join(paths.resources, process.platform, 'bin')];
     const executableName = options?.executable ?? this.executable;
@@ -516,6 +517,8 @@ export class MobyClient implements ContainerEngineClient {
       return spawnFile(executable, args, { ...opts, stdio: 'ignore' });
     case 'stream':
       return spawn(executable, args, { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
+    case 'interactive':
+      return spawn(executable, args, { ...opts, stdio: 'pipe' });
     case 'pipe':
       return spawnFile(executable, args, { ...opts, stdio: 'pipe' });
     }

@@ -25,6 +25,7 @@ import { PathManagementStrategy, PathManager } from '@pkg/integrations/pathManag
 import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
 import { BackendState, CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
+import { ContainerExecHandler } from '@pkg/main/containerExec';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import { DashboardServer } from '@pkg/main/dashboardServer';
 import { DeploymentProfileError, readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
@@ -89,6 +90,7 @@ let cfg: settings.Settings;
 let firstRunDialogComplete = false;
 let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler | null = null;
+let containerExecHandler: ContainerExecHandler | null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
@@ -588,6 +590,12 @@ async function startK8sManager() {
 
   await initializeExtensionManager(k8smanager.containerEngineClient, cfg);
   window.send('extensions/changed');
+
+  if (!containerExecHandler) {
+    containerExecHandler = new ContainerExecHandler(k8smanager.containerEngineClient);
+  } else {
+    containerExecHandler.updateClient(k8smanager.containerEngineClient);
+  }
 }
 
 /**

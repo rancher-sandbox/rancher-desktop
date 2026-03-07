@@ -39,6 +39,13 @@ export interface IpcMainEvents {
   'containers-process-output': (data: string, isStdErr: boolean) => void;
   // #endregion
 
+  // #region main/containerExec
+  'container-exec/start':  (containerId: string, namespace?: string) => void;
+  'container-exec/input':  (containerId: string, data: string) => void;
+  'container-exec/kill':   (containerId: string) => void;
+  'container-exec/detach': (containerId: string) => void;
+  // #endregion
+
   // #region main/imageEvents
   'confirm-do-image-deletion': (imageName: string, imageID: string) => void;
   'do-image-build':            (taggedImageName: string) => void;
@@ -207,6 +214,13 @@ export interface IpcRendererEvents {
   'images-check-state':       (state: boolean) => void;
   'images-namespaces':        (namespaces: string[]) => void;
   'container-process-output': (data: string, isStdErr: boolean) => void;
+  // #endregion
+
+  // #region main/containerExec
+  'container-exec/output':      (execId: string, data: string) => void;
+  'container-exec/exit':        (execId: string, code: number) => void;
+  'container-exec/ready':       (execId: string, history: string) => void;
+  'container-exec/unsupported': () => void;
   // #endregion
 
   // #region dialog
