@@ -395,6 +395,15 @@ export default {
       }
     }
 
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+
+      A {
+        pointer-events: none;
+      }
+    }
+
     .tab-badge {
       margin-left: 5px;
       background-color: var(--link);
