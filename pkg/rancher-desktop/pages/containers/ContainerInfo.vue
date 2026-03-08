@@ -89,6 +89,7 @@
         <container-shell
           v-if="shellEverActivated && containerId"
           v-show="activeTab === 'tab-shell'"
+          ref="containerShell"
           :container-id="containerId"
           :is-container-running="isRunning"
           :namespace="namespace"
@@ -116,6 +117,7 @@ const store = useStore();
 
 // Template refs with proper typing
 const containerLogs = ref<InstanceType<typeof ContainerLogs> | null>(null);
+const containerShell = ref<InstanceType<typeof ContainerShell> | null>(null);
 const searchInput = ref<HTMLInputElement | null>(null);
 
 // Reactive data
@@ -168,6 +170,7 @@ watch(containerName, (name) => {
 watch(activeTab, (tab) => {
   if (tab === 'tab-shell') {
     shellEverActivated.value = true;
+    nextTick(() => containerShell.value?.focus());
   }
 });
 

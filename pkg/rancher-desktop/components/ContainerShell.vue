@@ -237,6 +237,8 @@ watch(() => props.containerId, () => {
   }
 });
 
+defineExpose({ focus: () => terminal?.focus() });
+
 watch(() => props.isContainerRunning, (running) => {
   if (running) {
     startShell();
