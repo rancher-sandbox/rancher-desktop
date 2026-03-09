@@ -89,6 +89,7 @@ func main() {
 	}
 
 	groupCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	group, ctx := errgroup.WithContext(groupCtx)
 
 	sigCh := make(chan os.Signal, 1)
