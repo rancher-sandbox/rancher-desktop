@@ -45,6 +45,11 @@ export interface IpcMainEvents {
   'container-exec/detach': (containerId: string) => void;
   // #endregion
 
+  // #region main/containerStats
+  'container-stats/start': (containerId: string, intervalSeconds: number, namespace?: string) => void;
+  'container-stats/stop':  (containerId: string) => void;
+  // #endregion
+
   // #region main/imageEvents
   'confirm-do-image-deletion': (imageName: string, imageID: string) => void;
   'do-image-build':            (taggedImageName: string) => void;
@@ -218,6 +223,13 @@ export interface IpcRendererEvents {
   'container-exec/exit':        (execId: string, code: number) => void;
   'container-exec/ready':       (execId: string, history: string) => void;
   'container-exec/unsupported': () => void;
+  // #endregion
+
+  // #region main/containerStats
+  /** Raw JSON line from `docker stats --no-stream --format '{{json .}}'` */
+  'container-stats/data':      (containerId: string, statsJson: string) => void;
+  /** Raw text output from `docker top` */
+  'container-stats/processes': (containerId: string, topOutput: string) => void;
   // #endregion
 
   // #region dialog
