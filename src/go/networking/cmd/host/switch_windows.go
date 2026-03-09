@@ -60,14 +60,6 @@ func main() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	// config flags
-	ctx, cancel := context.WithCancel(context.Background())
-	groupErrs, ctx := errgroup.WithContext(ctx)
-
-	// catch user issued signals
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
 	subnet, err := config.ValidateSubnet(virtualSubnet)
 	if err != nil {
 		logrus.Fatal(err)
@@ -80,11 +72,26 @@ func main() {
 		logrus.Fatal(err)
 	}
 
-	cfg := newConfig(*subnet, portForwarding, debug)
+	if err := runSwitch(*subnet, portForwarding); err != nil {
+		logrus.Error(err)
+		os.Exit(1)
+	}
+}
+
+func runSwitch(subnet config.Subnet, portForwarding map[string]string) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	groupErrs, ctx := errgroup.WithContext(ctx)
+
+	// catch user issued signals
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
+	cfg := newConfig(subnet, portForwarding, debug)
 
 	ln, err := vsockHandshake(ctx, vsockHandshakePort, vsock.SignaturePhrase)
 	if err != nil {
-		logrus.Fatalf("handshake with peer process failed: %v", err)
+		return fmt.Errorf("handshake with peer process failed: %w", err)
 	}
 
 	logrus.Debugf("attempting to start a virtual network with the following config: %+v", cfg)
@@ -104,10 +111,7 @@ func main() {
 		}
 	})
 	// Wait for all of the go funcs to finish up
-	if err := groupErrs.Wait(); err != nil {
-		logrus.Error(err)
-		os.Exit(1)
-	}
+	return groupErrs.Wait()
 }
 
 func run(ctx context.Context, g *errgroup.Group, cfg *types.Configuration, ln net.Listener) error {
