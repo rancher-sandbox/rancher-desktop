@@ -7,6 +7,12 @@
       :key="containerId"
       :flat="true"
     >
+      <!--
+        Tab components are used only to register headers and emit @active events; their slots
+        are intentionally empty. Content is rendered in .tab-content below so we can mix
+        v-if (destroy/recreate on switch) with v-show (preserve the shell terminal's DOM and
+        pty process across tab switches).
+      -->
       <tab
         label="Logs"
         name="tab-logs"
@@ -108,6 +114,7 @@ import ContainerLogs from '@pkg/components/ContainerLogs.vue';
 import ContainerShell from '@pkg/components/ContainerShell.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
+import type { Settings } from '@pkg/config/settings';
 import type { Container } from '@pkg/store/container-engine';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -121,7 +128,7 @@ const containerShell = ref<InstanceType<typeof ContainerShell> | null>(null);
 const searchInput = ref<HTMLInputElement | null>(null);
 
 // Reactive data
-const settings = ref<any>();
+const settings = ref<Settings>();
 const subscribeTimer = ref<ReturnType<typeof setTimeout>>();
 const searchTerm = ref('');
 const activeTab = ref<'tab-logs' | 'tab-shell'>('tab-logs');
@@ -172,11 +179,6 @@ watch(activeTab, (tab) => {
     shellEverActivated.value = true;
     nextTick(() => containerShell.value?.focus());
   }
-});
-
-watch(containerId, () => {
-  activeTab.value = 'tab-logs';
-  shellEverActivated.value = false;
 });
 
 // Methods as functions
