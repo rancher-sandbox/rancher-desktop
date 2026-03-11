@@ -34,8 +34,9 @@ export class ContainerShellPage {
 
   /** Type a command and press Enter, using the hidden xterm textarea. */
   async runCommand(command: string) {
-    // xterm.js captures keyboard events through a hidden textarea; clicking
-    // the terminal container first ensures it is focused.
+    // ContainerShell auto-focuses the terminal when the shell tab becomes
+    // active for real users, but Playwright's keyboard routing requires an
+    // explicit click to track the focused element correctly.
     await this.terminal.click();
     await this.page.keyboard.type(command);
     await this.page.keyboard.press('Enter');

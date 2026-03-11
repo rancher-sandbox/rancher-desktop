@@ -69,7 +69,7 @@ test.describe.serial('Containers Tests', () => {
     await containersPage.waitForContainerToAppear(testContainerId);
     await containersPage.viewContainerInfo(testContainerId);
 
-    await page.waitForURL(`**/containers/info/${ testContainerId }`, {
+    await page.waitForURL(`**/containers/info/${ testContainerId }**`, {
       timeout: 10_000,
     });
   });
@@ -167,7 +167,7 @@ test.describe.serial('Containers Tests', () => {
       await containersPage.waitForContainerToAppear(scrollTestContainerId);
       await containersPage.viewContainerInfo(scrollTestContainerId);
 
-      await page.waitForURL(`**/containers/info/${ scrollTestContainerId }`, {
+      await page.waitForURL(`**/containers/info/${ scrollTestContainerId }**`, {
         timeout: 10_000,
       });
 
@@ -226,7 +226,7 @@ test.describe.serial('Containers Tests', () => {
       await containersPage.waitForContainerToAppear(longRunningContainerId);
       await containersPage.viewContainerInfo(longRunningContainerId);
 
-      await page.waitForURL(`**/containers/info/${ longRunningContainerId }`, {
+      await page.waitForURL(`**/containers/info/${ longRunningContainerId }**`, {
         timeout: 10000,
       });
 
@@ -348,7 +348,7 @@ test.describe.serial('Container Shell Tab', () => {
     await containersPage.waitForTableToLoad();
     await containersPage.waitForContainerToAppear(shellContainerId);
     await containersPage.clickContainerAction(shellContainerId, 'info');
-    await page.waitForURL(`**/containers/info/${ shellContainerId }`, { timeout: 10_000 });
+    await page.waitForURL(`**/containers/info/${ shellContainerId }**`, { timeout: 10_000 });
     const shellPage = new ContainerShellPage(page);
     await shellPage.clickTab();
     await shellPage.waitForTerminal();
@@ -399,7 +399,7 @@ test.describe.serial('Container Shell Tab', () => {
     await containersPage.waitForTableToLoad();
     await containersPage.waitForContainerToAppear(unsupportedContainerId);
     await containersPage.clickContainerAction(unsupportedContainerId, 'info');
-    await page.waitForURL(`**/containers/info/${ unsupportedContainerId }`, { timeout: 10_000 });
+    await page.waitForURL(`**/containers/info/${ unsupportedContainerId }**`, { timeout: 10_000 });
 
     const shellPage = new ContainerShellPage(page);
     await shellPage.clickTab();

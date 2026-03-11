@@ -3,109 +3,118 @@
     class="container-info-page"
     data-testid="container-info"
   >
-    <div class="tab-header-row">
-      <ul class="tabs">
+    <rd-tabbed
+      :key="containerId"
+      :flat="true"
+    >
+      <!--
+        Tab components are used only to register headers and emit @active events; their slots
+        are intentionally empty. Content is rendered in .tab-content below so we can mix
+        v-if (destroy/recreate on switch) with v-show (preserve the shell terminal's DOM and
+        pty process across tab switches).
+      -->
+      <tab
+        label="Logs"
+        name="tab-logs"
+        :weight="1"
+        @active="activeTab = 'tab-logs'"
+      />
+      <tab
+        label="Shell"
+        name="tab-shell"
+        :weight="0"
+        :disabled="!isRunning"
+        @active="activeTab = 'tab-shell'"
+      />
+      <template #tab-row-extras>
         <li
-          :class="['tab', { active: activeTab === 'logs' }]"
-          data-testid="tab-logs"
-          @click="activeTab = 'logs'"
+          v-if="activeTab === 'tab-logs'"
+          class="search-widget"
+          data-testid="search-widget"
         >
-          <a>
-            <span>Logs</span>
-          </a>
+          <input
+            ref="searchInput"
+            v-model="searchTerm"
+            aria-label="Search in logs"
+            class="search-input"
+            data-testid="search-input"
+            placeholder="Search logs..."
+            type="search"
+            @input="onSearchInput"
+            @keydown="handleSearchKeydown"
+          >
+          <button
+            :disabled="!searchTerm"
+            aria-label="Previous match"
+            class="search-btn btn role-tertiary"
+            data-testid="search-prev-btn"
+            title="Previous match"
+            @click="searchPrevious"
+          >
+            <i
+              aria-hidden="true"
+              class="icon icon-chevron-up"
+            />
+          </button>
+          <button
+            :disabled="!searchTerm"
+            aria-label="Next match"
+            class="search-btn btn role-tertiary"
+            data-testid="search-next-btn"
+            title="Next match"
+            @click="searchNext"
+          >
+            <i
+              aria-hidden="true"
+              class="icon icon-chevron-down"
+            />
+          </button>
+          <button
+            :disabled="!searchTerm"
+            aria-label="Clear search"
+            class="search-btn btn role-tertiary"
+            data-testid="search-clear-btn"
+            title="Clear search"
+            @click="clearSearch"
+          >
+            <i
+              aria-hidden="true"
+              class="icon icon-x"
+            />
+          </button>
         </li>
-        <li
-          :class="['tab', { active: activeTab === 'shell', disabled: !isRunning }]"
-          data-testid="tab-shell"
-          @click="isRunning && (activeTab = 'shell')"
-        >
-          <a>
-            <span>Shell</span>
-          </a>
-        </li>
-      </ul>
-      <div
-        v-if="activeTab === 'logs'"
-        class="search-widget"
-      >
-        <input
-          ref="searchInput"
-          v-model="searchTerm"
-          aria-label="Search in logs"
-          class="search-input"
-          data-testid="search-input"
-          placeholder="Search logs..."
-          type="search"
-          @input="onSearchInput"
-          @keydown="handleSearchKeydown"
-        >
-        <button
-          :disabled="!searchTerm"
-          aria-label="Previous match"
-          class="search-btn btn role-tertiary"
-          data-testid="search-prev-btn"
-          title="Previous match"
-          @click="searchPrevious"
-        >
-          <i
-            aria-hidden="true"
-            class="icon icon-chevron-up"
-          />
-        </button>
-        <button
-          :disabled="!searchTerm"
-          aria-label="Next match"
-          class="search-btn btn role-tertiary"
-          data-testid="search-next-btn"
-          title="Next match"
-          @click="searchNext"
-        >
-          <i
-            aria-hidden="true"
-            class="icon icon-chevron-down"
-          />
-        </button>
-        <button
-          :disabled="!searchTerm"
-          aria-label="Clear search"
-          class="search-btn btn role-tertiary"
-          data-testid="search-clear-btn"
-          title="Clear search"
-          @click="clearSearch"
-        >
-          <i
-            aria-hidden="true"
-            class="icon icon-x"
-          />
-        </button>
+      </template>
+      <div class="tab-content">
+        <container-logs
+          v-if="containerId && activeTab === 'tab-logs'"
+          ref="containerLogs"
+          :container-id="containerId"
+          :is-container-running="isRunning"
+          :namespace="namespace"
+        />
+        <container-shell
+          v-if="shellEverActivated && containerId"
+          v-show="activeTab === 'tab-shell'"
+          ref="containerShell"
+          :container-id="containerId"
+          :is-container-running="isRunning"
+          :namespace="namespace"
+        />
       </div>
-    </div>
-    <div class="tab-content">
-      <container-logs
-        v-if="containerId && activeTab === 'logs'"
-        ref="containerLogs"
-        :container-id="containerId"
-        :is-container-running="isRunning"
-        :namespace="namespace"
-      />
-      <container-shell
-        v-if="shellEverActivated && containerId"
-        v-show="activeTab === 'shell'"
-        :container-id="containerId"
-        :is-container-running="isRunning"
-        :namespace="settings?.containers?.namespace"
-      />
-    </div>
+    </rd-tabbed>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 
 import ContainerLogs from '@pkg/components/ContainerLogs.vue';
 import ContainerShell from '@pkg/components/ContainerShell.vue';
+import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
+import Tab from '@pkg/components/Tabbed/Tab.vue';
+import type { Settings } from '@pkg/config/settings';
 import type { Container } from '@pkg/store/container-engine';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -115,13 +124,14 @@ const store = useStore();
 
 // Template refs with proper typing
 const containerLogs = ref<InstanceType<typeof ContainerLogs> | null>(null);
+const containerShell = ref<InstanceType<typeof ContainerShell> | null>(null);
 const searchInput = ref<HTMLInputElement | null>(null);
 
 // Reactive data
-const settings = ref<any>();
+const settings = ref<Settings>();
 const subscribeTimer = ref<ReturnType<typeof setTimeout>>();
 const searchTerm = ref('');
-const activeTab = ref<'logs' | 'shell'>('logs');
+const activeTab = ref<'tab-logs' | 'tab-shell'>('tab-logs');
 const shellEverActivated = ref(false);
 
 // Vuex integration
@@ -165,14 +175,10 @@ watch(containerName, (name) => {
 }, { immediate: true });
 
 watch(activeTab, (tab) => {
-  if (tab === 'shell') {
+  if (tab === 'tab-shell') {
     shellEverActivated.value = true;
+    nextTick(() => containerShell.value?.focus());
   }
-});
-
-watch(containerId, () => {
-  activeTab.value = 'logs';
-  shellEverActivated.value = false;
 });
 
 // Methods as functions
@@ -283,68 +289,9 @@ onBeforeUnmount(() => {
   min-height: 0;
 }
 
-.tab-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.tabs {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-
-  .tab {
-    position: relative;
-    cursor: pointer;
-    margin-bottom: -1px;
-    border-bottom: 2px solid transparent;
-
-    a {
-      display: flex;
-      align-items: center;
-      padding: 10px 15px;
-      color: var(--body-text);
-      text-decoration: none;
-
-      &:hover {
-        color: var(--link);
-        text-decoration: none;
-
-        span {
-          text-decoration: none;
-        }
-      }
-    }
-
-    &.active {
-      border-bottom-color: var(--primary);
-
-      > a {
-        color: var(--link);
-        text-decoration: none;
-      }
-    }
-
-    &.disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-
-      a {
-        pointer-events: none;
-      }
-    }
-  }
-}
-
 .search-widget {
+  margin-left: auto;
+  list-style: none;
   display: flex;
   align-items: center;
   gap: 0.5rem;
