@@ -1692,16 +1692,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/asar@npm:4.0.1":
-  version: 4.0.1
-  resolution: "@electron/asar@npm:4.0.1"
+"@electron/asar@npm:4.1.0":
+  version: 4.1.0
+  resolution: "@electron/asar@npm:4.1.0"
   dependencies:
     commander: "npm:^13.1.0"
-    glob: "npm:^11.0.1"
+    glob: "npm:^13.0.2"
     minimatch: "npm:^10.0.1"
+    plist: "npm:^3.1.0"
+  dependenciesMeta:
+    electron:
+      built: true
   bin:
     asar: bin/asar.mjs
-  checksum: 10c0/4071dfce3d3d53e17baac023b1c38dfc83b5975b68b708943692bd1525a08b02c6717c334fefaeb3aaa860c5495842047a06a044351b652455653f762d13f850
+  checksum: 10c0/f75565faeae0e54170ec625ceb5339d0f5c3fec79ff6d6794b0172aa2c5d96a2a9d189943c78004875b53d0010f39925dc6d6fcc76b324571986e68f82d87b0a
   languageName: node
   linkType: hard
 
@@ -10154,7 +10158,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^11.0.1, glob@npm:^11.0.3":
+"glob@npm:^11.0.3":
   version: 11.0.3
   resolution: "glob@npm:11.0.3"
   dependencies:
@@ -10170,7 +10174,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^13.0.3":
+"glob@npm:^13.0.2, glob@npm:^13.0.3":
   version: 13.0.6
   resolution: "glob@npm:13.0.6"
   dependencies:
@@ -14600,7 +14604,7 @@ __metadata:
     "@babel/plugin-proposal-private-methods": "npm:7.18.6"
     "@babel/plugin-proposal-private-property-in-object": "npm:7.21.11"
     "@docker/extension-api-client-types": "npm:0.4.2"
-    "@electron/asar": "npm:4.0.1"
+    "@electron/asar": "npm:4.1.0"
     "@electron/fuses": "npm:^2.1.0"
     "@electron/notarize": "npm:3.1.1"
     "@eslint/compat": "npm:2.0.2"
