@@ -130,7 +130,7 @@
     "@yarnpkg/types": "^4.0.1",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "30.2.0",
-    "babel-loader": "10.0.0",
+    "babel-loader": "10.1.0",
     "cross-env": "10.1.0",
     "css-loader": "7.1.4",
     "ejs": "4.0.1",
