@@ -35,7 +35,7 @@ import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import buildApplicationMenu from '@pkg/main/mainmenu';
-import setupNetworking from '@pkg/main/networking';
+import setupNetworking, { setStevePort } from '@pkg/main/networking';
 import { Snapshots } from '@pkg/main/snapshots/snapshots';
 import { Snapshot, SnapshotDialog } from '@pkg/main/snapshots/types';
 import { Tray } from '@pkg/main/tray';
@@ -45,6 +45,7 @@ import getCommandLineArgs from '@pkg/utils/commandLine';
 import dockerDirManager from '@pkg/utils/dockerDirManager';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging, { clearLoggingDirectory, setLogLevel } from '@pkg/utils/logging';
+import { findAvailablePort } from '@pkg/utils/networks';
 import { fetchMacOsVersion, getMacOsVersion } from '@pkg/utils/osVersion';
 import paths from '@pkg/utils/paths';
 import { protocolsRegistered, setupProtocolHandlers } from '@pkg/utils/protocols';
@@ -112,6 +113,9 @@ let deploymentProfiles: settings.DeploymentProfileType = { defaults: {}, locked:
  * and if this flag is true, a new restart can be triggered.
  */
 let pendingRestartContext: CommandWorkerInterface.CommandContext | undefined;
+
+const DEFAULT_STEVE_HTTPS_PORT = 9443;
+const DEFAULT_STEVE_HTTP_PORT = 9080;
 
 let httpCommandServer: HttpCommandServer | null = null;
 const httpCredentialHelperServer = new HttpCredentialHelperServer();
@@ -1277,7 +1281,15 @@ function newK8sManager() {
         currentImageProcessor?.relayNamespaces();
 
         if (enabledK8s) {
-          await Steve.getInstance().start();
+          const steveHttpsPort = await findAvailablePort(DEFAULT_STEVE_HTTPS_PORT);
+          const steveHttpPort = await findAvailablePort(DEFAULT_STEVE_HTTP_PORT);
+
+          if (steveHttpsPort !== DEFAULT_STEVE_HTTPS_PORT || steveHttpPort !== DEFAULT_STEVE_HTTP_PORT) {
+            console.log(`Steve default ports in use; using HTTPS=${ steveHttpsPort } HTTP=${ steveHttpPort }`);
+          }
+          DashboardServer.getInstance().setStevePort(steveHttpsPort);
+          setStevePort(steveHttpsPort);
+          await Steve.getInstance().start(steveHttpsPort, steveHttpPort);
         }
       }
 
