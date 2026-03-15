@@ -26,9 +26,20 @@ export class DashboardServer {
   private dashboardApp: Server = new Server();
   private host = '127.0.0.1';
   private port = 6120;
-  private api = 'https://127.0.0.1:9443';
+  private api = '';
+  private proxies:      Record<string, ReturnType<typeof createProxyMiddleware>> = Object.create(null);
 
-  private proxies = (() => {
+  /**
+   * Checks for an existing instance of Dashboard server.
+   * Instantiate a new one if it does not exist.
+   */
+  public static getInstance(): DashboardServer {
+    DashboardServer.instance ??= new DashboardServer();
+
+    return DashboardServer.instance;
+  }
+
+  private createProxies() {
     const proxy: Record<ProxyKeys, Options> = {
       '/k8s':       proxyWsOpts, // Straight to a remote cluster (/k8s/clusters/<id>/)
       '/pp':        proxyWsOpts, // For (epinio) standalone API
@@ -42,20 +53,19 @@ export class DashboardServer {
       '/v1-*etc':   proxyOpts, // SAML, KDM, etc
     };
     const entries = Object.entries(proxy).map(([key, options]) => {
-      return [key, createProxyMiddleware({ ...options, target: this.api + key })] as const;
+      return [key, createProxyMiddleware({ ...options, router: () => this.api + key })] as const;
     });
 
-    return Object.fromEntries(entries);
-  })();
+    this.proxies = Object.fromEntries(entries) as typeof this.proxies;
+  }
 
   /**
-   * Checks for an existing instance of Dashboard server.
-   * Instantiate a new one if it does not exist.
+   * Update the Steve HTTPS port that proxies forward to.
+   * Call this before each Steve start so that dynamic port changes are
+   * reflected in subsequent proxy requests.
    */
-  public static getInstance(): DashboardServer {
-    DashboardServer.instance ??= new DashboardServer();
-
-    return DashboardServer.instance;
+  public setStevePort(stevePort: number) {
+    this.api = `https://127.0.0.1:${ stevePort }`;
   }
 
   /**
@@ -67,6 +77,8 @@ export class DashboardServer {
 
       return;
     }
+
+    this.createProxies();
 
     ProxyKeys.forEach((key) => {
       this.dashboardServer.use(key, this.proxies[key]);

@@ -8,25 +8,24 @@ import K3sHelper from '@pkg/backend/k3sHelper';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 
-const STEVE_PORT = 9443;
-
 const console = Logging.steve;
 
 /**
- * @description Singleton that manages the lifecycle of the Steve API
+ * Singleton that manages the lifecycle of the Steve API.
  */
 export class Steve {
   private static instance: Steve;
   private process!:        ChildProcess;
 
   private isRunning: boolean;
+  private httpsPort = 0;
 
   private constructor() {
     this.isRunning = false;
   }
 
   /**
-   * @description Checks for an existing instance of Steve. If one does not
+   * Checks for an existing instance of Steve. If one does not
    * exist, instantiate a new one.
    */
   public static getInstance(): Steve {
@@ -38,10 +37,12 @@ export class Steve {
   }
 
   /**
-   * @description Starts the Steve API if one is not already running.
+   * Starts the Steve API if one is not already running.
    * Returns only after Steve is ready to accept connections.
+   * @param httpsPort The HTTPS port for Steve to listen on.
+   * @param httpPort The HTTP port for Steve to listen on.
    */
-  public async start() {
+  public async start(httpsPort: number, httpPort: number) {
     const { pid } = this.process || { };
 
     if (this.isRunning && pid) {
@@ -49,6 +50,8 @@ export class Steve {
 
       return;
     }
+
+    this.httpsPort = httpsPort;
 
     const osSpecificName = /^win/i.test(os.platform()) ? 'steve.exe' : 'steve';
     const stevePath = path.join(paths.resources, os.platform(), 'internal', osSpecificName);
@@ -68,6 +71,10 @@ export class Steve {
         path.join(paths.resources, 'rancher-dashboard'),
         '--offline',
         'true',
+        '--https-listen-port',
+        String(httpsPort),
+        '--http-listen-port',
+        String(httpPort),
       ],
       { env },
     );
@@ -136,7 +143,7 @@ export class Steve {
   }
 
   /**
-   * Check if Steve is accepting connections on its port.
+   * Check if Steve is accepting connections on its HTTPS port.
    */
   private isPortReady(): Promise<boolean> {
     return new Promise((resolve) => {
@@ -155,7 +162,7 @@ export class Steve {
         socket.destroy();
         resolve(false);
       });
-      socket.connect(STEVE_PORT, '127.0.0.1');
+      socket.connect(this.httpsPort, '127.0.0.1');
     });
   }
 
