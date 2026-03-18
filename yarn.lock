@@ -8699,16 +8699,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:40.8.0":
-  version: 40.8.0
-  resolution: "electron@npm:40.8.0"
+"electron@npm:41.0.0":
+  version: 41.0.0
+  resolution: "electron@npm:41.0.0"
   dependencies:
     "@electron/get": "npm:^2.0.0"
     "@types/node": "npm:^24.9.0"
     extract-zip: "npm:^2.0.1"
   bin:
     electron: cli.js
-  checksum: 10c0/95da8f43c8ca049ca631cea81e62166104bf6f49015d646922131dc4c2dcbfc762da8fc51e8bb5cf4289284a6ca1406c4e5fbae3d2b4a64e2d6dbade517cd8d1
+  checksum: 10c0/b4fa6b3860fddd24d141f28d9272a708554b28c83986f262f265aa52b6ff33012cebec6ca0f2d4f809278ae918b61853e9073c994da3b6837de58f5353089095
   languageName: node
   linkType: hard
 
@@ -13146,11 +13146,11 @@ __metadata:
   linkType: hard
 
 "node-abi@npm:^4.2.0":
-  version: 4.24.0
-  resolution: "node-abi@npm:4.24.0"
+  version: 4.28.0
+  resolution: "node-abi@npm:4.28.0"
   dependencies:
     semver: "npm:^7.6.3"
-  checksum: 10c0/9bf9f4e79c875b98f8026f2ad80150b2d5077f48529444232c9574cfd82e45d42a3ab2dcf6fb374cf7775becbf58e7c1b8704596ad3bef27cdeab7bc93eca7a3
+  checksum: 10c0/d734dc7d25247fdd7bba7f1f12ddadc23c6ada9c639cf2cd2b11a6e568591c82f609e41bf740077b838f2eb88ff4d9489eb111eef4e530c8dbdb41355e6f0343
   languageName: node
   linkType: hard
 
@@ -14822,7 +14822,7 @@ __metadata:
     dmg-license: "npm:1.0.11"
     dompurify: "npm:3.3.3"
     ejs: "npm:5.0.1"
-    electron: "npm:40.8.0"
+    electron: "npm:41.0.0"
     electron-builder: "npm:26.8.1"
     electron-updater: "npm:6.8.3"
     eslint: "npm:10.0.3"
