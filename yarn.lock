@@ -8699,16 +8699,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:41.0.0":
-  version: 41.0.0
-  resolution: "electron@npm:41.0.0"
+"electron@npm:41.0.2":
+  version: 41.0.2
+  resolution: "electron@npm:41.0.2"
   dependencies:
     "@electron/get": "npm:^2.0.0"
     "@types/node": "npm:^24.9.0"
     extract-zip: "npm:^2.0.1"
   bin:
     electron: cli.js
-  checksum: 10c0/b4fa6b3860fddd24d141f28d9272a708554b28c83986f262f265aa52b6ff33012cebec6ca0f2d4f809278ae918b61853e9073c994da3b6837de58f5353089095
+  checksum: 10c0/2aabd5d72e339e1c839cb75491e1f1154120dd2c16039c515db4cc26cb85d05006d8ebb251c8d5b5b811527e2135afe5fe68e1e95831e821b6e38d957ca9c808
   languageName: node
   linkType: hard
 
@@ -14822,7 +14822,7 @@ __metadata:
     dmg-license: "npm:1.0.11"
     dompurify: "npm:3.3.3"
     ejs: "npm:5.0.1"
-    electron: "npm:41.0.0"
+    electron: "npm:41.0.2"
     electron-builder: "npm:26.8.1"
     electron-updater: "npm:6.8.3"
     eslint: "npm:10.0.3"
