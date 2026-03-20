@@ -1,5 +1,5 @@
 import { ChildProcess, spawn } from 'child_process';
-import net from 'net';
+import http from 'http';
 import os from 'os';
 import path from 'path';
 import { setTimeout } from 'timers/promises';
@@ -19,6 +19,7 @@ export class Steve {
 
   private isRunning: boolean;
   private httpsPort = 0;
+  private httpPort = 0;
 
   private constructor() {
     this.isRunning = false;
@@ -52,6 +53,7 @@ export class Steve {
     }
 
     this.httpsPort = httpsPort;
+    this.httpPort = httpPort;
 
     const osSpecificName = /^win/i.test(os.platform()) ? 'steve.exe' : 'steve';
     const stevePath = path.join(paths.resources, os.platform(), 'internal', osSpecificName);
@@ -115,7 +117,7 @@ export class Steve {
   }
 
   /**
-   * Wait for Steve to be ready to accept connections.
+   * Wait for Steve to be ready to serve API requests.
    */
   private async waitForReady(): Promise<void> {
     const maxAttempts = 60;
@@ -139,26 +141,33 @@ export class Steve {
   }
 
   /**
-   * Check if Steve is accepting connections on its HTTPS port.
+   * Check if Steve has finished initializing its API controllers.
+   * Steve accepts HTTP connections and responds to /v1 before its
+   * controllers have discovered all resource schemas from the K8s
+   * API server. The dashboard fails if schemas are incomplete, so
+   * we probe a core resource endpoint that returns 404 until the
+   * schema controller has registered it.
    */
   private isPortReady(): Promise<boolean> {
     return new Promise((resolve) => {
-      const socket = new net.Socket();
+      const req = http.request({
+        hostname: '127.0.0.1',
+        port:     this.httpPort,
+        path:     '/v1/namespaces',
+        method:   'GET',
+        timeout:  1000,
+        agent:    false,
+      }, (res) => {
+        res.resume();
+        resolve(res.statusCode === 200);
+      });
 
-      socket.setTimeout(1000);
-      socket.once('connect', () => {
-        socket.destroy();
-        resolve(true);
-      });
-      socket.once('error', () => {
-        socket.destroy();
+      req.on('error', () => resolve(false));
+      req.on('timeout', () => {
+        req.destroy();
         resolve(false);
       });
-      socket.once('timeout', () => {
-        socket.destroy();
-        resolve(false);
-      });
-      socket.connect(this.httpsPort, '127.0.0.1');
+      req.end();
     });
   }
 
