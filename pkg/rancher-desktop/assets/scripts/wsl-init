@@ -43,6 +43,13 @@ mount --make-shared /sys/fs/cgroup
 mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
 mount --make-shared /proc/sys/fs/binfmt_misc
 
+# Some environments may not have binfmt_misc enabled / mounted, and WSLInterop
+# may already be registered, so only add the handler when it is possible and
+# necessary.
+if [ -w /proc/sys/fs/binfmt_misc/register ] && [ ! -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
+    echo ':WSLInterop:M::MZ::/init:PF' > /proc/sys/fs/binfmt_misc/register
+fi
+
 if [ -f /var/lib/resolv.conf ]; then
     ln -s -f /var/lib/resolv.conf /etc/resolv.conf
 fi
