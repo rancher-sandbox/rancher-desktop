@@ -228,9 +228,9 @@ Electron.app.whenReady().then(async() => {
     // Check for required OS versions and features
     await checkPrerequisites();
 
-    DashboardServer.getInstance().init();
-
     await setupNetworking();
+
+    DashboardServer.getInstance().init();
 
     try {
       deploymentProfiles = await readDeploymentProfiles();
@@ -1277,12 +1277,14 @@ function newK8sManager() {
 
         if (enabledK8s) {
           try {
-            const [steveHttpsPort, steveHttpPort] = await getAvailablePorts(2);
+            const [stevePort] = await getAvailablePorts(1);
 
-            console.log(`Steve ports: HTTPS=${ steveHttpsPort } HTTP=${ steveHttpPort }`);
-            await Steve.getInstance().start(steveHttpsPort, steveHttpPort);
-            DashboardServer.getInstance().setStevePort(steveHttpsPort); // recreate proxy middleware
-            setSteveCertPort(steveHttpsPort); // update certificate-error allowed URLs
+            console.log(`Steve HTTPS port: ${ stevePort }`);
+            // Set the Steve HTTPS port for certificate checking before setting
+            // up Steve itself.
+            setSteveCertPort(stevePort);
+            await Steve.getInstance().start(stevePort);
+            DashboardServer.getInstance().setStevePort(stevePort); // recreate proxy middleware
           } catch (ex) {
             console.error('Failed to start Steve:', ex);
           }

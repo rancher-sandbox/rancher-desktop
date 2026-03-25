@@ -1,8 +1,9 @@
 import { ChildProcess, spawn } from 'child_process';
-import http from 'http';
 import os from 'os';
 import path from 'path';
 import { setTimeout } from 'timers/promises';
+
+import Electron from 'electron';
 
 import K3sHelper from '@pkg/backend/k3sHelper';
 import Logging from '@pkg/utils/logging';
@@ -19,7 +20,6 @@ export class Steve {
 
   private isRunning: boolean;
   private httpsPort = 0;
-  private httpPort = 0;
 
   private constructor() {
     this.isRunning = false;
@@ -41,9 +41,8 @@ export class Steve {
    * @description Starts the Steve API if one is not already running.
    * Returns only after Steve is ready to accept connections.
    * @param httpsPort The HTTPS port for Steve to listen on.
-   * @param httpPort The HTTP port for Steve to listen on.
    */
-  public async start(httpsPort: number, httpPort: number) {
+  public async start(httpsPort: number) {
     const { pid } = this.process || { };
 
     if (this.isRunning && pid) {
@@ -53,7 +52,6 @@ export class Steve {
     }
 
     this.httpsPort = httpsPort;
-    this.httpPort = httpPort;
 
     const osSpecificName = /^win/i.test(os.platform()) ? 'steve.exe' : 'steve';
     const stevePath = path.join(paths.resources, os.platform(), 'internal', osSpecificName);
@@ -76,7 +74,7 @@ export class Steve {
         '--https-listen-port',
         String(httpsPort),
         '--http-listen-port',
-        String(httpPort),
+        '0', // Disable HTTP support; it does not work correctly anyway.
       ],
       { env },
     );
@@ -129,7 +127,7 @@ export class Steve {
       }
 
       if (await this.isPortReady()) {
-        console.debug(`Steve is ready after ${ attempt } attempt(s)`);
+        console.debug(`Steve is ready after ${ attempt } / ${ maxAttempts } attempt(s)`);
 
         return;
       }
@@ -149,24 +147,43 @@ export class Steve {
    * schema controller has registered it.
    */
   private isPortReady(): Promise<boolean> {
+    // Steve's HTTP port just redirects to HTTPS, so we might as well go to the
+    // HTTPS port directly.  We will need to ignore certificate errors; however,
+    // neither the NodeJS stack nor Electron.net.request() would pass through
+    // the `Electron.app.on('certificate-error', ...)` handler, so we cannot use
+    // the normal certificate handling for this health check.  Instead, we
+    // create a temporary session with a certificate verify proc that ignores
+    // errors, and use that session for the health check request.
     return new Promise((resolve) => {
-      const req = http.request({
-        hostname: '127.0.0.1',
-        port:     this.httpPort,
-        path:     '/v1/namespaces',
-        method:   'GET',
-        timeout:  1000,
-        agent:    false,
-      }, (res) => {
-        res.resume();
-        resolve(res.statusCode === 200);
+      const session = Electron.session.fromPartition('steve-healthcheck', { cache: false });
+
+      session.setCertificateVerifyProc((request, callback) => {
+        if (request.hostname === '127.0.0.1') {
+          // We do not have any more information to narrow down the certificate;
+          // given that we're doing this in a private partition, it should be
+          // safe to allow all localhost certificates.  In particular, we do not
+          // get access to the port number, and all the Steve certificates have
+          // generic fields (e.g. subject).
+          callback(0);
+        } else {
+          // Unexpected request; not sure how this could happen in a new session,
+          // but we can at least pretend to do the right thing.
+          callback(-3); // Use Chromium's default verification.
+        }
       });
 
-      req.on('error', () => resolve(false));
-      req.on('timeout', () => {
-        req.destroy();
-        resolve(false);
+      const req = Electron.net.request({
+        protocol: 'https:',
+        hostname: '127.0.0.1',
+        port:     this.httpsPort,
+        path:     '/v1/namespaces',
+        method:   'GET',
+        redirect: 'error',
+        session,
       });
+
+      req.on('response', (res) => resolve(res.statusCode === 200));
+      req.on('error', () => resolve(false));
       req.end();
     });
   }
