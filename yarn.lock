@@ -3694,13 +3694,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tootallnate/quickjs-emscripten@npm:^0.23.0":
-  version: 0.23.0
-  resolution: "@tootallnate/quickjs-emscripten@npm:0.23.0"
-  checksum: 10c0/2a939b781826fb5fd3edd0f2ec3b321d259d760464cf20611c9877205aaca3ccc0b7304dea68416baa0d568e82cd86b17d29548d1e5139fa3155a4a86a2b4b49
-  languageName: node
-  linkType: hard
-
 "@trysound/sax@npm:0.2.0":
   version: 0.2.0
   resolution: "@trysound/sax@npm:0.2.0"
@@ -6191,6 +6184,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"agent-base@npm:8.0.0":
+  version: 8.0.0
+  resolution: "agent-base@npm:8.0.0"
+  checksum: 10c0/024ab013d665acc86b2aa3b468d920637654cdc5310080261855e294d9834da113dee199a74c44ba6f293d041a97439624f04648135d450fe2e5cd0a36c032dc
+  languageName: node
+  linkType: hard
+
 "agent-base@npm:^7.1.0, agent-base@npm:^7.1.2":
   version: 7.1.3
   resolution: "agent-base@npm:7.1.3"
@@ -8162,10 +8162,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"data-uri-to-buffer@npm:^6.0.2":
-  version: 6.0.2
-  resolution: "data-uri-to-buffer@npm:6.0.2"
-  checksum: 10c0/f76922bf895b3d7d443059ff278c9cc5efc89d70b8b80cd9de0aa79b3adc6d7a17948eefb8692e30398c43635f70ece1673d6085cc9eba2878dbc6c6da5292ac
+"data-uri-to-buffer@npm:7.0.0":
+  version: 7.0.0
+  resolution: "data-uri-to-buffer@npm:7.0.0"
+  checksum: 10c0/49301640fd1e5e6913b3de29cb62396ca2c1ac6847d6bf67491549e5cdde79a666c53322454b1e30e8e6f0bd9bf48b817e7887d0224bbda9f55071e2d1b3cbb3
   languageName: node
   linkType: hard
 
@@ -8317,14 +8317,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"degenerator@npm:^5.0.0":
-  version: 5.0.1
-  resolution: "degenerator@npm:5.0.1"
+"degenerator@npm:6.0.0":
+  version: 6.0.0
+  resolution: "degenerator@npm:6.0.0"
   dependencies:
     ast-types: "npm:^0.13.4"
     escodegen: "npm:^2.1.0"
     esprima: "npm:^4.0.1"
-  checksum: 10c0/e48d8a651edeb512a648711a09afec269aac6de97d442a4bb9cf121a66877e0eec11b9727100a10252335c0666ae1c84a8bc1e3a3f47788742c975064d2c7b1c
+  peerDependencies:
+    quickjs-wasi: ^0.0.1
+  checksum: 10c0/63ee1e18336e333f85fd847c51ca56ed296d6769bb1c4c0f9bfc83353c6de9c134d63c9e5f1b38f65f830e25b4e7dba852116012ef296235f85eb933bea46b60
   languageName: node
   linkType: hard
 
@@ -10149,14 +10151,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-uri@npm:^6.0.1":
-  version: 6.0.4
-  resolution: "get-uri@npm:6.0.4"
+"get-uri@npm:7.0.0":
+  version: 7.0.0
+  resolution: "get-uri@npm:7.0.0"
   dependencies:
     basic-ftp: "npm:^5.0.2"
-    data-uri-to-buffer: "npm:^6.0.2"
+    data-uri-to-buffer: "npm:7.0.0"
     debug: "npm:^4.3.4"
-  checksum: 10c0/07c87abe1f97a4545fae329a37a45e276ec57e6ad48dad2a97780f87c96b00a82c2043ab49e1a991f99bb5cff8f8ed975e44e4f8b3c9600f35493a97f123499f
+  checksum: 10c0/bd4f43ef287bc4c144ce6f20109fecfc67b71d94d7d3ad573139b5dbfa18c82c4a78397f26d5aa30ac8cd024469d5dc3b93e34932563749ec3e412c6f8ca9a1f
   languageName: node
   linkType: hard
 
@@ -10690,7 +10692,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http-proxy-agent@npm:^7.0.0, http-proxy-agent@npm:^7.0.1, http-proxy-agent@npm:^7.0.2":
+"http-proxy-agent@npm:8.0.0":
+  version: 8.0.0
+  resolution: "http-proxy-agent@npm:8.0.0"
+  dependencies:
+    agent-base: "npm:8.0.0"
+    debug: "npm:^4.3.4"
+  checksum: 10c0/04ffc6eef497412e4e121d57a273018e1ae642648fd862f67b4cafb23c75d406faeef528bb416f681db4bac23c207b4bff560f3cb3493905419f16c63e3f8757
+  languageName: node
+  linkType: hard
+
+"http-proxy-agent@npm:^7.0.0, http-proxy-agent@npm:^7.0.2":
   version: 7.0.2
   resolution: "http-proxy-agent@npm:7.0.2"
   dependencies:
@@ -10750,6 +10762,16 @@ __metadata:
     quick-lru: "npm:^5.1.1"
     resolve-alpn: "npm:^1.0.0"
   checksum: 10c0/6a9b72a033e9812e1476b9d776ce2f387bc94bc46c88aea0d5dab6bd47d0a539b8178830e77054dd26d1142c866d515a28a4dc7c3ff4232c88ff2ebe4f5d12d1
+  languageName: node
+  linkType: hard
+
+"https-proxy-agent@npm:8.0.0":
+  version: 8.0.0
+  resolution: "https-proxy-agent@npm:8.0.0"
+  dependencies:
+    agent-base: "npm:8.0.0"
+    debug: "npm:^4.3.4"
+  checksum: 10c0/661995ea07f190728b3413ff87ea6e8ab40675e12f7169d328b7e4b86eac2ef528b3d83cc096ace42387eb37f953befd4b95b0b23e910585a0e0234e535f4ddf
   languageName: node
   linkType: hard
 
@@ -13701,29 +13723,31 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pac-proxy-agent@npm:^7.1.0":
-  version: 7.2.0
-  resolution: "pac-proxy-agent@npm:7.2.0"
+"pac-proxy-agent@npm:8.0.0":
+  version: 8.0.0
+  resolution: "pac-proxy-agent@npm:8.0.0"
   dependencies:
-    "@tootallnate/quickjs-emscripten": "npm:^0.23.0"
-    agent-base: "npm:^7.1.2"
+    agent-base: "npm:8.0.0"
     debug: "npm:^4.3.4"
-    get-uri: "npm:^6.0.1"
-    http-proxy-agent: "npm:^7.0.0"
-    https-proxy-agent: "npm:^7.0.6"
-    pac-resolver: "npm:^7.0.1"
-    socks-proxy-agent: "npm:^8.0.5"
-  checksum: 10c0/0265c17c9401c2ea735697931a6553a0c6d8b20c4d7d4e3b3a0506080ba69a8d5ad656e2a6be875411212e2b6ed7a4d9526dd3997e08581fdfb1cbcad454c296
+    get-uri: "npm:7.0.0"
+    http-proxy-agent: "npm:8.0.0"
+    https-proxy-agent: "npm:8.0.0"
+    pac-resolver: "npm:8.0.0"
+    quickjs-wasi: "npm:^0.0.1"
+    socks-proxy-agent: "npm:9.0.0"
+  checksum: 10c0/d4ced772bb8214a775ad2128edff2d29fe404f20b76ca38610c58490fc94c1384b31d12ebca56693002c51840be8b573132b24ebd390c3351456246c02d7c33a
   languageName: node
   linkType: hard
 
-"pac-resolver@npm:^7.0.1":
-  version: 7.0.1
-  resolution: "pac-resolver@npm:7.0.1"
+"pac-resolver@npm:8.0.0":
+  version: 8.0.0
+  resolution: "pac-resolver@npm:8.0.0"
   dependencies:
-    degenerator: "npm:^5.0.0"
+    degenerator: "npm:6.0.0"
     netmask: "npm:^2.0.2"
-  checksum: 10c0/5f3edd1dd10fded31e7d1f95776442c3ee51aa098c28b74ede4927d9677ebe7cebb2636750c24e945f5b84445e41ae39093d3a1014a994e5ceb9f0b1b88ebff5
+  peerDependencies:
+    quickjs-wasi: ^0.0.1
+  checksum: 10c0/a727a22568ff93053a57ff10f1587535bfd9fd1cab50c8fc4eebd686e7dddd69156dda5461aeac85c504d4655fc853e03a84d8b50d0b00fbb6c180adf76c0900
   languageName: node
   linkType: hard
 
@@ -14638,19 +14662,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"proxy-agent@npm:^6.5.0":
-  version: 6.5.0
-  resolution: "proxy-agent@npm:6.5.0"
+"proxy-agent@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "proxy-agent@npm:7.0.0"
   dependencies:
-    agent-base: "npm:^7.1.2"
+    agent-base: "npm:8.0.0"
     debug: "npm:^4.3.4"
-    http-proxy-agent: "npm:^7.0.1"
-    https-proxy-agent: "npm:^7.0.6"
+    http-proxy-agent: "npm:8.0.0"
+    https-proxy-agent: "npm:8.0.0"
     lru-cache: "npm:^7.14.1"
-    pac-proxy-agent: "npm:^7.1.0"
+    pac-proxy-agent: "npm:8.0.0"
     proxy-from-env: "npm:^1.1.0"
-    socks-proxy-agent: "npm:^8.0.5"
-  checksum: 10c0/7fd4e6f36bf17098a686d4aee3b8394abfc0b0537c2174ce96b0a4223198b9fafb16576c90108a3fcfc2af0168bd7747152bfa1f58e8fee91d3780e79aab7fd8
+    socks-proxy-agent: "npm:9.0.0"
+  checksum: 10c0/5e8189abb910e5e0141b5e23c6c30782940cb15600974af4febc17b7f334a1fe3ed4c72f222a20652ce2257bb5b78dafdb07374d97e83e1283734bf5ec2777d0
   languageName: node
   linkType: hard
 
@@ -14739,6 +14763,13 @@ __metadata:
   version: 5.1.1
   resolution: "quick-lru@npm:5.1.1"
   checksum: 10c0/a24cba5da8cec30d70d2484be37622580f64765fb6390a928b17f60cd69e8dbd32a954b3ff9176fa1b86d86ff2ba05252fae55dc4d40d0291c60412b0ad096da
+  languageName: node
+  linkType: hard
+
+"quickjs-wasi@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "quickjs-wasi@npm:0.0.1"
+  checksum: 10c0/5fe942ffd85aa97287016588c2057cfb10a036d3cb53ccd4fa1c9979e158c97b52d88d1ffffd6a4fea28b2b4889fe7485aed6ad902352982aad283b554589a8a
   languageName: node
   linkType: hard
 
@@ -14845,7 +14876,7 @@ __metadata:
     octokit: "npm:5.0.5"
     plist: "npm:3.1.0"
     posix-node: "npm:0.12.0"
-    proxy-agent: "npm:^6.5.0"
+    proxy-agent: "npm:^7.0.0"
     ps-tree: "npm:1.2.0"
     rancher-icons: "rancher/icons#v2.0.21"
     raw-loader: "npm:4.0.2"
@@ -15862,7 +15893,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"socks-proxy-agent@npm:^8.0.3, socks-proxy-agent@npm:^8.0.4, socks-proxy-agent@npm:^8.0.5":
+"socks-proxy-agent@npm:9.0.0":
+  version: 9.0.0
+  resolution: "socks-proxy-agent@npm:9.0.0"
+  dependencies:
+    agent-base: "npm:8.0.0"
+    debug: "npm:^4.3.4"
+    socks: "npm:^2.8.3"
+  checksum: 10c0/83218b89c9611fcaa2a95f82a45ae477c6aa7d7606221ecc4de6bea57273995193b08f807cf320fade2c7b7162a634acef09383646abf53233ea54eb4b30a962
+  languageName: node
+  linkType: hard
+
+"socks-proxy-agent@npm:^8.0.3, socks-proxy-agent@npm:^8.0.4":
   version: 8.0.5
   resolution: "socks-proxy-agent@npm:8.0.5"
   dependencies:
