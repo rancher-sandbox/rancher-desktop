@@ -17,6 +17,17 @@ import { windowMapping } from '@pkg/window';
 
 const console = Logging.networking;
 
+let stevePort = 0;
+
+/**
+ * Update the Steve HTTPS port used by the certificate-error handler.
+ * Call this before each Steve start so that dynamic port changes are
+ * reflected in the allowed-URL list.
+ */
+export function setSteveCertPort(port: number) {
+  stevePort = port;
+}
+
 export default async function setupNetworking() {
   const agentOptions = { ...https.globalAgent.options };
 
@@ -42,10 +53,11 @@ export default async function setupNetworking() {
 
   // Set up certificate handling for system certificates on Windows and macOS
   Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
-    const tlsPort = 9443;
+    // stevePort is 0 until setSteveCertPort() is called, which is harmless:
+    // no cert errors for Steve can arrive before Steve starts.
     const dashboardUrls = [
-      `https://127.0.0.1:${ tlsPort }`,
-      `wss://127.0.0.1:${ tlsPort }`,
+      `https://127.0.0.1:${ stevePort }`,
+      `wss://127.0.0.1:${ stevePort }`,
       'http://127.0.0.1:6120',
       'ws://127.0.0.1:6120',
     ];

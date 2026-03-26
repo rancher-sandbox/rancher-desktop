@@ -35,7 +35,7 @@ import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import buildApplicationMenu from '@pkg/main/mainmenu';
-import setupNetworking from '@pkg/main/networking';
+import setupNetworking, { setSteveCertPort } from '@pkg/main/networking';
 import { Snapshots } from '@pkg/main/snapshots/snapshots';
 import { Snapshot, SnapshotDialog } from '@pkg/main/snapshots/types';
 import { Tray } from '@pkg/main/tray';
@@ -45,6 +45,7 @@ import getCommandLineArgs from '@pkg/utils/commandLine';
 import dockerDirManager from '@pkg/utils/dockerDirManager';
 import { isDevEnv } from '@pkg/utils/environment';
 import Logging, { clearLoggingDirectory, setLogLevel } from '@pkg/utils/logging';
+import { getAvailablePorts } from '@pkg/utils/networks';
 import { fetchMacOsVersion, getMacOsVersion } from '@pkg/utils/osVersion';
 import paths from '@pkg/utils/paths';
 import { protocolsRegistered, setupProtocolHandlers } from '@pkg/utils/protocols';
@@ -227,9 +228,9 @@ Electron.app.whenReady().then(async() => {
     // Check for required OS versions and features
     await checkPrerequisites();
 
-    DashboardServer.getInstance().init();
-
     await setupNetworking();
+
+    DashboardServer.getInstance().init();
 
     try {
       deploymentProfiles = await readDeploymentProfiles();
@@ -1268,8 +1269,6 @@ function newK8sManager() {
 
   mgr.on('state-changed', async(state: K8s.State) => {
     try {
-      mainEvents.emit('k8s-check-state', mgr);
-
       if ([K8s.State.STARTED, K8s.State.DISABLED].includes(state)) {
         if (!cfg.kubernetes.version) {
           writeSettings({ kubernetes: { version: mgr.kubeBackend.version } });
@@ -1277,12 +1276,24 @@ function newK8sManager() {
         currentImageProcessor?.relayNamespaces();
 
         if (enabledK8s) {
-          await Steve.getInstance().start();
+          try {
+            const [stevePort] = await getAvailablePorts(1);
+
+            console.log(`Steve HTTPS port: ${ stevePort }`);
+            // Set the Steve HTTPS port for certificate checking before setting
+            // up Steve itself.
+            setSteveCertPort(stevePort);
+            await Steve.getInstance().start(stevePort);
+            DashboardServer.getInstance().setStevePort(stevePort); // recreate proxy middleware
+          } catch (ex) {
+            console.error('Failed to start Steve:', ex);
+          }
         }
       }
 
-      // Notify UI after Steve is ready, so the dashboard button is only enabled
-      // when Steve can accept connections.
+      // Notify the tray and renderer after Steve is ready, so the dashboard
+      // button is only enabled when Steve can accept connections.
+      mainEvents.emit('k8s-check-state', mgr);
       window.send('k8s-check-state', state);
 
       if (state === K8s.State.STOPPING) {
