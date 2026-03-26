@@ -40,4 +40,11 @@ describe('getAvailablePorts', () => {
 
     expect(ports[0]).not.toBe(ports[1]);
   });
+
+  it('can accept dynamic counts', async() => {
+    const count = Math.floor(1.0); // Force number type, not a literal.
+    const ports = await getAvailablePorts(count);
+
+    expect(ports).toHaveLength(count);
+  });
 });

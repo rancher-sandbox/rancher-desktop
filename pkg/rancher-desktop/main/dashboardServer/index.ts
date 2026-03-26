@@ -27,7 +27,7 @@ export class DashboardServer {
   private host = '127.0.0.1';
   private port = 6120;
   private stevePort = 0;
-  private proxies:      Record<string, ReturnType<typeof createProxyMiddleware>> = Object.create(null);
+  private proxies:      Record<ProxyKeys, ReturnType<typeof createProxyMiddleware>> = Object.create(null);
 
   /**
    * Checks for an existing instance of Dashboard server.
@@ -95,15 +95,13 @@ export class DashboardServer {
 
     // Register wrapper functions so that when createProxies() replaces
     // this.proxies (on each Steve restart), express and the upgrade
-    // handler automatically use the new instances.  The optional
-    // chaining is safe: proxies are always created before the UI is
-    // notified that Kubernetes is ready, and the dashboard button is
-    // disabled until then.
-    //
-    // ?? next() fires only when the proxy is absent: createProxyMiddleware
-    // returns an async function, so the call always yields a Promise (truthy).
+    // handler automatically use the new instances.  The call is safe: proxies
+    // are always created before the UI is notified that Kubernetes is ready,
+    // and the dashboard button is disabled until then.
     ProxyKeys.forEach((key) => {
-      this.dashboardServer.use(key, (req, res, next) => this.proxies[key]?.(req, res, next) ?? next());
+      this.dashboardServer.use(key, (req, res, next) => {
+        return this.proxies[key] ? this.proxies[key](req, res, next) : next();
+      });
     });
 
     this.dashboardApp = this.dashboardServer
@@ -133,21 +131,16 @@ export class DashboardServer {
           return;
         }
 
-        // TODO: drive this from ProxyKeys instead of maintaining a parallel list.
-        const key = req.url?.startsWith('/v1')
-          ? '/v1'
-          : req.url?.startsWith('/v3')
-            ? '/v3'
-            : req.url?.startsWith('/k8s/')
-              ? '/k8s'
-              : req.url?.startsWith('/api/')
-                ? '/api'
-                : undefined;
+        const upgradeKeys = new Set<ProxyKeys>(['/v1', '/v3', '/k8s', '/api']);
+        const key = Array.from(upgradeKeys).find((key) => {
+          return req.url === key || req.url?.startsWith(key + '/');
+        });
 
-        if (key) {
-          return this.proxies[key]?.upgrade(req, socket, head);
+        if (key && this.proxies[key]) {
+          return this.proxies[key].upgrade(req, socket, head);
         }
-        console.log(`Unknown Web socket upgrade request for ${ req.url }`);
+
+        console.log(`Unknown WebSocket upgrade request for ${ req.url }`);
         socket.destroy();
       });
   }

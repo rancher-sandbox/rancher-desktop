@@ -184,6 +184,15 @@ export class Steve {
 
       req.on('response', (res) => resolve(res.statusCode === 200));
       req.on('error', () => resolve(false));
+      // Timeout if we don't get a response in a reasonable time.
+      setTimeout(1_000).then(() => {
+        try {
+          req.abort();
+        } catch {
+          // ignore
+        }
+        resolve(false);
+      });
       req.end();
     });
   }
