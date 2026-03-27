@@ -5555,7 +5555,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@yarnpkg/core@npm:^4.4.2, @yarnpkg/core@npm:^4.5.0":
+"@yarnpkg/core@npm:^4.4.2":
   version: 4.5.0
   resolution: "@yarnpkg/core@npm:4.5.0"
   dependencies:
@@ -14895,7 +14895,7 @@ __metadata:
     "@xterm/addon-web-links": "npm:0.12.0"
     "@xterm/xterm": "npm:6.0.0"
     "@yarnpkg/cli": "npm:^4.13.0"
-    "@yarnpkg/core": "npm:^4.5.0"
+    "@yarnpkg/core": "npm:^4.6.0"
     "@yarnpkg/types": "npm:^4.0.1"
     async-mutex: "npm:^0.5.0"
     babel-core: "npm:7.0.0-bridge.0"
