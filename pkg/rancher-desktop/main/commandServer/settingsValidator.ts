@@ -1,3 +1,4 @@
+import net from 'net';
 import os from 'os';
 
 import _ from 'lodash';
@@ -148,7 +149,7 @@ export default class SettingsValidator {
             password: this.checkPlatform('win32', this.checkString),
             port:     this.checkPlatform('win32', this.checkNumber(1, 65535)),
             username: this.checkPlatform('win32', this.checkString),
-            noproxy:  this.checkPlatform('win32', this.checkUniqueStringArray),
+            noproxy:  this.checkPlatform('win32', this.checkNoproxyList),
           },
           sshPortForwarder: this.checkLima(this.checkBoolean),
         },
@@ -661,6 +662,60 @@ export default class SettingsValidator {
     }
 
     return Array.from(duplicates).concat(whiteSpaceMembers);
+  }
+
+  /**
+   * Validate that a string is an IP address or CIDR subnet.
+   * Accepts IPv4 and IPv6 addresses with optional prefix length.
+   */
+  protected static isIPAddressOrCIDR(entry: string): boolean {
+    const slashIndex = entry.indexOf('/');
+
+    if (slashIndex === -1) {
+      return net.isIP(entry) !== 0;
+    }
+    const address = entry.substring(0, slashIndex);
+    const prefixStr = entry.substring(slashIndex + 1);
+    const ipVersion = net.isIP(address);
+
+    if (ipVersion === 0) {
+      return false;
+    }
+    if (!/^\d+$/.test(prefixStr)) {
+      return false;
+    }
+    const prefix = parseInt(prefixStr, 10);
+    const maxPrefix = ipVersion === 4 ? 32 : 128;
+
+    return prefix >= 0 && prefix <= maxPrefix;
+  }
+
+  /**
+   * Validate the noproxy list: must be unique strings, each a valid IP or CIDR.
+   */
+  protected checkNoproxyList<S>(mergedSettings: S, currentValue: string[], desiredValue: string[], errors: string[], fqname: string): boolean {
+    if (!Array.isArray(desiredValue) || desiredValue.some(s => typeof (s) !== 'string')) {
+      errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+      return false;
+    }
+    const duplicateValues = this.findDuplicates(desiredValue);
+
+    if (duplicateValues.length > 0) {
+      duplicateValues.sort(Intl.Collator().compare);
+      errors.push(`field "${ fqname }" has duplicate entries: "${ duplicateValues.join('", "') }"`);
+
+      return false;
+    }
+    const invalidEntries = desiredValue.filter(entry => !SettingsValidator.isIPAddressOrCIDR(entry));
+
+    if (invalidEntries.length > 0) {
+      errors.push(`field "${ fqname }" has invalid entries (must be IP addresses or CIDR subnets): "${ invalidEntries.join('", "') }"`);
+
+      return false;
+    }
+
+    return currentValue.length !== desiredValue.length || currentValue.some((v, i) => v !== desiredValue[i]);
   }
 
   protected checkInstalledExtensions(

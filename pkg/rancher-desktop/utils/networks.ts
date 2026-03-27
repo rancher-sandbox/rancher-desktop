@@ -42,6 +42,15 @@ export async function getAvailablePorts<N extends number>(count: N): Promise<Tup
   }
 }
 
+/**
+ * Strip the wildcard or leading-dot prefix from a noproxy domain entry.
+ * Both "*.example.com" and ".example.com" are common NO_PROXY conventions
+ * meaning "match this domain and its subdomains".
+ */
+export function stripNoproxyPrefix(entry: string): string {
+  return entry.startsWith('*.') ? entry.substring(2) : entry.startsWith('.') ? entry.substring(1) : entry;
+}
+
 export function wslHostIPv4Address(): string | undefined {
   const interfaces = os.networkInterfaces();
   // The veth interface name changed at some time on Windows 11, so try the new name if the old one doesn't exist
