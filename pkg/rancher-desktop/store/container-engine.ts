@@ -262,8 +262,8 @@ export const mutations = {
   SET_ERROR(state, error) {
     state.error = error;
   },
-  SET_INSPECT_DATA(state, { containerId, data }: { containerId: string, data: ContainerInspectData }) {
-    state.inspectData = { ...state.inspectData, [containerId]: data };
+  SET_INSPECT_DATA(state, inspectData) {
+    state.inspectData = inspectData;
   },
   SET_PARAMS(state, params: BulkParams) {
     let clearData = false;
@@ -395,14 +395,19 @@ export const actions = {
     }
   },
   async fetchContainerInspect({ commit, state }, { containerId, namespace }: { containerId: string, namespace?: string }) {
-    const result = await state.client?.docker.cli.exec(
-      'inspect',
-      [containerId],
-      { namespace },
-    );
+    const { client } = state;
+
+    if (!client) {
+      throw new Error('Container client is not available');
+    }
+    const args = [
+      ...(namespace ? [`--namespace=${ namespace }`] : []),
+      containerId,
+    ];
+    const result = await client.docker.cli.exec('inspect', args);
     const parsed = result.parseJsonObject() as ContainerInspectData[];
 
-    commit('SET_INSPECT_DATA', { containerId, data: parsed[0] });
+    commit('SET_INSPECT_DATA', { ...state.inspectData, [containerId]: parsed[0] });
   },
   async fetchVolumes({ commit, getters, state }) {
     try {
