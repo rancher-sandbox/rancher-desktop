@@ -12,15 +12,6 @@
       Loading container details…
     </div>
 
-    <div
-      v-else-if="error"
-      class="error-state"
-      data-testid="info-error"
-    >
-      <i class="icon icon-warning" />
-      {{ error }}
-    </div>
-
     <template v-else-if="data">
       <!-- Summary table -->
       <table
@@ -30,7 +21,7 @@
         <tbody>
           <tr data-testid="info-row-name">
             <th>Name</th>
-            <td>{{ displayName }}</td>
+            <td><code>{{ displayName }}</code></td>
           </tr>
           <tr data-testid="info-row-id">
             <th>ID</th>
@@ -38,7 +29,7 @@
           </tr>
           <tr data-testid="info-row-image">
             <th>Image</th>
-            <td>{{ data.Config.Image }}</td>
+            <td><code>{{ data.Config.Image }}</code></td>
           </tr>
           <tr data-testid="info-row-ip">
             <th>IP Address</th>
@@ -63,7 +54,7 @@
         class="inspect-section"
         data-testid="info-section-mounts"
       >
-        <summary class="section-summary">
+        <summary>
           Mounts <span class="count">({{ data.Mounts.length }})</span>
         </summary>
         <div
@@ -105,7 +96,7 @@
         class="inspect-section"
         data-testid="info-section-env"
       >
-        <summary class="section-summary">
+        <summary>
           Environment <span class="count">({{ envVars.length }})</span>
         </summary>
         <div
@@ -127,7 +118,7 @@
         class="inspect-section"
         data-testid="info-section-command"
       >
-        <summary class="section-summary">
+        <summary>
           Command &amp; Args
         </summary>
         <div class="section-body">
@@ -155,7 +146,7 @@
         class="inspect-section"
         data-testid="info-section-capabilities"
       >
-        <summary class="section-summary">
+        <summary>
           Capabilities
         </summary>
         <div class="section-body">
@@ -179,7 +170,7 @@
         class="inspect-section"
         data-testid="info-section-ports"
       >
-        <summary class="section-summary">
+        <summary>
           Ports <span class="count">({{ portEntries.length }})</span>
         </summary>
         <div
@@ -208,7 +199,7 @@
         class="inspect-section"
         data-testid="info-section-labels"
       >
-        <summary class="section-summary">
+        <summary>
           Labels <span class="count">({{ labelEntries.length }})</span>
         </summary>
         <div
@@ -235,55 +226,33 @@
         </div>
       </details>
     </template>
+
+    <div
+      v-else
+      class="error-state"
+      data-testid="info-error"
+    >
+      <i class="icon icon-warning" />
+      {{ error || 'An unknown error has occurred' }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
+import { useStore } from 'vuex';
 
-interface ContainerMount {
-  Type:        string;
-  Source:      string;
-  Destination: string;
-  RW:          boolean;
-  Mode:        string;
-}
-
-interface ContainerInspectData {
-  Id:      string;
-  Name:    string;
-  Created: string;
-  State: {
-    Status:     string;
-    StartedAt:  string;
-    FinishedAt: string;
-  };
-  Config: {
-    Image:      string;
-    Env:        string[] | null;
-    Cmd:        string[] | null;
-    Entrypoint: string[] | null;
-    Labels:     Record<string, string> | null;
-  };
-  HostConfig: {
-    CapAdd:  string[] | null;
-    CapDrop: string[] | null;
-  };
-  Mounts:          ContainerMount[];
-  NetworkSettings: {
-    IPAddress: string;
-    Ports:     Record<string, ({ HostIp: string; HostPort: string }[]) | null>;
-    Networks:  Record<string, { IPAddress: string }>;
-  };
-  Args: string[];
-}
+import type { ContainerInspectData } from '@pkg/store/container-engine';
 
 const props = defineProps<{
   containerId: string;
   namespace:   string | undefined;
 }>();
 
-const data = ref<ContainerInspectData | null>(null);
+const store = useStore();
+const data = computed<ContainerInspectData | undefined>(
+  () => store.state['container-engine'].inspectData[props.containerId],
+);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
@@ -293,17 +262,12 @@ const fetchInspect = async() => {
   }
   loading.value = true;
   error.value = null;
-  data.value = null;
 
   try {
-    const result = await window.ddClient.docker.cli.exec(
-      'inspect',
-      [props.containerId],
-      { namespace: props.namespace },
-    );
-    const parsed = result.parseJsonObject() as ContainerInspectData[];
-
-    data.value = parsed[0];
+    await store.dispatch('container-engine/fetchContainerInspect', {
+      containerId: props.containerId,
+      namespace:   props.namespace,
+    });
   } catch (err: any) {
     error.value = err?.message ?? 'Failed to load container details.';
   } finally {
@@ -413,38 +377,38 @@ const formatDate = (iso: string): string => {
   border-radius: var(--border-radius);
   overflow: hidden;
 
-  &[open] .section-summary {
+  &[open] > summary {
     border-bottom: 1px solid var(--border);
-  }
-}
 
-.section-summary {
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  user-select: none;
-  font-weight: 500;
-  list-style: none;
-
-  &::-webkit-details-marker {
-    display: none;
+    &::before {
+      transform: rotate(90deg);
+    }
   }
 
-  &::before {
-    content: '▶';
-    display: inline-block;
-    margin-right: 0.5rem;
-    transition: transform 0.15s ease;
-    font-size: 0.7em;
-  }
+  > summary {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 500;
+    list-style: none;
 
-  details[open] &::before {
-    transform: rotate(90deg);
-  }
+    &::-webkit-details-marker {
+      display: none;
+    }
 
-  .count {
-    color: var(--muted);
-    font-weight: 400;
-    font-size: 0.875em;
+    &::before {
+      content: '▶';
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: transform 0.15s ease;
+      font-size: 0.7em;
+    }
+
+    .count {
+      color: var(--muted);
+      font-weight: 400;
+      font-size: 0.875em;
+    }
   }
 }
 

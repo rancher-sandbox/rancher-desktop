@@ -440,9 +440,7 @@ test.describe.serial('Container Info Tab', () => {
     );
     infoContainerId = output.trim();
 
-    const navPage2 = new NavPage(page);
-    await navPage2.navigateTo('Containers');
-    const containersPage = new ContainersPage(page);
+    const containersPage = await navPage.navigateTo('Containers');
     await containersPage.waitForTableToLoad();
     await containersPage.waitForContainerToAppear(infoContainerId);
     await containersPage.clickContainerAction(infoContainerId, 'info');
