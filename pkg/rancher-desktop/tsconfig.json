@@ -15,7 +15,6 @@
     "strict": true,
     "noEmit": false,
     "experimentalDecorators": true,
-    "baseUrl": ".",
     "paths": {
       "@pkg/*": [
         "./*"

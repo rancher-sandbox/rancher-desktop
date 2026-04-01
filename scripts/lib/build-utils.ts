@@ -11,7 +11,7 @@ import spawn from 'cross-spawn';
 import _ from 'lodash';
 import webpack from 'webpack';
 
-import babelConfig from 'babel.config.cjs';
+import babelConfig from '@/babel.config.cjs';
 
 /**
  * A promise that is resolved when the child exits.

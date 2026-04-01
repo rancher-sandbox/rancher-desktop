@@ -16,10 +16,12 @@
     "sourceMap": true,
     "strict": true,
     "experimentalDecorators": true,
-    "baseUrl": ".",
     "paths": {
+      "@/*": [
+        "./*"
+      ],
       "@pkg/*": [
-        "pkg/rancher-desktop/*"
+        "./pkg/rancher-desktop/*"
       ],
       "@shell/*": [
         "./node_modules/@rancher/shell/*"

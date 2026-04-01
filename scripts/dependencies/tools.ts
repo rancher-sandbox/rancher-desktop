@@ -3,22 +3,21 @@ import os from 'os';
 import path from 'path';
 
 import {
+  DownloadContext,
+  findChecksum,
+  getPublishedReleaseTagNames,
+  GitHubDependency,
+  GlobalDependency,
+} from '@/scripts/lib/dependencies';
+import {
   ArchiveDownloadOptions,
   download,
   DownloadOptions,
   downloadTarGZ,
   downloadZip,
   getResource,
-} from '../lib/download';
-
-import {
-  DownloadContext,
-  findChecksum,
-  getPublishedReleaseTagNames,
-  GitHubDependency,
-  GlobalDependency,
-} from 'scripts/lib/dependencies';
-import { simpleSpawn } from 'scripts/simple_process';
+} from '@/scripts/lib/download';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';

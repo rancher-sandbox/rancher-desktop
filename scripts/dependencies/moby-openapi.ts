@@ -6,8 +6,8 @@ import yaml from 'yaml';
 
 import { download } from '../lib/download';
 
-import { DownloadContext, getOctokit, VersionedDependency, GlobalDependency } from 'scripts/lib/dependencies';
-import { simpleSpawn } from 'scripts/simple_process';
+import { DownloadContext, getOctokit, VersionedDependency, GlobalDependency } from '@/scripts/lib/dependencies';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 // This downloads the moby openAPI specification (for WSL-helper) and generates
 // ./src/go/wsl-helper/pkg/dockerproxy/models/...

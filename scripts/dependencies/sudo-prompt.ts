@@ -1,7 +1,7 @@
 import path from 'path';
 
-import { Dependency, DownloadContext } from 'scripts/lib/dependencies';
-import { simpleSpawn } from 'scripts/simple_process';
+import { Dependency, DownloadContext } from '@/scripts/lib/dependencies';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 /**
  * SudoPrompt represents the sudo-prompt.app applet used by sudo-prompt on macOS.

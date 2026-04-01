@@ -4,7 +4,7 @@ import path from 'path';
 import { download } from '../lib/download';
 import { simpleSpawn } from '../simple_process';
 
-import { DownloadContext, GitHubDependency, GlobalDependency } from 'scripts/lib/dependencies';
+import { DownloadContext, GitHubDependency, GlobalDependency } from '@/scripts/lib/dependencies';
 
 export class Moproxy extends GlobalDependency(GitHubDependency) {
   readonly name = 'moproxy';

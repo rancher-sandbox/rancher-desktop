@@ -6,7 +6,7 @@ import stream from 'stream';
 
 import tar from 'tar-stream';
 
-import { Dependency, DownloadContext } from 'scripts/lib/dependencies';
+import { Dependency, DownloadContext } from '@/scripts/lib/dependencies';
 
 export class ExtensionProxyImage implements Dependency {
   readonly name = 'rdx-proxy.tar';
