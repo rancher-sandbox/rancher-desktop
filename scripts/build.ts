@@ -11,7 +11,7 @@ import * as path from 'path';
 
 import buildUtils from './lib/build-utils';
 
-import { simpleSpawn } from 'scripts/simple_process';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 class Builder {
   async cleanup() {

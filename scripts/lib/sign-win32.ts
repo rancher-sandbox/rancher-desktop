@@ -10,7 +10,7 @@ import defaults from 'lodash/defaultsDeep';
 import merge from 'lodash/merge';
 import yaml from 'yaml';
 
-import { simpleSpawn } from 'scripts/simple_process';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 /** signFileFn is a function that signs a single file. */
 type signFileFn = (...filePath: string[]) => Promise<void>;

@@ -3,18 +3,18 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import * as goUtils from 'scripts/dependencies/go-source';
-import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
-import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
-import { SudoPrompt } from 'scripts/dependencies/sudo-prompt';
-import { ExtensionProxyImage, WSLDistroImage } from 'scripts/dependencies/tar-archives';
-import * as tools from 'scripts/dependencies/tools';
-import { Wix } from 'scripts/dependencies/wix';
-import { WSLDistro, Moproxy } from 'scripts/dependencies/wsl';
+import * as goUtils from '@/scripts/dependencies/go-source';
+import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from '@/scripts/dependencies/lima';
+import { MobyOpenAPISpec } from '@/scripts/dependencies/moby-openapi';
+import { SudoPrompt } from '@/scripts/dependencies/sudo-prompt';
+import { ExtensionProxyImage, WSLDistroImage } from '@/scripts/dependencies/tar-archives';
+import * as tools from '@/scripts/dependencies/tools';
+import { Wix } from '@/scripts/dependencies/wix';
+import { WSLDistro, Moproxy } from '@/scripts/dependencies/wsl';
 import {
   DependencyPlatform, DependencyVersions, readDependencyVersions, DownloadContext, Dependency,
-} from 'scripts/lib/dependencies';
-import { simpleSpawn } from 'scripts/simple_process';
+} from '@/scripts/lib/dependencies';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 interface DependencyWithContext {
   dependency: Dependency;

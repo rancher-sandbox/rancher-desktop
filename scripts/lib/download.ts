@@ -9,7 +9,7 @@ import os from 'os';
 import path from 'path';
 import stream from 'stream';
 
-import { simpleSpawn } from 'scripts/simple_process';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 type ChecksumAlgorithm = 'sha1' | 'sha256' | 'sha512';
 

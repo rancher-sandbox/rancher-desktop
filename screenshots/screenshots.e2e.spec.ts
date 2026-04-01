@@ -9,16 +9,16 @@ import { imagesList } from './test-data/images';
 import { lockedSettings } from './test-data/preferences';
 import { snapshotsList } from './test-data/snapshots';
 import { volumesList } from './test-data/volumes';
-import { NavPage } from '../e2e/pages/nav-page';
-import { PreferencesPage } from '../e2e/pages/preferences';
-import { clearUserProfile } from '../e2e/utils/ProfileUtils';
+
+import { ContainerLogsPage } from '@/e2e/pages/container-logs-page';
+import { NavPage } from '@/e2e/pages/nav-page';
+import { PreferencesPage } from '@/e2e/pages/preferences';
+import { clearUserProfile } from '@/e2e/utils/ProfileUtils';
 import {
   createDefaultSettings, setUserProfile, retry, teardown, tool, startRancherDesktop, reportAsset,
-} from '../e2e/utils/TestUtils';
-
+} from '@/e2e/utils/TestUtils';
 import { ContainerEngine, CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
 import { Log } from '@pkg/utils/logging';
-import { ContainerLogsPage } from 'e2e/pages/container-logs-page';
 
 import type { ElectronApplication, Page } from '@playwright/test';
 

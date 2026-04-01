@@ -17,7 +17,7 @@ import yaml from 'yaml';
 import buildUtils from './build-utils';
 import generateFileList from './installer-win32-gen';
 
-import { simpleSpawn } from 'scripts/simple_process';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 /**
  * Return the contents of package.json embedded in the application.

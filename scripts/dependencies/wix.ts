@@ -6,7 +6,7 @@ import semver from 'semver';
 import { DownloadContext, GitHubDependency, GlobalDependency, getOctokit } from '../lib/dependencies';
 import { download } from '../lib/download';
 
-import { simpleSpawn } from 'scripts/simple_process';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 /**
  * Wix downloads the latest build of WiX3.

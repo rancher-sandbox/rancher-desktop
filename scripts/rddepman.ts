@@ -7,17 +7,17 @@ import semver from 'semver';
 
 import { getExtensions } from './lib/extension-data';
 
-import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
-import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
-import * as tools from 'scripts/dependencies/tools';
-import { Wix } from 'scripts/dependencies/wix';
-import { WSLDistro, Moproxy } from 'scripts/dependencies/wsl';
+import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from '@/scripts/dependencies/lima';
+import { MobyOpenAPISpec } from '@/scripts/dependencies/moby-openapi';
+import * as tools from '@/scripts/dependencies/tools';
+import { Wix } from '@/scripts/dependencies/wix';
+import { WSLDistro, Moproxy } from '@/scripts/dependencies/wsl';
 import {
   AlpineLimaISOVersion, getOctokit,
   iterateIterator,
   GitHubDependency,
   VersionedDependency,
-} from 'scripts/lib/dependencies';
+} from '@/scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';

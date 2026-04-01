@@ -19,8 +19,8 @@ import {
   GitHubDependency,
   GitHubRelease,
   GlobalDependency,
-} from 'scripts/lib/dependencies';
-import { simpleSpawn } from 'scripts/simple_process';
+} from '@/scripts/lib/dependencies';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 export class Lima extends GlobalDependency(GitHubDependency) {
   readonly name = 'lima';

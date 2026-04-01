@@ -1,9 +1,9 @@
 import { Octokit } from 'octokit';
 
-import { Lima, Qemu, AlpineLimaISO } from 'scripts/dependencies/lima';
-import * as tools from 'scripts/dependencies/tools';
-import { WSLDistro } from 'scripts/dependencies/wsl';
-import { GitHubDependency, HasUnreleasedChangesResult, getOctokit, RancherDesktopRepository } from 'scripts/lib/dependencies';
+import { Lima, Qemu, AlpineLimaISO } from '@/scripts/dependencies/lima';
+import * as tools from '@/scripts/dependencies/tools';
+import { WSLDistro } from '@/scripts/dependencies/wsl';
+import { GitHubDependency, HasUnreleasedChangesResult, getOctokit, RancherDesktopRepository } from '@/scripts/lib/dependencies';
 
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
 const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-desktop';

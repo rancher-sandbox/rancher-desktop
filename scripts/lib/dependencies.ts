@@ -225,7 +225,7 @@ export abstract class VersionedDependency implements Dependency {
 export function GlobalDependency<T extends abstract new(...args: any[]) => VersionedDependency>(Base: T) {
   abstract class GlobalDependency extends Base {
     /** The name of this dependency; it must be a key in DEP_VERSIONS_PATH. */
-    abstract get name(): keyof DependencyVersions;
+    abstract name: keyof DependencyVersions;
     /** Cache of the loaded {@link DependencyVersions}; should not be used directly. */
     static #depVersionsCache: Promise<DependencyVersions> | undefined;
     /** Get the {@link DependencyVersions} as found on disk. */
