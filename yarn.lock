@@ -13273,7 +13273,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-forge@npm:1.3.3, node-forge@npm:^1":
+"node-forge@npm:1.4.0":
+  version: 1.4.0
+  resolution: "node-forge@npm:1.4.0"
+  checksum: 10c0/67330a5f1f95257a4c8a93b7d555abe87b5f15e350123aa396c97a21a8ca94f9c6549008eb2c73668a91e0d7e3a905785acbd8f8bd0751c29401292011f8f8e1
+  languageName: node
+  linkType: hard
+
+"node-forge@npm:^1":
   version: 1.3.3
   resolution: "node-forge@npm:1.3.3"
   checksum: 10c0/9c6f53b0ebb34865872cf62a35b0aef8fb337e2efc766626c2e3a0040f4c02933bf29a62ba999eb44a2aca73bd512c4eda22705a47b94654b9fb8ed53db9a1db
@@ -14923,7 +14930,7 @@ __metadata:
     mustache: "npm:4.2.0"
     native-reg: "npm:1.1.1"
     node-addon-api: "npm:8"
-    node-forge: "npm:1.3.3"
+    node-forge: "npm:1.4.0"
     node-gyp: "npm:12.2.0"
     node-gyp-build: "npm:4.8.4"
     node-loader: "npm:^2.1.0"
