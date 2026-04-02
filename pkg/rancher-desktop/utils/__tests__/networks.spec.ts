@@ -1,6 +1,6 @@
 import net from 'net';
 
-import { getAvailablePorts } from '../networks';
+import { getAvailablePorts, stripNoproxyPrefix } from '../networks';
 
 describe('getAvailablePorts', () => {
   it('returns the requested number of ports', async() => {
@@ -46,5 +46,35 @@ describe('getAvailablePorts', () => {
     const ports = await getAvailablePorts(count);
 
     expect(ports).toHaveLength(count);
+  });
+});
+
+describe('stripNoproxyPrefix', () => {
+  it('strips wildcard prefix from *.example.com', () => {
+    expect(stripNoproxyPrefix('*.example.com')).toBe('example.com');
+  });
+
+  it('strips leading-dot prefix from .example.com', () => {
+    expect(stripNoproxyPrefix('.example.com')).toBe('example.com');
+  });
+
+  it('returns plain domains unchanged', () => {
+    expect(stripNoproxyPrefix('example.com')).toBe('example.com');
+  });
+
+  it('returns an empty string unchanged', () => {
+    expect(stripNoproxyPrefix('')).toBe('');
+  });
+
+  it('strips prefix from a bare dot', () => {
+    expect(stripNoproxyPrefix('.')).toBe('');
+  });
+
+  it('strips prefix from a bare wildcard-dot', () => {
+    expect(stripNoproxyPrefix('*.')).toBe('');
+  });
+
+  it('returns a bare asterisk unchanged', () => {
+    expect(stripNoproxyPrefix('*')).toBe('*');
   });
 });
