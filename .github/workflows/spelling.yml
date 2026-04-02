@@ -110,6 +110,9 @@ jobs:
     - name: Check Spelling
       run: yarn lint:spelling
       env:
+        # Pretend this is a push event; we don't need any of the extra
+        # functionality that GitHub pull request integration provides.
+        GITHUB_EVENT_NAME: push
         GITHUB_TOKEN: ${{ github.token }} # Needed to generate SARIF reports.
         RD_LINT_SPELLING: 1
 
