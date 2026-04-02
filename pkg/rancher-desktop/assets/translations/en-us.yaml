@@ -430,8 +430,8 @@ virtualMachine:
     username: Username
     password: Password
     noproxy:
-      legend: No proxy hostname list
-      placeholder: Hostname to not redirect to the proxy
+      legend: Proxy bypass list
+      placeholder: "IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy"
       errors:
         duplicate: Error, item is duplicate.
   type:

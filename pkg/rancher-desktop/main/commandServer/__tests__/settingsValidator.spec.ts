@@ -1041,22 +1041,56 @@ describe('SettingsValidator', () => {
       expect({ needToUpdate, errors }).toEqual({ needToUpdate: false, errors: [] });
     });
 
-    it('should reject hostnames', () => {
+    it('should accept domain names', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['example.com']));
 
-      expect(needToUpdate).toBe(false);
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain('invalid entries');
-      expect(errors[0]).toContain('example.com');
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
     });
 
-    it('should reject wildcard DNS entries', () => {
+    it('should accept wildcard domain entries', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['*.example.com']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept leading-dot domain entries', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['.example.com']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept domain names with subdomains', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['sub.example.com']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept mixed IP and domain entries', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['10.0.0.0/8', 'example.com', '*.internal.corp']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept single-label hostnames', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['localhost']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should reject bare wildcard', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['*.']));
 
       expect(needToUpdate).toBe(false);
       expect(errors).toHaveLength(1);
       expect(errors[0]).toContain('invalid entries');
-      expect(errors[0]).toContain('*.example.com');
+    });
+
+    it('should reject domains with labels starting with hyphens', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['-example.com']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
     });
 
     it('should reject duplicate entries', () => {
@@ -1091,12 +1125,12 @@ describe('SettingsValidator', () => {
     });
 
     it('should report all invalid entries at once', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['foo.bar', '10.0.0.0/8', 'baz.qux']));
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['-invalid', '10.0.0.0/8', 'also-invalid-']));
 
       expect(needToUpdate).toBe(false);
       expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain('foo.bar');
-      expect(errors[0]).toContain('baz.qux');
+      expect(errors[0]).toContain('-invalid');
+      expect(errors[0]).toContain('also-invalid-');
     });
 
     it('should reject IPv6 CIDR with out-of-range prefix length', () => {
@@ -1109,6 +1143,14 @@ describe('SettingsValidator', () => {
 
     it('should reject entries with whitespace', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting([' 10.0.0.1', '10.0.0.2 ', 'example .com']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should reject wildcard or dot-prefixed IP addresses', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['*.10.0.0.1', '.10.0.0.1', '*.::1', '.::1']));
 
       expect(needToUpdate).toBe(false);
       expect(errors).toHaveLength(1);

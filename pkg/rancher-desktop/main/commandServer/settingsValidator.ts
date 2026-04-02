@@ -18,6 +18,7 @@ import {
 import { NavItemName, navItemNames, TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { parseImageReference, validateImageName, validateImageTag } from '@pkg/utils/dockerUtils';
+import { stripNoproxyPrefix } from '@pkg/utils/networks';
 import { getMacOsVersion } from '@pkg/utils/osVersion';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferenceConstants';
@@ -691,7 +692,28 @@ export default class SettingsValidator {
   }
 
   /**
-   * Validate the noproxy list: must be unique strings, each a valid IP or CIDR.
+   * Validate that a string is a domain name, optionally with a wildcard prefix.
+   * Accepts "example.com", "*.example.com", and ".example.com" (NO_PROXY convention).
+   */
+  protected static isDomainName(entry: string): boolean {
+    const domain = stripNoproxyPrefix(entry);
+
+    if (domain.length === 0 || domain.length > 253) {
+      return false;
+    }
+    // Reject prefixed IP addresses like "*.10.0.0.1" or ".10.0.0.1".
+    if (net.isIP(domain) !== 0) {
+      return false;
+    }
+    const labels = domain.split('.');
+    const labelRE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+
+    return labels.every(label => labelRE.test(label));
+  }
+
+  /**
+   * Validate the noproxy list: must be unique strings, each a valid IP address,
+   * CIDR subnet, domain name, or wildcard domain.
    */
   protected checkNoproxyList<S>(mergedSettings: S, currentValue: string[], desiredValue: string[], errors: string[], fqname: string): boolean {
     if (!Array.isArray(desiredValue) || desiredValue.some(s => typeof (s) !== 'string')) {
@@ -707,10 +729,10 @@ export default class SettingsValidator {
 
       return false;
     }
-    const invalidEntries = desiredValue.filter(entry => !SettingsValidator.isIPAddressOrCIDR(entry));
+    const invalidEntries = desiredValue.filter(entry => !SettingsValidator.isIPAddressOrCIDR(entry) && !SettingsValidator.isDomainName(entry));
 
     if (invalidEntries.length > 0) {
-      errors.push(`field "${ fqname }" has invalid entries (must be IP addresses or CIDR subnets): "${ invalidEntries.join('", "') }"`);
+      errors.push(`field "${ fqname }" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "${ invalidEntries.join('", "') }"`);
 
       return false;
     }
