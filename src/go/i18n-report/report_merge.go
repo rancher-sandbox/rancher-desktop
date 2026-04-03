@@ -20,6 +20,7 @@ type mergeEntry struct {
 func runMerge(args []string) error {
 	fs := flag.NewFlagSet("merge", flag.ExitOnError)
 	locale := fs.String("locale", "", "Target locale code (required)")
+	dryRun := fs.Bool("dry-run", false, "Show what would change without writing")
 	fs.Parse(args)
 
 	if *locale == "" {
@@ -30,14 +31,14 @@ func runMerge(args []string) error {
 	if err != nil {
 		return err
 	}
-	return reportMerge(root, *locale, fs.Args())
+	return reportMerge(root, *locale, fs.Args(), *dryRun)
 }
 
 // reportMerge reads flat key=value pairs with @reason comments and writes
 // (or updates) a nested YAML locale file. Input sources:
 //   - File arguments: agent output (JSONL), markdown, or raw flat text
 //   - Stdin (when no files given): raw flat text
-func reportMerge(root, locale string, files []string) error {
+func reportMerge(root, locale string, files []string, dryRun bool) error {
 	localePath := translationsPath(root, locale+".yaml")
 
 	// Read existing locale entries, preserving comments.
@@ -81,12 +82,27 @@ func reportMerge(root, locale string, files []string) error {
 	for k, e := range existing {
 		merged[k] = e
 	}
-	added := 0
+	var added, overwritten int
 	for _, e := range newEntries {
-		if _, exists := merged[e.key]; !exists {
+		if prev, exists := merged[e.key]; exists {
+			if prev.value != e.value {
+				overwritten++
+				if dryRun {
+					fmt.Printf("overwrite %s\n  old: %s\n  new: %s\n", e.key, prev.value, e.value)
+				}
+			}
+		} else {
 			added++
+			if dryRun {
+				fmt.Printf("add %s: %s\n", e.key, e.value)
+			}
 		}
 		merged[e.key] = e
+	}
+
+	if dryRun {
+		fmt.Fprintf(os.Stderr, "Dry run: %d new, %d overwritten, %d total\n", added, overwritten, len(merged))
+		return nil
 	}
 
 	// Convert map to sorted slice.
@@ -103,7 +119,7 @@ func reportMerge(root, locale string, files []string) error {
 		return fmt.Errorf("writing %s: %w", localePath, err)
 	}
 
-	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (total: %d keys)\n", added, localePath, len(entries))
+	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (%d overwritten, %d total)\n", added, localePath, overwritten, len(entries))
 	return nil
 }
 

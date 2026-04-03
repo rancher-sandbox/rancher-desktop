@@ -157,7 +157,7 @@ status.done=Fertig
 	inputFile := filepath.Join(dir, "input.txt")
 	os.WriteFile(inputFile, []byte(newInput), 0644)
 
-	err := reportMerge(dir, "de", []string{inputFile})
+	err := reportMerge(dir, "de", []string{inputFile}, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,6 +181,39 @@ status.done=Fertig
 	// Uncommented key has no comment.
 	if e := result["status.updating"]; e.comment != "" {
 		t.Errorf("unexpected comment on updating: got %q", e.comment)
+	}
+}
+
+func TestMergeDryRunDoesNotWrite(t *testing.T) {
+	dir := t.TempDir()
+
+	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
+	os.MkdirAll(transDir, 0755)
+
+	enUS := "status:\n  checking: Checking...\n  done: Done\n"
+	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte(enUS), 0644)
+
+	existingDE := "status:\n  checking: Wird geprüft…\n"
+	dePath := filepath.Join(transDir, "de.yaml")
+	os.WriteFile(dePath, []byte(existingDE), 0644)
+
+	// Input adds "done" and overwrites "checking".
+	newInput := "status.checking=Prüfe…\nstatus.done=Fertig\n"
+	inputFile := filepath.Join(dir, "input.txt")
+	os.WriteFile(inputFile, []byte(newInput), 0644)
+
+	// Capture file state before dry run.
+	before, _ := os.ReadFile(dePath)
+
+	err := reportMerge(dir, "de", []string{inputFile}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// File must be unchanged.
+	after, _ := os.ReadFile(dePath)
+	if string(after) != string(before) {
+		t.Error("dry run modified the locale file")
 	}
 }
 
