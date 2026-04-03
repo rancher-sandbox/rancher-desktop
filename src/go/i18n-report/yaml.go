@@ -81,11 +81,65 @@ func flattenNodeWithComments(prefix string, node *yaml.Node, result map[string]m
 			flattenNodeWithComments(key, valNode, result)
 		} else {
 			result[key] = mergeEntry{
-				key:     key,
-				value:   valNode.Value,
-				comment: keyNode.HeadComment,
+				key:      key,
+				value:    valNode.Value,
+				comment:  keyNode.HeadComment,
+				override: commentHasOverride(keyNode.HeadComment),
 			}
 		}
+	}
+}
+
+// commentHasOverride returns true if a comment string contains @override.
+func commentHasOverride(comment string) bool {
+	for _, line := range strings.Split(comment, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "# @override" || strings.HasPrefix(trimmed, "# @override ") {
+			return true
+		}
+	}
+	return false
+}
+
+// nodeHasOverride returns true if a leaf key's HeadComment contains @override.
+func nodeHasOverride(root *yaml.Node, dottedKey string) bool {
+	_, comment, found := nodeGetLeaf(root, dottedKey)
+	if !found {
+		return false
+	}
+	return commentHasOverride(comment)
+}
+
+// validateOverridePlacement checks that @override only appears on leaf key
+// nodes, not on parent mapping nodes. Returns a list of invalid placements.
+func validateOverridePlacement(doc *yaml.Node) []string {
+	root := documentRoot(doc)
+	var errors []string
+	checkOverridePlacement("", root, &errors)
+	return errors
+}
+
+// checkOverridePlacement recursively checks for misplaced @override on
+// parent mapping nodes.
+func checkOverridePlacement(prefix string, node *yaml.Node, errors *[]string) {
+	if node.Kind != yaml.MappingNode {
+		return
+	}
+	for i := 0; i < len(node.Content)-1; i += 2 {
+		keyNode := node.Content[i]
+		valNode := node.Content[i+1]
+		key := keyNode.Value
+		if prefix != "" {
+			key = prefix + "." + key
+		}
+		if valNode.Kind == yaml.MappingNode {
+			// Parent mapping — @override is invalid here.
+			if commentHasOverride(keyNode.HeadComment) {
+				*errors = append(*errors, key)
+			}
+			checkOverridePlacement(key, valNode, errors)
+		}
+		// Leaf nodes with @override are valid — no error.
 	}
 }
 
@@ -309,6 +363,8 @@ func nodeInsertSorted(mapping *yaml.Node, keyNode, valNode *yaml.Node) {
 }
 
 // scalarStyle returns the yaml.Style to use for a scalar value.
+// Style is set for node-tree correctness but not consumed by
+// serializeYAMLNode, which formats scalars via yamlScalar() directly.
 func scalarStyle(value string) yaml.Style {
 	if strings.Contains(value, "\n") {
 		return yaml.LiteralStyle
@@ -376,7 +432,7 @@ func serializeNode(w *strings.Builder, keyNode, valNode *yaml.Node, depth int) {
 			w.WriteString("\n")
 			bodyIndent := indent + "  "
 			for _, line := range lines[1:] {
-				trimmed := strings.TrimLeft(line, " ")
+				trimmed := strings.TrimPrefix(line, "  ")
 				if trimmed == "" {
 					w.WriteString("\n")
 				} else {
@@ -392,92 +448,3 @@ func serializeNode(w *strings.Builder, keyNode, valNode *yaml.Node, depth int) {
 	}
 }
 
-// writeNestedYAML writes a sorted slice of mergeEntry items as nested YAML
-// with @reason comments to the given writer. The structure matches en-us.yaml.
-func writeNestedYAML(w *strings.Builder, entries []mergeEntry) {
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].key < entries[j].key
-	})
-
-	// Build a map for quick lookup.
-	entryMap := make(map[string]mergeEntry, len(entries))
-	keys := make([]string, 0, len(entries))
-	for _, e := range entries {
-		entryMap[e.key] = e
-		keys = append(keys, e.key)
-	}
-
-	var prevParts []string
-	for _, key := range keys {
-		e := entryMap[key]
-		parts := strings.Split(key, ".")
-
-		// Find common prefix length with previous key (comparing parent segments).
-		common := 0
-		maxParent := len(parts) - 1
-		if len(prevParts)-1 < maxParent {
-			maxParent = len(prevParts) - 1
-		}
-		for j := 0; j < maxParent; j++ {
-			if parts[j] == prevParts[j] {
-				common = j + 1
-			} else {
-				break
-			}
-		}
-
-		// Add blank line between different top-level groups.
-		if len(prevParts) > 0 && parts[0] != prevParts[0] {
-			w.WriteString("\n")
-		}
-
-		// Emit new parent nodes.
-		for j := common; j < len(parts)-1; j++ {
-			indent := strings.Repeat("  ", j)
-			w.WriteString(indent)
-			w.WriteString(parts[j])
-			w.WriteString(":\n")
-		}
-
-		// Emit @reason comment and leaf value.
-		depth := len(parts) - 1
-		indent := strings.Repeat("  ", depth)
-
-		if e.comment != "" {
-			for _, commentLine := range strings.Split(e.comment, "\n") {
-				w.WriteString(indent)
-				w.WriteString(commentLine)
-				w.WriteString("\n")
-			}
-		}
-
-		leaf := parts[len(parts)-1]
-		w.WriteString(indent)
-		w.WriteString(leaf)
-		w.WriteString(": ")
-		scalar := yamlScalar(e.value)
-		if strings.Contains(scalar, "\n") {
-			// Block scalar (e.g. "|\n  line1\n  line2"): re-indent the body
-			// lines to match the current YAML tree depth.
-			lines := strings.Split(scalar, "\n")
-			w.WriteString(lines[0]) // block indicator ("|" or ">")
-			w.WriteString("\n")
-			bodyIndent := indent + "  "
-			for _, line := range lines[1:] {
-				trimmed := strings.TrimLeft(line, " ")
-				if trimmed == "" {
-					w.WriteString("\n")
-				} else {
-					w.WriteString(bodyIndent)
-					w.WriteString(trimmed)
-					w.WriteString("\n")
-				}
-			}
-		} else {
-			w.WriteString(scalar)
-			w.WriteString("\n")
-		}
-
-		prevParts = parts
-	}
-}

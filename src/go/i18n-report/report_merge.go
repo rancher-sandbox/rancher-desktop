@@ -10,11 +10,12 @@ import (
 	"strings"
 )
 
-// mergeEntry holds a translated key-value pair with an optional @reason comment.
+// mergeEntry holds a translated key-value pair with an optional comment.
 type mergeEntry struct {
-	key     string
-	value   string
-	comment string // may be multi-line (joined with "\n")
+	key      string
+	value    string
+	comment  string // may be multi-line (joined with "\n")
+	override bool   // true if comment contains @override
 }
 
 func runMerge(args []string) error {

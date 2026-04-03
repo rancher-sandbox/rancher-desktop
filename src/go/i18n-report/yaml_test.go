@@ -286,6 +286,96 @@ func TestSerializeYAMLNodePreservesRoundTrip(t *testing.T) {
 	}
 }
 
+func TestCommentHasOverride(t *testing.T) {
+	tests := []struct {
+		comment string
+		want    bool
+	}{
+		{"# @override", true},
+		{"# @override human-reviewed translation", true},
+		{"# @reason standard term\n# @override", true},
+		{"# @override\n# @reason something", true},
+		{"# @reason no override here", false},
+		{"", false},
+		{"# @overridden", false}, // not an exact prefix match
+	}
+	for _, tc := range tests {
+		got := commentHasOverride(tc.comment)
+		if got != tc.want {
+			t.Errorf("commentHasOverride(%q) = %v, want %v", tc.comment, got, tc.want)
+		}
+	}
+}
+
+func TestNodeHasOverride(t *testing.T) {
+	doc := &yaml.Node{
+		Kind:    yaml.DocumentNode,
+		Content: []*yaml.Node{{Kind: yaml.MappingNode}},
+	}
+	root := documentRoot(doc)
+	nodeSetLeaf(root, "a.b", "value", "# @override")
+	nodeSetLeaf(root, "a.c", "value", "# @reason something")
+
+	if !nodeHasOverride(root, "a.b") {
+		t.Error("a.b should have @override")
+	}
+	if nodeHasOverride(root, "a.c") {
+		t.Error("a.c should not have @override")
+	}
+	if nodeHasOverride(root, "a.d") {
+		t.Error("non-existent key should not have @override")
+	}
+}
+
+func TestValidateOverridePlacement(t *testing.T) {
+	// Valid: @override on a leaf node.
+	validYAML := `status:
+  # @override
+  checking: Checking...
+`
+	tmpFile := t.TempDir() + "/valid.yaml"
+	os.WriteFile(tmpFile, []byte(validYAML), 0644)
+	doc, _ := loadYAMLDocument(tmpFile)
+	if errors := validateOverridePlacement(doc); len(errors) > 0 {
+		t.Errorf("expected no errors for valid placement, got %v", errors)
+	}
+
+	// Invalid: @override on a parent mapping node.
+	invalidYAML := `# @override
+status:
+  checking: Checking...
+`
+	tmpFile2 := t.TempDir() + "/invalid.yaml"
+	os.WriteFile(tmpFile2, []byte(invalidYAML), 0644)
+	doc2, _ := loadYAMLDocument(tmpFile2)
+	errors := validateOverridePlacement(doc2)
+	if len(errors) != 1 || errors[0] != "status" {
+		t.Errorf("expected [status], got %v", errors)
+	}
+}
+
+func TestLoadYAMLWithCommentsOverride(t *testing.T) {
+	input := `status:
+  # @override
+  checking: Checking...
+  # @reason standard term
+  updating: Updating...
+`
+	tmpFile := t.TempDir() + "/test.yaml"
+	os.WriteFile(tmpFile, []byte(input), 0644)
+	got, err := loadYAMLWithComments(tmpFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !got["status.checking"].override {
+		t.Error("status.checking should have override=true")
+	}
+	if got["status.updating"].override {
+		t.Error("status.updating should not have override=true")
+	}
+}
+
 func TestLoadYAMLWithComments(t *testing.T) {
 	// Write a temp YAML file with comments and load it.
 	input := `status:
@@ -331,81 +421,3 @@ locale:
 	}
 }
 
-func TestWriteNestedYAML(t *testing.T) {
-	tests := []struct {
-		name    string
-		entries []mergeEntry
-		want    string
-	}{
-		{
-			name: "single key",
-			entries: []mergeEntry{
-				{key: "a.b", value: "hello"},
-			},
-			want: "a:\n  b: hello\n",
-		},
-		{
-			name: "two keys same parent",
-			entries: []mergeEntry{
-				{key: "a.x", value: "1"},
-				{key: "a.y", value: "2"},
-			},
-			want: "a:\n  x: \"1\"\n  y: \"2\"\n",
-		},
-		{
-			name: "blank line between top-level groups",
-			entries: []mergeEntry{
-				{key: "a.x", value: "1"},
-				{key: "b.y", value: "2"},
-			},
-			want: "a:\n  x: \"1\"\n\nb:\n  y: \"2\"\n",
-		},
-		{
-			name: "with comment",
-			entries: []mergeEntry{
-				{key: "a.b", value: "val", comment: "# @reason test"},
-			},
-			want: "a:\n  # @reason test\n  b: val\n",
-		},
-		{
-			name: "deep nesting",
-			entries: []mergeEntry{
-				{key: "a.b.c.d", value: "deep"},
-			},
-			want: "a:\n  b:\n    c:\n      d: deep\n",
-		},
-		{
-			name: "sorted output",
-			entries: []mergeEntry{
-				{key: "z.a", value: "last"},
-				{key: "a.z", value: "first"},
-			},
-			want: "a:\n  z: first\n\nz:\n  a: last\n",
-		},
-		{
-			name: "multiline value",
-			entries: []mergeEntry{
-				{key: "a.b", value: "line one\nline two\n"},
-			},
-			want: "a:\n  b: |\n    line one\n    line two\n",
-		},
-		{
-			name: "multiline value at depth 3",
-			entries: []mergeEntry{
-				{key: "a.b.c.d", value: "first\nsecond\n"},
-			},
-			want: "a:\n  b:\n    c:\n      d: |\n        first\n        second\n",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			var buf strings.Builder
-			writeNestedYAML(&buf, tc.entries)
-			got := buf.String()
-			if got != tc.want {
-				t.Errorf("got:\n%s\nwant:\n%s", got, tc.want)
-			}
-		})
-	}
-}
