@@ -25,6 +25,7 @@ var subcommands = map[string]func([]string) error{
 	"remove":       runRemove,
 	"manifest":     runManifest,
 	"meta":         runMeta,
+	"drift":        runDrift,
 }
 
 func main() {
@@ -68,6 +69,7 @@ Subcommands:
   check         Lint check: unused + stale + missing translations
   manifest      Validate meta/locales.yaml manifest
   meta          Generate source metadata for a locale
+  drift         Detect translated keys whose English source has changed
 
 Run "i18n-report <subcommand> -h" for subcommand-specific flags.`)
 }
