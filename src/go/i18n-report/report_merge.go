@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // mergeEntry holds a translated key-value pair with an optional comment.
@@ -61,6 +63,9 @@ func reportMerge(root, locale string, files []string, dryRun bool, mode string, 
 		return fmt.Errorf("loading existing %s: %w", localePath, err)
 	}
 	treeRoot := documentRoot(doc)
+	if treeRoot.Kind != yaml.MappingNode {
+		return fmt.Errorf("%s has a non-mapping root node (kind %d); refusing to modify", localePath, treeRoot.Kind)
+	}
 
 	// Build input reader from file arguments or stdin.
 	var inputReader io.Reader
@@ -87,6 +92,31 @@ func reportMerge(root, locale string, files []string, dryRun bool, mode string, 
 
 	if len(newEntries) == 0 {
 		return fmt.Errorf("no translation entries found in input")
+	}
+
+	// Reject conflicting duplicate keys in input.
+	seen := make(map[string]string, len(newEntries))
+	for _, e := range newEntries {
+		if prev, exists := seen[e.key]; exists && prev != e.value {
+			return fmt.Errorf("conflicting values for key %q in input:\n  first:  %s\n  second: %s", e.key, prev, e.value)
+		}
+		seen[e.key] = e.value
+	}
+
+	// Reject keys not present in the English source.
+	enPath := translationsPath(root, "en-us.yaml")
+	enKeys, err := loadYAMLFlat(enPath)
+	if err != nil {
+		return fmt.Errorf("loading source keys: %w", err)
+	}
+	var unknown []string
+	for _, e := range newEntries {
+		if _, exists := enKeys[e.key]; !exists {
+			unknown = append(unknown, e.key)
+		}
+	}
+	if len(unknown) > 0 {
+		return fmt.Errorf("input contains %d keys not in en-us.yaml: %s", len(unknown), strings.Join(unknown, ", "))
 	}
 
 	// Apply new entries to the tree, respecting mode.
@@ -142,15 +172,33 @@ func reportMerge(root, locale string, files []string, dryRun bool, mode string, 
 		return nil
 	}
 
-	// Serialize and write.
+	// Serialize both files before writing either, so a serialization failure
+	// leaves both files untouched. The writes themselves are sequential, so a
+	// crash between them can leave metadata stale. Run `i18n-report meta` to
+	// regenerate if that happens.
 	var buf strings.Builder
 	serializeYAMLNode(&buf, doc)
-
-	if err := os.WriteFile(localePath, []byte(buf.String()), 0644); err != nil {
-		return fmt.Errorf("writing %s: %w", localePath, err)
-	}
+	localeData := []byte(buf.String())
 
 	total := len(nodeAllLeaves(treeRoot))
+
+	enKeys, err = loadYAMLFlat(enPath)
+	if err != nil {
+		return fmt.Errorf("loading English for metadata: %w", err)
+	}
+	localeKeys := make(map[string]string, total)
+	for k, e := range nodeAllLeaves(treeRoot) {
+		localeKeys[k] = e.value
+	}
+
+	// Write both files together.
+	if err := os.WriteFile(localePath, localeData, 0644); err != nil {
+		return fmt.Errorf("writing %s: %w", localePath, err)
+	}
+	if err := writeMetadata(root, locale, enKeys, localeKeys); err != nil {
+		return err
+	}
+
 	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (%d overwritten", added, localePath, overwritten)
 	if skipped > 0 {
 		fmt.Fprintf(os.Stderr, ", %d skipped", skipped)
@@ -170,7 +218,8 @@ func reportMerge(root, locale string, files []string, dryRun bool, mode string, 
 func extractTranslationText(data []byte) string {
 	content := string(data)
 
-	// Detect JSONL (agent output): first non-empty line starts with '{'.
+	// Detect JSONL by checking whether the first non-whitespace character is '{'.
+	// Sufficient for the agent output formats we consume.
 	firstLine := ""
 	for _, line := range strings.Split(content, "\n") {
 		if trimmed := strings.TrimSpace(line); trimmed != "" {
@@ -197,16 +246,22 @@ func extractTranslationText(data []byte) string {
 			if msg.Message.Role != "assistant" {
 				continue
 			}
-			// Content may be a string or an array of blocks.
-			var blocks []struct {
-				Type string `json:"type"`
-				Text string `json:"text"`
-			}
-			if err := json.Unmarshal(msg.Message.Content, &blocks); err == nil {
-				for _, b := range blocks {
-					if b.Type == "text" {
-						extracted.WriteString(b.Text)
-						extracted.WriteString("\n")
+			// Content may be a string or an array of content blocks.
+			var text string
+			if err := json.Unmarshal(msg.Message.Content, &text); err == nil {
+				extracted.WriteString(text)
+				extracted.WriteString("\n")
+			} else {
+				var blocks []struct {
+					Type string `json:"type"`
+					Text string `json:"text"`
+				}
+				if err := json.Unmarshal(msg.Message.Content, &blocks); err == nil {
+					for _, b := range blocks {
+						if b.Type == "text" {
+							extracted.WriteString(b.Text)
+							extracted.WriteString("\n")
+						}
 					}
 				}
 			}

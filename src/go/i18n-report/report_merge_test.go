@@ -355,6 +355,58 @@ func TestMergeModeImproveSkipDryRun(t *testing.T) {
 	}
 }
 
+func TestMergeRejectsDuplicateKeys(t *testing.T) {
+	existing := "status:\n  checking: Wird geprüft…\n"
+	dir, inputFile := setupMergeTestRepo(t, existing)
+	// Two entries for the same key with different values.
+	os.WriteFile(inputFile, []byte("status.checking=Prüfe…\nstatus.checking=Wird geprüft…\n"), 0644)
+
+	err := reportMerge(dir, "de", []string{inputFile}, false, "normal", false)
+	if err == nil {
+		t.Error("merge should reject conflicting duplicate keys")
+	}
+	if err != nil && !strings.Contains(err.Error(), "conflicting values") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestMergeRejectsUnknownKeys(t *testing.T) {
+	existing := "status:\n  checking: Wird geprüft…\n"
+	dir, inputFile := setupMergeTestRepo(t, existing)
+	// Key not in en-us.yaml.
+	os.WriteFile(inputFile, []byte("status.nonexistent=Hallo\n"), 0644)
+
+	err := reportMerge(dir, "de", []string{inputFile}, false, "normal", false)
+	if err == nil {
+		t.Error("merge should reject unknown keys not in en-us.yaml")
+	}
+	if err != nil && !strings.Contains(err.Error(), "not in en-us.yaml") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestMergeRejectsNonMappingRoot(t *testing.T) {
+	dir := t.TempDir()
+	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
+	os.MkdirAll(transDir, 0755)
+
+	enUS := "status:\n  checking: Checking...\n"
+	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte(enUS), 0644)
+	// Write a scalar root (not a mapping).
+	os.WriteFile(filepath.Join(transDir, "de.yaml"), []byte("just a string\n"), 0644)
+
+	inputFile := filepath.Join(dir, "input.txt")
+	os.WriteFile(inputFile, []byte("status.checking=Wird geprüft…\n"), 0644)
+
+	err := reportMerge(dir, "de", []string{inputFile}, false, "normal", false)
+	if err == nil {
+		t.Error("merge should reject non-mapping root")
+	}
+	if err != nil && !strings.Contains(err.Error(), "non-mapping root") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
 func TestExtractTranslationText(t *testing.T) {
 	tests := []struct {
 		name  string
