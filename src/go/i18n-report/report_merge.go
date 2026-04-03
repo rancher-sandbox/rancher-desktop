@@ -22,17 +22,24 @@ func runMerge(args []string) error {
 	fs := flag.NewFlagSet("merge", flag.ExitOnError)
 	locale := fs.String("locale", "", "Target locale code (required)")
 	dryRun := fs.Bool("dry-run", false, "Show what would change without writing")
+	mode := fs.String("mode", "normal", "Merge mode: normal, drift, improve")
+	includeOverrides := fs.Bool("include-overrides", false, "In improve mode, also overwrite @override keys")
 	fs.Parse(args)
 
 	if *locale == "" {
 		return fmt.Errorf("--locale is required")
 	}
 
+	validModes := map[string]bool{"normal": true, "drift": true, "improve": true}
+	if !validModes[*mode] {
+		return fmt.Errorf("--mode must be normal, drift, or improve")
+	}
+
 	root, err := repoRoot()
 	if err != nil {
 		return err
 	}
-	return reportMerge(root, *locale, fs.Args(), *dryRun)
+	return reportMerge(root, *locale, fs.Args(), *dryRun, *mode, *includeOverrides)
 }
 
 // reportMerge reads flat key=value pairs with @reason comments and writes
@@ -40,7 +47,12 @@ func runMerge(args []string) error {
 // directly, preserving all existing leaf comments. Input sources:
 //   - File arguments: agent output (JSONL), markdown, or raw flat text
 //   - Stdin (when no files given): raw flat text
-func reportMerge(root, locale string, files []string, dryRun bool) error {
+//
+// Merge modes control how @override keys are handled:
+//   - normal: write everything unconditionally
+//   - drift: write everything, warn when overwriting @override keys
+//   - improve: skip @override keys unless includeOverrides is set
+func reportMerge(root, locale string, files []string, dryRun bool, mode string, includeOverrides bool) error {
 	localePath := translationsPath(root, locale+".yaml")
 
 	// Load existing YAML as a node tree (empty tree if file does not exist).
@@ -77,15 +89,31 @@ func reportMerge(root, locale string, files []string, dryRun bool) error {
 		return fmt.Errorf("no translation entries found in input")
 	}
 
-	// Apply new entries to the tree.
-	var added, overwritten int
+	// Apply new entries to the tree, respecting mode.
+	var added, overwritten, skipped, warned int
 	for _, e := range newEntries {
 		existingVal, _, found := nodeGetLeaf(treeRoot, e.key)
 		if found {
+			hasOverride := nodeHasOverride(treeRoot, e.key)
+
+			// In improve mode, skip @override keys unless --include-overrides.
+			if mode == "improve" && hasOverride && !includeOverrides {
+				skipped++
+				if dryRun {
+					fmt.Printf("skip %s (@override)\n", e.key)
+				}
+				continue
+			}
+
 			if existingVal != e.value {
 				overwritten++
 				if dryRun {
 					fmt.Printf("overwrite %s\n  old: %s\n  new: %s\n", e.key, existingVal, e.value)
+				}
+				// In drift mode, warn when overwriting @override keys.
+				if mode == "drift" && hasOverride {
+					warned++
+					fmt.Fprintf(os.Stderr, "Warning: overwriting @override key %s\n", e.key)
 				}
 			}
 		} else {
@@ -103,7 +131,14 @@ func reportMerge(root, locale string, files []string, dryRun bool) error {
 
 	if dryRun {
 		total := len(nodeAllLeaves(treeRoot)) + added
-		fmt.Fprintf(os.Stderr, "Dry run: %d new, %d overwritten, %d total\n", added, overwritten, total)
+		fmt.Fprintf(os.Stderr, "Dry run: %d new, %d overwritten", added, overwritten)
+		if skipped > 0 {
+			fmt.Fprintf(os.Stderr, ", %d skipped (@override)", skipped)
+		}
+		if warned > 0 {
+			fmt.Fprintf(os.Stderr, ", %d @override warnings", warned)
+		}
+		fmt.Fprintf(os.Stderr, ", %d total\n", total)
 		return nil
 	}
 
@@ -116,7 +151,14 @@ func reportMerge(root, locale string, files []string, dryRun bool) error {
 	}
 
 	total := len(nodeAllLeaves(treeRoot))
-	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (%d overwritten, %d total)\n", added, localePath, overwritten, total)
+	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (%d overwritten", added, localePath, overwritten)
+	if skipped > 0 {
+		fmt.Fprintf(os.Stderr, ", %d skipped", skipped)
+	}
+	if warned > 0 {
+		fmt.Fprintf(os.Stderr, ", %d @override warnings", warned)
+	}
+	fmt.Fprintf(os.Stderr, ", %d total)\n", total)
 	return nil
 }
 

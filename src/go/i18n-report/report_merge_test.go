@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -157,7 +158,7 @@ status.done=Fertig
 	inputFile := filepath.Join(dir, "input.txt")
 	os.WriteFile(inputFile, []byte(newInput), 0644)
 
-	err := reportMerge(dir, "de", []string{inputFile}, false)
+	err := reportMerge(dir, "de", []string{inputFile}, false, "normal", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,7 +206,7 @@ func TestMergeDryRunDoesNotWrite(t *testing.T) {
 	// Capture file state before dry run.
 	before, _ := os.ReadFile(dePath)
 
-	err := reportMerge(dir, "de", []string{inputFile}, true)
+	err := reportMerge(dir, "de", []string{inputFile}, true, "normal", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,6 +215,143 @@ func TestMergeDryRunDoesNotWrite(t *testing.T) {
 	after, _ := os.ReadFile(dePath)
 	if string(after) != string(before) {
 		t.Error("dry run modified the locale file")
+	}
+}
+
+func setupMergeTestRepo(t *testing.T, existingLocale string) (string, string) {
+	t.Helper()
+	dir := t.TempDir()
+	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
+	os.MkdirAll(transDir, 0755)
+
+	enUS := "status:\n  checking: Checking...\n  done: Done\n"
+	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte(enUS), 0644)
+	os.WriteFile(filepath.Join(transDir, "de.yaml"), []byte(existingLocale), 0644)
+
+	inputFile := filepath.Join(dir, "input.txt")
+	return dir, inputFile
+}
+
+func TestMergeModeDrift(t *testing.T) {
+	existing := `status:
+  # @override
+  checking: Manuelle Übersetzung
+  done: Fertig
+`
+	dir, inputFile := setupMergeTestRepo(t, existing)
+	// Input overwrites both keys.
+	os.WriteFile(inputFile, []byte("status.checking=Wird geprüft…\nstatus.done=Erledigt\n"), 0644)
+
+	// Capture stderr for the warning.
+	oldStderr := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+
+	err := reportMerge(dir, "de", []string{inputFile}, false, "drift", false)
+	w.Close()
+	os.Stderr = oldStderr
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stderrOut, _ := io.ReadAll(r)
+	stderr := string(stderrOut)
+
+	// Should warn about overwriting the @override key.
+	if !strings.Contains(stderr, "Warning: overwriting @override key status.checking") {
+		t.Errorf("expected @override warning, got: %s", stderr)
+	}
+
+	// Both keys should be overwritten (drift mode writes everything).
+	result, _ := loadYAMLWithComments(filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations", "de.yaml"))
+	if result["status.checking"].value != "Wird geprüft…" {
+		t.Errorf("override key not overwritten in drift mode: got %q", result["status.checking"].value)
+	}
+	if result["status.done"].value != "Erledigt" {
+		t.Errorf("non-override key not overwritten: got %q", result["status.done"].value)
+	}
+}
+
+func TestMergeModeImprove(t *testing.T) {
+	existing := `status:
+  # @override
+  checking: Manuelle Übersetzung
+  done: Fertig
+`
+	dir, inputFile := setupMergeTestRepo(t, existing)
+	os.WriteFile(inputFile, []byte("status.checking=Wird geprüft…\nstatus.done=Erledigt\n"), 0644)
+
+	err := reportMerge(dir, "de", []string{inputFile}, false, "improve", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, _ := loadYAMLWithComments(filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations", "de.yaml"))
+
+	// @override key should be skipped.
+	if result["status.checking"].value != "Manuelle Übersetzung" {
+		t.Errorf("override key should be preserved in improve mode: got %q", result["status.checking"].value)
+	}
+	// Non-override key should be overwritten.
+	if result["status.done"].value != "Erledigt" {
+		t.Errorf("non-override key not overwritten: got %q", result["status.done"].value)
+	}
+}
+
+func TestMergeModeImproveIncludeOverrides(t *testing.T) {
+	existing := `status:
+  # @override
+  checking: Manuelle Übersetzung
+`
+	dir, inputFile := setupMergeTestRepo(t, existing)
+	os.WriteFile(inputFile, []byte("status.checking=Wird geprüft…\n"), 0644)
+
+	err := reportMerge(dir, "de", []string{inputFile}, false, "improve", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result, _ := loadYAMLWithComments(filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations", "de.yaml"))
+
+	// With --include-overrides, even @override keys should be overwritten.
+	if result["status.checking"].value != "Wird geprüft…" {
+		t.Errorf("override key should be overwritten with --include-overrides: got %q", result["status.checking"].value)
+	}
+}
+
+func TestMergeModeImproveSkipDryRun(t *testing.T) {
+	existing := `status:
+  # @override
+  checking: Manuelle Übersetzung
+  done: Fertig
+`
+	dir, inputFile := setupMergeTestRepo(t, existing)
+	os.WriteFile(inputFile, []byte("status.checking=Wird geprüft…\nstatus.done=Erledigt\n"), 0644)
+
+	// Capture stdout to check dry-run output.
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := reportMerge(dir, "de", []string{inputFile}, true, "improve", false)
+	w.Close()
+	os.Stdout = oldStdout
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out, _ := io.ReadAll(r)
+	output := string(out)
+
+	// Dry run should report the skip.
+	if !strings.Contains(output, "skip status.checking (@override)") {
+		t.Errorf("dry-run should show skip, got: %s", output)
+	}
+	// Non-override key should show overwrite.
+	if !strings.Contains(output, "overwrite status.done") {
+		t.Errorf("dry-run should show overwrite for non-override key, got: %s", output)
 	}
 }
 
