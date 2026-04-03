@@ -4,6 +4,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 func TestFlattenYAML(t *testing.T) {
@@ -149,6 +151,138 @@ func TestIsValidDottedKey(t *testing.T) {
 				t.Errorf("isValidDottedKey(%q) = %v, want %v", tc.input, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestNodeSetAndGetLeaf(t *testing.T) {
+	doc := &yaml.Node{
+		Kind:    yaml.DocumentNode,
+		Content: []*yaml.Node{{Kind: yaml.MappingNode}},
+	}
+	root := documentRoot(doc)
+
+	// Insert a new leaf.
+	nodeSetLeaf(root, "a.b.c", "hello", "# @reason test")
+	val, comment, found := nodeGetLeaf(root, "a.b.c")
+	if !found {
+		t.Fatal("a.b.c not found after insert")
+	}
+	if val != "hello" {
+		t.Errorf("value = %q, want %q", val, "hello")
+	}
+	if comment != "# @reason test" {
+		t.Errorf("comment = %q, want %q", comment, "# @reason test")
+	}
+
+	// Update value, preserve existing comment.
+	nodeSetLeaf(root, "a.b.c", "world", "")
+	val, comment, found = nodeGetLeaf(root, "a.b.c")
+	if !found {
+		t.Fatal("a.b.c not found after update")
+	}
+	if val != "world" {
+		t.Errorf("value = %q, want %q", val, "world")
+	}
+	if comment != "# @reason test" {
+		t.Errorf("comment lost after update: got %q", comment)
+	}
+
+	// Update with new comment replaces old.
+	nodeSetLeaf(root, "a.b.c", "world", "# @reason new")
+	_, comment, _ = nodeGetLeaf(root, "a.b.c")
+	if comment != "# @reason new" {
+		t.Errorf("comment = %q, want %q", comment, "# @reason new")
+	}
+
+	// Non-existent key.
+	_, _, found = nodeGetLeaf(root, "x.y.z")
+	if found {
+		t.Error("x.y.z should not be found")
+	}
+}
+
+func TestNodeInsertSorted(t *testing.T) {
+	doc := &yaml.Node{
+		Kind:    yaml.DocumentNode,
+		Content: []*yaml.Node{{Kind: yaml.MappingNode}},
+	}
+	root := documentRoot(doc)
+
+	// Insert keys out of order.
+	nodeSetLeaf(root, "c.x", "3", "")
+	nodeSetLeaf(root, "a.x", "1", "")
+	nodeSetLeaf(root, "b.x", "2", "")
+
+	// Top-level keys should be sorted.
+	if len(root.Content) != 6 {
+		t.Fatalf("expected 6 Content entries (3 key-value pairs), got %d", len(root.Content))
+	}
+	keys := []string{root.Content[0].Value, root.Content[2].Value, root.Content[4].Value}
+	if keys[0] != "a" || keys[1] != "b" || keys[2] != "c" {
+		t.Errorf("top-level keys = %v, want [a b c]", keys)
+	}
+}
+
+func TestSerializeYAMLNode(t *testing.T) {
+	doc := &yaml.Node{
+		Kind:    yaml.DocumentNode,
+		Content: []*yaml.Node{{Kind: yaml.MappingNode}},
+	}
+	root := documentRoot(doc)
+
+	nodeSetLeaf(root, "action.refresh", "Refresh", "")
+	nodeSetLeaf(root, "status.checking", "Checking...", "# @reason standard term")
+	nodeSetLeaf(root, "status.done", "Done", "")
+
+	var buf strings.Builder
+	serializeYAMLNode(&buf, doc)
+	got := buf.String()
+
+	want := `action:
+  refresh: Refresh
+status:
+  # @reason standard term
+  checking: Checking...
+  done: Done
+`
+	if got != want {
+		t.Errorf("got:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestSerializeYAMLNodePreservesRoundTrip(t *testing.T) {
+	// Load a YAML file, serialize it, verify comments survive.
+	input := `status:
+  # @reason "checking" = standard term
+  versionChecking: Checking...
+  updating: Updating...
+`
+	tmpFile := t.TempDir() + "/test.yaml"
+	os.WriteFile(tmpFile, []byte(input), 0644)
+
+	doc, err := loadYAMLDocument(tmpFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Add a new key.
+	nodeSetLeaf(documentRoot(doc), "status.done", "Done", "")
+
+	var buf strings.Builder
+	serializeYAMLNode(&buf, doc)
+	got := buf.String()
+
+	// Original comment must survive.
+	if !strings.Contains(got, `# @reason "checking" = standard term`) {
+		t.Errorf("comment lost in round-trip:\n%s", got)
+	}
+	// New key must appear.
+	if !strings.Contains(got, "done: Done") {
+		t.Errorf("new key missing:\n%s", got)
+	}
+	// Existing values must survive.
+	if !strings.Contains(got, "updating: Updating...") {
+		t.Errorf("existing value lost:\n%s", got)
 	}
 }
 

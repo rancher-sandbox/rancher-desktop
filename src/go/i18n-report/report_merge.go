@@ -35,20 +35,19 @@ func runMerge(args []string) error {
 }
 
 // reportMerge reads flat key=value pairs with @reason comments and writes
-// (or updates) a nested YAML locale file. Input sources:
+// (or updates) a nested YAML locale file. It operates on the yaml.Node tree
+// directly, preserving all existing leaf comments. Input sources:
 //   - File arguments: agent output (JSONL), markdown, or raw flat text
 //   - Stdin (when no files given): raw flat text
 func reportMerge(root, locale string, files []string, dryRun bool) error {
 	localePath := translationsPath(root, locale+".yaml")
 
-	// Read existing locale entries, preserving comments.
-	existing := make(map[string]mergeEntry)
-	if _, err := os.Stat(localePath); err == nil {
-		existing, err = loadYAMLWithComments(localePath)
-		if err != nil {
-			return fmt.Errorf("loading existing %s: %w", localePath, err)
-		}
+	// Load existing YAML as a node tree (empty tree if file does not exist).
+	doc, err := loadYAMLDocument(localePath)
+	if err != nil {
+		return fmt.Errorf("loading existing %s: %w", localePath, err)
 	}
+	treeRoot := documentRoot(doc)
 
 	// Build input reader from file arguments or stdin.
 	var inputReader io.Reader
@@ -77,18 +76,15 @@ func reportMerge(root, locale string, files []string, dryRun bool) error {
 		return fmt.Errorf("no translation entries found in input")
 	}
 
-	// Build merged entry list: existing + new (new entries override existing).
-	merged := make(map[string]mergeEntry, len(existing)+len(newEntries))
-	for k, e := range existing {
-		merged[k] = e
-	}
+	// Apply new entries to the tree.
 	var added, overwritten int
 	for _, e := range newEntries {
-		if prev, exists := merged[e.key]; exists {
-			if prev.value != e.value {
+		existingVal, _, found := nodeGetLeaf(treeRoot, e.key)
+		if found {
+			if existingVal != e.value {
 				overwritten++
 				if dryRun {
-					fmt.Printf("overwrite %s\n  old: %s\n  new: %s\n", e.key, prev.value, e.value)
+					fmt.Printf("overwrite %s\n  old: %s\n  new: %s\n", e.key, existingVal, e.value)
 				}
 			}
 		} else {
@@ -97,29 +93,29 @@ func reportMerge(root, locale string, files []string, dryRun bool) error {
 				fmt.Printf("add %s: %s\n", e.key, e.value)
 			}
 		}
-		merged[e.key] = e
+		if !dryRun {
+			if err := nodeSetLeaf(treeRoot, e.key, e.value, e.comment); err != nil {
+				return fmt.Errorf("setting %s: %w", e.key, err)
+			}
+		}
 	}
 
 	if dryRun {
-		fmt.Fprintf(os.Stderr, "Dry run: %d new, %d overwritten, %d total\n", added, overwritten, len(merged))
+		total := len(nodeAllLeaves(treeRoot)) + added
+		fmt.Fprintf(os.Stderr, "Dry run: %d new, %d overwritten, %d total\n", added, overwritten, total)
 		return nil
 	}
 
-	// Convert map to sorted slice.
-	entries := make([]mergeEntry, 0, len(merged))
-	for _, e := range merged {
-		entries = append(entries, e)
-	}
-
-	// Write nested YAML.
+	// Serialize and write.
 	var buf strings.Builder
-	writeNestedYAML(&buf, entries)
+	serializeYAMLNode(&buf, doc)
 
 	if err := os.WriteFile(localePath, []byte(buf.String()), 0644); err != nil {
 		return fmt.Errorf("writing %s: %w", localePath, err)
 	}
 
-	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (%d overwritten, %d total)\n", added, localePath, overwritten, len(entries))
+	total := len(nodeAllLeaves(treeRoot))
+	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (%d overwritten, %d total)\n", added, localePath, overwritten, total)
 	return nil
 }
 
