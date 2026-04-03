@@ -23,6 +23,7 @@ var subcommands = map[string]func([]string) error{
 	"dynamic":      runDynamic,
 	"check":        runCheck,
 	"remove":       runRemove,
+	"manifest":     runManifest,
 }
 
 func main() {
@@ -64,6 +65,7 @@ Subcommands:
   references    Where each en-us.yaml key is used (file:line)
   dynamic       Template literal patterns that reference keys dynamically
   check         Lint check: unused + stale + missing translations
+  manifest      Validate meta/locales.yaml manifest
 
 Run "i18n-report <subcommand> -h" for subcommand-specific flags.`)
 }
