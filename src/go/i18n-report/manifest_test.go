@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -120,6 +121,152 @@ locales:
 	}
 	if !strings.Contains(err.Error(), "invalid status") {
 		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+// writeCrossValidationFiles writes the supporting files needed by
+// crossValidateManifest into a test repo directory.
+func writeCrossValidationFiles(t *testing.T, dir string, apiEnum string, validatorDynamic bool, specLocales string) {
+	t.Helper()
+
+	// command-api.yaml
+	specsDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "specs")
+	os.MkdirAll(specsDir, 0755)
+	apiYAML := fmt.Sprintf(`paths:
+  /v1/settings:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  application:
+                    properties:
+                      locale:
+                        type: string
+                        enum: [%s]
+`, apiEnum)
+	os.WriteFile(filepath.Join(specsDir, "command-api.yaml"), []byte(apiYAML), 0644)
+
+	// settingsValidator.ts
+	validatorDir := filepath.Join(dir, "pkg", "rancher-desktop", "main", "commandServer")
+	os.MkdirAll(validatorDir, 0755)
+	validatorContent := "locale: this.checkEnum('none', 'de'),\n"
+	if validatorDynamic {
+		validatorContent = "locale: this.checkEnum('none', ...availableLocales),\n"
+	}
+	os.WriteFile(filepath.Join(validatorDir, "settingsValidator.ts"), []byte(validatorContent), 0644)
+
+	// settingsValidator.spec.ts
+	testDir := filepath.Join(validatorDir, "__tests__")
+	os.MkdirAll(testDir, 0755)
+	specContent := fmt.Sprintf(`describe('application.locale', () => {
+  it('should accept valid locales', () => {
+    %s
+  });
+  it('should reject invalid values', () => {
+    { application: { locale: 'invalid' } }
+  });
+});
+`, specLocales)
+	os.WriteFile(filepath.Join(testDir, "settingsValidator.spec.ts"), []byte(specContent), 0644)
+}
+
+func TestCrossValidateManifestMatch(t *testing.T) {
+	dir := setupManifestTestRepo(t, `
+locales:
+  en-us:
+    status: source
+  de:
+    status: experimental
+`, []string{"de.yaml"})
+
+	writeCrossValidationFiles(t, dir, "none, de, en-us", true,
+		"{ application: { locale: 'en-us' } }, { application: { locale: 'de' } }")
+
+	m, err := loadManifest(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = crossValidateManifest(dir, m)
+	if err != nil {
+		t.Errorf("cross-validation should pass: %v", err)
+	}
+}
+
+func TestCrossValidateManifestMismatch(t *testing.T) {
+	dir := setupManifestTestRepo(t, `
+locales:
+  en-us:
+    status: source
+  de:
+    status: experimental
+  fa:
+    status: experimental
+`, []string{"de.yaml", "fa.yaml"})
+
+	// API is missing "fa".
+	writeCrossValidationFiles(t, dir, "none, de, en-us", true,
+		"{ application: { locale: 'de' } }")
+
+	m, err := loadManifest(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = crossValidateManifest(dir, m)
+	if err == nil {
+		t.Error("cross-validation should fail when API is missing a locale")
+	}
+}
+
+func TestCrossValidateHardcodedValidator(t *testing.T) {
+	dir := setupManifestTestRepo(t, `
+locales:
+  en-us:
+    status: source
+  de:
+    status: experimental
+`, []string{"de.yaml"})
+
+	// settingsValidator.ts uses hardcoded list instead of ...availableLocales.
+	writeCrossValidationFiles(t, dir, "none, de, en-us", false,
+		"{ application: { locale: 'de' } }")
+
+	m, err := loadManifest(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = crossValidateManifest(dir, m)
+	if err == nil {
+		t.Error("cross-validation should fail when settingsValidator.ts uses hardcoded locales")
+	}
+}
+
+func TestCrossValidateSpecUnknownLocale(t *testing.T) {
+	dir := setupManifestTestRepo(t, `
+locales:
+  en-us:
+    status: source
+  de:
+    status: experimental
+`, []string{"de.yaml"})
+
+	// Spec references 'fr' which is not in the manifest.
+	writeCrossValidationFiles(t, dir, "none, de, en-us", true,
+		"{ application: { locale: 'fr' } }")
+
+	m, err := loadManifest(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = crossValidateManifest(dir, m)
+	if err == nil {
+		t.Error("cross-validation should fail when spec uses locale not in manifest")
 	}
 }
 
