@@ -5,31 +5,49 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
+
+// normalizeWhitespace collapses newlines and surrounding whitespace into
+// single spaces so that multiline values fit on one key=value output line.
+// This makes the text format lossy for multiline values; use --format json
+// for a lossless round-trip through translate and merge.
+func normalizeWhitespace(s string) string {
+	return strings.Join(strings.Fields(s), " ")
+}
 
 func runTranslate(args []string) error {
 	fs := flag.NewFlagSet("translate", flag.ExitOnError)
 	locale := fs.String("locale", "", "Target locale code (required)")
+	mode := fs.String("mode", "missing", "Translate mode: missing, improve, drift")
 	format := fs.String("format", "text", "Output format: text, json")
 	batch := fs.Int("batch", 0, "Batch number (1-indexed); requires --batches")
 	batches := fs.Int("batches", 0, "Total number of batches")
+	includeOverrides := fs.Bool("include-overrides", false, "In improve mode, include @override keys")
 	fs.Parse(args)
 
 	if *locale == "" {
 		return fmt.Errorf("--locale is required")
 	}
 
+	validModes := map[string]bool{"missing": true, "improve": true, "drift": true}
+	if !validModes[*mode] {
+		return fmt.Errorf("--mode must be missing, improve, or drift")
+	}
+
 	root, err := repoRoot()
 	if err != nil {
 		return err
 	}
-	return reportTranslate(root, *locale, *format, *batch, *batches)
+	return reportTranslate(root, *locale, *mode, *format, *batch, *batches, *includeOverrides)
 }
 
-// reportTranslate outputs key=value pairs for keys in en-us.yaml that are
-// missing from a locale file. Annotations (@context, @meaning, @no-translate)
-// from en-us.yaml are included so translators have context.
-func reportTranslate(root, locale, format string, batch, batches int) error {
+// reportTranslate outputs key=value pairs for translation. The mode controls
+// which keys are included:
+//   - missing: keys in en-us.yaml absent from the locale
+//   - improve: translated keys eligible for quality review (skip @override by default)
+//   - drift: translated keys whose English source has changed
+func reportTranslate(root, locale, mode, format string, batch, batches int, includeOverrides bool) error {
 	enPath := translationsPath(root, "en-us.yaml")
 	localePath := translationsPath(root, locale+".yaml")
 
@@ -37,12 +55,8 @@ func reportTranslate(root, locale, format string, batch, batches int) error {
 	if err != nil {
 		return err
 	}
-	localeKeys, err := loadYAMLFlat(localePath)
-	if err != nil {
-		return err
-	}
 
-	// Build a flat key list for sorting.
+	// Build a flat key map for sorting.
 	enKeyMap := make(map[string]string, len(enEntries))
 	for k, e := range enEntries {
 		enKeyMap[k] = e.value
@@ -54,9 +68,66 @@ func reportTranslate(root, locale, format string, batch, batches int) error {
 		Comment string `json:"comment,omitempty"`
 	}
 	var pairs []kv
-	for _, k := range sortedKeys(enKeyMap) {
-		if _, found := localeKeys[k]; !found {
+
+	switch mode {
+	case "missing":
+		localeKeys, err := loadYAMLFlat(localePath)
+		if err != nil {
+			return err
+		}
+		for _, k := range sortedKeys(enKeyMap) {
+			if _, found := localeKeys[k]; !found {
+				pairs = append(pairs, kv{k, enEntries[k].value, enEntries[k].comment})
+			}
+		}
+
+	case "improve":
+		doc, err := loadYAMLDocument(localePath)
+		if err != nil {
+			return err
+		}
+		treeRoot := documentRoot(doc)
+		localeLeaves := nodeAllLeaves(treeRoot)
+		meta, err := loadMetadata(root, locale)
+		if err != nil {
+			return err
+		}
+		for _, k := range sortedKeys(enKeyMap) {
+			if _, found := localeLeaves[k]; !found {
+				continue // missing, not an "improve" candidate
+			}
+			if !includeOverrides && nodeHasOverride(treeRoot, k) {
+				continue // skip @override keys
+			}
+			// Exclude drifted keys — those belong in translate --mode=drift.
+			if storedSource, inMeta := meta[k]; inMeta {
+				if enKeyMap[k] != storedSource {
+					continue
+				}
+			}
 			pairs = append(pairs, kv{k, enEntries[k].value, enEntries[k].comment})
+		}
+
+	case "drift":
+		localeKeys, err := loadYAMLFlat(localePath)
+		if err != nil {
+			return err
+		}
+		meta, err := loadMetadata(root, locale)
+		if err != nil {
+			return err
+		}
+		for _, k := range sortedKeys(enKeyMap) {
+			if _, found := localeKeys[k]; !found {
+				continue // missing, not drifted
+			}
+			storedSource, inMeta := meta[k]
+			if !inMeta {
+				continue // no metadata, cannot detect drift
+			}
+			if enKeyMap[k] != storedSource {
+				pairs = append(pairs, kv{k, enEntries[k].value, enEntries[k].comment})
+			}
 		}
 	}
 
@@ -90,12 +161,18 @@ func reportTranslate(root, locale, format string, batch, batches int) error {
 		return enc.Encode(pairs)
 	}
 
+	modeLabel := map[string]string{
+		"missing": "missing from",
+		"improve": "eligible for improvement in",
+		"drift":   "drifted in",
+	}[mode]
+
 	if len(pairs) == 0 {
-		fmt.Printf("No keys missing from %s.\n", locale)
+		fmt.Printf("No keys %s %s.\n", modeLabel, locale)
 		return nil
 	}
 
-	label := fmt.Sprintf("Found %d keys missing from %s", len(pairs), locale)
+	label := fmt.Sprintf("Found %d keys %s %s", len(pairs), modeLabel, locale)
 	if batches > 0 {
 		label += fmt.Sprintf(" (batch %d of %d)", batch, batches)
 	}
@@ -104,7 +181,7 @@ func reportTranslate(root, locale, format string, batch, batches int) error {
 		if p.Comment != "" {
 			fmt.Println(p.Comment)
 		}
-		fmt.Printf("%s=%s\n", p.Key, p.Value)
+		fmt.Printf("%s=%s\n", p.Key, normalizeWhitespace(p.Value))
 	}
 	return nil
 }
