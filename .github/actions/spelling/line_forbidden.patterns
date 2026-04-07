@@ -8,6 +8,16 @@
 # you might not want to check in code where you skip all the other tests.
 #\bfit\(
 
+# Variant selectors
+# Were you really intending to use Variant selectors?
+# https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode
+[\x{FE00}-\x{FE0F}\x{E0100}-\x{E01EF}]{2,}
+
+# Private Use Area
+# Were you really intending to use Private Use Area code points?
+# https://www.aikido.dev/blog/the-return-of-the-invisible-threat-hidden-pua-unicode-hits-github-repositorties
+[\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}]{2,}
+
 # English does not use a hyphen between adverbs and nouns
 # https://twitter.com/nyttypos/status/1894815686192685239
 (?:^|\s)[A-Z]?[a-z]+ly-(?=[a-z]{3,})(?:[.,?!]?\s|$)
@@ -20,7 +30,10 @@
 
 # Generally spaces follow instead of preceding `,`s
 # It's possible this is some strange CSV dialect, but, even so, you could probably move the space.
-\s[a-z]{3,} ,[a-z]{3,}\s
+\s[A-Za-z]{3,} ,[A-Za-z]{3,}\s
+
+# Should be `could`/`should`/`would`+`'ve`
+\b(?:c|sh|w)ould of\b(?! course)
 
 # Generally words are written with `'s`, not `"s`
 [^=|+']\s\w+"s\s
@@ -70,7 +83,7 @@
 \b2006-02-01\b
 
 # Should probably have a trailing `.`
-\s([a-z]\.){2,}[a-z]\s
+\s([a-z]\.){2,}[a-z]\s(?=\w)
 
 # Should probably end with `”`
 # Likely bad OCR
@@ -80,39 +93,57 @@
 \s\w+[^'‘\\\[]+’'(?!['"])
 
 # Should probably be matching (smart)quotes or backticks (if Markdown)
-# Unless the file format is Tex
-(?<!`)``(?!`).*?''
+# Unless the file format is TeX
+^[^`]+(?<!`)``(?!`)[^`]*?''
 
 # Should probably be `YYYYMMDD`
 \b[Yy]{4}[Dd]{2}[Mm]{2}(?!.*[Yy]{4}[Dd]{2}[Mm]{2}).*$
 
 # Should be `a bit of`
-(<=\bquite )some(?= hands-on)
+(?<=\bquite )some(?= hands-on)
 
 # Should be `a few`
-(<=\bquite )some(?= hands\s)
+(?<=\bquite )some(?= hands\s)
+
+# Should be `a part`
+(?i)\bapart(?= of\b)
 
 # Should be `a priori` or `and prior`
 (?i)(?<!posteriori)\sand priori\s
 
 # Should be `a`
-\san (?=(?:[b-df-gjklpqtvwz]|h(?!our|s[lv]|tml|ttp|ref)|n(?!ginx|grok|pm)|r(?!c)|s(?!s[ho]|vg))[a-z]|x(?!\d|ml))
+\san (?=(?:[b-dfgjklpqtvwz]|h(?!onou?r|our|s[lv]|tml|ttp|ref)|n(?!ginx|grok|pm)|r(?!c)|s(?!s[ho]|vg))[a-z]|x(?!\b|[-\d]|ml))
 
 # Articles generally shouldn't be used without a noun and a verb
 # - Perhaps you're missing a verb between the noun and the second article.
 # - Or, perhaps you should remove the first verb and treat the intervening word as a verb?
 # - In some cases you should add a `,` between the noun and the second article.
-\s(?:an?|the)\s(?!wh|how\b)[A-Za-z][a-z]+[a-qs-z]\s(?:an?|the(?! same))\s
+\s(?:an?|the)\s(?!wh|(?:how|priori)\b)[A-Za-z][a-z]+[a-qs-z]\s(?:a(?! (?:bit|few|little|lot|posteriori))n?|the(?! same))\s
 
 # Should only be one of `a`, `an`, or `the`
-\b(?:(?:an?|the)\s+){2,}\b
+\b(?:(?:a(?! (?:priori|posteriori))n?|the)\s+){2,}\b
 
 # Should be `a large amount` or `large amounts`
 (?<=\bof )large amount(?= of data\b)
 
+# Should be `access`
+(?<!\bto )assess(?= token(?!-)\b)
+
+# Should be `ado`
+(?i)(?<=without further )adieu\b
+
+# Should be `afterthought` or `after some thought`
+\bafter thought\b
+
+# Should be `and not` or `nor`
+\band nor\b
+
 # Should be a list `something, a second thing, or a third thing` or `something, a thing to do a thing`
 # -- This rule is experimental, if you find it has a high false-positive rate, please let the maintainer know
-(?:^|[?!.] )(?:(?![Ff]or example|Currently|In \w)[^()?!;,.])+, a(?:\s+(?!and|to\b)\w+)+?\s+an?\b
+(?:^|[?!.] )(?:(?![Ff]or example|Currently|In \w)[^()?!;,.])+, a(?:\s+(?!and|to\b)\w+)+?\s+an?\b(?![^.:!]+, (?:and|or)\b)
+
+# Should be present tense
+(?<=\bhas to )\w+ed\b
 
 # Should only be `are` or `can`, not both
 \b(?:(?:are|can)\s+){2,}\b
@@ -123,18 +154,27 @@
 # Should probably be `ABCDEFGHIJKLMNOPQRSTUVWXYZ`
 (?i)(?!ABCDEFGHIJKLMNOPQRSTUVWXYZ)ABC[A-Z]{21}YZ
 
+# Should be `all over`
+\ballover(?= the\b)
+
 # Should be `please` or `also, please`
 # https://english.stackexchange.com/questions/106165/please-do-also-or-please-also
 \b[Pp]lease(?:, do|) also\b
 
 # Should be `an`
-#(?<!\b[Ii] )(?<![-.])(?<!\d\s?)\bam\b(?!/pm|[:")])
+#(?<!(?:\b[Ii]|git) )(?<![-.])(?<!\d\s?)\bam\b(?!/pm|[:")]| I\b)
 
 # Should be `an`
-\sa(?= (?:a(?!nd\s|s\s)|e(?!u)|i(?![ns]\s)|o(?!nc?e)|u(?!biquitous|int|kr|n[ai]|r[ael]|s[aeiu]|tf\d*|til|topia|uid|vula|v\b)|y(?!arn|ear|oga|y)))
+(?<=\s)a(?= (?:a(?!nd\s|s\s)|e(?!u)|i(?![ns]\s)|o(?!nc?e)|u(?!\d|biquitous|int|kr|n[ai]|r[ael]|s[aeiu]|tf\d*|til|topia|uid|vula|v\b)|y(?!aml|arn|e|ie|oga|oung|y)))
 
 # Should be `anymore`
 \bany more[,.]
+
+# Should be `API`
+\bAPi\b
+
+# Should be `as`
+(?<=\bas well )a\b
 
 # Should be `Ask`
 (?:^|[.?]\s+)As\s+[A-Z][a-z]{2,}\s[^.?]*?(?:how|if|wh\w+)\b
@@ -145,11 +185,17 @@
 # https://www.opensourceshakespeare.org/views/plays/play_view.php?WorkID=macbeth&Act=4&Scene=3&Scope=scene
 \bin one fell s[lw]?oop\b
 
+# Should be `aw`
+(?i)\bawe(?=, look)
+
 # Should be `'`
 (?i)\b(?:(?:i|s?he|they|what|who|you)[`"]ll|(?:are|ca|did|do|does|ha[ds]|have|is|should|were|wo|would)n[`"]t|(?:s?he|let|that|there|what|where|who)[`"]s|(?:i|they|we|what|who|you)[`"]ve)\b
 
 # Should be `background` / `intro text` / `introduction` / `prologue` unless it's a brand or relates to _subterfuge_
 (?i)\bpretext\b
+
+# Should be `bear`
+(?i)\bbare(?= with\b)
 
 # Should be `Bitbucket`
 \bBitBucket\b
@@ -159,6 +205,12 @@
 
 # Should be `beginning`
 \b(?<=from )begin(?= to end\b)
+
+# Should be `beside`
+(?i)\bbesides(?= the point)
+
+# Should be `best-effort`
+\bbest-efforts\b
 
 # Should be `bona`
 # unless talking about bones
@@ -200,6 +252,9 @@
 # Should be `chart`
 (?i)\bhelm\b.*\bchard\b
 
+# Should be `chute`
+(?i)(?<=laundry )shoot\b
+
 # Should be `code`
 (?<=\bof )a code(?= that\b)
 
@@ -227,8 +282,17 @@
 # Should be `dress code`
 \bdressing code\b
 
+# Should be `dried`
+(?i)(?<=\bcut and )dry\b
+
+# Should be `dryer`
+(?i)(?<=\ba clothes )drier\b
+
 # Should be `effect`
 (?<=\btake )affect\b
+
+# Should be `en`
+(?i)(?<=\bis )on(?= route to\b)
 
 # Should be `end`
 (?<=\b[Ww]e )ends\b
@@ -260,11 +324,17 @@
 # Should be `exceeds`
 \bis higher than\b
 
+# Should be `... exists`
+\b(?:an?|the) \w+[a-rt-z] already exist\b
+
 # Should be `fall back`
-(?<!\ba )\bfallback(?= to)\b
+(?<!\b(?:a|the) |-)\bfallback(?= to)\b
+
+# Should be `fell`
+(?i)\bfoul(?= swoop)
 
 # Should be `for`, `for, to` or `to`
-\b(?:for to|(?<!\bup )to for)\b
+\b(?:for to|(?<!\bup |-)to for)\b
 
 # Should be `ghcr.io`
 # https://bmitch.net/blog/2025-08-22-ghrc-appears-malicious/
@@ -281,6 +351,15 @@
 
 # Should be `heartrending` unless talking about drawing hearts
 \b(?i)heart[- ]rendering\b(?![^.?!]*(?:hearts|quirk))
+
+# Should be `homing`
+(?i)\bhoning(?= in on)
+
+# Should be `how to` or reworded
+(?<=figure out )to(?! which)\b"
+
+# Should be `hunker`
+(?i)\bbunker(?= down)
 
 # Should probably be `https://`...
 # Markdown generally doesn't assume that links are to urls
@@ -314,6 +393,9 @@
 
 # Should be `Microsoft`
 \bMicroSoft\b
+
+# Should be `muster`
+(?i)(?<=cut the )mustard
 
 # Should be `OAuth`
 (?:^|[^-/*$])[ '"]oAuth(?: [a-z]|\d+ |[^ a-zA-Z0-9:;_.()])
@@ -356,6 +438,18 @@ CLoud
 # Should be `disk space.`
 (?<=to save )disk\.(?![a-zA-Z])
 
+# Should be `diffuse`
+(?i)\bdefuse(?= tensions)
+
+# Should be `drawers`
+(?i)(?<=dresser )draws\b
+
+# Should be `due`
+(?i)\bdo(?= diligence\b)
+
+# Should be `due`
+(?i)(?<=\bin )do(?= (?:course|time))
+
 # Should be `gets`
 \scommand get the\s
 
@@ -372,13 +466,13 @@ CLoud
 \bgoing to bad(?!-)\b
 
 # Should be `greater than`
-\bhigher than\b
+\bhigher than\b(?! ever)
 
 # Should be `Homebrew`
 \bHomeBrew\b
 
 # Should be `ID` (unless it's a flag/property/RCS variable)
-(?<![-\.$])\bId\b(?![(=:'"]|  )
+(?<![-\.*$])\bId\b(?![(=:'"]|  )
 
 # Should be `in front of`
 \bin from of\b
@@ -424,8 +518,14 @@ CLoud
 # Should be `lends`
 \bleads(?= credence)
 
+# Should be `lessen`
+(?<=\bwould )lesson\b
+
 # Should be `few times` or `little time`
 (?<=\bvery )few time\b
+
+# Should be `lo`
+(?i)\blow(?= and behold)
 
 # Should be `log in`
 \blogin to the
@@ -435,6 +535,9 @@ CLoud
 
 # Should be `lose`
 (?<=\bwill )loose\b
+
+# Should be `lowercase`/`uppercase` if writing in en-US
+\b(?:low|upp)er case\b
 
 # Should be `OAuth`
 \bOauth\b
@@ -495,7 +598,7 @@ CLoud
 \bI maybe\b
 
 # Should be `moot`
-\bmute point\b
+(?i)\bmute(?= point\b)
 
 # Should be `one of`
 (?<!-)\bon of\b
@@ -507,6 +610,9 @@ CLoud
 # The former if you mean it can be changed dynamically.
 # The latter if you mean that it can be changed without recompiling but not after the program starts.
 \bswitched on runtime\b
+
+# Should be `of`
+(?<=\brid )off\b
 
 # Should be `Of course,`
 [?.!]\s+Of course\s(?=[-\w\s]+[.?;!,])
@@ -541,8 +647,14 @@ CLoud
 # Should be `or`
 \b(?i)true of .*false\b
 
+# Should be `PagerDuty`
+\bPagerduty\b
+
 # Should be `pale`
 \b(?<=beyond the )pail\b
+
+# Should be `piqued`
+(?i)\bpe[ae]ked(?= my interest\b)
 
 # Should be reworded.
 # `passthrough` is an adjective
@@ -556,12 +668,27 @@ CLoud
 # Should be `Red Hat`
 \bRed[Hh]at\b
 
+# Should be `rein`
+(?i)(?<=\bfree )(?:rain|reign)\b
+
 # Should be `regardless, ...` or `regardless of (whether)`
 \b[Rr]egardless if you\b
+
+# Should be `rely`
+(?<=\b(?i)we )reply(?= on\b)
+
+# Should be `rought`
+(?i)\brod(?= iron)
 
 # Should probably be `(s)` if trying to say "word(s)"
 # False positive if `/s` is used to mean `per second`
 \s[a-z]{2,}[a-rt-z]/s\s(?=[a-oq-z]\w{2}|p[a-df-z]\w|pe[a-qs-z]|per[a-z])
+
+# Should be `safeguard`
+\bsafe guard\b
+
+# Should be `se`
+(?i)(?<=per )say\b
 
 # Should be `self-signed`
 \bself signed\b
@@ -569,14 +696,33 @@ CLoud
 # Should be `SendGrid`
 \bSendgrid\b
 
+# Should be `served`
+(?i)(?<=first come, first )serve(?=\.)
+
 # Should be `set up` (`setup` is a noun / `set up` is a verb)
 \b[Ss]etup(?= (?:an?|the|to)\b)
+
+# Should be `shoo`
+(?i)shoe(?=-in)
+
+# Should be `sleight`
+(?i)\bslight(?= of hand)
+
+# Should be `start` or `state`
+# unless D&D (or similar), files/sockets, or statistics
+(?:^|\s)stat of\b(?!.*(?:socket|file|path|roll|battle|race|class|diff|NPC))
 
 # Should be `state`
 \bsate(?=\b|[A-Z])|(?<=[a-z])Sate(?=\b|[A-Z])|(?<=[A-Z]{2})Sate(?=\b|[A-Z])
 
 # Should be `succeed` (or `successfully`)
 (?i)(?<=\bshould )success\b
+
+# Should be `supposed`
+(?i)\bsuppose(?= to\b)
+
+# Should be `time`
+(?<=\bat a )tim\b(?! (?i)(?:bu|ho)rton)
 
 # Should be `times`
 (?<=\ba few )time\b
@@ -589,6 +735,9 @@ CLoud
 # RegEx engines don't tend to appreciate variable length negative bookbehind
 (?<!er|ly)(?<!more|less)(?<!worse)(?<!different)\sthan(?= the \w+ must)
 
+# Should be `think`
+(?i)(?<=you've got another )thing(?= coming)
+
 # Should be `this`
 \b[Tt]oday(?= morning\b)
 
@@ -598,6 +747,9 @@ CLoud
 
 # Should be `to use`
 \bto now use\b
+
+# Should be `toe`
+(?i)\btow(?= the line)
 
 # Should be `let's` or `let us`
 \b[Ll]ets (?=throw\.)
@@ -615,7 +767,7 @@ CLoud
 \bwere not existent\b
 
 # Should be `not exist` or `nonexistent`
-(?<!(?i)IF|WHERE )\bnot exists\b
+(?<!(?i)(?:IF|WHERE) )\bnot exists\b(?!\()
 
 # Should be `nonexistent`
 \bnon existing\b
@@ -624,7 +776,7 @@ CLoud
 \b[Nn]o[nt][- ]existent\b
 
 # Should be `only does`
-\bdoes only(?! (?:seem|match))\b
+(?<![Ww]hy )\bdoes only(?! (?:seem|match))\b
 
 # Should be `only matches`
 \bdoes only match\b
@@ -640,6 +792,9 @@ CLoud
 
 # Should be `more than` or `more, then`
 \bmore then\b
+
+# Should be `peek`
+(?i)(?<=sneak )peak
 
 # Should be `Pipeline`/`pipeline`
 (?:(?<=\b|[A-Z])p|P)ipeLine(?:\b|(?=[A-Z]))
@@ -668,6 +823,11 @@ CLoud
 # Should be `QuickTime`
 \bQuicktime\b
 
+# Should be `quiet`
+# Unless for some really strange reason you *quite* literally mean *quite*
+# instead of the opposite of load/verbose.
+(?<=--)quite\b
+
 # Should be `recently changed` or `recent changes`
 [Rr]ecent changed
 
@@ -676,6 +836,9 @@ CLoud
 
 # Should be `reentrant`
 [Rr]e[- ]entrant
+
+# Should be `rely`
+(?<=\bto )really(?= on\b)
 
 # Should be `room for`
 \brooms for (?!lease|rent|sale)
@@ -726,17 +889,30 @@ socio-economic
 # Should be `was`
 \bhas been(?= removed in v?\d)
 
+# Should be `waste`
+# Unless really talking about the human torso
+\b(?i)waist[\w\s,']*\b(?:lot|time)\b
+
 # Should be `where`
 \bwere they are\b
 
+# Should be `whet`
+(?i)\bwet(?= your appetite)
+
 # Should be `whether or not ...`
-\bwhether(?:\s\w+)+ or not\.
+(?i)\b(?:whe|ra)ther(?:\s\w+)+ or not\.
 
 # Should be `why`
 , way(?= is [^.]*\?)
 
+# Should be `won't`
+\bwont(?= have\b)
+
 # Should be `wouldn't`
 would'nt
+
+# Should be `wreaks`
+(?i)\bwrecks(?= havoc)
 
 # should be `vCenter`
 \bV[Cc]enter\b
@@ -787,13 +963,16 @@ Whatsapp
 \bwitch\b
 
 # Should be _verb in infinitive form_
-(?<=\bwill )(?!(?:(?:b|sp|\b)ring|cities|focus|its|shed|sometimes|th[iu]s|[a-z]+s (?:be|of))\b)[a-z]+(?:[a-df-z]ed|ing|[a-rt-xz]s)\b
+(?<=\bwill )(?!(?:(?:un|)alias|bias|(?:b|sp|\b)ring|cities|(?:re|)focus|its|shed|sometimes|th[iu]s|[a-z]+s (?:be|of))\b)[a-z]+(?:[a-df-z]ed|ing|[a-rt-xz]s)\b
 
 # Should be `WinGet`
 \bWinget\b
 
 # Should be `without` (unless `out` is a modifier of the next word)
 \bwith out\b(?!-)
+
+# Should be `without ...` / `while missing ...` or reworded
+\bwith missing\b
 
 # Should be `wondering`
 \bwandering(?= why)
@@ -810,6 +989,9 @@ Whatsapp
 # Should be `worst`
 (?i)worse-case
 
+# Should be `yea`
+(?i)\byay(?= or nay)
+
 # Should be `you are not` or reworded
 \byour not\b
 
@@ -818,14 +1000,6 @@ Whatsapp
 
 # Should be `(coarse|fine)-grained`
 \b(?:coarse|fine) grained\b
-
-# Homoglyph (Cyrillic) should be `A`/`B`/`C`/`E`/`H`/`I`/`I`/`J`/`K`/`M`/`O`/`P`/`S`/`T`/`Y`
-# It's possible that your content is intentionally mixing Cyrillic and Latin scripts, but if it isn't, you definitely want to correct this.
-(?<=[A-Z]{2})[АВСЕНІӀЈКМОРЅТУ]|[АВСЕНІӀЈКМОРЅТУ](?=[A-Z]+(?:\b|[a-z]+)|[a-z]+(?:[^a-z]|$))
-
-# Homoglyph (Cyrillic) should be `a`/`b`/`c`/`e`/`o`/`p`/`x`/`y`
-# It's possible that your content is intentionally mixing Cyrillic and Latin scripts, but if it isn't, you definitely want to correct this.
-[авсеорху](?=[A-Za-z]{2,})|(?<=[A-Za-z]{2})[авсеорху]|(?<=[A-Za-z])[авсеорху](?=[A-Za-z])
 
 # Should be `neither/nor` -- or reword
 (?<!do )\bnot\b([^.?!"/(](?!neither|,.*?,))+\bnor\b
