@@ -38,7 +38,7 @@ type UpperSnakeCaseInner<T extends string> =
           never;
 
 /**
- * UpperSnakeCase transforms a string into upper snake case (all upper case,
+ * UpperSnakeCase transforms a string into upper snake case (all uppercase,
  * underscore word separators.
  *
  * @example UpperSnakeCase<'HelloWorld'> == 'HELLO_WORLD'
