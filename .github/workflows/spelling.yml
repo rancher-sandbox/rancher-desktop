@@ -107,7 +107,11 @@ jobs:
     - run: corepack enable yarn
     - run: yarn install --no-immutable --mode=skip-build
 
-    - run: sudo apt-get install cpanminus
+    - name: install cpanminus
+      run: |
+        : install cpanminus
+        sudo apt-get update
+        sudo apt-get install -y cpanminus
 
     - name: Check Spelling
       run: yarn lint:spelling
