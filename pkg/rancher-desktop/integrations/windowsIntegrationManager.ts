@@ -61,9 +61,9 @@ enum SyncStateKey {
 type SyncState =
   { state: SyncStateKey.IDLE } |
   /** The `active` promise will be resolved once the current sync is complete. */
-  { state: SyncStateKey.ACTIVE, active: ReturnType<typeof Latch> } |
+  { state: SyncStateKey.ACTIVE, active: ReturnType<typeof Latch<void>> } |
   /** The `queued` promise will be resolved after the current sync +1 is complete. */
-  { state: SyncStateKey.QUEUED, active: ReturnType<typeof Latch>, queued: ReturnType<typeof Latch> };
+  { state: SyncStateKey.QUEUED, active: ReturnType<typeof Latch<void>>, queued: ReturnType<typeof Latch<void>> };
 
 /**
  * DiagnosticKey limits the `key` argument of the diagnostic events.
