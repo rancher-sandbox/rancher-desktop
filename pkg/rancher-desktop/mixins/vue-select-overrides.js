@@ -1,13 +1,13 @@
 export default {
   methods: {
     mappedKeys(map, vm) {
-      // Defaults found at - https://github.com/sagalbot/vue-select/blob/master/src/components/Select.vue#L947
+      // Defaults found at - https://github.com/sagalbot/vue-select/blob/v3.20.4/src/components/Select.vue#L1324
       const out = { ...map };
 
       // tab
       (out[9] = (e) => {
-        // user esc'd
         if (!vm.open) {
+          // Already closed.
           return;
         }
 
