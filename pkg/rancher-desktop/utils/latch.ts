@@ -30,22 +30,22 @@ interface Latch<T> extends Promise<T> {
 }
 
 /**
+ * ResetState is the enum value of `state.reset` that indicates whether the
+ * latch was settled or reset.  This is used to determine whether we should
+ * return the result of the latch or wait for it to be settled again.
+ */
+enum ResetState {
+  /** The latch was resolved or rejected. */
+  SETTLED,
+  /** The latch was reset. */
+  RESET,
+}
+
+/**
  * Creates a Latch that is an extension of a Promise that can be resolved via
  * calling a method on that Promise.
  */
 export default function Latch<T = void>(): Latch<T> {
-  /**
-   * ResetState is the enum value of `state.reset` that indicates whether the
-   * latch was settled or reset.  This is used to determine whether we should
-   * return the result of the latch or wait for it to be settled again.
-   */
-  enum ResetState {
-    /** The latch was resolved or rejected. */
-    SETTLED,
-    /** The latch was reset. */
-    RESET,
-  }
-
   /**
    * The state of the latch, which includes the promise that will be resolved
    * when the latch is settled and the promise that will be resolved when the
@@ -57,89 +57,59 @@ export default function Latch<T = void>(): Latch<T> {
   };
 
   /** Wait for the latch to be settled, looping while it's reset. */
-  async function waitForSettled() {
+  async function waitForSettled(): Promise<T> {
     while (true) {
-      const { promise } = state.promise;
-      const { promise: reset } = state.reset;
-      const [p, r] = await Promise.allSettled([promise, reset]);
+      // Capture the promises, so if somebody resolves, then resets, we still
+      // return the result of the first resolution.
+      const { reset: { promise: reset }, promise: { promise: p } } = state;
 
-      if (r.status === 'fulfilled') {
-        if (r.value === ResetState.SETTLED) {
-          // The latch was resolved; return the resolved value.
-          return p;
-        }
-        // If we get here, the latch was reset; try again.
-      } else {
-        // This should never reject.
-        throw r.reason;
+      if (await reset === ResetState.SETTLED) {
+        // The latch was settled; return the result.
+        return p;
       }
+      // The latch was reset; loop and wait again with new state.
     }
   }
 
-  return {
-    async then(onfulfilled, onrejected) {
-      const result = await waitForSettled();
-
-      if (result.status === 'fulfilled') {
-        // If onfulfilled is not provided, it's implicitly identity, per
-        // ECMA-262 27.2.2.1 step 1.d.i.1; MDN phrases it as:
-        // > If it is not a function, it is internally replaced with an identity
-        // > function ((x) => x) which simply passes the fulfillment value forward.
-        // However, the TypeScript typings here don't have a proper fallback.
-        if (typeof onfulfilled === 'function') {
-          return onfulfilled(result.value);
-        }
-        return Promise.resolve(result.value) as any;
-      } else {
-        if (typeof onrejected === 'function') {
-          return onrejected(result.reason);
-        }
-        return Promise.reject(result.reason);
-      }
+  return Object.create((Promise.prototype as Latch<T>), {
+    then: {
+      value(onfulfilled?: ((value: T) => any) | null, onrejected?: ((reason: any) => any) | null) {
+        return waitForSettled().then(onfulfilled, onrejected);
+      },
     },
-    async catch(onrejected) {
-      const result = await waitForSettled();
-
-      if (result.status === 'rejected') {
-        if (typeof onrejected === 'function') {
-          return onrejected(result.reason);
-        }
-        return Promise.reject(result.reason);
-      }
-      // The latch was resolved; return the resolved value.
-      return result.value;
+    catch: {
+      value(onrejected?: ((reason: any) => any) | null) {
+        return waitForSettled().catch(onrejected);
+      },
     },
-    async finally(onfinally) {
-      const result = await waitForSettled();
-
-      // The latch was settled; call the finally callback.
-      if (typeof onfinally === 'function') {
-        // If the return value is a promise, await on it so we can propagate
-        // any rejections from it.
-        await Promise.resolve(onfinally());
-      }
-
-      return result.status === 'fulfilled' ? result.value : Promise.reject(result.reason);
+    finally: {
+      value(onfinally?: (() => any) | null) {
+        return waitForSettled().finally(onfinally);
+      },
     },
-    resolve(value: T) {
-      state.promise.resolve(value);
-      state.reset.resolve(ResetState.SETTLED);
+    resolve: {
+      value(value: T) {
+        state.promise.resolve(value);
+        state.reset.resolve(ResetState.SETTLED);
+      },
     },
-    reject(reason) {
-      state.promise.reject(reason);
-      state.reset.resolve(ResetState.SETTLED);
+    reject: {
+      value(reason: any) {
+        state.promise.reject(reason);
+        state.reset.resolve(ResetState.SETTLED);
+      },
     },
-    reset() {
-      const { promise: oldPromise, reset: oldReset } = state;
-      state.promise = Promise.withResolvers<T>();
-      state.reset = Promise.withResolvers<ResetState>();
-      // Settle the previous promises, so that we can check the new ones.
-      oldReset.resolve(ResetState.RESET);
-      // Prevent UnhandledPromiseRejectionWarning, because we don't know what
-      // dummy value to resolve with.
-      oldPromise.promise.catch(() => {});
-      oldPromise.reject(new Error('Latch reset'));
+    reset: {
+      value() {
+        const { reset: oldReset, promise: oldPromise } = state;
+        state.promise = Promise.withResolvers<T>();
+        state.reset = Promise.withResolvers<ResetState>();
+        // Resolve the reset state, so `waitForSettled` will loop.
+        oldReset.resolve(ResetState.RESET);
+        // Attach a catch to the old promise to avoid unhandled rejections if
+        // it was rejected.
+        oldPromise.promise.catch(() => { /* ignore */ });
+      },
     },
-    [Symbol.toStringTag]: Promise.prototype[Symbol.toStringTag],
-  };
+  });
 }
