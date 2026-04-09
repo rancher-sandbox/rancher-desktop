@@ -156,7 +156,7 @@
     "sass": "1.98.0",
     "sass-loader": "16.0.7",
     "ts-jest": "29.4.9",
-    "ts-loader": "^9.5.4",
+    "ts-loader": "^9.5.7",
     "tsconfig-paths": "4.2.0",
     "tsx": "4.21.0",
     "typescript": "6.0.2",
