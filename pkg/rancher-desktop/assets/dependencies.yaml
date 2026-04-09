@@ -6,7 +6,7 @@ alpineLimaISO:
   alpineVersion: 3.23.0
 WSLDistro: "0.95"
 kuberlr: 0.6.1
-helm: 4.1.3
+helm: 4.1.4
 dockerCLI: 29.4.0
 dockerBuildx: 0.33.0
 dockerCompose: 5.1.1
