@@ -136,7 +136,7 @@
     "ejs": "5.0.1",
     "electron": "41.1.1",
     "electron-builder": "26.8.1",
-    "eslint": "10.1.0",
+    "eslint": "10.2.0",
     "eslint-plugin-vue": "10.8.0",
     "extract-zip": "2.0.1",
     "glob": "^13.0.3",
