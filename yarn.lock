@@ -2082,17 +2082,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/compat@npm:2.0.3":
-  version: 2.0.3
-  resolution: "@eslint/compat@npm:2.0.3"
+"@eslint/compat@npm:2.0.4":
+  version: 2.0.4
+  resolution: "@eslint/compat@npm:2.0.4"
   dependencies:
-    "@eslint/core": "npm:^1.1.1"
+    "@eslint/core": "npm:^1.2.0"
   peerDependencies:
     eslint: ^8.40 || 9 || 10
   peerDependenciesMeta:
     eslint:
       optional: true
-  checksum: 10c0/e7b1a1bdf366759f9a7c3f09fe35cdd0f45208a6ca789be1357895869e546d0c3185ec92b29996141fdd1173103c3408a81ba2ecb86219bd15671ae65af6595b
+  checksum: 10c0/9ac00129e5d1319c4dfcd0201d100b693c3f04582eef4941a0792cf81c2d902f1757c06541db072e53517f5f7a3e83e26f5e9e3a530eab9067de0624f86c0453
   languageName: node
   linkType: hard
 
@@ -2113,15 +2113,6 @@ __metadata:
   dependencies:
     "@eslint/core": "npm:^1.2.1"
   checksum: 10c0/18889c062cd6bdbd4cd92fe57318c44465ea66184aa0ba204a4420712c66764c64093a7905b6c2ffde23e51b268ca2cec1a39c605d336bebf17ee1ba4f0fc0bb
-  languageName: node
-  linkType: hard
-
-"@eslint/core@npm:^1.1.1":
-  version: 1.1.1
-  resolution: "@eslint/core@npm:1.1.1"
-  dependencies:
-    "@types/json-schema": "npm:^7.0.15"
-  checksum: 10c0/129c654c78afc1f6d61dccb0ce841be667f09f052f7d5642614b6ba5eeebd579ca6cc336d7b750d88625e61f7aad22fdd62bf83847fbfc10cc3e58cfe6c5072e
   languageName: node
   linkType: hard
 
@@ -14420,7 +14411,7 @@ __metadata:
     "@electron/asar": "npm:4.2.0"
     "@electron/fuses": "npm:^2.1.1"
     "@electron/notarize": "npm:3.1.1"
-    "@eslint/compat": "npm:2.0.3"
+    "@eslint/compat": "npm:2.0.4"
     "@eslint/js": "npm:10.0.1"
     "@kubernetes/client-node": "npm:1.4.0"
     "@napi-rs/xattr": "npm:^1.0.3"
