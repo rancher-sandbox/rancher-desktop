@@ -109,7 +109,7 @@ describe(K3sHelper, () => {
       expect(process('1.99.3+k3s4', ['1.99.3+k3s4'])).toEqual(false);
       expect(await subject.availableVersions).toHaveLength(1);
     });
-    it('should ignore versions with missing assets', async() => {
+    it('should ignore versions missing assets', async() => {
       expect(process('1.99.3+k3s4')).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(0);
     });
