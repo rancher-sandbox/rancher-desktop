@@ -9,7 +9,7 @@ require (
 	github.com/containernetworking/plugins v1.9.1
 	github.com/containers/gvisor-tap-vsock v0.8.8
 	github.com/docker/docker v28.5.2+incompatible
-	github.com/docker/go-connections v0.6.0
+	github.com/docker/go-connections v0.7.0
 	github.com/lima-vm/lima v1.0.0-beta.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sync v0.20.0
