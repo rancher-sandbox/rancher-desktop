@@ -140,7 +140,7 @@
     "eslint-plugin-vue": "10.8.0",
     "extract-zip": "2.0.1",
     "glob": "^13.0.3",
-    "globals": "17.4.0",
+    "globals": "17.5.0",
     "jest": "30.3.0",
     "jest-environment-jsdom": "30.3.0",
     "js-yaml-loader": "1.2.2",
