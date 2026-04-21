@@ -66,7 +66,7 @@
     "cookie-universal": "2.2.2",
     "cross-spawn": "7.0.6",
     "dayjs": "1.11.20",
-    "dompurify": "3.3.3",
+    "dompurify": "3.4.0",
     "electron-updater": "6.8.3",
     "express": "5.2.1",
     "floating-vue": "5.2.2",
