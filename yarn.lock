@@ -2179,56 +2179,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/bigdecimal@npm:0.2.0":
-  version: 0.2.0
-  resolution: "@formatjs/bigdecimal@npm:0.2.0"
-  checksum: 10c0/dec607e3d9d4b8c5d0474862e867726cbf322a24d543d5b2cbc3cab6fea187ac787a8e1a0e3df5ceef85a1ab9d58112a08bb7af40b1b3a3b00670431b0603510
+"@formatjs/fast-memoize@npm:3.1.2":
+  version: 3.1.2
+  resolution: "@formatjs/fast-memoize@npm:3.1.2"
+  checksum: 10c0/25af387ebb53146c8c09af34cda4ce82768f0855227ec854fb315d6dc2e7859e16724860fdea7991b3c7c5741154e3fcdd5169ef7a11ba1afb3ffd860613931c
   languageName: node
   linkType: hard
 
-"@formatjs/ecma402-abstract@npm:3.2.0":
-  version: 3.2.0
-  resolution: "@formatjs/ecma402-abstract@npm:3.2.0"
+"@formatjs/icu-messageformat-parser@npm:3.5.4":
+  version: 3.5.4
+  resolution: "@formatjs/icu-messageformat-parser@npm:3.5.4"
   dependencies:
-    "@formatjs/bigdecimal": "npm:0.2.0"
-    "@formatjs/fast-memoize": "npm:3.1.1"
-    "@formatjs/intl-localematcher": "npm:0.8.2"
-  checksum: 10c0/b3c8ac881c3d7533fb4127ca3d771d2a32cb89e6efbbcc72d80b1dcc6a798494ace9ca5ee822b25eb08ebdc7ee2885a9e33496a436b40271ffc915ece605a3ce
+    "@formatjs/icu-skeleton-parser": "npm:2.1.4"
+  checksum: 10c0/3ff5ab209b63113d6b1779a4e8de6ee2cf941f3ad3f3ede2c8e425953a25456b6a1d880d734845244615dc9887fad10b62e75dee38858c731e45812402110efb
   languageName: node
   linkType: hard
 
-"@formatjs/fast-memoize@npm:3.1.1":
-  version: 3.1.1
-  resolution: "@formatjs/fast-memoize@npm:3.1.1"
-  checksum: 10c0/79b24dc1389a49b2b2fb9e90a2ba922a4057d4b74e7bc33a3811f0dc94a5a868d28e8e37917b68c2f831070d11dfd0889de686f269bf5214085a44efc1c25a8c
-  languageName: node
-  linkType: hard
-
-"@formatjs/icu-messageformat-parser@npm:3.5.3":
-  version: 3.5.3
-  resolution: "@formatjs/icu-messageformat-parser@npm:3.5.3"
-  dependencies:
-    "@formatjs/ecma402-abstract": "npm:3.2.0"
-    "@formatjs/icu-skeleton-parser": "npm:2.1.3"
-  checksum: 10c0/9a9632348df058e0da339234381b11f71b5ace1c93eaf1950b3eb45f4e146a73f8923af82818543e90c1135523b254d2c04fb47cab3624eb1f601d2a4edd35c6
-  languageName: node
-  linkType: hard
-
-"@formatjs/icu-skeleton-parser@npm:2.1.3":
-  version: 2.1.3
-  resolution: "@formatjs/icu-skeleton-parser@npm:2.1.3"
-  dependencies:
-    "@formatjs/ecma402-abstract": "npm:3.2.0"
-  checksum: 10c0/6a8ed06c722bce1d73d54b2d72462bfe46b752f43d09e3d8c14649ef775b06f3c7f8d36274e67e6cfb95800bf43230a2595a7e1790922ebb683711201fcbccc8
-  languageName: node
-  linkType: hard
-
-"@formatjs/intl-localematcher@npm:0.8.2":
-  version: 0.8.2
-  resolution: "@formatjs/intl-localematcher@npm:0.8.2"
-  dependencies:
-    "@formatjs/fast-memoize": "npm:3.1.1"
-  checksum: 10c0/3bf838a018184837b167964849dafdcdeac95531a24f4df7d868638d4ad716854a250e9bccac9ab4568264c0db7470e70b99363da1db308fdc882b87f3eca651
+"@formatjs/icu-skeleton-parser@npm:2.1.4":
+  version: 2.1.4
+  resolution: "@formatjs/icu-skeleton-parser@npm:2.1.4"
+  checksum: 10c0/9d6292443e4079c5718c50e32041a3bd192047449d181ae87e8cb6ef78c90f156f8b2d454008c9d0c2920c215daee5250c0eb214d13a105522a631f269e71b3c
   languageName: node
   linkType: hard
 
@@ -10757,14 +10727,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"intl-messageformat@npm:11.2.0":
-  version: 11.2.0
-  resolution: "intl-messageformat@npm:11.2.0"
+"intl-messageformat@npm:11.2.1":
+  version: 11.2.1
+  resolution: "intl-messageformat@npm:11.2.1"
   dependencies:
-    "@formatjs/ecma402-abstract": "npm:3.2.0"
-    "@formatjs/fast-memoize": "npm:3.1.1"
-    "@formatjs/icu-messageformat-parser": "npm:3.5.3"
-  checksum: 10c0/0f0a92324ef61c885902ff41c99754a65f0cc5cbe25d690c1771605117df4f97a786bb06dec50f12a7047e4cb2fab1f2516002df32e93be6ac02e1967e928e44
+    "@formatjs/fast-memoize": "npm:3.1.2"
+    "@formatjs/icu-messageformat-parser": "npm:3.5.4"
+  checksum: 10c0/c4d2e43c2e7940a8dbd75d7a3b77d722c7ac8802707f7410067097e3a923243343bd36367edb4e922b13d1a10425a2f52c544c65c9368841d481816ed04c6c2b
   languageName: node
   linkType: hard
 
@@ -14469,7 +14438,7 @@ __metadata:
     glob: "npm:^13.0.3"
     globals: "npm:17.5.0"
     http-proxy-middleware: "npm:3.0.5"
-    intl-messageformat: "npm:11.2.0"
+    intl-messageformat: "npm:11.2.1"
     jest: "npm:30.3.0"
     jest-environment-jsdom: "npm:30.3.0"
     jquery: "npm:4.0.0"
