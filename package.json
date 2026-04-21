@@ -72,7 +72,7 @@
     "floating-vue": "5.2.2",
     "fs-extra": "11.3.4",
     "http-proxy-middleware": "3.0.5",
-    "intl-messageformat": "11.2.0",
+    "intl-messageformat": "11.2.1",
     "jquery": "4.0.0",
     "jsonpath-plus": "10.4.0",
     "lodash": "4.18.1",
