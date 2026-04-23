@@ -38,9 +38,11 @@ export default {
       .loader('raw-loader');
 
     config.plugin('define-plugin').use(webpack.DefinePlugin, [{
-      'process.client':       JSON.stringify(true),
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-      'process.env.RD_TEST':  JSON.stringify(process.env.RD_TEST || ''),
+      'process.client':          JSON.stringify(true),
+      'process.env.NODE_ENV':    JSON.stringify(process.env.NODE_ENV || 'development'),
+      'process.env.RD_DOCS_URL': JSON.stringify(process.env.RD_DOCS_URL || 'https://docs.rancherdesktop.io'),
+      'process.env.RD_TEST':     JSON.stringify(process.env.RD_TEST || ''),
+      'process.env.RD_VERSION':  JSON.stringify(process.env.RD_VERSION || '0.0.1-fallback'),
 
       'process.env.FEATURE_DIAGNOSTICS_FIXES': process.env.RD_ENV_DIAGNOSTICS_FIXES === '1',
 

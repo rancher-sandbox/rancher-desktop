@@ -5,7 +5,6 @@
 
 'use strict';
 
-import childProcess from 'child_process';
 import fs from 'fs';
 import * as path from 'path';
 
@@ -16,7 +15,6 @@ import {
 } from 'electron-builder';
 import _ from 'lodash';
 import plist from 'plist';
-import semver from 'semver';
 import yaml from 'yaml';
 
 import buildUtils from './lib/build-utils';
@@ -26,8 +24,6 @@ import { spawnFile } from '@pkg/utils/childProcess';
 import { ReadWrite } from '@pkg/utils/typeUtils';
 
 class Builder {
-  private static readonly DEFAULT_VERSION = '0.0.0';
-
   async replaceInFile(srcFile: string, pattern: string | RegExp, replacement: string, dstFile?: string) {
     dstFile = dstFile || srcFile;
     await fs.promises.stat(srcFile);
@@ -154,16 +150,8 @@ class Builder {
     // Build the electron builder configuration to include the version data
     const config: ReadWrite<Configuration> = yaml.parse(await fs.promises.readFile('packaging/electron-builder.yml', 'utf-8'));
     const configPath = path.join(buildUtils.distDir, 'electron-builder.yaml');
-    const fallbackVersion = buildUtils.packageMeta.version ?? Builder.DEFAULT_VERSION;
-    const fallbackSuffix = '-fallback';
-    let fullBuildVersion: string;
-    const fallbackTaggedVersion = semver.valid(`${ fallbackVersion }${ fallbackSuffix }`) ?? Builder.DEFAULT_VERSION;
-    try {
-      fullBuildVersion = semver.valid(childProcess.execFileSync('git', ['describe', '--tags']).toString()) ?? fallbackTaggedVersion;
-    } catch {
-      fullBuildVersion = fallbackTaggedVersion;
-    }
-    const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
+    const version = await buildUtils.version;
+
     const distDir = path.join(process.cwd(), 'dist');
     const electronPlatform = ({
       darwin: 'mac',
@@ -177,7 +165,7 @@ class Builder {
 
     switch (electronPlatform) {
     case 'linux':
-      await this.createLinuxResources(finalBuildVersion);
+      await this.createLinuxResources(version);
       break;
     case 'win':
       await this.createWindowsResources(distDir);
@@ -201,7 +189,7 @@ class Builder {
       delete section[key];
     }
 
-    _.set(config, 'extraMetadata.version', finalBuildVersion);
+    _.set(config, 'extraMetadata.version', version);
     await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
 
     config.afterPack = this.afterPack.bind(this);

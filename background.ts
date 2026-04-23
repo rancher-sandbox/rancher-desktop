@@ -52,7 +52,6 @@ import { protocolsRegistered, setupProtocolHandlers } from '@pkg/utils/protocols
 import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
 import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
-import { getVersion } from '@pkg/utils/version';
 import getWSLVersion from '@pkg/utils/wslVersion';
 import * as window from '@pkg/window';
 import { closeDashboard, openDashboard } from '@pkg/window/dashboard';
@@ -429,7 +428,7 @@ async function initUI() {
     // also needs to be updated in electron-builder.yml
     copyright:          'Copyright © 2021-2026 SUSE LLC',
     applicationName:    `${ Electron.app.name } by SUSE`,
-    applicationVersion: `Version ${ await getVersion() }`,
+    applicationVersion: `Version ${ process.env.RD_VERSION }`,
     iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
   });
 
@@ -968,10 +967,6 @@ ipcMainProxy.on('diagnostics/run', () => {
   diagnostics.runChecks();
 });
 
-ipcMainProxy.on('get-app-version', async(event) => {
-  event.reply('get-app-version', await getVersion());
-});
-
 ipcMainProxy.on('snapshot', (event, args) => {
   event.reply('snapshot', args);
 });
@@ -996,8 +991,8 @@ ipcMainProxy.handle('host/isArm', () => {
   return process.arch === 'arm64';
 });
 
-ipcMainProxy.on('help/preferences/open-url', async() => {
-  Help.preferences.openUrl(await getVersion());
+ipcMainProxy.on('help/preferences/open-url', () => {
+  Help.preferences.openUrl();
 });
 
 ipcMainProxy.handle('show-message-box', (_event, options: Electron.MessageBoxOptions): Promise<Electron.MessageBoxReturnValue> => {

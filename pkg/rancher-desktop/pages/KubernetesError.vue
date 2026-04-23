@@ -73,7 +73,7 @@ export default defineComponent({
       lastCommand:        '',
       lastCommandComment: '',
       lastLogLines:       [],
-      appVersion:         '',
+      appVersion:         process.env.RD_VERSION ?? '?',
     };
   },
   computed: {
@@ -91,12 +91,6 @@ export default defineComponent({
     versionString(): string {
       return `Rancher Desktop ${ this.appVersion } - ${ this.platform } (${ this.arch })`;
     },
-  },
-  beforeMount() {
-    ipcRenderer.on('get-app-version', (_event, version) => {
-      this.appVersion = version;
-    });
-    ipcRenderer.send('get-app-version');
   },
   mounted() {
     ipcRenderer.on('dialog/populate', (event, titlePart, mainMessage, failureDetails) => {

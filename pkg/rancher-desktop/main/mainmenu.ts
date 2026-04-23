@@ -1,16 +1,7 @@
 import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
 
-import { getVersion, parseDocsVersion } from '@pkg/utils/version';
+import { Help } from '@pkg/config/help';
 import { openPreferences } from '@pkg/window/preferences';
-
-const baseUrl = `https://docs.rancherdesktop.io`;
-
-async function versionedDocsUrl() {
-  const version = await getVersion();
-  const parsed = parseDocsVersion(version);
-
-  return `${ baseUrl }/${ parsed }`;
-}
 
 export default function buildApplicationMenu(): void {
   const menuItems: MenuItem[] = getApplicationMenu();
@@ -104,8 +95,8 @@ function getHelpMenu(isMac: boolean): MenuItem {
       : []),
     {
       label: isMac ? 'Rancher Desktop &Help' : 'Get &Help',
-      click: async() => {
-        shell.openExternal(await versionedDocsUrl());
+      click() {
+        Help.openUrl();
       },
     },
     {

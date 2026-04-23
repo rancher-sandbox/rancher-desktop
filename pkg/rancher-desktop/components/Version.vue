@@ -1,7 +1,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 
-import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 export default defineComponent({
   name:  'version',
   props: {
@@ -15,7 +14,7 @@ export default defineComponent({
     },
   },
   data() {
-    return { version: this.t('product.versionChecking') };
+    return { version: process.env.RD_VERSION ?? '?' };
   },
   computed: {
     getTooltip() {
@@ -26,12 +25,6 @@ export default defineComponent({
         popperClass: 'tooltip-footer',
       };
     },
-  },
-  mounted() {
-    ipcRenderer.on('get-app-version', (event, version) => {
-      this.version = version;
-    });
-    ipcRenderer.send('get-app-version');
   },
 });
 </script>
