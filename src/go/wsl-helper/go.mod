@@ -1,6 +1,6 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -22,7 +22,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sys v0.43.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/client-go v0.35.4
+	k8s.io/client-go v0.36.0
 )
 
 require (
