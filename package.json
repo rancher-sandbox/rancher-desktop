@@ -11,7 +11,7 @@
     "node": "^22.14.0"
   },
   "type": "module",
-  "packageManager": "yarn@4.9.4",
+  "packageManager": "yarn@4.14.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
@@ -125,7 +125,7 @@
     "@vue/eslint-config-standard-with-typescript": "9.2.0",
     "@vue/eslint-config-typescript": "14.7.0",
     "@vue/test-utils": "2.4.6",
-    "@yarnpkg/cli": "^4.13.0",
+    "@yarnpkg/cli": "^4.14.1",
     "@yarnpkg/core": "^4.7.0",
     "@yarnpkg/types": "^4.0.1",
     "babel-core": "7.0.0-bridge.0",
