@@ -11,7 +11,7 @@
     "node": "^22.14.0"
   },
   "type": "module",
-  "packageManager": "yarn@4.9.4",
+  "packageManager": "yarn@4.14.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
