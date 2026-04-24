@@ -60,6 +60,13 @@ class Builder {
         '--skip-plugins',
         'eslint',
       ],
+      {
+        env: {
+          ...process.env,
+          RD_DOCS_URL: await buildUtils.docsUrl,
+          RD_VERSION:  await buildUtils.version,
+        },
+      },
     );
   }
 

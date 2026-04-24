@@ -1,31 +1,11 @@
 import { shell } from 'electron';
 
 import { TransientSettings } from '@pkg/config/transientSettings';
-import { parseDocsVersion } from '@pkg/utils/version';
 
-type Paths = Record<string, string>;
-
-class Url {
-  private readonly baseUrl = 'https://docs.rancherdesktop.io';
-  private paths: Paths = {};
-
-  constructor(paths: Paths) {
-    this.paths = paths;
-  }
-
-  buildUrl(key: string | undefined, version: string): string {
-    if (key) {
-      const docsVersion = parseDocsVersion(version);
-
-      return `${ this.baseUrl }/${ docsVersion }/${ this.paths[key] }`;
-    }
-
-    return '';
-  }
-}
+const baseUrl = process.env.RD_DOCS_URL ?? 'https://docs.rancherdesktop.io';
 
 class PreferencesHelp {
-  private readonly url = new Url({
+  private readonly mapping: Record<string, string> = {
     'Application-behavior':            'ui/preferences/application/behavior',
     'Application-environment':         'ui/preferences/application/environment',
     'Application-general':             'ui/preferences/application/general',
@@ -39,16 +19,24 @@ class PreferencesHelp {
     'WSL-network':                     'ui/preferences/wsl/network',
     'WSL-proxy':                       'ui/preferences/wsl/proxy',
     Kubernetes:                        'ui/preferences/kubernetes',
-  });
+  };
 
-  openUrl(version: string): void {
+  openUrl(): void {
     const { current, currentTabs } = TransientSettings.value.preferences.navItem;
     const tab = currentTabs[current] ? `-${ currentTabs[current] }` : '';
+    const key = `${ current }${ tab }`;
+    let url = baseUrl;
 
-    const url = this.url.buildUrl(`${ current }${ tab }`, version);
-
+    if (this.mapping[key]) {
+      url += `/${ this.mapping[key] }`;
+    }
     shell.openExternal(url);
   }
 }
 
-export const Help = { preferences: new PreferencesHelp() };
+export const Help = {
+  preferences: new PreferencesHelp(),
+  openUrl() {
+    shell.openExternal(baseUrl);
+  },
+};

@@ -25,7 +25,6 @@ export interface IpcMainEvents {
   'k8s-integrations':      () => void;
   'k8s-integration-set':   (name: string, newState: boolean) => void;
   'factory-reset':         (keepSystemImages: boolean) => void;
-  'get-app-version':       () => void;
   'update-network-status': (status: boolean) => void;
 
   // #region main/update
@@ -127,7 +126,6 @@ export interface IpcMainInvokeEvents {
   'transient-settings-update': (arg: RecursivePartial<import('@pkg/config/transientSettings').TransientSettings>) => void;
   'service-fetch':             (namespace?: string) => import('@pkg/backend/k8s').ServiceEntry[];
   'service-forward':           (service: ServiceEntry, state: boolean) => void;
-  'get-app-version':           () => string;
   'show-message-box':          (options: Electron.MessageBoxOptions) => Electron.MessageBoxReturnValue;
   'show-message-box-rd':       (options: Electron.MessageBoxOptions, modal?: boolean) => any;
   'api-get-credentials':       () => { user: string, password: string, port: number };
@@ -171,7 +169,6 @@ export interface IpcRendererEvents {
     settings: import('@pkg/config/settings').Settings
   ) => void;
   'settings-read':    (settings: import('@pkg/config/settings').Settings) => void;
-  'get-app-version':  (version: string) => void;
   'update-state':     (state: import('@pkg/main/update').UpdateState) => void;
   'always-debugging': (status: boolean) => void;
   'is-debugging':     (status: boolean) => void;
