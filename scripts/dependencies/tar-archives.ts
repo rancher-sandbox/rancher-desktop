@@ -127,7 +127,7 @@ export class WSLDistroImage implements Dependency {
   }
 
   async download(context: DownloadContext): Promise<void> {
-    const tarName = `distro-${ context.versions.WSLDistro }.tar`;
+    const tarName = `distro-${ context.dependencies.WSLDistro.version }.tar`;
     const pristinePath = path.join(context.resourcesDir, context.platform, 'staging', tarName);
     const pristineFile = fs.createReadStream(pristinePath);
     const extractor = tar.extract();
