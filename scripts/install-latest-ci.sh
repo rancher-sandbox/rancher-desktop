@@ -78,7 +78,7 @@ wslpath_from_win32_env() {
     if [[ "$(uname -s)" =~ MINGW* ]]; then
         # When running under WSL, the environment variables are set but to
         # Windows-style paths; however, `cd` works with those.  Also, under
-        # MinGW the relevant variables are upper case.
+        # MinGW the relevant variables are uppercase.
         local var="${1^^}"
         (
             cd "${!var}"

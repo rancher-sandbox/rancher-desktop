@@ -72,7 +72,7 @@ func TestContainersCreate(t *testing.T) {
 			Consistency: "cached",
 			Source:      bindPath,
 			Target:      "/host",
-			Type:        "bind",
+			Type:        struct{ models.MountType }{"bind"},
 		}
 		body := containersCreateBody{
 			HostConfig: models.HostConfig{

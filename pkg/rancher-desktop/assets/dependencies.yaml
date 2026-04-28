@@ -11,7 +11,7 @@ dockerCLI: 29.1.4
 dockerBuildx: 0.30.1
 dockerCompose: 5.0.1
 golangci-lint: 2.8.0
-trivy: 0.68.2
+trivy: 0.70.0
 steve: 0.1.0-beta9.1
 rancherDashboard: 2.11.1.rd3
 dockerProvidedCredentialHelpers: 0.9.5
@@ -25,4 +25,4 @@ spinOperator: 0.6.1
 certManager: 1.19.2
 spinCLI: 3.5.1
 spinKubePlugin: 0.4.0
-check-spelling: 0.0.25
+check-spelling: 0.0.26
