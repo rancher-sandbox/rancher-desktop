@@ -55,6 +55,7 @@ banzaicloud
 basedisk
 bassano
 batslib
+bci
 bellingham
 binfmt
 blahblah
@@ -641,13 +642,7 @@ TOCTOU
 toggleable
 togglefullscreen
 tonistiigi
-<<<<<<< HEAD
-||||||| parent of d68953ef4 (Refresh spell-check-this)
 toolsets
-TOCTOU
-=======
-toolsets
->>>>>>> d68953ef4 (Refresh spell-check-this)
 topmenu
 TQF
 traefik
