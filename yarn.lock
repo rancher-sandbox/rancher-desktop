@@ -14453,7 +14453,7 @@ __metadata:
     typescript: "npm:6.0.3"
     vue: "npm:3.5.32"
     vue-3-slider-component: "npm:1.0.2"
-    vue-router: "npm:5.0.4"
+    vue-router: "npm:5.0.5"
     vue-select: "npm:3.20.4"
     vuex: "npm:4.1.0"
     webpack: "npm:5.100.2"
@@ -16921,9 +16921,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-router@npm:5.0.4":
-  version: 5.0.4
-  resolution: "vue-router@npm:5.0.4"
+"vue-router@npm:5.0.5":
+  version: 5.0.5
+  resolution: "vue-router@npm:5.0.5"
   dependencies:
     "@babel/generator": "npm:^7.28.6"
     "@vue-macros/common": "npm:^3.1.1"
@@ -16954,7 +16954,7 @@ __metadata:
       optional: true
     pinia:
       optional: true
-  checksum: 10c0/11309a44c3b5aaa6e4f960d8739ce94796e78afa2d9b517ccfe78fa982f029009a07aef30ffeafecaf383a1cbd870ae27f7d56f4b9a62bad61423d8e244eb94b
+  checksum: 10c0/a46a8934c852fa389e2a674b15d4cc3aaeea5502d106707302f5e1abdb33d8cb85e488a65ae1e6fb99448f94c6be9e21a9866949ecdc258bce19b091ce654f68
   languageName: node
   linkType: hard
 
