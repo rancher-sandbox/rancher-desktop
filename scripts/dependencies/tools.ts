@@ -61,17 +61,15 @@ export class KuberlrAndKubectl extends GlobalDependency(GitHubDependency) {
       ['darwin', 'amd64'], ['darwin', 'arm64'],
       ['windows', 'amd64'],
     ];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const [goPlatform, arch] of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
       const archiveName = `kuberlr_${ version }_${ goPlatform }_${ arch }` + (goPlatform === 'windows' ? '.zip' : '.tar.gz');
-
-      result[archiveName] = await downloadAndHash(`${ baseURL }/${ archiveName }`, {
+      const checksum = await downloadAndHash(`${ baseURL }/${ archiveName }`, {
         verify: { algorithm: 'sha256', expected: upstream[archiveName] },
       });
-    }
 
-    return result;
+      return [archiveName, checksum];
+    })));
   }
 
   /**
@@ -128,20 +126,18 @@ export class Helm extends GlobalDependency(GitHubDependency) {
       ['darwin', 'amd64'], ['darwin', 'arm64'],
       ['windows', 'amd64'],
     ];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const [goPlatform, arch] of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
       const archiveName = `helm-v${ version }-${ goPlatform }-${ arch }.tar.gz`;
       const url = `https://get.helm.sh/${ archiveName }`;
       // Helm publishes a sidecar `.sha256sum` per artifact, one line of `<hex>  <filename>`.
       const sidecar = await fetchUpstreamChecksums(`${ url }.sha256sum`, 'sha256');
-
-      result[archiveName] = await downloadAndHash(url, {
+      const checksum = await downloadAndHash(url, {
         verify: { algorithm: 'sha256', expected: sidecar[archiveName] },
       });
-    }
 
-    return result;
+      return [archiveName, checksum];
+    })));
   }
 }
 
@@ -172,17 +168,15 @@ export class DockerCLI extends GlobalDependency(GitHubDependency) {
       ['darwin', 'amd64'], ['darwin', 'arm64'],
       ['windows', 'amd64'],
     ];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const [dockerPlatform, arch] of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async([dockerPlatform, arch]) => {
       const executableName = `docker-${ dockerPlatform }-${ arch }` + (dockerPlatform === 'windows' ? '.exe' : '');
-
-      result[executableName] = await downloadAndHash(`${ baseURL }/${ executableName }`, {
+      const checksum = await downloadAndHash(`${ baseURL }/${ executableName }`, {
         verify: { algorithm: 'sha256', expected: upstream[executableName] },
       });
-    }
 
-    return result;
+      return [executableName, checksum];
+    })));
   }
 }
 
@@ -214,17 +208,15 @@ export class DockerBuildx extends GlobalDependency(GitHubDependency) {
       ['darwin', 'amd64'], ['darwin', 'arm64'],
       ['windows', 'amd64'],
     ];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const [goPlatform, arch] of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
       const executableName = `buildx-v${ version }.${ goPlatform }-${ arch }` + (goPlatform === 'windows' ? '.exe' : '');
       const url = `${ baseURL }/${ executableName }`;
       const verify = goPlatform === 'darwin' ? undefined : { algorithm: 'sha256' as const, expected: upstream[executableName] };
+      const checksum = await downloadAndHash(url, verify ? { verify } : undefined);
 
-      result[executableName] = await downloadAndHash(url, verify ? { verify } : undefined);
-    }
-
-    return result;
+      return [executableName, checksum];
+    })));
   }
 }
 
@@ -251,19 +243,17 @@ export class DockerCompose extends GlobalDependency(GitHubDependency) {
       ['darwin', 'x86_64'], ['darwin', 'aarch64'],
       ['windows', 'x86_64'], ['windows', 'aarch64'],
     ];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const [goPlatform, arch] of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
       const executableName = `docker-compose-${ goPlatform }-${ arch }` + (goPlatform === 'windows' ? '.exe' : '');
       const url = `${ baseUrl }/${ executableName }`;
       const sidecar = await fetchUpstreamChecksums(`${ url }.sha256`, 'sha256');
-
-      result[executableName] = await downloadAndHash(url, {
+      const checksum = await downloadAndHash(url, {
         verify: { algorithm: 'sha256', expected: sidecar[executableName] },
       });
-    }
 
-    return result;
+      return [executableName, checksum];
+    })));
   }
 }
 
@@ -330,17 +320,15 @@ export class Trivy extends GlobalDependency(GitHubDependency) {
     const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ version }_checksums.txt`;
     const upstream = await fetchUpstreamChecksums(checksumURL, 'sha256');
     const archLabels = ['Linux-64bit', 'Linux-ARM64'];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const archLabel of archLabels) {
+    return Object.fromEntries(await Promise.all(archLabels.map(async(archLabel) => {
       const archiveName = `trivy_${ version }_${ archLabel }.tar.gz`;
-
-      result[archiveName] = await downloadAndHash(`${ trivyURLBase }/download/${ versionWithV }/${ archiveName }`, {
+      const checksum = await downloadAndHash(`${ trivyURLBase }/download/${ versionWithV }/${ archiveName }`, {
         verify: { algorithm: 'sha256', expected: upstream[archiveName] },
       });
-    }
 
-    return result;
+      return [archiveName, checksum];
+    })));
   }
 }
 
@@ -373,19 +361,17 @@ export class Steve extends GlobalDependency(GitHubDependency) {
       ['darwin', 'amd64'], ['darwin', 'arm64'],
       ['windows', 'amd64'],
     ];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const [goPlatform, arch] of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
       const archiveName = `steve-${ goPlatform }-${ arch }.tar.gz`;
       const url = `${ steveURLBase }/${ archiveName }`;
       const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
-
-      result[archiveName] = await downloadAndHash(url, {
+      const checksum = await downloadAndHash(url, {
         verify: { algorithm: 'sha512', expected: sidecar[archiveName] },
       });
-    }
 
-    return result;
+      return [archiveName, checksum];
+    })));
   }
 }
 
@@ -524,18 +510,15 @@ export class DockerProvidedCredHelpers extends GlobalDependency(GitHubDependency
       }
     }
 
-    const result: Record<string, Sha256Checksum> = {};
-
-    for (const { goPlatform, arch, baseName, isWindows } of matrix) {
+    return Object.fromEntries(await Promise.all(matrix.map(async({ goPlatform, arch, baseName, isWindows }) => {
       const fullBaseName = `${ baseName }-v${ version }.${ goPlatform }-${ arch }`;
       const fullBinName = isWindows ? `${ fullBaseName }.exe` : fullBaseName;
-
-      result[fullBinName] = await downloadAndHash(`${ baseURL }/${ fullBinName }`, {
+      const checksum = await downloadAndHash(`${ baseURL }/${ fullBinName }`, {
         verify: { algorithm: 'sha256', expected: upstream[fullBinName] },
       });
-    }
 
-    return result;
+      return [fullBinName, checksum];
+    })));
   }
 }
 
@@ -558,8 +541,6 @@ export class ECRCredHelper extends GlobalDependency(GitHubDependency) {
   }
 
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
-    // Upstream does not publish a checksum file, so we record the sha256 we
-    // observe at bump time.
     const baseName = 'docker-credential-ecr-login';
     const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
     const platforms: [string, string][] = [
@@ -567,17 +548,20 @@ export class ECRCredHelper extends GlobalDependency(GitHubDependency) {
       ['darwin', 'amd64'], ['darwin', 'arm64'],
       ['windows', 'amd64'],
     ];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const [ecrLoginPlatform, arch] of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async([ecrLoginPlatform, arch]) => {
       const binName = ecrLoginPlatform === 'windows' ? `${ baseName }.exe` : baseName;
       const key = `${ ecrLoginPlatform }-${ arch }/${ binName }`;
       const url = `${ baseUrl }/${ version }/${ key }`;
+      // Upstream publishes a per-binary `<bin>.sha256` sidecar in GNU format,
+      // indexed by the bare binary name without the platform-prefixed path.
+      const sidecar = await fetchUpstreamChecksums(`${ url }.sha256`, 'sha256');
+      const checksum = await downloadAndHash(url, {
+        verify: { algorithm: 'sha256', expected: sidecar[binName] },
+      });
 
-      result[key] = await downloadAndHash(url);
-    }
-
-    return result;
+      return [key, checksum];
+    })));
   }
 }
 
@@ -599,17 +583,15 @@ export class WasmShims extends GlobalDependency(GitHubDependency) {
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const architectures = ['x86_64', 'aarch64'];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const arch of architectures) {
+    // Upstream does not publish a checksum file, so we record the sha256 we
+    // observe at bump time.
+    return Object.fromEntries(await Promise.all(architectures.map(async(arch) => {
       const filename = `containerd-shim-spin-v2-linux-${ arch }.tar.gz`;
+      const checksum = await downloadAndHash(`${ base }/${ filename }`);
 
-      // Upstream does not publish a checksum file, so we record the sha256 we
-      // observe at bump time.
-      result[filename] = await downloadAndHash(`${ base }/${ filename }`);
-    }
-
-    return result;
+      return [filename, checksum];
+    })));
   }
 }
 
@@ -640,10 +622,14 @@ export class CertManager extends GlobalDependency(GitHubDependency) {
     const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const crdsFilename = 'cert-manager.crds.yaml';
     const chartFilename = `cert-manager-v${ version }.tgz`;
+    const [crdsHash, chartHash] = await Promise.all([
+      downloadAndHash(`${ base }/${ crdsFilename }`),
+      downloadAndHash(`https://charts.jetstack.io/charts/${ chartFilename }`),
+    ]);
 
     return {
-      [crdsFilename]:  await downloadAndHash(`${ base }/${ crdsFilename }`),
-      [chartFilename]: await downloadAndHash(`https://charts.jetstack.io/charts/${ chartFilename }`),
+      [crdsFilename]:  crdsHash,
+      [chartFilename]: chartHash,
     };
   }
 }
@@ -674,10 +660,14 @@ export class SpinOperator extends GlobalDependency(GitHubDependency) {
     const base = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const crdsFilename = 'spin-operator.crds.yaml';
     const chartFilename = `spin-operator-${ version }.tgz`;
+    const [crdsHash, chartHash] = await Promise.all([
+      downloadAndHash(`${ base }/${ crdsFilename }`),
+      downloadAndHash(`${ base }/${ chartFilename }`),
+    ]);
 
     return {
-      [crdsFilename]:  await downloadAndHash(`${ base }/${ crdsFilename }`),
-      [chartFilename]: await downloadAndHash(`${ base }/${ chartFilename }`),
+      [crdsFilename]:  crdsHash,
+      [chartFilename]: chartHash,
     };
   }
 }
@@ -712,18 +702,16 @@ export class SpinCLI extends GlobalDependency(GitHubDependency) {
       ['static-linux', 'amd64'], ['static-linux', 'aarch64'],
       ['windows', 'amd64'],
     ];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const [platform, arch] of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async([platform, arch]) => {
       const ext = platform === 'windows' ? '.zip' : '.tar.gz';
       const archiveName = `spin-v${ version }-${ platform }-${ arch }${ ext }`;
-
-      result[archiveName] = await downloadAndHash(`${ baseURL }/${ archiveName }`, {
+      const checksum = await downloadAndHash(`${ baseURL }/${ archiveName }`, {
         verify: { algorithm: 'sha256', expected: upstream[archiveName] },
       });
-    }
 
-    return result;
+      return [archiveName, checksum];
+    })));
   }
 }
 

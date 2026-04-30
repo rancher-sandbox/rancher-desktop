@@ -71,19 +71,17 @@ export class Lima extends GlobalDependency(GitHubDependency) {
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const platforms = [`${ MACOS_RUNNER }.amd64`, `${ MACOS_RUNNER }.arm64`, 'linux.amd64', 'linux.arm64'];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const platform of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async(platform) => {
       const archiveName = `lima.${ platform }.tar.gz`;
       const url = `${ baseUrl }/${ archiveName }`;
       const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
-
-      result[archiveName] = await downloadAndHash(url, {
+      const checksum = await downloadAndHash(url, {
         verify: { algorithm: 'sha512', expected: sidecar[archiveName] },
       });
-    }
 
-    return result;
+      return [archiveName, checksum];
+    })));
   }
 }
 
@@ -116,24 +114,22 @@ export class Qemu extends GlobalDependency(GitHubDependency) {
 
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
-    // Upstream does not yet publish linux/arm64; mirror the skip in download().
+    // rancher-desktop-qemu does not yet publish a linux/arm64 build; mirror the skip in download().
     const platforms: [string, string][] = [
       ['darwin', 'x86_64'], ['darwin', 'aarch64'],
       ['linux', 'x86_64'],
     ];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const [platform, arch] of platforms) {
+    return Object.fromEntries(await Promise.all(platforms.map(async([platform, arch]) => {
       const archiveName = `qemu-${ version }-${ platform }-${ arch }.tar.gz`;
       const url = `${ baseUrl }/${ archiveName }`;
       const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
-
-      result[archiveName] = await downloadAndHash(url, {
+      const checksum = await downloadAndHash(url, {
         verify: { algorithm: 'sha512', expected: sidecar[archiveName] },
       });
-    }
 
-    return result;
+      return [archiveName, checksum];
+    })));
   }
 }
 
@@ -157,17 +153,15 @@ export class SocketVMNet extends GlobalDependency(GitHubDependency) {
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const upstream = await fetchUpstreamChecksums(`${ baseURL }/SHA256SUMS`, 'sha256');
     const architectures = ['x86_64', 'arm64'];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const arch of architectures) {
+    return Object.fromEntries(await Promise.all(architectures.map(async(arch) => {
       const archiveName = `socket_vmnet-${ version }-${ arch }.tar.gz`;
-
-      result[archiveName] = await downloadAndHash(`${ baseURL }/${ archiveName }`, {
+      const checksum = await downloadAndHash(`${ baseURL }/${ archiveName }`, {
         verify: { algorithm: 'sha256', expected: upstream[archiveName] },
       });
-    }
 
-    return result;
+      return [archiveName, checksum];
+    })));
   }
 }
 
@@ -197,19 +191,17 @@ export class AlpineLimaISO extends GlobalDependency(GitHubDependency) {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version.isoVersion }`;
     const edition = 'rd';
     const architectures = ['x86_64', 'aarch64'];
-    const result: Record<string, Sha256Checksum> = {};
 
-    for (const arch of architectures) {
+    return Object.fromEntries(await Promise.all(architectures.map(async(arch) => {
       const isoName = `alpine-lima-${ edition }-${ version.alpineVersion }-${ arch }.iso`;
       const url = `${ baseUrl }/${ isoName }`;
       const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
-
-      result[isoName] = await downloadAndHash(url, {
+      const checksum = await downloadAndHash(url, {
         verify: { algorithm: 'sha512', expected: sidecar[isoName] },
       });
-    }
 
-    return result;
+      return [isoName, checksum];
+    })));
   }
 
   assembleAlpineLimaISOVersionFromGitHubRelease(release: GitHubRelease): AlpineLimaISOVersion {

@@ -201,7 +201,7 @@ export async function getResource(url: string): Promise<string> {
  */
 export async function downloadTarGZ(url: string, destPath: string, options: ArchiveDownloadOptions = {}): Promise<string> {
   const access = options.access ?? fs.constants.X_OK;
-  const tgzPath = `${ destPath }.tar.gz`;
+  const tgzPath = `${ destPath.replace(/\.exe$/, '') }.tar.gz`;
   const fileToExtract = options.entryName || path.basename(destPath);
   const mode =
         (access & fs.constants.X_OK) ? 0o755 : (access & fs.constants.W_OK) ? 0o644 : 0o444;
@@ -220,7 +220,7 @@ export async function downloadTarGZ(url: string, destPath: string, options: Arch
   // tgzPath above.  copyFile overwrites destPath unconditionally,
   // so a postinstall run while Rancher Desktop or another shell
   // holds the binary fails with EBUSY/EPERM on Windows or ETXTBSY
-  // on Linux; stop the consuming process and retry.
+  // on Linux.
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ path.basename(destPath, '.exe') }-`));
   const args = ['tar', '-zxf', tgzPath, '--directory', workDir, fileToExtract];
 
@@ -257,7 +257,7 @@ export async function downloadTarGZ(url: string, destPath: string, options: Arch
  */
 export async function downloadZip(url: string, destPath: string, options: ArchiveDownloadOptions = {}): Promise<string> {
   const access = options.access ?? fs.constants.X_OK;
-  const zipPath = `${ destPath }.zip`;
+  const zipPath = `${ destPath.replace(/\.exe$/, '') }.zip`;
   const fileToExtract = options.entryName || path.basename(destPath);
   const mode =
         (access & fs.constants.X_OK) ? 0o755 : (access & fs.constants.W_OK) ? 0o644 : 0o444;
@@ -276,7 +276,7 @@ export async function downloadZip(url: string, destPath: string, options: Archiv
   // zipPath above.  copyFileSync overwrites destPath unconditionally,
   // so a postinstall run while Rancher Desktop or another shell
   // holds the binary fails with EBUSY/EPERM on Windows or ETXTBSY
-  // on Linux; stop the consuming process and retry.
+  // on Linux.
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ path.basename(destPath, '.exe') }-`));
   const args = ['unzip', '-q', '-o', zipPath, fileToExtract, '-d', workDir];
 
