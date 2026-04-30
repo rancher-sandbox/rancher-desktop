@@ -86,8 +86,8 @@ test.describe.serial('KubernetesBackend', () => {
 
       try {
         return JSON.parse(text);
-      } catch (ex) {
-        throw new Error(`Response text is not JSON: \n${ text }`);
+      } catch (cause) {
+        throw new Error(`Response text is not JSON: \n${ text }`, { cause });
       }
     }
 

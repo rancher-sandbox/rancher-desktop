@@ -363,6 +363,18 @@ application:
     notificationIcon:
       legendText: Notification Icon
       label: Hide Notification Icon
+    theme:
+      legendText: Appearance
+      options:
+        system:
+          label: System
+          description: Follow the operating system setting
+        light:
+          label: Light
+          description: Always use light mode
+        dark:
+          label: Dark
+          description: Always use dark mode
 
 virtualMachine:
   networkingTunnel:
@@ -418,8 +430,8 @@ virtualMachine:
     username: Username
     password: Password
     noproxy:
-      legend: No proxy hostname list
-      placeholder: Hostname to not redirect to the proxy
+      legend: Proxy bypass list
+      placeholder: "IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy"
       errors:
         duplicate: Error, item is duplicate.
   type:

@@ -92,8 +92,8 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
    * ...
    */
 
-  parse(data: string): imageProcessor.imageType[] {
-    const images: imageProcessor.imageType[] = [];
+  parse(data: string): imageProcessor.ImageType[] {
+    const images: imageProcessor.ImageType[] = [];
     const records = data
       .split(/\r?\n/)
       .filter(line => line.trim().length > 0)
@@ -125,7 +125,7 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
   }
 }
 
-function imageComparator(a: imageProcessor.imageType, b: imageProcessor.imageType): number {
+function imageComparator(a: imageProcessor.ImageType, b: imageProcessor.ImageType): number {
   return a.imageName.localeCompare(b.imageName) ||
     a.tag.localeCompare(b.tag) ||
     a.imageID.localeCompare(b.imageID);

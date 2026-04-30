@@ -9,7 +9,7 @@ import util from 'util';
 
 import yaml from 'yaml';
 
-import { DownloadContext, getPublishedReleaseTagNames, VersionedDependency } from './dependencies';
+import { DownloadContext, getPublishedReleaseTagNames, Sha256Checksum, VersionedDependency } from './dependencies';
 
 const EXTENSION_PATH = 'scripts/assets/extension-data.yaml';
 const EXTENSION_OUTPUT_PATH = 'pkg/rancher-desktop/assets/extension-data.yaml';
@@ -56,7 +56,12 @@ export class Extension extends VersionedDependency {
     return await getPublishedReleaseTagNames(owner, repo);
   }
 
-  async updateManifest(newVersion: string): Promise<Set<string>> {
+  getChecksums(): Promise<Record<string, Sha256Checksum>> {
+    // Extensions are pulled via `docker pull`, not downloaded as files.
+    return Promise.resolve({});
+  }
+
+  async updateManifest(newVersion: string, _newChecksums: Record<string, Sha256Checksum>): Promise<Set<string>> {
     // We want to try to keep the YAML comments; so we do string replace instead.
     const fileContents = await fs.promises.readFile(EXTENSION_PATH, 'utf-8');
     const oldRef = `${ this.name }:${ await this.currentVersion }`;

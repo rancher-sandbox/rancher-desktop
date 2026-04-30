@@ -55,7 +55,6 @@ banzaicloud
 basedisk
 bassano
 batslib
-bci
 bellingham
 binfmt
 blahblah

@@ -6,6 +6,11 @@ const SummaryLine1Matcher = /:\s*resolv(?:ing|ed)\s*\|/;
 const SummaryLine2Matcher = /^elapsed:.*total:/;
 
 export default class ImageNonBuildOutputCuller {
+  buffering:    boolean;
+  lines:        string[];
+  summaryLine1: string;
+  summaryLine2: string;
+
   constructor() {
     this.buffering = true;
     this.lines = [];
@@ -13,7 +18,7 @@ export default class ImageNonBuildOutputCuller {
     this.summaryLine2 = '';
   }
 
-  addData(data) {
+  addData(data: string) {
     // TODO (possibly): Deal with partial final lines - I haven't seen this happen yet
     const lines = data.split(LineSplitter);
 
@@ -59,7 +64,7 @@ export default class ImageNonBuildOutputCuller {
   }
 
   getProcessedData() {
-    const lines = [].concat(this.lines);
+    const lines = ([] as string[]).concat(this.lines);
 
     if (this.summaryLine1) {
       lines.push(this.summaryLine1);

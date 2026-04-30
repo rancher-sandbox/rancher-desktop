@@ -41,6 +41,10 @@ export default {
       required: false,
       type:     Number,
     },
+    disabled: {
+      type:    Boolean,
+      default: false,
+    },
   },
 
   emits: ['active'],

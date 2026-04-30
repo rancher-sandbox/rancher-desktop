@@ -67,7 +67,7 @@ jobs:
       env:
         EXEC_COMMAND: # On Windows, we don't need any commands.
 
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         persist-credentials: false
     - uses: ./.github/actions/yarn-install
@@ -83,13 +83,13 @@ jobs:
         RD_ENV_SCREENSHOT_SLEEP: 5000
         RD_LOGS_DIR: logs
     - name: Upload screenshots
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: screenshots-${{ matrix.platform }}.zip
         path: screenshots/output/
         if-no-files-found: error
     - name: Upload logs
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: always()
       with:
         name: logs-${{ matrix.platform }}.zip
@@ -105,7 +105,7 @@ jobs:
       cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         pattern: screenshots-*.zip
         merge-multiple: true
@@ -143,7 +143,7 @@ jobs:
         sudo DEBIAN_FRONTEND=noninteractive apt-get install graphicsmagick # spellcheck-ignore-line
         mkdir -p out/getting-started
         gm convert in/darwin/light/main/*_intro.png in/win32/light/main/*_intro.png +append out/getting-started/introduction_preferences_tabKubernetes.png
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: screenshots.zip
         path: out

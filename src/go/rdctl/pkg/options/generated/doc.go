@@ -17,5 +17,11 @@ limitations under the License.
 // Package options contains the generated options.
 package options
 
+import "github.com/spf13/pflag"
+
 // This file exists so that dependabot can find the package; the actual options
 // are generated via `yarn postinstall`.
+
+// The generated options use pflag.FlagSet, but dependabot can't see generated
+// files and would misclassify pflag as an indirect dependency.
+var _ *pflag.FlagSet

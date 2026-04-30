@@ -5,7 +5,6 @@
 
 'use strict';
 
-import childProcess from 'child_process';
 import fs from 'fs';
 import * as path from 'path';
 
@@ -151,13 +150,8 @@ class Builder {
     // Build the electron builder configuration to include the version data
     const config: ReadWrite<Configuration> = yaml.parse(await fs.promises.readFile('packaging/electron-builder.yml', 'utf-8'));
     const configPath = path.join(buildUtils.distDir, 'electron-builder.yaml');
-    let fullBuildVersion: string;
-    try {
-      fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
-    } catch {
-      fullBuildVersion = 'unknown';
-    }
-    const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
+    const version = await buildUtils.version;
+
     const distDir = path.join(process.cwd(), 'dist');
     const electronPlatform = ({
       darwin: 'mac',
@@ -171,7 +165,7 @@ class Builder {
 
     switch (electronPlatform) {
     case 'linux':
-      await this.createLinuxResources(finalBuildVersion);
+      await this.createLinuxResources(version);
       break;
     case 'win':
       await this.createWindowsResources(distDir);
@@ -195,7 +189,7 @@ class Builder {
       delete section[key];
     }
 
-    _.set(config, 'extraMetadata.version', finalBuildVersion);
+    _.set(config, 'extraMetadata.version', version);
     await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
 
     config.afterPack = this.afterPack.bind(this);

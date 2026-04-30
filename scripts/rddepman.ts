@@ -7,17 +7,14 @@ import semver from 'semver';
 
 import { getExtensions } from './lib/extension-data';
 
-import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
-import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
-import * as tools from 'scripts/dependencies/tools';
-import { Wix } from 'scripts/dependencies/wix';
-import { WSLDistro, Moproxy } from 'scripts/dependencies/wsl';
+import { globalDependencies } from '@/scripts/dependencies/global';
 import {
-  AlpineLimaISOVersion, getOctokit,
+  getOctokit,
   iterateIterator,
   GitHubDependency,
+  Version,
   VersionedDependency,
-} from 'scripts/lib/dependencies';
+} from '@/scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
@@ -25,36 +22,12 @@ const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-des
 
 interface VersionComparison {
   dependency:     VersionedDependency;
-  currentVersion: string | AlpineLimaISOVersion;
-  latestVersion:  string | AlpineLimaISOVersion;
+  currentVersion: Version;
+  latestVersion:  Version;
 }
 
 const dependencies: VersionedDependency[] = [
-  new tools.KuberlrAndKubectl(),
-  new tools.Helm(),
-  new tools.DockerCLI(),
-  new tools.DockerBuildx(),
-  new tools.DockerCompose(),
-  new tools.DockerProvidedCredHelpers(),
-  new tools.GoLangCILint(),
-  new tools.CheckSpelling(),
-  new tools.Trivy(),
-  new tools.Steve(),
-  new tools.RancherDashboard(),
-  new tools.ECRCredHelper(),
-  new Lima(),
-  new Qemu(),
-  new SocketVMNet(),
-  new AlpineLimaISO(),
-  new WSLDistro(),
-  new Wix(),
-  new MobyOpenAPISpec(),
-  new Moproxy(),
-  new tools.WasmShims(),
-  new tools.CertManager(),
-  new tools.SpinOperator(),
-  new tools.SpinCLI(),
-  new tools.SpinKubePlugin(),
+  ...globalDependencies,
   ...getExtensions(true),
 ];
 
@@ -94,19 +67,19 @@ function git(returnOrArg: string | true, ...args: string[]): number | null {
   return result.status;
 }
 
-function printable(version: string | AlpineLimaISOVersion): string {
-  return typeof version === 'string' ? version : version.isoVersion;
+function printable(version: Version): string {
+  return VersionedDependency.versionString(version);
 }
 
-function getBranchName(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): string {
+function getBranchName(name: string, currentVersion: Version, latestVersion: Version): string {
   return `rddepman/${ name }/${ printable(currentVersion) }-to-${ printable(latestVersion) }`;
 }
 
-function getTitle(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): string {
+function getTitle(name: string, currentVersion: Version, latestVersion: Version): string {
   return `rddepman: bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 }
 
-async function getBody(dependency: VersionedDependency, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<string> {
+async function getBody(dependency: VersionedDependency, currentVersion: Version, latestVersion: Version): Promise<string> {
   if (!(dependency instanceof GitHubDependency) || typeof currentVersion !== 'string' || typeof latestVersion !== 'string') {
     // If the dependency is not on GitHub, we don't have any additional information yet.
     return '';
@@ -185,7 +158,7 @@ async function getBody(dependency: VersionedDependency, currentVersion: string |
   }).join('\n');
 }
 
-async function createDependencyBumpPR(dependency: VersionedDependency, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
+async function createDependencyBumpPR(dependency: VersionedDependency, currentVersion: Version, latestVersion: Version): Promise<void> {
   const title = getTitle(dependency.name, currentVersion, latestVersion);
   const branchName = getBranchName(dependency.name, currentVersion, latestVersion);
 
@@ -315,8 +288,13 @@ async function checkDependencies(): Promise<void> {
     const branchName = getBranchName(dependency.name, currentVersion, latestVersion);
     const commitMessage = `Bump ${ dependency.name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 
+    // Compute fresh checksums before branching so that an upstream verification
+    // failure aborts the bump before any git state changes.
+    console.log(`Computing checksums for ${ dependency.name } ${ printable(latestVersion) }...`);
+    const newChecksums = await dependency.getChecksums(latestVersion);
+
     git('checkout', '-b', branchName, MAIN_BRANCH);
-    git('add', ...await dependency.updateManifest(latestVersion));
+    git('add', ...await dependency.updateManifest(latestVersion, newChecksums));
     git('commit', '--signoff', '--message', commitMessage);
     git('push', '--force', `https://${ process.env.GITHUB_TOKEN }@github.com/${ GITHUB_OWNER }/${ GITHUB_REPO }`);
     await createDependencyBumpPR(dependency, currentVersion, latestVersion);

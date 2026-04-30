@@ -7,7 +7,6 @@ import { webRoot, createWindow, getWindow } from '.';
 import { Help } from '@pkg/config/help';
 import paths from '@pkg/utils/paths';
 import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
-import { getVersion } from '@pkg/utils/version';
 import { preferencesNavItems } from '@pkg/window/preferenceConstants';
 
 let isDirty = false;
@@ -44,8 +43,8 @@ export function openPreferences() {
         key:      'F1',
         platform: ['win32', 'linux'],
       }],
-      async() => {
-        Help.preferences.openUrl(await getVersion());
+      () => {
+        Help.preferences.openUrl();
       },
       'preferences help',
     );

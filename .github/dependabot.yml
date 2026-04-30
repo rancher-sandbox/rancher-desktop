@@ -30,6 +30,12 @@ updates:
     # ignore until we arrive a solution that uses it.
     dependency-name: "@rancher/shell"
     versions: [">0.1"]
+  - # We are currently using @vue/cli-service which depends on an older version
+    # of webpack.  Upgrading webpack past what we currently have causes
+    # conflicts between the different versions of webpack.  Disable further
+    # updates of webpack until we can migrate off @vue/cli-service (which is
+    # unlikely to be fixed as it is in maintenance mode).
+    dependency-name: "webpack"
 
 # Maintain dependencies for Golang
 - package-ecosystem: "gomod"
@@ -39,8 +45,8 @@ updates:
   - "/scripts"
   schedule:
     interval: "daily"
-  cooldown:
-    default-days: 7
+# cooldown:
+#   default-days: 7
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   ignore:

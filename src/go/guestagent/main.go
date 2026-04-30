@@ -88,7 +88,35 @@ func main() {
 		log.Fatal("agent must run as root")
 	}
 
+	if !*enableContainerd &&
+		!*enableDocker {
+		log.Fatal("requires either -docker or -containerd enabled.")
+	}
+
+	if *enableContainerd &&
+		*enableDocker {
+		log.Fatal("requires either -docker or -containerd but not both.")
+	}
+
+	if err := runAgent(
+		*enableContainerd, *enableDocker, *enableKubernetes,
+		*containerdSock, *configPath, *k8sServiceListenerAddr,
+		*adminInstall, *k8sAPIPort, *tapIfaceIP,
+	); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Info("Rancher Desktop Agent Shutting Down")
+}
+
+func runAgent(
+	enableContainerd, enableDocker, enableKubernetes bool,
+	containerdSock, configPath, k8sServiceListenerAddr string,
+	adminInstall bool,
+	k8sAPIPort, tapIfaceIP string,
+) error {
 	groupCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	group, ctx := errgroup.WithContext(groupCtx)
 
 	sigCh := make(chan os.Signal, 1)
@@ -100,29 +128,19 @@ func main() {
 		cancel()
 	}()
 
-	if !*enableContainerd &&
-		!*enableDocker {
-		log.Fatal("requires either -docker or -containerd enabled.")
-	}
-
-	if *enableContainerd &&
-		*enableDocker {
-		log.Fatal("requires either -docker or -containerd but not both.")
-	}
-
 	var portTracker tracker.Tracker
 
 	wslProxyForwarder := forwarder.NewWSLProxyForwarder(ctx, "/run/wsl-proxy.sock")
-	portTracker = tracker.NewAPITracker(ctx, wslProxyForwarder, tracker.GatewayBaseURL, *tapIfaceIP, *adminInstall)
+	portTracker = tracker.NewAPITracker(ctx, wslProxyForwarder, tracker.GatewayBaseURL, tapIfaceIP, adminInstall)
 	// Manually register the port for K8s API, we would
 	// only want to send this manual port mapping if both
 	// of the following conditions are met:
 	// 1) if kubernetes is enabled
 	// 2) when wsl-proxy for wsl-integration is enabled
-	if *enableKubernetes {
-		port, err := nat.NewPort("tcp", *k8sAPIPort)
+	if enableKubernetes {
+		port, err := nat.NewPort("tcp", k8sAPIPort)
 		if err != nil {
-			log.Fatalf("failed to parse port for k8s API: %v", err)
+			return fmt.Errorf("failed to parse port for k8s API: %w", err)
 		}
 		k8sAPIPortMapping := types.PortMapping{
 			Remove: false,
@@ -130,21 +148,21 @@ func main() {
 				port: []nat.PortBinding{
 					{
 						HostIP:   "127.0.0.1",
-						HostPort: *k8sAPIPort,
+						HostPort: k8sAPIPort,
 					},
 				},
 			},
 		}
 		if err := wslProxyForwarder.Send(k8sAPIPortMapping); err != nil {
-			log.Fatalf("failed to send a static portMapping event to wsl-proxy: %v", err)
+			return fmt.Errorf("failed to send a static portMapping event to wsl-proxy: %w", err)
 		}
-		log.Debugf("successfully forwarded k8s API port [%s] to wsl-proxy", *k8sAPIPort)
+		log.Debugf("successfully forwarded k8s API port [%s] to wsl-proxy", k8sAPIPort)
 	}
 
-	if *enableContainerd {
+	if enableContainerd {
 		group.Go(func() error {
 			for {
-				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
+				eventMonitor, err := containerd.NewEventMonitor(containerdSock, portTracker)
 				if err != nil {
 					return fmt.Errorf("error initializing containerd event monitor: %w", err)
 				}
@@ -166,7 +184,7 @@ func main() {
 		})
 	}
 
-	if *enableDocker {
+	if enableDocker {
 		group.Go(func() error {
 			for {
 				eventMonitor, err := docker.NewEventMonitor(portTracker)
@@ -188,18 +206,18 @@ func main() {
 		})
 	}
 
-	if *enableKubernetes {
-		k8sServiceListenerIP := net.ParseIP(*k8sServiceListenerAddr)
+	if enableKubernetes {
+		k8sServiceListenerIP := net.ParseIP(k8sServiceListenerAddr)
 
 		if k8sServiceListenerIP == nil || (!k8sServiceListenerIP.Equal(net.IPv4zero) && !k8sServiceListenerIP.Equal(net.IPv4(127, 0, 0, 1))) {
-			log.Fatalf("empty or invalid input for Kubernetes service listener IP address %s. "+
-				"Valid options are 0.0.0.0 and 127.0.0.1.", *k8sServiceListenerAddr)
+			return fmt.Errorf("empty or invalid Kubernetes service listener IP address %s; "+
+				"valid options are 0.0.0.0 and 127.0.0.1", k8sServiceListenerAddr)
 		}
 
 		group.Go(func() error {
 			// Watch for kube
 			err := kube.WatchForServices(ctx,
-				*configPath,
+				configPath,
 				k8sServiceListenerIP,
 				portTracker)
 			if err != nil {
@@ -227,11 +245,7 @@ func main() {
 		return procScanner.ForwardPorts()
 	})
 
-	if err := group.Wait(); err != nil {
-		log.Fatal(err)
-	}
-
-	log.Info("Rancher Desktop Agent Shutting Down")
+	return group.Wait()
 }
 
 func tryConnectAPI(ctx context.Context, socketFile string, verify func(context.Context) error) error {

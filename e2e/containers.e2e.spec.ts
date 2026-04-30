@@ -1,6 +1,7 @@
 import { expect, test, ElectronApplication, Page } from '@playwright/test';
 
 import { ContainerLogsPage } from './pages/container-logs-page';
+import { ContainerShellPage } from './pages/container-shell-page';
 import { ContainersPage } from './pages/containers-page';
 import { NavPage } from './pages/nav-page';
 import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
@@ -68,7 +69,7 @@ test.describe.serial('Containers Tests', () => {
     await containersPage.waitForContainerToAppear(testContainerId);
     await containersPage.viewContainerInfo(testContainerId);
 
-    await page.waitForURL(`**/containers/info/${ testContainerId }`, {
+    await page.waitForURL(`**/containers/info/${ testContainerId }**`, {
       timeout: 10_000,
     });
   });
@@ -166,7 +167,7 @@ test.describe.serial('Containers Tests', () => {
       await containersPage.waitForContainerToAppear(scrollTestContainerId);
       await containersPage.viewContainerInfo(scrollTestContainerId);
 
-      await page.waitForURL(`**/containers/info/${ scrollTestContainerId }`, {
+      await page.waitForURL(`**/containers/info/${ scrollTestContainerId }**`, {
         timeout: 10_000,
       });
 
@@ -225,7 +226,7 @@ test.describe.serial('Containers Tests', () => {
       await containersPage.waitForContainerToAppear(longRunningContainerId);
       await containersPage.viewContainerInfo(longRunningContainerId);
 
-      await page.waitForURL(`**/containers/info/${ longRunningContainerId }`, {
+      await page.waitForURL(`**/containers/info/${ longRunningContainerId }**`, {
         timeout: 10000,
       });
 
@@ -277,7 +278,7 @@ test.describe.serial('Containers Tests', () => {
         autoRefreshContainerName,
         'alpine',
         'sleep',
-        'inf',
+        'infinity',
       );
       autoRefreshContainerId = output.trim();
 
@@ -297,5 +298,114 @@ test.describe.serial('Containers Tests', () => {
         } catch {}
       }
     }
+  });
+});
+
+test.describe.serial('Container Shell Tab', () => {
+  let electronApp: ElectronApplication;
+  let shellContainerId: string;
+  let unsupportedContainerId: string;
+
+  test.beforeAll(async({ colorScheme }, testInfo) => {
+    [electronApp, page] = await startSlowerDesktop(testInfo, {
+      kubernetes:      { enabled: false },
+      containerEngine: { name: ContainerEngine.MOBY, allowedImages: { enabled: false } },
+    });
+
+    const navPage = new NavPage(page);
+    await navPage.progressBecomesReady();
+
+    // Start a long-running container for the shell tests.
+    // Ubuntu is used because the base Alpine image does not include `script`
+    // (util-linux), which is required for the interactive shell session.
+    const output = await tool('docker', 'run', '--detach', 'ubuntu', 'sleep', 'infinity');
+    shellContainerId = output.trim();
+
+    // Alpine container for the "unsupported" test — Alpine's base image has no
+    // `script` command, so the shell tab should show the unsupported banner.
+    const alpineOutput = await tool('docker', 'run', '--detach', 'alpine', 'sleep', 'infinity');
+    unsupportedContainerId = alpineOutput.trim();
+  });
+
+  test.afterAll(async({ colorScheme }, testInfo) => {
+    if (shellContainerId) {
+      try {
+        await tool('docker', 'rm', '-f', shellContainerId);
+      } catch {}
+    }
+    if (unsupportedContainerId) {
+      try {
+        await tool('docker', 'rm', '-f', unsupportedContainerId);
+      } catch {}
+    }
+    await teardown(electronApp, testInfo);
+  });
+
+  async function navigateToShellTab() {
+    const navPage = new NavPage(page);
+    await navPage.navigateTo('Containers');
+    const containersPage = new ContainersPage(page);
+    await containersPage.waitForTableToLoad();
+    await containersPage.waitForContainerToAppear(shellContainerId);
+    await containersPage.clickContainerAction(shellContainerId, 'info');
+    await page.waitForURL(`**/containers/info/${ shellContainerId }**`, { timeout: 10_000 });
+    const shellPage = new ContainerShellPage(page);
+    await shellPage.clickTab();
+    await shellPage.waitForTerminal();
+    await shellPage.waitForShellReady();
+
+    return shellPage;
+  }
+
+  test('should show the Shell tab on a running container', async() => {
+    const shellPage = await navigateToShellTab();
+    await expect(shellPage.tab).toBeVisible();
+    await expect(shellPage.terminal).toBeVisible();
+    await expect(shellPage.notRunningBanner).not.toBeVisible();
+  });
+
+  test('should execute a command and display its output', async() => {
+    const shellPage = new ContainerShellPage(page);
+    // Unique marker avoids false positives from any earlier terminal history.
+    const marker = `RDTEST_${ Date.now() }`;
+    await shellPage.runCommand(`echo ${ marker }`);
+    await shellPage.waitForOutput(marker);
+  });
+
+  test('should preserve the session when switching between Logs and Shell tabs', async() => {
+    const shellPage = new ContainerShellPage(page);
+    const logsTab = page.getByTestId('tab-logs');
+    // A unique marker is required: we must distinguish "this exact output is
+    // still in the buffer" from "the shell printed something similar".
+    const marker = `RDTEST_PERSIST_${ Date.now() }`;
+
+    await shellPage.runCommand(`echo ${ marker }`);
+    await shellPage.waitForOutput(marker);
+
+    // Switch to Logs and back.
+    await logsTab.click();
+    await shellPage.clickTab();
+
+    // History must still be visible — session was preserved.
+    await shellPage.waitForOutput(marker);
+  });
+
+  test('should show the unsupported banner for containers without script', async() => {
+    // Navigate to the Alpine container — it has no `script`, so the backend
+    // will send container-exec/unsupported instead of starting a session.
+    const navPage = new NavPage(page);
+    await navPage.navigateTo('Containers');
+    const containersPage = new ContainersPage(page);
+    await containersPage.waitForTableToLoad();
+    await containersPage.waitForContainerToAppear(unsupportedContainerId);
+    await containersPage.clickContainerAction(unsupportedContainerId, 'info');
+    await page.waitForURL(`**/containers/info/${ unsupportedContainerId }**`, { timeout: 10_000 });
+
+    const shellPage = new ContainerShellPage(page);
+    await shellPage.clickTab();
+
+    // The unsupported banner must appear and the terminal must not be rendered.
+    await expect(shellPage.unsupportedBanner).toBeVisible({ timeout: 15_000 });
+    await expect(shellPage.terminal).not.toBeVisible();
   });
 });

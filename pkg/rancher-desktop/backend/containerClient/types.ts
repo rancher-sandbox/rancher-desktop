@@ -1,7 +1,7 @@
 import type { Log } from '@pkg/utils/logging';
 
 import type { ChildProcessByStdio, SpawnOptions } from 'child_process';
-import type { Readable } from 'stream';
+import type { Readable, Writable } from 'stream';
 
 export interface ContainerBasicOptions {
   /**
@@ -60,6 +60,9 @@ export type ContainerComposeExecOptions = ContainerComposeOptions & {
 
 /** ReadableProcess describes a process that is capturing output */
 export type ReadableProcess = ChildProcessByStdio<null, Readable, Readable>;
+
+/** WritableReadableProcess describes a process with stdin, stdout, and stderr all piped */
+export type WritableReadableProcess = ChildProcessByStdio<Writable, Readable, Readable>;
 
 export type ContainerComposePortOptions = ContainerComposeOptions & {
   /** The service to find the port for */
@@ -163,4 +166,5 @@ export interface ContainerEngineClient {
   runClient(args: string[], stdio: Log, options?: ContainerRunClientOptions): Promise<Record<string, never>>;
   runClient(args: string[], stdio: 'pipe', options?: ContainerRunClientOptions): Promise<{ stdout: string, stderr: string }>;
   runClient(args: string[], stdio: 'stream', options?: ContainerRunClientOptions): ReadableProcess;
+  runClient(args: string[], stdio: 'interactive', options?: ContainerRunClientOptions): WritableReadableProcess;
 }
