@@ -7,7 +7,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/adrg/xdg v0.5.3
 	github.com/go-openapi/errors v0.22.7
-	github.com/go-openapi/strfmt v0.26.1
+	github.com/go-openapi/strfmt v0.26.2
 	github.com/go-openapi/swag v0.25.5
 	github.com/go-openapi/validate v0.25.2
 	github.com/go-swagger/go-swagger v0.33.2
