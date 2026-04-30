@@ -241,15 +241,13 @@ class Builder {
   }
 
   protected async createWindowsResources(workDir: string) {
-    // Create stub executable with the correct icon (for the installer)
+    // Create the icon
     const imageFile = path.join(process.cwd(), 'resources', 'icons', 'logo-square-512.png');
+    const iconFile = path.join(process.cwd(), 'resources', 'icons', 'icon.ico');
     const iconArgs = ['icon', '--format', 'ico', '--out', workDir, '--input', imageFile];
     const iconResult = await this.executeAppBuilderAsJson(iconArgs);
-    const iconFile = iconResult.icons[0].file;
-    const executable = path.join(process.cwd(), 'resources', 'win32', 'bin', 'rdctl.exe');
-    const rceditArgs = [executable, '--set-icon', iconFile];
-
-    await executeAppBuilder(['rcedit', '--args', JSON.stringify(rceditArgs)], undefined, undefined, 3);
+    const outFile = iconResult.icons[0].file;
+    await fs.promises.rename(outFile, iconFile);
 
     // Create the custom action for the installer
     log.info('building Windows Installer custom action...');

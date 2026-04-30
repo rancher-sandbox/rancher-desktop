@@ -173,14 +173,14 @@ export default async function generateFileList(rootPath: string): Promise<string
             Name="Rancher Desktop"
             WorkingDirectory="APPLICATIONFOLDER"
             Advertise="yes"
-            Icon="RancherDesktopIcon.exe" />
+            Icon="RancherDesktopIcon.ico" />
           <Shortcut
             Id="startMenuShortcut"
             Directory="ProgramMenuFolder"
             Name="Rancher Desktop"
             WorkingDirectory="APPLICATIONFOLDER"
             Advertise="yes"
-            Icon="RancherDesktopIcon.exe">
+            Icon="RancherDesktopIcon.ico">
             <ShortcutProperty
               Key="System.AppUserModel.ID"
               Value="io.rancherdesktop.app" />

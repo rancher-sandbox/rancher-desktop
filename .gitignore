@@ -10,6 +10,7 @@
 /resources/cert-manager*
 /resources/darwin/
 /resources/host/
+/resources/icons/icon.ico
 /resources/linux/*
 !/resources/linux/rancher-desktop.desktop
 /resources/preload.js*
