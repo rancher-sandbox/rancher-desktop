@@ -190,6 +190,11 @@ class Builder {
     }
 
     _.set(config, 'extraMetadata.version', version);
+
+    if (electronPlatform === 'mac') {
+      _.set(config, 'dmg.title', `Install Rancher Desktop ${ version }-${ buildUtils.arch }`);
+    }
+
     await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
 
     config.afterPack = this.afterPack.bind(this);
