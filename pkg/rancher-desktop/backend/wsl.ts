@@ -87,7 +87,7 @@ export enum Action {
 }
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = DEPENDENCY_VERSIONS.WSLDistro;
+const DISTRO_VERSION = DEPENDENCY_VERSIONS.WSLDistro.version;
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -1393,9 +1393,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
               await this.runInit();
               if (configureWASM) {
                 try {
-                  const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
+                  const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI.version);
                   const env = {
-                    KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin,
+                    KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin.version,
                     SPIN_TEMPLATES_TAG:  (version ? `spin/templates/v${ version.major }.${ version.minor }` : 'unknown'),
                   };
                   const wslenv = Object.keys(env).join(':');
