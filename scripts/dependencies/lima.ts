@@ -21,27 +21,21 @@ import {
 } from '@/scripts/lib/dependencies';
 import { simpleSpawn } from '@/scripts/simple_process';
 
-// Names the macOS runner that builds the rancher-desktop-lima darwin
-// archive.  Both `download()` and `getChecksums()` embed this token in
-// artifact filenames, so update it here when upstream bumps the runner
-// (e.g. `macos-16`).
-const MACOS_RUNNER = 'macos-15';
-
 export class Lima extends GlobalDependency(GitHubDependency) {
   readonly name = 'lima';
   readonly githubOwner = 'rancher-sandbox';
   readonly githubRepo = 'rancher-desktop-lima';
 
+  // Names the macOS runner that builds the rancher-desktop-lima darwin
+  // archive.  Both `download()` and `getChecksums()` embed this token in
+  // artifact filenames, so update it here when upstream bumps the runner
+  // (e.g. `macos-16`).
+  static readonly MACOS_RUNNER = 'macos-15';
+
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
-    let platform: string = context.platform;
-
-    if (platform === 'darwin') {
-      platform = `${ MACOS_RUNNER }.${ process.env.M1 ? 'arm64' : 'amd64' }`;
-    } else {
-      platform = `linux.${ process.env.M1 ? 'arm64' : 'amd64' }`;
-    }
-
+    const arch = process.env.M1 ? 'arm64' : 'amd64';
+    const platform = context.platform === 'darwin' ? `${ Lima.MACOS_RUNNER }.${ arch }` : `linux.${ arch }`;
     const archiveName = `lima.${ platform }.tar.gz`;
     const url = `${ baseUrl }/v${ context.dependencies.lima.version }/${ archiveName }`;
     const expectedChecksum = lookupChecksum(context, this.name, archiveName);
@@ -70,7 +64,7 @@ export class Lima extends GlobalDependency(GitHubDependency) {
 
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
-    const platforms = [`${ MACOS_RUNNER }.amd64`, `${ MACOS_RUNNER }.arm64`, 'linux.amd64', 'linux.arm64'];
+    const platforms = [`${ Lima.MACOS_RUNNER }.amd64`, `${ Lima.MACOS_RUNNER }.arm64`, 'linux.amd64', 'linux.arm64'];
 
     return Object.fromEntries(await Promise.all(platforms.map(async(platform) => {
       const archiveName = `lima.${ platform }.tar.gz`;

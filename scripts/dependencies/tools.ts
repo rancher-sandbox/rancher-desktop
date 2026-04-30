@@ -26,6 +26,13 @@ function exeName(context: DownloadContext, name: string) {
   return `${ name }${ onWindows ? '.exe' : '' }`;
 }
 
+function cartesian<A extends string, B extends string>(
+  as: readonly A[],
+  bs: readonly B[],
+): [A, B][] {
+  return as.flatMap(a => bs.map<[A, B]>(b => [a, b]));
+}
+
 export class KuberlrAndKubectl extends GlobalDependency(GitHubDependency) {
   readonly name = 'kuberlr';
   readonly githubOwner = 'flavio';
@@ -56,11 +63,7 @@ export class KuberlrAndKubectl extends GlobalDependency(GitHubDependency) {
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const upstream = await fetchUpstreamChecksums(`${ baseURL }/checksums.txt`, 'sha256');
-    const platforms: [string, string][] = [
-      ['linux', 'amd64'], ['linux', 'arm64'],
-      ['darwin', 'amd64'], ['darwin', 'arm64'],
-      ['windows', 'amd64'],
-    ];
+    const platforms = cartesian(['linux', 'darwin', 'windows'], ['amd64', 'arm64']);
 
     return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
       const archiveName = `kuberlr_${ version }_${ goPlatform }_${ arch }` + (goPlatform === 'windows' ? '.zip' : '.tar.gz');
@@ -121,11 +124,7 @@ export class Helm extends GlobalDependency(GitHubDependency) {
   }
 
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
-    const platforms: [string, string][] = [
-      ['linux', 'amd64'], ['linux', 'arm64'],
-      ['darwin', 'amd64'], ['darwin', 'arm64'],
-      ['windows', 'amd64'],
-    ];
+    const platforms = cartesian(['linux', 'darwin', 'windows'], ['amd64', 'arm64']);
 
     return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
       const archiveName = `helm-v${ version }-${ goPlatform }-${ arch }.tar.gz`;
@@ -162,12 +161,7 @@ export class DockerCLI extends GlobalDependency(GitHubDependency) {
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const upstream = await fetchUpstreamChecksums(`${ baseURL }/sha256sum.txt`, 'sha256');
-    const platforms: [string, string][] = [
-      ['linux', 'amd64'], ['linux', 'arm64'],
-      ['wsl', 'amd64'], ['wsl', 'arm64'],
-      ['darwin', 'amd64'], ['darwin', 'arm64'],
-      ['windows', 'amd64'],
-    ];
+    const platforms = cartesian(['linux', 'wsl', 'darwin', 'windows'], ['amd64', 'arm64']);
 
     return Object.fromEntries(await Promise.all(platforms.map(async([dockerPlatform, arch]) => {
       const executableName = `docker-${ dockerPlatform }-${ arch }` + (dockerPlatform === 'windows' ? '.exe' : '');
@@ -203,11 +197,7 @@ export class DockerBuildx extends GlobalDependency(GitHubDependency) {
     // (https://github.com/docker/buildx/issues/945), so we hash darwin without
     // upstream verification.
     const upstream = await fetchUpstreamChecksums(`${ baseURL }/checksums.txt`, 'sha256');
-    const platforms: [string, string][] = [
-      ['linux', 'amd64'], ['linux', 'arm64'],
-      ['darwin', 'amd64'], ['darwin', 'arm64'],
-      ['windows', 'amd64'],
-    ];
+    const platforms = cartesian(['linux', 'darwin', 'windows'], ['amd64', 'arm64']);
 
     return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
       const executableName = `buildx-v${ version }.${ goPlatform }-${ arch }` + (goPlatform === 'windows' ? '.exe' : '');
@@ -238,11 +228,7 @@ export class DockerCompose extends GlobalDependency(GitHubDependency) {
 
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
-    const platforms: [string, string][] = [
-      ['linux', 'x86_64'], ['linux', 'aarch64'],
-      ['darwin', 'x86_64'], ['darwin', 'aarch64'],
-      ['windows', 'x86_64'], ['windows', 'aarch64'],
-    ];
+    const platforms = cartesian(['linux', 'darwin', 'windows'], ['x86_64', 'aarch64']);
 
     return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
       const executableName = `docker-compose-${ goPlatform }-${ arch }` + (goPlatform === 'windows' ? '.exe' : '');
@@ -382,7 +368,7 @@ export class RancherDashboard extends GlobalDependency(GitHubDependency) {
   readonly releaseFilter = 'custom';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseURL = `https://github.com/rancher-sandbox/${ this.githubRepo }/releases/download/desktop-v${ context.dependencies.rancherDashboard.version }`;
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/desktop-v${ context.dependencies.rancherDashboard.version }`;
     const archiveName = 'rancher-dashboard-desktop-embed.tar.gz';
     const url = `${ baseURL }/${ archiveName }`;
     const destPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
@@ -437,7 +423,7 @@ export class RancherDashboard extends GlobalDependency(GitHubDependency) {
   }
 
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
-    const baseURL = `https://github.com/rancher-sandbox/${ this.githubRepo }/releases/download/desktop-v${ version }`;
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/desktop-v${ version }`;
     const archiveName = 'rancher-dashboard-desktop-embed.tar.gz';
     const url = `${ baseURL }/${ archiveName }`;
     const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
@@ -543,11 +529,7 @@ export class ECRCredHelper extends GlobalDependency(GitHubDependency) {
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const baseName = 'docker-credential-ecr-login';
     const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
-    const platforms: [string, string][] = [
-      ['linux', 'amd64'], ['linux', 'arm64'],
-      ['darwin', 'amd64'], ['darwin', 'arm64'],
-      ['windows', 'amd64'],
-    ];
+    const platforms = cartesian(['linux', 'darwin', 'windows'], ['amd64', 'arm64']);
 
     return Object.fromEntries(await Promise.all(platforms.map(async([ecrLoginPlatform, arch]) => {
       const binName = ecrLoginPlatform === 'windows' ? `${ baseName }.exe` : baseName;
