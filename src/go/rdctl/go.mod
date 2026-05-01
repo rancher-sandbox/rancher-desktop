@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/adrg/xdg v0.5.3
-	github.com/docker/cli v29.4.1+incompatible
+	github.com/docker/cli v29.4.2+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/sirupsen/logrus v1.9.4
