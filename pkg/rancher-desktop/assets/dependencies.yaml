@@ -7,12 +7,12 @@
 # Each entry pairs a version with a checksums map of upstream artifact
 # filenames; install-time downloads verify against the stored sha256.
 lima:
-  version: 1.2.1.rd3
+  version: 1.2.1.rd4
   checksums:
-    lima.macos-15.amd64.tar.gz: sha256:dd7ef25213d253fbfb2bcbf09511ec96b1f01ec818b75f725fe9e34948ef7f6b
-    lima.macos-15.arm64.tar.gz: sha256:8abb8fd657d80e0005403b98e9d144a269f1bda89755c2b5af757e48f17a9d47
-    lima.linux.amd64.tar.gz: sha256:a488303bbe939b5990799090376899ee5a2d0cb8dd7b4656265c5f524a1e16ad
-    lima.linux.arm64.tar.gz: sha256:7e1c4a48ab5f948447b7b6724c37f112c64043bd50076d29f376d8b19c948c5d
+    lima.macos-15.amd64.tar.gz: sha256:aae1f520d63d80465fb58b8306f5adc1049ab7ae986fe65370bca0f52634d2db
+    lima.macos-15.arm64.tar.gz: sha256:3329726040fdf5f9e618f5fe1a2ec4d3a68049655df26a06dee076261dea8f7e
+    lima.linux.amd64.tar.gz: sha256:64b84359260daee42a04cb132d72501cc9b293a999e3d29494238226fc3aaeba
+    lima.linux.arm64.tar.gz: sha256:852987aa6ab04cfc6d36ef307c139df7b5ef5cdf84f275075a5038c313a821e7
 qemu:
   version: 9.2.0.rd2
   checksums:
