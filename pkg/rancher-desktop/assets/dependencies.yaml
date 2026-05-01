@@ -54,16 +54,16 @@ helm:
     helm-v4.1.4-windows-amd64.tar.gz: sha256:f6a7bca730093d5b859a33141d34361f1cc7bc358657b48c75ce36e1e8bdf8b6
     helm-v4.1.4-windows-arm64.tar.gz: sha256:44dbb375a7dc2e59e9496882c35bf15d3103f6d4bb8df6124c40de0eed680927
 dockerCLI:
-  version: 29.4.1
+  version: 29.4.2
   checksums:
-    docker-linux-amd64: sha256:32892cbe6ccd673d72b0276b1c36e4efc84aec3df57e79f856565f59ba1d8335
-    docker-linux-arm64: sha256:b740a3915050591248430181b6034eef5d501af9dfe7ae7d5d500c0285e4c392
-    docker-wsl-amd64: sha256:62d1b3ace67473c68602213757dc132e1cf73bf8736f92425c815300deb1e51b
-    docker-wsl-arm64: sha256:f1de0fbcc7fb2e9294544040de6b18be833e8c35d77f36532dfc839b308b33cb
-    docker-darwin-amd64: sha256:90a0abfa721d7e268b63392c3d77d7b179445a25516b328323d4c6036fd0fbc0
-    docker-darwin-arm64: sha256:b5c132aebceaef0e180b38616a5cee6943631a356e650297c98dd3049174565f
-    docker-windows-amd64.exe: sha256:e035e3abdeea019fae064b710e7b49b95ea59cb1e4ed22e746e9162d5875d8fb
-    docker-windows-arm64.exe: sha256:ba480fff265b2710b9571199fcdaa14bde2e9805f3184f7b7b64efe0b302cf67
+    docker-linux-amd64: sha256:1329a45667c8ec512673cad79bc9c89ccd58d42f965676b8492d1802a2556d83
+    docker-linux-arm64: sha256:759de5f6e2ae03d8d2bf21b0b8e1ce24466e30a345322c6d4c18467272e29633
+    docker-wsl-amd64: sha256:f7f30b582ac0d0b743564c14fbb086feaca8839691b2143b57793a2f0dec5eea
+    docker-wsl-arm64: sha256:a882ce7ca86a98630c69b01bf143e9075af9336297d8b5e3c1962a93b2555f08
+    docker-darwin-amd64: sha256:aa1a7e8199f233ca46889cc8640a95fe3db19ce46b124acad18576e3bddcdaa9
+    docker-darwin-arm64: sha256:cc2a5a6da977062bb9bb160029a3b4719b2bfd2adacbff43e4066f4031d5ddf7
+    docker-windows-amd64.exe: sha256:4c49872c8a581fb8450065ed322b2e02ea41c1f4d55e26cacae421526d4c31a3
+    docker-windows-arm64.exe: sha256:e7162a2d344e444dad61bd405da27aa475ee20af498277b405abd8db008781b6
 dockerBuildx:
   version: 0.33.0
   checksums:
