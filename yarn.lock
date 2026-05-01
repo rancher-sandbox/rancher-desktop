@@ -4912,19 +4912,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/compiler-core@npm:3.5.32":
-  version: 3.5.32
-  resolution: "@vue/compiler-core@npm:3.5.32"
-  dependencies:
-    "@babel/parser": "npm:^7.29.2"
-    "@vue/shared": "npm:3.5.32"
-    entities: "npm:^7.0.1"
-    estree-walker: "npm:^2.0.2"
-    source-map-js: "npm:^1.2.1"
-  checksum: 10c0/46133e028609bfe5be21ebf0857b260825cb1aa715e854dab7e2dd26916d9a5b75fbf3dd2add320255b8161973f4db2dc056a653a1bb67296cc81dd0dc5028ff
-  languageName: node
-  linkType: hard
-
 "@vue/compiler-core@npm:3.5.33":
   version: 3.5.33
   resolution: "@vue/compiler-core@npm:3.5.33"
@@ -4938,16 +4925,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/compiler-dom@npm:3.5.32":
-  version: 3.5.32
-  resolution: "@vue/compiler-dom@npm:3.5.32"
-  dependencies:
-    "@vue/compiler-core": "npm:3.5.32"
-    "@vue/shared": "npm:3.5.32"
-  checksum: 10c0/d061e950240e48ce09500005f58ffe5b09f8627f5c999ecf7f52b9525d527e25fc5f7527e66ce67acbe5464a395ba91ad27a5791223f5d1c7064af3b234eefd4
-  languageName: node
-  linkType: hard
-
 "@vue/compiler-dom@npm:3.5.33":
   version: 3.5.33
   resolution: "@vue/compiler-dom@npm:3.5.33"
@@ -4958,7 +4935,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/compiler-sfc@npm:3.5.33":
+"@vue/compiler-sfc@npm:3.5.33, @vue/compiler-sfc@npm:^3.5.13, @vue/compiler-sfc@npm:^3.5.22":
   version: 3.5.33
   resolution: "@vue/compiler-sfc@npm:3.5.33"
   dependencies:
@@ -4972,33 +4949,6 @@ __metadata:
     postcss: "npm:^8.5.10"
     source-map-js: "npm:^1.2.1"
   checksum: 10c0/1c5e649b591eb8466eecda43369bc21a12d4cc763c994a5f3370e532c8abb70bbdfedec3c444ebf6373b10d278d5c01972406bc28372ba42a184e1a6a97f9910
-  languageName: node
-  linkType: hard
-
-"@vue/compiler-sfc@npm:^3.5.13, @vue/compiler-sfc@npm:^3.5.22":
-  version: 3.5.32
-  resolution: "@vue/compiler-sfc@npm:3.5.32"
-  dependencies:
-    "@babel/parser": "npm:^7.29.2"
-    "@vue/compiler-core": "npm:3.5.32"
-    "@vue/compiler-dom": "npm:3.5.32"
-    "@vue/compiler-ssr": "npm:3.5.32"
-    "@vue/shared": "npm:3.5.32"
-    estree-walker: "npm:^2.0.2"
-    magic-string: "npm:^0.30.21"
-    postcss: "npm:^8.5.8"
-    source-map-js: "npm:^1.2.1"
-  checksum: 10c0/2135c1cb2d2a99af2b676ccf9559a863db00d15fba7eb2f4a71253afbe4d2bdad79de31bdc45c3c7187857c213a588334af9cddbe2425d5999b1f3fbd8aa6494
-  languageName: node
-  linkType: hard
-
-"@vue/compiler-ssr@npm:3.5.32":
-  version: 3.5.32
-  resolution: "@vue/compiler-ssr@npm:3.5.32"
-  dependencies:
-    "@vue/compiler-dom": "npm:3.5.32"
-    "@vue/shared": "npm:3.5.32"
-  checksum: 10c0/4b42add6b0bff390e1aff7755b458517673338d999a2cae65aa071761e7b5e55f5e4869c9e278711071fcc3169581bd3cada01d79f2e1a8bf90a8d284aa34090
   languageName: node
   linkType: hard
 
@@ -5172,14 +5122,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/shared@npm:3.5.32, @vue/shared@npm:^3.5.13":
-  version: 3.5.32
-  resolution: "@vue/shared@npm:3.5.32"
-  checksum: 10c0/5b070d2cc7bd6db8109f3b8826a2ed67f4e9806ad1290d7a9af606afeaa071051c63c00096e4bf5094ae79673e21c637ed637efbe0cf73f6e1b5a3e32eaa73ed
-  languageName: node
-  linkType: hard
-
-"@vue/shared@npm:3.5.33":
+"@vue/shared@npm:3.5.33, @vue/shared@npm:^3.5.13":
   version: 3.5.33
   resolution: "@vue/shared@npm:3.5.33"
   checksum: 10c0/c96ec56cf1ff246907ed734f7e61f81e96fccec9944d77ae79421d9d1548ea5be63694e951968b527bdd1dd2c6ab98a05229ee9ae252893051f4802c95c1d3f2
@@ -5471,41 +5414,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@yarnpkg/core@npm:^4.4.2":
-  version: 4.6.0
-  resolution: "@yarnpkg/core@npm:4.6.0"
-  dependencies:
-    "@arcanis/slice-ansi": "npm:^1.1.1"
-    "@types/semver": "npm:^7.1.0"
-    "@types/treeify": "npm:^1.0.0"
-    "@yarnpkg/fslib": "npm:^3.1.5"
-    "@yarnpkg/libzip": "npm:^3.2.2"
-    "@yarnpkg/parsers": "npm:^3.0.3"
-    "@yarnpkg/shell": "npm:^4.1.3"
-    camelcase: "npm:^5.3.1"
-    chalk: "npm:^4.1.2"
-    ci-info: "npm:^4.0.0"
-    clipanion: "npm:^4.0.0-rc.2"
-    cross-spawn: "npm:^7.0.3"
-    diff: "npm:^5.1.0"
-    dotenv: "npm:^16.3.1"
-    es-toolkit: "npm:^1.39.7"
-    fast-glob: "npm:^3.2.2"
-    got: "npm:^11.7.0"
-    hpagent: "npm:^1.2.0"
-    micromatch: "npm:^4.0.2"
-    p-limit: "npm:^2.2.0"
-    semver: "npm:^7.1.2"
-    strip-ansi: "npm:^6.0.0"
-    tar: "npm:^7.5.3"
-    tinylogic: "npm:^2.0.0"
-    treeify: "npm:^1.1.0"
-    tslib: "npm:^2.4.0"
-  checksum: 10c0/69c5f388c75f30001fd2c7cb6e4381d8f9f862a8f535a0c44b82f9cef087c7fc2464402af202700da56ca8ca0153a62727e3602dcfa68e5d29cfa60ab1d54d3a
-  languageName: node
-  linkType: hard
-
-"@yarnpkg/core@npm:^4.7.0":
+"@yarnpkg/core@npm:^4.4.2, @yarnpkg/core@npm:^4.7.0":
   version: 4.7.0
   resolution: "@yarnpkg/core@npm:4.7.0"
   dependencies:
@@ -5896,24 +5805,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@yarnpkg/plugin-pnp@npm:^4.1.1, @yarnpkg/plugin-pnp@npm:^4.1.2":
-  version: 4.1.3
-  resolution: "@yarnpkg/plugin-pnp@npm:4.1.3"
-  dependencies:
-    "@yarnpkg/fslib": "npm:^3.1.4"
-    "@yarnpkg/plugin-stage": "npm:^4.0.2"
-    "@yarnpkg/pnp": "npm:^4.1.3"
-    clipanion: "npm:^4.0.0-rc.2"
-    micromatch: "npm:^4.0.2"
-    tslib: "npm:^2.4.0"
-  peerDependencies:
-    "@yarnpkg/cli": ^4.11.0
-    "@yarnpkg/core": ^4.5.0
-  checksum: 10c0/c712e943fe33397b5e5e25b1dfc094afd7e468a266a5f886a4e8e91176ee723c5399f929b2a62e6817d9aa0fb61a8475a52f0b65fe965533cf51fcd055ff57dc
-  languageName: node
-  linkType: hard
-
-"@yarnpkg/plugin-pnp@npm:^4.1.5":
+"@yarnpkg/plugin-pnp@npm:^4.1.1, @yarnpkg/plugin-pnp@npm:^4.1.2, @yarnpkg/plugin-pnp@npm:^4.1.5":
   version: 4.1.5
   resolution: "@yarnpkg/plugin-pnp@npm:4.1.5"
   dependencies:
@@ -6018,17 +5910,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@yarnpkg/pnp@npm:^4.1.1, @yarnpkg/pnp@npm:^4.1.2, @yarnpkg/pnp@npm:^4.1.3":
-  version: 4.1.3
-  resolution: "@yarnpkg/pnp@npm:4.1.3"
-  dependencies:
-    "@types/node": "npm:^18.19.124"
-    "@yarnpkg/fslib": "npm:^3.1.4"
-  checksum: 10c0/a75901d2c1d68f6a8334753388774b1fb5462b60b040cf0bac44b09594e5f24b3ccb839e9faaf9b93620091881ecbf4c30f7c344614c9418b608acd08f00cc99
-  languageName: node
-  linkType: hard
-
-"@yarnpkg/pnp@npm:^4.1.5":
+"@yarnpkg/pnp@npm:^4.1.1, @yarnpkg/pnp@npm:^4.1.2, @yarnpkg/pnp@npm:^4.1.5":
   version: 4.1.5
   resolution: "@yarnpkg/pnp@npm:4.1.5"
   dependencies:
@@ -8416,19 +8298,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:*":
-  version: 3.3.3
-  resolution: "dompurify@npm:3.3.3"
-  dependencies:
-    "@types/trusted-types": "npm:^2.0.7"
-  dependenciesMeta:
-    "@types/trusted-types":
-      optional: true
-  checksum: 10c0/097c14a21a3f6cb95beded9ecd255f7c3512c42767b048390c747b0fe35736f6a71e02320fc50a9ac2be645834b463e4760915d595d502a56452daf339d0ea9c
-  languageName: node
-  linkType: hard
-
-"dompurify@npm:3.4.1":
+"dompurify@npm:*, dompurify@npm:3.4.1":
   version: 3.4.1
   resolution: "dompurify@npm:3.4.1"
   dependencies:
@@ -14147,18 +14017,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.2.6, postcss@npm:^8.3.5, postcss@npm:^8.4.33, postcss@npm:^8.4.40, postcss@npm:^8.5.8":
-  version: 8.5.8
-  resolution: "postcss@npm:8.5.8"
-  dependencies:
-    nanoid: "npm:^3.3.11"
-    picocolors: "npm:^1.1.1"
-    source-map-js: "npm:^1.2.1"
-  checksum: 10c0/dd918f7127ee7c60a0295bae2e72b3787892296e1d1c3c564d7a2a00c68d8df83cadc3178491259daa19ccc54804fb71ed8c937c6787e08d8bd4bedf8d17044c
-  languageName: node
-  linkType: hard
-
-"postcss@npm:^8.5.10":
+"postcss@npm:^8.2.6, postcss@npm:^8.3.5, postcss@npm:^8.4.33, postcss@npm:^8.4.40, postcss@npm:^8.5.10":
   version: 8.5.12
   resolution: "postcss@npm:8.5.12"
   dependencies:
