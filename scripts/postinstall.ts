@@ -3,18 +3,22 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import * as goUtils from 'scripts/dependencies/go-source';
-import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from 'scripts/dependencies/lima';
-import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
-import { SudoPrompt } from 'scripts/dependencies/sudo-prompt';
-import { ExtensionProxyImage, WSLDistroImage } from 'scripts/dependencies/tar-archives';
-import * as tools from 'scripts/dependencies/tools';
-import { Wix } from 'scripts/dependencies/wix';
-import { WSLDistro, Moproxy } from 'scripts/dependencies/wsl';
+import * as goUtils from '@/scripts/dependencies/go-source';
+import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from '@/scripts/dependencies/lima';
+import { MobyOpenAPISpec } from '@/scripts/dependencies/moby-openapi';
+import { SudoPrompt } from '@/scripts/dependencies/sudo-prompt';
+import { ExtensionProxyImage, WSLDistroImage } from '@/scripts/dependencies/tar-archives';
+import * as tools from '@/scripts/dependencies/tools';
+import { Wix } from '@/scripts/dependencies/wix';
+import { WSLDistro, Moproxy } from '@/scripts/dependencies/wsl';
 import {
-  DependencyPlatform, DependencyVersions, readDependencyVersions, DownloadContext, Dependency,
-} from 'scripts/lib/dependencies';
-import { simpleSpawn } from 'scripts/simple_process';
+  Dependency,
+  DependencyManifest,
+  DependencyPlatform,
+  DownloadContext,
+  readDependencyManifest,
+} from '@/scripts/lib/dependencies';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 interface DependencyWithContext {
   dependency: Dependency;
@@ -180,14 +184,14 @@ async function downloadDependencies(items: DependencyWithContext[]): Promise<voi
 }
 
 async function runScripts(): Promise<void> {
-  // load desired versions of dependencies
-  const depVersions = await readDependencyVersions(path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml'));
+  // load desired versions and checksums of dependencies
+  const manifest = await readDependencyManifest(path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml'));
   const platform = os.platform();
   const dependencies: DependencyWithContext[] = [];
 
   if (platform === 'linux' || platform === 'darwin') {
     // download things that go on unix host
-    const hostDownloadContext = await buildDownloadContextFor(platform, depVersions);
+    const hostDownloadContext = await buildDownloadContextFor(platform, manifest);
 
     for (const dependency of [...userTouchedDependencies, ...unixDependencies, ...hostDependencies]) {
       dependencies.push({ dependency, context: hostDownloadContext });
@@ -201,19 +205,19 @@ async function runScripts(): Promise<void> {
     }
 
     // download things that go inside Lima VM
-    const vmDownloadContext = await buildDownloadContextFor('linux', depVersions);
+    const vmDownloadContext = await buildDownloadContextFor('linux', manifest);
 
     dependencies.push(...vmDependencies.map(dependency => ({ dependency, context: vmDownloadContext })));
   } else if (platform === 'win32') {
     // download things for windows
-    const hostDownloadContext = await buildDownloadContextFor('win32', depVersions);
+    const hostDownloadContext = await buildDownloadContextFor('win32', manifest);
 
     for (const dependency of [...userTouchedDependencies, ...windowsDependencies, ...hostDependencies]) {
       dependencies.push({ dependency, context: hostDownloadContext });
     }
 
     // download things that go inside WSL distro
-    const vmDownloadContext = await buildDownloadContextFor('wsl', depVersions);
+    const vmDownloadContext = await buildDownloadContextFor('wsl', manifest);
 
     for (const dependency of [...userTouchedDependencies, ...wslDependencies, ...vmDependencies]) {
       dependencies.push({ dependency, context: vmDownloadContext });
@@ -223,11 +227,11 @@ async function runScripts(): Promise<void> {
   await downloadDependencies(dependencies);
 }
 
-async function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): Promise<DownloadContext> {
+async function buildDownloadContextFor(rawPlatform: DependencyPlatform, manifest: DependencyManifest): Promise<DownloadContext> {
   const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
   const resourcesDir = path.join(process.cwd(), 'resources');
   const downloadContext: DownloadContext = {
-    versions:           depVersions,
+    dependencies:       manifest,
     dependencyPlatform: rawPlatform,
     platform,
     goPlatform:         platform === 'win32' ? 'windows' : platform,

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2024",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "moduleDetection": "force",
     "jsx": "react",
     "lib": [
@@ -16,10 +16,13 @@
     "sourceMap": true,
     "strict": true,
     "experimentalDecorators": true,
-    "baseUrl": ".",
+    "resolveJsonModule": true,
     "paths": {
+      "@/*": [
+        "./*"
+      ],
       "@pkg/*": [
-        "pkg/rancher-desktop/*"
+        "./pkg/rancher-desktop/*"
       ],
       "@shell/*": [
         "./node_modules/@rancher/shell/*"

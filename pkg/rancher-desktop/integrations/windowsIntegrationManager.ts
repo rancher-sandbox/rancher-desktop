@@ -61,9 +61,9 @@ enum SyncStateKey {
 type SyncState =
   { state: SyncStateKey.IDLE } |
   /** The `active` promise will be resolved once the current sync is complete. */
-  { state: SyncStateKey.ACTIVE, active: ReturnType<typeof Latch> } |
+  { state: SyncStateKey.ACTIVE, active: ReturnType<typeof Latch<void>> } |
   /** The `queued` promise will be resolved after the current sync +1 is complete. */
-  { state: SyncStateKey.QUEUED, active: ReturnType<typeof Latch>, queued: ReturnType<typeof Latch> };
+  { state: SyncStateKey.QUEUED, active: ReturnType<typeof Latch<void>>, queued: ReturnType<typeof Latch<void>> };
 
 /**
  * DiagnosticKey limits the `key` argument of the diagnostic events.
@@ -587,9 +587,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncDistroSpinCLI(distro: string, state: boolean) {
     try {
       if (state && this.settings.experimental?.containerEngine?.webAssembly) {
-        const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
+        const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI.version);
         const env = {
-          KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin,
+          KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin.version,
           SPIN_TEMPLATES_TAG:  (version ? `spin/templates/v${ version.major }.${ version.minor }` : 'unknown'),
         };
         const wslenv = Object.keys(env).join(':');

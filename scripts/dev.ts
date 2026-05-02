@@ -42,10 +42,11 @@ class DevRunner extends events.EventEmitter {
    * Spawn a child process, set up to emit errors on unexpected exit.
    * @param title The title of the process to show in messages.
    * @param command The executable to run.
-   * @param args Any arguments to the executable.
+   * @param args Any arguments to the executable; the last argument may be
+   *                        an Object holding options for child_process.spawn().
    * @returns The new child process.
    */
-  spawn(title: string, command: string, ...args: string[]): childProcess.ChildProcess {
+  spawn(title: string, command: string, ...args: (string | childProcess.SpawnOptions)[]): childProcess.ChildProcess {
     const promise = buildUtils.spawn(command, ...args);
 
     promise
@@ -128,6 +129,13 @@ class DevRunner extends events.EventEmitter {
       this.rendererPort.toString(),
       '--skip-plugins',
       'eslint',
+      {
+        env: {
+          ...process.env,
+          RD_DOCS_URL: await buildUtils.docsUrl,
+          RD_VERSION:  await buildUtils.version,
+        },
+      },
     );
 
     // Listen for the 'exit' event of the child process and resolve or reject the Promise accordingly.

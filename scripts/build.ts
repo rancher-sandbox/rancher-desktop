@@ -11,7 +11,7 @@ import * as path from 'path';
 
 import buildUtils from './lib/build-utils';
 
-import { simpleSpawn } from 'scripts/simple_process';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 class Builder {
   async cleanup() {
@@ -60,6 +60,13 @@ class Builder {
         '--skip-plugins',
         'eslint',
       ],
+      {
+        env: {
+          ...process.env,
+          RD_DOCS_URL: await buildUtils.docsUrl,
+          RD_VERSION:  await buildUtils.version,
+        },
+      },
     );
   }
 

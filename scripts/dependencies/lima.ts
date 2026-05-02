@@ -5,47 +5,46 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import yaml from 'yaml';
-
-import { download, downloadTarGZ, getResource } from '../lib/download';
+import { download, downloadTarGZ } from '../lib/download';
 
 import {
   AlpineLimaISOVersion,
-  DEP_VERSIONS_PATH,
-  DependencyVersions,
   DownloadContext,
-  findChecksum,
+  downloadAndHash,
+  fetchUpstreamChecksums,
   getOctokit,
   GitHubDependency,
   GitHubRelease,
   GlobalDependency,
-} from 'scripts/lib/dependencies';
-import { simpleSpawn } from 'scripts/simple_process';
+  lookupChecksum,
+  Sha256Checksum,
+} from '@/scripts/lib/dependencies';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 export class Lima extends GlobalDependency(GitHubDependency) {
   readonly name = 'lima';
   readonly githubOwner = 'rancher-sandbox';
   readonly githubRepo = 'rancher-desktop-lima';
 
+  // Names the macOS runner that builds the rancher-desktop-lima darwin
+  // archive.  Both `download()` and `getChecksums()` embed this token in
+  // artifact filenames, so update it here when upstream bumps the runner
+  // (e.g. `macos-16`).
+  static readonly MACOS_RUNNER = 'macos-15';
+
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
-    let platform: string = context.platform;
-
-    if (platform === 'darwin') {
-      platform = `macos-15.${ process.env.M1 ? 'arm64' : 'amd64' }`;
-    } else {
-      platform = `linux.${ process.env.M1 ? 'arm64' : 'amd64' }`;
-    }
-
-    const url = `${ baseUrl }/v${ context.versions.lima }/lima.${ platform }.tar.gz`;
-    const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
+    const arch = process.env.M1 ? 'arm64' : 'amd64';
+    const platform = context.platform === 'darwin' ? `${ Lima.MACOS_RUNNER }.${ arch }` : `linux.${ arch }`;
+    const archiveName = `lima.${ platform }.tar.gz`;
+    const url = `${ baseUrl }/v${ context.dependencies.lima.version }/${ archiveName }`;
+    const expectedChecksum = lookupChecksum(context, this.name, archiveName);
     const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
-    const tarPath = path.join(context.resourcesDir, context.platform, `lima.${ platform }.v${ context.versions.lima }.tgz`);
+    const tarPath = path.join(context.resourcesDir, context.platform, `lima.${ platform }.v${ context.dependencies.lima.version }.tgz`);
 
     await download(url, tarPath, {
       expectedChecksum,
-      checksumAlgorithm: 'sha512',
-      access:            fs.constants.W_OK,
+      access: fs.constants.W_OK,
     });
     await fs.promises.mkdir(limaDir, { recursive: true });
 
@@ -62,6 +61,22 @@ export class Lima extends GlobalDependency(GitHubDependency) {
       });
     });
   }
+
+  async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
+    const platforms = [`${ Lima.MACOS_RUNNER }.amd64`, `${ Lima.MACOS_RUNNER }.arm64`, 'linux.amd64', 'linux.arm64'];
+
+    return Object.fromEntries(await Promise.all(platforms.map(async(platform) => {
+      const archiveName = `lima.${ platform }.tar.gz`;
+      const url = `${ baseUrl }/${ archiveName }`;
+      const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
+      const checksum = await downloadAndHash(url, {
+        verify: { algorithm: 'sha512', expected: sidecar[archiveName] },
+      });
+
+      return [archiveName, checksum];
+    })));
+  }
 }
 
 export class Qemu extends GlobalDependency(GitHubDependency) {
@@ -77,18 +92,38 @@ export class Qemu extends GlobalDependency(GitHubDependency) {
 
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const arch = context.isM1 ? 'aarch64' : 'x86_64';
-
-    const url = `${ baseUrl }/v${ context.versions.qemu }/qemu-${ context.versions.qemu }-${ context.platform }-${ arch }.tar.gz`;
-    const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
+    const archiveName = `qemu-${ context.dependencies.qemu.version }-${ context.platform }-${ arch }.tar.gz`;
+    const url = `${ baseUrl }/v${ context.dependencies.qemu.version }/${ archiveName }`;
+    const expectedChecksum = lookupChecksum(context, this.name, archiveName);
     const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
-    const tarPath = path.join(context.resourcesDir, context.platform, `qemu.v${ context.versions.qemu }.tgz`);
+    const tarPath = path.join(context.resourcesDir, context.platform, `qemu.v${ context.dependencies.qemu.version }.tgz`);
 
     await download(url, tarPath, {
-      expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
+      expectedChecksum, access: fs.constants.W_OK,
     });
     await fs.promises.mkdir(limaDir, { recursive: true });
 
     await simpleSpawn('/usr/bin/tar', ['-xf', tarPath], { cwd: limaDir });
+  }
+
+  async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
+    // rancher-desktop-qemu does not yet publish a linux/arm64 build; mirror the skip in download().
+    const platforms: [string, string][] = [
+      ['darwin', 'x86_64'], ['darwin', 'aarch64'],
+      ['linux', 'x86_64'],
+    ];
+
+    return Object.fromEntries(await Promise.all(platforms.map(async([platform, arch]) => {
+      const archiveName = `qemu-${ version }-${ platform }-${ arch }.tar.gz`;
+      const url = `${ baseUrl }/${ archiveName }`;
+      const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
+      const checksum = await downloadAndHash(url, {
+        verify: { algorithm: 'sha512', expected: sidecar[archiveName] },
+      });
+
+      return [archiveName, checksum];
+    })));
   }
 }
 
@@ -99,13 +134,28 @@ export class SocketVMNet extends GlobalDependency(GitHubDependency) {
 
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'arm64' : 'x86_64';
-    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.socketVMNet }`;
-    const archiveName = `socket_vmnet-${ context.versions.socketVMNet }-${ arch }.tar.gz`;
-    const expectedChecksum = await findChecksum(`${ baseURL }/SHA256SUMS`, archiveName);
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.dependencies.socketVMNet.version }`;
+    const archiveName = `socket_vmnet-${ context.dependencies.socketVMNet.version }-${ arch }.tar.gz`;
+    const expectedChecksum = lookupChecksum(context, this.name, archiveName);
 
     await downloadTarGZ(`${ baseURL }/${ archiveName }`,
       path.join(context.resourcesDir, context.platform, 'lima', 'socket_vmnet', 'bin', 'socket_vmnet'),
       { expectedChecksum, entryName: './opt/socket_vmnet/bin/socket_vmnet' });
+  }
+
+  async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
+    const upstream = await fetchUpstreamChecksums(`${ baseURL }/SHA256SUMS`, 'sha256');
+    const architectures = ['x86_64', 'arm64'];
+
+    return Object.fromEntries(await Promise.all(architectures.map(async(arch) => {
+      const archiveName = `socket_vmnet-${ version }-${ arch }.tar.gz`;
+      const checksum = await downloadAndHash(`${ baseURL }/${ archiveName }`, {
+        verify: { algorithm: 'sha256', expected: upstream[archiveName] },
+      });
+
+      return [archiveName, checksum];
+    })));
   }
 }
 
@@ -118,17 +168,34 @@ export class AlpineLimaISO extends GlobalDependency(GitHubDependency) {
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const edition = 'rd';
-    const version = context.versions.alpineLimaISO;
+    const version = context.dependencies.alpineLimaISO.version;
     const arch = process.env.M1 ? 'aarch64' : 'x86_64';
 
     const isoName = `alpine-lima-${ edition }-${ version.alpineVersion }-${ arch }.iso`;
     const url = `${ baseUrl }/v${ version.isoVersion }/${ isoName }`;
     const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-v${ version.isoVersion }-${ edition }-${ version.alpineVersion }.iso`);
-    const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
+    const expectedChecksum = lookupChecksum(context, this.name, isoName);
 
     await download(url, destPath, {
-      expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
+      expectedChecksum, access: fs.constants.W_OK,
     });
+  }
+
+  async getChecksums(version: AlpineLimaISOVersion): Promise<Record<string, Sha256Checksum>> {
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version.isoVersion }`;
+    const edition = 'rd';
+    const architectures = ['x86_64', 'aarch64'];
+
+    return Object.fromEntries(await Promise.all(architectures.map(async(arch) => {
+      const isoName = `alpine-lima-${ edition }-${ version.alpineVersion }-${ arch }.iso`;
+      const url = `${ baseUrl }/${ isoName }`;
+      const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
+      const checksum = await downloadAndHash(url, {
+        verify: { algorithm: 'sha512', expected: sidecar[isoName] },
+      });
+
+      return [isoName, checksum];
+    })));
   }
 
   assembleAlpineLimaISOVersionFromGitHubRelease(release: GitHubRelease): AlpineLimaISOVersion {
@@ -137,7 +204,7 @@ export class AlpineLimaISO extends GlobalDependency(GitHubDependency) {
     if (!matchingAsset) {
       throw new Error(`Could not find matching asset name in set ${ release.assets }`);
     }
-    const nameMatch = matchingAsset.name.match(/alpine-lima-rd-([0-9]+\.[0-9]+\.[0-9])-.*/);
+    const nameMatch = /alpine-lima-rd-([0-9]+\.[0-9]+\.[0-9])-.*/.exec(matchingAsset.name);
 
     if (!nameMatch) {
       throw new Error(`Failed to parse name "${ matchingAsset.name }"`);
@@ -154,7 +221,7 @@ export class AlpineLimaISO extends GlobalDependency(GitHubDependency) {
     const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
     const releases = response.data;
 
-    return await Promise.all(releases.map(this.assembleAlpineLimaISOVersionFromGitHubRelease));
+    return releases.map(release => this.assembleAlpineLimaISOVersionFromGitHubRelease(release));
   }
 
   versionToTagName(version: AlpineLimaISOVersion): string {
@@ -163,18 +230,5 @@ export class AlpineLimaISO extends GlobalDependency(GitHubDependency) {
 
   rcompareVersions(version1: AlpineLimaISOVersion, version2: AlpineLimaISOVersion): -1 | 0 | 1 {
     return super.rcompareVersions(version1.isoVersion, version2.isoVersion);
-  }
-
-  async updateManifest(newVersion: string | AlpineLimaISOVersion): Promise<Set<string>> {
-    if (typeof newVersion === 'string') {
-      throw new TypeError(`AlpineLimaISO.updateManifest does not support string version ${ newVersion }`);
-    }
-
-    const depVersions: DependencyVersions = yaml.parse(await fs.promises.readFile(DEP_VERSIONS_PATH, 'utf8'));
-
-    depVersions.alpineLimaISO = newVersion;
-    await fs.promises.writeFile(DEP_VERSIONS_PATH, yaml.stringify(depVersions), 'utf-8');
-
-    return new Set([DEP_VERSIONS_PATH]);
   }
 }

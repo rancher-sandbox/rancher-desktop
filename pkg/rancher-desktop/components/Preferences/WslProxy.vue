@@ -123,7 +123,7 @@ export default defineComponent({
             :items="preferences.experimental.virtualMachine.proxy.noproxy"
             :error-messages="noproxyErrorMessages"
             bulk-addition-delimiter=","
-            @change="onChange('experimental.virtualMachine.proxy.noproxy', $event)"
+            @change="Array.isArray($event) && onChange('experimental.virtualMachine.proxy.noproxy', $event)"
             @type:item="onType($event)"
             @errors="onDuplicate($event.duplicate)"
           />

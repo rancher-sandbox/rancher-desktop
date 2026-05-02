@@ -88,7 +88,7 @@ describe('IpcMainProxy', () => {
   });
 
   it('should allow adding event listeners', () => {
-    const topic = 'get-app-version' as const;
+    const topic = 'update-state' as const;
     const cb = jest.fn();
 
     subject.on(topic, cb);
@@ -98,7 +98,7 @@ describe('IpcMainProxy', () => {
   });
 
   it('should allow removing event listeners', () => {
-    const topic = 'get-app-version' as const;
+    const topic = 'update-state' as const;
     const cb = jest.fn();
 
     subject.on(topic, cb);
@@ -109,7 +109,7 @@ describe('IpcMainProxy', () => {
   });
 
   it('should allow single-use listeners', () => {
-    const topic = 'get-app-version' as const;
+    const topic = 'update-state' as const;
     const cb = jest.fn();
 
     subject.once(topic, cb);
@@ -120,7 +120,7 @@ describe('IpcMainProxy', () => {
   });
 
   it('should allow removing all listeners of a topic', () => {
-    const topic = 'get-app-version' as const;
+    const topic = 'update-state' as const;
     const cb = jest.fn();
 
     subject.on(topic, cb);

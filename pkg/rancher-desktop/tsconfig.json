@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2018",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "lib": [
       "ESNext",
       "ESNext.AsyncIterable",
@@ -15,7 +15,6 @@
     "strict": true,
     "noEmit": false,
     "experimentalDecorators": true,
-    "baseUrl": ".",
     "paths": {
       "@pkg/*": [
         "./*"

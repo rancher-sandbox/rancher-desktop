@@ -237,9 +237,9 @@ const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 
 export const MACHINE_NAME = '0';
-const IMAGE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.isoVersion;
+const IMAGE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.version.isoVersion;
 const ALPINE_EDITION = 'rd';
-const ALPINE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.alpineVersion;
+const ALPINE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.version.alpineVersion;
 
 const ETC_RANCHER_DESKTOP_DIR = '/etc/rancher/desktop';
 const CREDENTIAL_FORWARDER_SETTINGS_PATH = path.join(ETC_RANCHER_DESKTOP_DIR, 'credfwd');
@@ -1535,10 +1535,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       promises.push(BackendHelper.configureContainerEngine(this, configureWASM, mobyStorageDriver));
       if (configureWASM) {
-        const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
+        const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI.version);
         const env = {
           ...process.env,
-          KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin,
+          KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin.version,
           SPIN_TEMPLATES_TAG:  (version ? `spin/templates/v${ version.major }.${ version.minor }` : 'unknown'),
         };
 

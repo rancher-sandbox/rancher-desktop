@@ -84,7 +84,7 @@ class E2ETestRunner extends events.EventEmitter {
   /**
    * Start the renderer process.
    */
-  buildRenderer(): Promise<void> {
+  async buildRenderer(): Promise<void> {
     process.env.VUE_CLI_SERVICE_CONFIG_PATH = 'pkg/rancher-desktop/vue.config.mjs';
 
     return buildUtils.spawn(
@@ -94,6 +94,13 @@ class E2ETestRunner extends events.EventEmitter {
       'build',
       '--skip-plugins',
       'eslint',
+      {
+        env: {
+          ...process.env,
+          RD_DOCS_URL: await buildUtils.docsUrl,
+          RD_VERSION:  await buildUtils.version,
+        },
+      },
     );
   }
 

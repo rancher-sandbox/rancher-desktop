@@ -19,7 +19,7 @@ runs:
   - id: vault
     name: Read vault secrets
     if: github.repository == 'rancher-sandbox/rancher-desktop'
-    uses: rancher-eio/read-vault-secrets@main
+    uses: rancher-eio/read-vault-secrets@0da85151ad1f19ed7986c41587e45aac1ace74b6 # v3
     with:
       secrets: |
         secret/data/github/repo/${{ github.repository }}/github/app-credentials appId | APP_ID ;
@@ -27,7 +27,7 @@ runs:
   - id: gen-token
     name: Generate token
     if: github.repository == 'rancher-sandbox/rancher-desktop'
-    uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+    uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
     with:
       app-id: ${{ env.APP_ID }}
       private-key: ${{ env.PRIVATE_KEY }}

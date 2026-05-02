@@ -17,6 +17,10 @@ extraResources:
 - '!resources/win32/staging/'
 - '!resources/host/'
 - '!resources/**/*.js.map'
+- '!resources/**/*.unsigned'
+- '!resources/**/*.tar.gz'
+- '!resources/**/*.zip'
+- '!resources/**/*.xz'
 files:
 - dist/app/**/*
 - '!**/node_modules/*/prebuilds/!(${platform}*)/*.node'
