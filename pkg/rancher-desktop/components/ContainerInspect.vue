@@ -21,19 +21,19 @@
         <tbody>
           <tr data-testid="info-row-name">
             <th>Name</th>
-            <td><code>{{ displayName }}</code></td>
+            <td>{{ displayName }}</td>
           </tr>
           <tr data-testid="info-row-id">
             <th>ID</th>
-            <td><code>{{ shortId }}</code></td>
+            <td>{{ shortId }}</td>
           </tr>
           <tr data-testid="info-row-image">
             <th>Image</th>
-            <td><code>{{ data.Config.Image }}</code></td>
+            <td>{{ data.Config.Image }}</td>
           </tr>
           <tr data-testid="info-row-ip">
             <th>IP Address</th>
-            <td><code>{{ ipAddress }}</code></td>
+            <td>{{ ipAddress }}</td>
           </tr>
           <tr data-testid="info-row-created">
             <th>Created</th>
@@ -76,8 +76,8 @@
                 :key="i"
               >
                 <td>{{ mount.Type }}</td>
-                <td><code>{{ mount.Source }}</code></td>
-                <td><code>{{ mount.Destination }}</code></td>
+                <td>{{ mount.Source }}</td>
+                <td>{{ mount.Destination }}</td>
                 <td>{{ mount.RW ? 'RW' : 'RO' }}</td>
               </tr>
             </tbody>
@@ -126,15 +126,15 @@
             <tbody>
               <tr v-if="entrypoint">
                 <th>Entrypoint</th>
-                <td><code>{{ entrypoint }}</code></td>
+                <td>{{ entrypoint }}</td>
               </tr>
               <tr v-if="command">
                 <th>Command</th>
-                <td><code>{{ command }}</code></td>
+                <td>{{ command }}</td>
               </tr>
               <tr v-if="data.Args.length">
                 <th>Args</th>
-                <td><code>{{ data.Args.join(' ') }}</code></td>
+                <td>{{ data.Args.join(' ') }}</td>
               </tr>
             </tbody>
           </table>
@@ -347,8 +347,10 @@ const formatDate = (iso: string): string => {
 // Summary table
 .summary-table {
   border-collapse: collapse;
-  width: 100%;
-  max-width: 700px;
+  // Shift right by .inspect-section border (1px) + .section-body padding (0.75rem) so that
+  // both th labels and td values align with the columns inside the detail tables below.
+  margin-left: calc(0.75rem + 1px);
+  width: calc(100% - 0.75rem - 1px);
 
   th, td {
     padding: 0.4rem 0.75rem;
@@ -359,15 +361,15 @@ const formatDate = (iso: string): string => {
 
   th {
     white-space: nowrap;
+    // content-box ensures width: 120px sets the content width, matching .detail-table th
+    // (which gets content-box by default). Without this the global border-box rule makes
+    // the total box 120px instead, so td starts 21px too far left.
+    box-sizing: content-box;
     width: 120px;
     color: var(--muted);
     font-weight: 500;
   }
 
-  code {
-    font-family: monospace;
-    font-size: 0.875em;
-  }
 }
 
 // Collapsible sections
@@ -428,7 +430,8 @@ const formatDate = (iso: string): string => {
   width: 100%;
 
   th, td {
-    padding: 0.3rem 0.5rem;
+    // Horizontal padding must match .summary-table th, td so the value columns stay aligned.
+    padding: 0.3rem 0.75rem;
     text-align: left;
     border-bottom: 1px solid var(--border);
     vertical-align: top;
@@ -436,15 +439,9 @@ const formatDate = (iso: string): string => {
 
   th {
     white-space: nowrap;
+    width: 120px;
     color: var(--muted);
     font-weight: 500;
-    padding-right: 1rem;
-  }
-
-  code {
-    font-family: monospace;
-    font-size: 0.875em;
-    word-break: break-all;
   }
 
   tr:last-child th,
@@ -471,10 +468,5 @@ const formatDate = (iso: string): string => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-
-  code {
-    font-family: monospace;
-    font-size: 0.875em;
-  }
 }
 </style>
