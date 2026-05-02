@@ -21,6 +21,9 @@ import (
 const HkcuRegistryHive = "hkcu"
 const HklmRegistryHive = "hklm"
 
+const DefaultsProfileType = "defaults"
+const LockedProfileType = "locked"
+
 func escape(s string) string {
 	s1 := strings.ReplaceAll(s, "\\", "\\\\")
 	return strings.ReplaceAll(s1, `"`, `\\"`)
@@ -47,7 +50,7 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 		}
 		return convertToRegFormat(pathParts, structType, value.Elem(), jsonTag, path)
 	}
-	if value.Kind() == reflect.Ptr {
+	if value.Kind() == reflect.Pointer {
 		return nil, fmt.Errorf("reg-file generation: got an unexpected pointer for %s value %v, expecting type %v", path, value, structType)
 	}
 	switch kind {
@@ -96,7 +99,7 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 		retLines = append(retLines, scalarReturnedLines...)
 		retLines = append(retLines, nestedReturnedLines...)
 		return retLines, nil
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return convertToRegFormat(pathParts, structType.Elem(), value, jsonTag, path)
 	case reflect.Slice, reflect.Array:
 		if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
@@ -184,11 +187,11 @@ func stringToMultiStringHexBytes(values []string) string {
 func JSONToReg(hiveType, profileType, settingsBodyAsJSON string) ([]string, error) {
 	var actualSettingsJSON map[string]interface{}
 
-	fullHiveType, ok := map[string]string{"hklm": "HKEY_LOCAL_MACHINE", "hkcu": "HKEY_CURRENT_USER"}[hiveType]
+	fullHiveType, ok := map[string]string{HklmRegistryHive: "HKEY_LOCAL_MACHINE", HkcuRegistryHive: "HKEY_CURRENT_USER"}[hiveType]
 	if !ok {
 		return nil, fmt.Errorf(`unrecognized hiveType of %q, must be "hklm" or "hkcu"`, hiveType)
 	}
-	_, ok = map[string]bool{"defaults": true, "locked": true}[profileType]
+	_, ok = map[string]bool{DefaultsProfileType: true, LockedProfileType: true}[profileType]
 	if !ok {
 		return nil, fmt.Errorf(`unrecognized profileType of %q, must be "defaults" or "locked"`, profileType)
 	}

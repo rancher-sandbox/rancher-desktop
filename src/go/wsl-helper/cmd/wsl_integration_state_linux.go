@@ -26,6 +26,12 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/integration"
 )
 
+const (
+	modeShow   = "show"
+	modeSet    = "set"
+	modeDelete = "delete"
+)
+
 var wslIntegrationStateViper = viper.New()
 
 // wslIntegrationStateCmd represents the `wsl integration state` command.
@@ -38,12 +44,12 @@ var wslIntegrationStateCmd = &cobra.Command{
 
 		mode := cmd.Flags().Lookup("mode").Value.String()
 		switch mode {
-		case "show":
+		case modeShow:
 			return integration.Show()
-		case "set":
+		case modeSet:
 			logrus.Trace("Setting wsl integration state marker")
 			return integration.Set()
-		case "delete":
+		case modeDelete:
 			logrus.Trace("Deleting wsl integration state marker")
 			return integration.Delete()
 		default:
@@ -53,7 +59,7 @@ var wslIntegrationStateCmd = &cobra.Command{
 }
 
 func init() {
-	wslIntegrationStateCmd.Flags().Var(&enumValue{val: "show", allowed: []string{"show", "set", "delete"}}, "mode", "Operation mode")
+	wslIntegrationStateCmd.Flags().Var(&enumValue{val: modeShow, allowed: []string{modeShow, modeSet, modeDelete}}, "mode", "Operation mode")
 	if err := wslIntegrationStateCmd.MarkFlagRequired("mode"); err != nil {
 		logrus.WithError(err).Fatal("Failed to set up flags")
 	}
