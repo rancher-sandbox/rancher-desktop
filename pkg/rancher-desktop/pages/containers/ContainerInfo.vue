@@ -193,11 +193,6 @@ watch(activeTab, (tab) => {
   }
 });
 
-watch(containerId, () => {
-  activeTab.value = 'tab-info';
-  shellEverActivated.value = false;
-});
-
 // Methods as functions
 const subscribe = async() => {
   if (subscribeTimer.value) {

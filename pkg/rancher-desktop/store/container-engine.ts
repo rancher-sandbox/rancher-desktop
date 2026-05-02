@@ -8,7 +8,7 @@ import type { RDXClient } from '@pkg/preload/extensions';
 
 type ValidContainerEngine = Exclude<ContainerEngine, ContainerEngine.NONE>;
 type SubscriberType = 'containers' | 'volumes';
-type ErrorSource = 'containers' | 'volumes' | 'namespaces' | 'inspect';
+type ErrorSource = 'containers' | 'volumes' | 'namespaces';
 
 export interface ContainerMount {
   Type:        string;
@@ -38,8 +38,8 @@ export interface ContainerInspectData {
     CapAdd:  string[] | null;
     CapDrop: string[] | null;
   };
-  Mounts:          ContainerMount[];
-  NetworkSettings: {
+  Mounts:           ContainerMount[];
+  NetworkSettings?: {
     IPAddress: string;
     Ports:     Record<string, ({ HostIp: string; HostPort: string }[]) | null>;
     Networks:  Record<string, { IPAddress: string }>;
@@ -386,6 +386,14 @@ export const actions = {
           delete containers[id];
         }
       }
+      // Remove stale inspect data for containers that no longer exist
+      const inspectData = { ...state.inspectData };
+      for (const id of Object.keys(inspectData)) {
+        if (!ids.has(id)) {
+          delete inspectData[id];
+        }
+      }
+      commit('SET_INSPECT_DATA', inspectData);
       commit('SET_CONTAINERS', containers);
       if (state.error?.source === 'containers') {
         commit('SET_ERROR', null);
@@ -407,7 +415,9 @@ export const actions = {
     const result = await client.docker.cli.exec('inspect', args);
     const parsed = result.parseJsonObject() as ContainerInspectData[];
 
-    commit('SET_INSPECT_DATA', { ...state.inspectData, [containerId]: parsed[0] });
+    if (parsed[0]) {
+      commit('SET_INSPECT_DATA', { ...state.inspectData, [containerId]: parsed[0] });
+    }
   },
   async fetchVolumes({ commit, getters, state }) {
     try {

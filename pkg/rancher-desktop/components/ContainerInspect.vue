@@ -239,7 +239,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useStore } from 'vuex';
 
 import type { ContainerInspectData } from '@pkg/store/container-engine';
@@ -253,7 +253,7 @@ const store = useStore();
 const data = computed<ContainerInspectData | undefined>(
   () => store.state['container-engine'].inspectData[props.containerId],
 );
-const loading = ref(false);
+const loading = ref(true);
 const error = ref<string | null>(null);
 
 const fetchInspect = async() => {
@@ -275,8 +275,7 @@ const fetchInspect = async() => {
   }
 };
 
-onMounted(fetchInspect);
-watch(() => props.containerId, fetchInspect);
+watch(() => props.containerId, fetchInspect, { immediate: true });
 
 // Computed helpers
 const displayName = computed(() => (data.value?.Name ?? '').replace(/^\//, ''));
@@ -288,13 +287,13 @@ const capAdd = computed(() => (data.value?.HostConfig.CapAdd ?? []).join(', ') |
 const capDrop = computed(() => (data.value?.HostConfig.CapDrop ?? []).join(', ') || 'None');
 
 const ipAddress = computed(() => {
-  const primary = data.value?.NetworkSettings.IPAddress;
+  const primary = data.value?.NetworkSettings?.IPAddress;
 
   if (primary) {
     return primary;
   }
   // For containers on custom networks, the IP lives in Networks[name].IPAddress
-  const ips = Object.values(data.value?.NetworkSettings.Networks ?? {})
+  const ips = Object.values(data.value?.NetworkSettings?.Networks ?? {})
     .map((n) => n.IPAddress)
     .filter(Boolean);
 
@@ -304,7 +303,7 @@ const ipAddress = computed(() => {
 const labelEntries = computed(() => Object.entries(data.value?.Config.Labels ?? {}));
 
 const portEntries = computed(() => {
-  const ports = data.value?.NetworkSettings.Ports ?? {};
+  const ports = data.value?.NetworkSettings?.Ports ?? {};
 
   return Object.entries(ports).flatMap(([containerPort, bindings]) => {
     if (!bindings?.length) {
