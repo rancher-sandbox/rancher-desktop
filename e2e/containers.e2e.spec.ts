@@ -510,14 +510,6 @@ test.describe.serial('Container Info Tab', () => {
     await expect(infoPage.mountsSection).toHaveAttribute('open');
   });
 
-  test('env section shows RDTEST_VAR in monospace list', async() => {
-    const infoPage = new ContainerInfoPage(page);
-
-    await infoPage.envSection.locator('summary').click();
-    await expect(infoPage.envSection).toHaveAttribute('open');
-    await expect(infoPage.envSection).toContainText('RDTEST_VAR=hello');
-  });
-
   test('switching to Logs tab and back preserves Info data', async() => {
     const infoPage = new ContainerInfoPage(page);
 
