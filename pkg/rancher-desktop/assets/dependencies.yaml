@@ -83,7 +83,7 @@ dockerCompose:
     docker-compose-windows-x86_64.exe: sha256:5e6d72612b3165be9fea4ae889435fec76979a9779b6f62f4efee99dd5f41ea1
     docker-compose-windows-aarch64.exe: sha256:9bdabc5fb175161b93c41b2ce6464b816f8d2614e6b9641f5e0fdf20b188f4a2
 golangci-lint:
-  version: 2.12.0
+  version: 2.12.1
   checksums: {}
 trivy:
   version: 0.70.0
