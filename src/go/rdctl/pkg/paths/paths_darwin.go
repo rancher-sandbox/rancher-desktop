@@ -12,7 +12,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/directories"
 )
 
-const appBundlePath = "/Applications/Rancher Desktop.app"
+const fallbackAppBundlePath = "/Applications/Rancher Desktop.app"
 
 func GetPaths(getResourcesPathFuncs ...func() (string, error)) (*Paths, error) {
 	var getResourcesPathFunc func() (string, error)
@@ -67,7 +67,7 @@ func GetRDLaunchPath(ctx context.Context) (string, error) {
 	}
 	executablePath := []string{"Contents", "MacOS", "Rancher Desktop"}
 
-	for _, dir := range []string{appDir, appBundlePath} {
+	for _, dir := range []string{appDir, fallbackAppBundlePath} {
 		absPathParts := append([]string{dir}, executablePath...)
 		ok, err := checkUsableApplication(filepath.Join(absPathParts...), true)
 		if err != nil {

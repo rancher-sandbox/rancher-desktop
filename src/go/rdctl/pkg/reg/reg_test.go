@@ -17,8 +17,8 @@ const (
 func TestJsonToRegFormat(t *testing.T) {
 	t.Run("complains about bad arguments", func(t *testing.T) {
 		type errorTestCases struct {
-			hiveType      string
-			profileType   string
+			hiveType      RegistryHive
+			profileType   ProfileType
 			expectedError string
 		}
 		testCases := []errorTestCases{
@@ -64,8 +64,8 @@ func TestJsonToRegFormat(t *testing.T) {
 	})
 	t.Run("converts the registry-type arguments into reg headers", func(t *testing.T) {
 		type testCaseType struct {
-			hiveType       string
-			profileType    string
+			hiveType       RegistryHive
+			profileType    ProfileType
 			expectedHeader string
 		}
 		testCases := []testCaseType{

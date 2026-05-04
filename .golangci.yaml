@@ -32,7 +32,7 @@ linters:
       # "error" is the conventional log-field key for errors, "--" is the POSIX
       # end-of-options marker, and "eth0" shares a platform-interface table
       # with other names that stay literal.
-      ignore-strings: ^(error|--|eth0)$
+      ignore-string-values: ^(error|--|eth0)$
     gocritic:
       disabled-checks:
         - dupImport # https://github.com/go-critic/go-critic/issues/845
