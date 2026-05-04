@@ -2186,19 +2186,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/icu-messageformat-parser@npm:3.5.4":
-  version: 3.5.4
-  resolution: "@formatjs/icu-messageformat-parser@npm:3.5.4"
+"@formatjs/icu-messageformat-parser@npm:3.5.5":
+  version: 3.5.5
+  resolution: "@formatjs/icu-messageformat-parser@npm:3.5.5"
   dependencies:
-    "@formatjs/icu-skeleton-parser": "npm:2.1.4"
-  checksum: 10c0/3ff5ab209b63113d6b1779a4e8de6ee2cf941f3ad3f3ede2c8e425953a25456b6a1d880d734845244615dc9887fad10b62e75dee38858c731e45812402110efb
+    "@formatjs/icu-skeleton-parser": "npm:2.1.5"
+  checksum: 10c0/54ef60422f994699a947b1ff4164cf351a234b604273c97e981d9b8fb7ddb08236e86c5068c93fbaeb200c0113b3af5d7b753d216812ba0c4b3126c7aaa090ef
   languageName: node
   linkType: hard
 
-"@formatjs/icu-skeleton-parser@npm:2.1.4":
-  version: 2.1.4
-  resolution: "@formatjs/icu-skeleton-parser@npm:2.1.4"
-  checksum: 10c0/9d6292443e4079c5718c50e32041a3bd192047449d181ae87e8cb6ef78c90f156f8b2d454008c9d0c2920c215daee5250c0eb214d13a105522a631f269e71b3c
+"@formatjs/icu-skeleton-parser@npm:2.1.5":
+  version: 2.1.5
+  resolution: "@formatjs/icu-skeleton-parser@npm:2.1.5"
+  checksum: 10c0/9788b08962bd07e06db2bf12480c27c17a5a213e7d766d92865ed140f1b4e9e89d4c2bf499b07ee063a089827efa96ff5c5d41ccb59264e1c3f7affe133356a5
   languageName: node
   linkType: hard
 
@@ -10686,13 +10686,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"intl-messageformat@npm:11.2.1":
-  version: 11.2.1
-  resolution: "intl-messageformat@npm:11.2.1"
+"intl-messageformat@npm:11.2.2":
+  version: 11.2.2
+  resolution: "intl-messageformat@npm:11.2.2"
   dependencies:
     "@formatjs/fast-memoize": "npm:3.1.2"
-    "@formatjs/icu-messageformat-parser": "npm:3.5.4"
-  checksum: 10c0/c4d2e43c2e7940a8dbd75d7a3b77d722c7ac8802707f7410067097e3a923243343bd36367edb4e922b13d1a10425a2f52c544c65c9368841d481816ed04c6c2b
+    "@formatjs/icu-messageformat-parser": "npm:3.5.5"
+  checksum: 10c0/8a0e27584b6c6129f52fc14ac26c3537cdc8b4d6beaa518b56c49946bf5f79dcc75c3b86ebeabc29d14596464c4123a5188c0d30fa60689c0a71b995bdc641fb
   languageName: node
   linkType: hard
 
@@ -14354,7 +14354,7 @@ __metadata:
     glob: "npm:^13.0.3"
     globals: "npm:17.5.0"
     http-proxy-middleware: "npm:3.0.5"
-    intl-messageformat: "npm:11.2.1"
+    intl-messageformat: "npm:11.2.2"
     jest: "npm:30.3.0"
     jest-environment-jsdom: "npm:30.3.0"
     jquery: "npm:4.0.0"
