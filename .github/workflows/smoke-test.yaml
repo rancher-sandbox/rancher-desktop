@@ -68,7 +68,7 @@ jobs:
         sha512sum rancher-desktop.AppImage > rancher-desktop.AppImage.sha512sum
         chmod a+x rancher-desktop.AppImage
       env:
-        OBS_DOWNLOAD_URL: https://provo-mirror.opensuse.org/download/repositories/isv:/Rancher:/dev/AppImage/
+        OBS_DOWNLOAD_URL: https://download.opensuse.org/download/repositories/isv:/Rancher:/dev/AppImage/
 
     - name: Upload macOS aarch-64 artifacts
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
