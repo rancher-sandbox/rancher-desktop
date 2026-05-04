@@ -12,7 +12,7 @@ import { MacPackager } from 'app-builder-lib/out/macPackager';
 import { AsyncTaskManager, log } from 'builder-util';
 import { Target } from 'electron-builder';
 import _ from 'lodash';
-import plist from 'plist';
+import * as plist from 'plist';
 import yaml from 'yaml';
 
 import { spawnFile } from '@pkg/utils/childProcess';
