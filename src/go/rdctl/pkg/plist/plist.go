@@ -44,7 +44,7 @@ func convertToPListLines(structType reflect.Type, value reflect.Value, indent, p
 		}
 		return convertToPListLines(structType, value.Elem(), indent, path)
 	}
-	if value.Kind() == reflect.Ptr {
+	if value.Kind() == reflect.Pointer {
 		return nil, fmt.Errorf("plist generation: got an unexpected pointer for %s value %v, expecting type %v", path, value, structType)
 	}
 	switch kind {
@@ -76,7 +76,7 @@ func convertToPListLines(structType reflect.Type, value reflect.Value, indent, p
 		}
 		returnedLines = append(returnedLines, indent+"</dict>")
 		return returnedLines, nil
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return convertToPListLines(structType.Elem(), value, indent, path)
 	case reflect.Slice, reflect.Array:
 		if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {

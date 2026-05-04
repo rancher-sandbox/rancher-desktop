@@ -117,7 +117,7 @@ func createProfile(ctx context.Context) (string, error) {
 	}
 	switch outputSettingsFlags.Format {
 	case regFormat:
-		lines, err := reg.JSONToReg(outputSettingsFlags.RegistryHive, outputSettingsFlags.RegistryProfileType, string(output))
+		lines, err := reg.JSONToReg(reg.RegistryHive(outputSettingsFlags.RegistryHive), reg.ProfileType(outputSettingsFlags.RegistryProfileType), string(output))
 		if err != nil {
 			return "", err
 		}
@@ -150,10 +150,10 @@ func validateProfileFormatFlags() error {
 	}
 
 	switch strings.ToLower(outputSettingsFlags.RegistryHive) {
-	case reg.HklmRegistryHive, reg.HkcuRegistryHive:
+	case string(reg.HklmRegistryHive), string(reg.HkcuRegistryHive):
 		outputSettingsFlags.RegistryHive = strings.ToLower(outputSettingsFlags.RegistryHive)
 	case "":
-		outputSettingsFlags.RegistryHive = reg.HklmRegistryHive
+		outputSettingsFlags.RegistryHive = string(reg.HklmRegistryHive)
 	default:
 		return fmt.Errorf("invalid registry hive of %q specified, must be %q or %q", outputSettingsFlags.RegistryHive, systemHive, userHive)
 	}

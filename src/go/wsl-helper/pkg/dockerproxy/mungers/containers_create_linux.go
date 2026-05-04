@@ -238,7 +238,7 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 
 	for _, mount := range body.HostConfig.Mounts {
 		logEntry := logrus.WithField("mount", fmt.Sprintf("%+v", mount))
-		if mount.Type.MountType != "bind" {
+		if mount.Type.MountType != models.MountTypeBind {
 			logEntry.Trace("skipping mount of unsupported type")
 			continue
 		}
@@ -351,7 +351,7 @@ func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValu
 		mountPath := path.Join(b.mountRoot, bindKey)
 		logEntry := logrus.WithFields(logrus.Fields{
 			"container": templates["id"],
-			"bind":      mountPath,
+			"path":      mountPath,
 			"target":    target,
 		})
 		err := b.prepareMountPath(target, bindKey)
@@ -386,7 +386,7 @@ func (b *bindManager) mungeContainersStartResponse(req *http.Response, contextVa
 		mountDir := path.Join(b.mountRoot, bindKey)
 		logEntry := logrus.WithFields(logrus.Fields{
 			"container": templates["id"],
-			"bind":      mountDir,
+			"path":      mountDir,
 		})
 		err := unix.Unmount(mountDir, unix.MNT_DETACH|unix.UMOUNT_NOFOLLOW)
 		if err != nil {

@@ -9,8 +9,10 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/startup-profile/model"
 )
 
+const networkingLogFile = "networking.log"
+
 func ParseNetworkingLogs(ctx context.Context) ([]*model.Event, error) {
-	scanner, err := readRDLogFile(ctx, "networking.log")
+	scanner, err := readRDLogFile(ctx, networkingLogFile)
 	if err != nil {
 		return nil, err
 	}
@@ -31,21 +33,21 @@ func ParseNetworkingLogs(ctx context.Context) ([]*model.Event, error) {
 		if m := beginMatcher.FindStringSubmatch(matches[2]); len(m) == beginMatcher.NumSubexp()+1 {
 			results = append(results, &model.Event{
 				Name:      m[1],
-				Category:  "networking.log",
+				Category:  networkingLogFile,
 				Phase:     model.EventPhaseBegin,
 				TimeStamp: parsedTime,
 			})
 		} else if m := endMatcher.FindStringSubmatch(matches[2]); len(m) == endMatcher.NumSubexp()+1 {
 			results = append(results, &model.Event{
 				Name:      m[1],
-				Category:  "networking.log",
+				Category:  networkingLogFile,
 				Phase:     model.EventPhaseEnd,
 				TimeStamp: parsedTime,
 			})
 		} else {
 			results = append(results, &model.Event{
 				Name:      matches[2],
-				Category:  "networking.log",
+				Category:  networkingLogFile,
 				Phase:     model.EventPhaseInstant,
 				TimeStamp: parsedTime,
 			})

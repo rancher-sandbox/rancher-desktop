@@ -28,6 +28,11 @@ linters:
     goconst:
       min-len: 2
       min-occurrences: 3
+      # Skip values that read better as literals than as named constants:
+      # "error" is the conventional log-field key for errors, "--" is the POSIX
+      # end-of-options marker, and "eth0" shares a platform-interface table
+      # with other names that stay literal.
+      ignore-string-values: ^(error|--|eth0)$
     gocritic:
       disabled-checks:
         - dupImport # https://github.com/go-critic/go-critic/issues/845
@@ -92,6 +97,7 @@ linters:
     rules:
       - linters:
           - errcheck
+          - goconst
           - gocritic
           - gosec
         path: _test\.go
