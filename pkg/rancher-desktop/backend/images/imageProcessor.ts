@@ -25,7 +25,7 @@ export interface childResultType {
 /**
  * The fields for display in the images table
  */
-export interface imageType {
+export interface ImageType {
   imageName: string;
   tag:       string;
   imageID:   string;
@@ -77,7 +77,7 @@ export abstract class ImageProcessor extends EventEmitter {
   private sameErrorMessageCount = 0;
   protected showedStderr = false;
   private refreshInterval: ReturnType<typeof timers.setInterval> | null = null;
-  protected images:        imageType[] = [];
+  protected images:        ImageType[] = [];
   protected _isReady = false;
   protected isK8sReady = false;
   private hasImageListeners = false;
@@ -208,7 +208,7 @@ export abstract class ImageProcessor extends EventEmitter {
   /**
    * Returns the current list of cached images.
    */
-  listImages(): imageType[] {
+  listImages(): ImageType[] {
     return this.images;
   }
 
@@ -256,7 +256,7 @@ export abstract class ImageProcessor extends EventEmitter {
     }
   }
 
-  protected parse(data: string): imageType[] {
+  protected parse(data: string): ImageType[] {
     const results = data
       .trimEnd()
       .split(/\r?\n/)

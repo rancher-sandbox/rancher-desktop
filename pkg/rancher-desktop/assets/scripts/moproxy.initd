@@ -21,11 +21,16 @@ description_reload="Reload the proxy list."
 : ${moproxy_remotedns:=${MOPROXY_REMOTE_DNS:-"--remote-dns"}}
 # Comma-separated list of port traffic to redirect to moproxy
 : ${ports_redirected:=${MOPROXY_REDIRECTED_PORT:-"80,443"}}
-# Comma-separated list of hostname to not redirect to the proxy
-: ${noproxy_rules:=${MOPROXY_NOPROXY:-"0.0.0.0/8,10.0.0.0/8,127.0.0.0/8,169.254.0.0/16,172.16.0.0/12,192.168.0.0/16,224.0.0.0/4,240.0.0.0/4"}}
+# Comma-separated lists of addresses to not redirect to the proxy.
+# IPv4 uses - (not :-): when all noproxy entries are domains, the backend
+# writes MOPROXY_NOPROXY="" and iptables rules should genuinely be empty.
+# IPv6 uses :-: no UI adds IPv6 entries, so empty should fall back to
+# sane defaults (loopback, ULA, link-local).
+: ${noproxy_rules:=${MOPROXY_NOPROXY-"0.0.0.0/8,10.0.0.0/8,127.0.0.0/8,169.254.0.0/16,172.16.0.0/12,192.168.0.0/16,224.0.0.0/4,240.0.0.0/4"}}
+: ${noproxy6_rules:=${MOPROXY_NOPROXY6:-"::1/128,fc00::/7,fe80::/10"}}
 
 command="'${MOPROXY_BINARY:-/usr/sbin/moproxy}'"
-command_args="--host ${host} --port ${port} ${moproxy_remotedns} --list ${proxy_list} ${moproxy_args}"
+command_args="--host ${host} --port ${port} ${moproxy_remotedns} --list ${proxy_list} --policy /etc/moproxy/policy.rules ${moproxy_args}"
 command_background="yes"
 pidfile="/run/${name}.pid"
 
@@ -33,48 +38,68 @@ MOPROXY_LOGFILE="${MOPROXY_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
 output_log="'${MOPROXY_LOGFILE}'"
 error_log="'${MOPROXY_LOGFILE}'"
 
-iptables_redirect_to_moproxy_chain() {
-	iptables --table nat --$1 $2 --protocol tcp --match multiport --dports "${ports_redirected}" --jump MOPROXY
+run_iptables() {
+	local cmd="$1"
+	shift
+	"$cmd" --table nat "$@"
 }
 
-iptables_redirect() {
-	iptables --table nat --append MOPROXY --protocol tcp --jump REDIRECT --to-port "${port}"
+redirect_to_moproxy_chain() {
+	run_iptables "$1" "--$2" "$3" --protocol tcp --match multiport --dports "${ports_redirected}" --jump MOPROXY
 }
 
-iptables_accept() {
-	iptables --table nat --append MOPROXY --protocol tcp --destination "$1" --jump ACCEPT
+add_redirect_rule() {
+	run_iptables "$1" --append MOPROXY --protocol tcp --jump REDIRECT --to-port "${port}"
+}
+
+add_accept_rule() {
+	run_iptables "$1" --append MOPROXY --protocol tcp --destination "$2" --jump ACCEPT
 }
 
 add_noproxy_rules() {
 	for i in ${noproxy_rules//,/ }
 	do
-		iptables_accept "$i"
+		add_accept_rule iptables "$i"
 	done
+	for i in ${noproxy6_rules//,/ }
+	do
+		add_accept_rule ip6tables "$i" || true
+	done
+	return 0
 }
 
 enable_redirection_to_moproxy_chain() {
-	if ! iptables_redirect_to_moproxy_chain check $1 &> /dev/null
-	then
-		iptables_redirect_to_moproxy_chain append $1
-	else
-		einfo "Rule already in table"
-	fi
+	local chain="$1"
+	local cmd
+	for cmd in iptables ip6tables; do
+		if ! redirect_to_moproxy_chain "$cmd" check "$chain" &> /dev/null; then
+			redirect_to_moproxy_chain "$cmd" append "$chain"
+		fi
+	done
+	return 0
 }
 
 disable_redirection_to_moproxy_chain() {
-	while iptables_redirect_to_moproxy_chain check $1  &> /dev/null
-	do
-		iptables_redirect_to_moproxy_chain delete $1
+	local chain="$1"
+	local cmd
+	for cmd in iptables ip6tables; do
+		while redirect_to_moproxy_chain "$cmd" check "$chain" &> /dev/null; do
+			redirect_to_moproxy_chain "$cmd" delete "$chain"
+		done
 	done
+	return 0
 }
 
 create_moproxy_chain() {
 	iptables --table nat --new MOPROXY
+	ip6tables --table nat --new MOPROXY || true
 }
 
 delete_moproxy_chain() {
 	iptables --table nat --flush MOPROXY
 	iptables --table nat --delete-chain MOPROXY
+	ip6tables --table nat --flush MOPROXY || true
+	ip6tables --table nat --delete-chain MOPROXY || true
 }
 
 depend() {
@@ -85,7 +110,8 @@ enable() {
 	einfo "Starting the iptables rules to start redirection of ports ${ports_redirected} to ${name}"
 	create_moproxy_chain
 	add_noproxy_rules
-	iptables_redirect
+	add_redirect_rule iptables
+	add_redirect_rule ip6tables || true
 	enable_redirection_to_moproxy_chain OUTPUT
 	enable_redirection_to_moproxy_chain PREROUTING
 }
@@ -106,9 +132,14 @@ stop_pre() {
 }
 
 reload() {
+	# SIGHUP reloads the proxy server list only, not the --policy file.
+	# Domain noproxy rules require a full stop+start cycle.
 	ebegin "Reloading ${name}"
 	start-stop-daemon --signal HUP --pidfile "$pidfile"
 	iptables --table nat --flush MOPROXY
+	ip6tables --table nat --flush MOPROXY || true
 	add_noproxy_rules
-	iptables_redirect
+	add_redirect_rule iptables
+	add_redirect_rule ip6tables || true
+	eend $?
 }

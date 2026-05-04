@@ -95,7 +95,7 @@ export class Screenshots {
   protected async screenshotLinux(outPath: string, includeAll: boolean) {
     // Find the target window; note that this is a child window of the window
     // frame, so we can't use it directly.
-    let windowId = '';
+    let windowId;
     let { stdout } = await spawnFile('xwininfo', ['-name', this.windowTitle, '-tree'], { stdio: 'pipe' });
 
     // Walk up the parents of the current window, until the parent is the root window.

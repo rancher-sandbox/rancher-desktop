@@ -51,18 +51,28 @@ var (
 	configPath string
 	// DefaultConfigPath - used to differentiate not being able to find a user-specified config file from the default
 	DefaultConfigPath string
+
+	wslDistroEnvs = []string{"WSL_DISTRO_NAME", "WSL_INTEROP", "WSLENV"}
+	// lstatFunc allows tests to inject a stub for /bin/wslpath checks.
+	lstatFunc = os.Lstat
 )
 
 // DefineGlobalFlags sets up the global flags, available for all sub-commands
 func DefineGlobalFlags(rootCmd *cobra.Command) {
 	var configDir string
-	var err error
 	if runtime.GOOS == "linux" && isWSLDistro() {
-		if configDir, err = wslifyConfigDir(rootCmd.Context()); err != nil {
-			log.Fatalf("Can't get WSL config-dir: %v", err)
+		ctx := rootCmd.Context()
+		if ctx == nil {
+			ctx = context.Background()
 		}
-		configDir = filepath.Join(configDir, "rancher-desktop")
-	} else {
+		if wslConfigDir, err := wslifyConfigDir(ctx); err == nil {
+			windowsConfigPath := filepath.Join(wslConfigDir, "rancher-desktop", "rd-engine.json")
+			if _, statErr := os.Stat(windowsConfigPath); statErr == nil {
+				configDir = filepath.Join(wslConfigDir, "rancher-desktop")
+			}
+		}
+	}
+	if configDir == "" {
 		appPaths, err := paths.GetPaths()
 		if err != nil {
 			log.Fatalf("failed to get paths: %s", err)
@@ -132,11 +142,24 @@ func GetConnectionInfo(mayBeMissing bool) (*ConnectionInfo, error) {
 // determines if we are running in a wsl linux distro
 // by checking for availability of wslpath and see if it's a symlink
 func isWSLDistro() bool {
-	fi, err := os.Lstat("/bin/wslpath")
-	if os.IsNotExist(err) {
+	fi, err := lstatFunc("/bin/wslpath")
+	if err != nil {
 		return false
 	}
-	return fi.Mode()&os.ModeSymlink == os.ModeSymlink
+	if fi.Mode()&os.ModeSymlink != os.ModeSymlink {
+		return false
+	}
+	return hasWSLEnvs()
+}
+
+// hasWSLEnvs reports whether any WSL environment marker is present.
+func hasWSLEnvs() bool {
+	for _, envName := range wslDistroEnvs {
+		if _, ok := os.LookupEnv(envName); ok {
+			return true
+		}
+	}
+	return false
 }
 
 func getLocalAppDataPath(ctx context.Context) (string, error) {

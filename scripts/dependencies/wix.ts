@@ -3,10 +3,18 @@ import path from 'path';
 
 import semver from 'semver';
 
-import { DownloadContext, GitHubDependency, GlobalDependency, getOctokit } from '../lib/dependencies';
+import {
+  DownloadContext,
+  downloadAndHash,
+  getOctokit,
+  GitHubDependency,
+  GlobalDependency,
+  lookupChecksum,
+  Sha256Checksum,
+} from '../lib/dependencies';
 import { download } from '../lib/download';
 
-import { simpleSpawn } from 'scripts/simple_process';
+import { simpleSpawn } from '@/scripts/simple_process';
 
 /**
  * Wix downloads the latest build of WiX3.
@@ -22,13 +30,14 @@ export class Wix extends GlobalDependency(GitHubDependency) {
   readonly releaseFilter = 'custom';
 
   async download(context: DownloadContext): Promise<void> {
-    // WiX doesn't appear to believe in checksum files...
+    // WiX doesn't publish upstream checksum files; we rely on the digest
+    // recorded in dependencies.yaml at bump time.
 
-    const tagName = this.versionToTagName(context.versions.wix);
-    const version = semver.parse(context.versions.wix);
+    const tagName = this.versionToTagName(context.dependencies.wix.version);
+    const version = semver.parse(context.dependencies.wix.version);
 
     if (!version) {
-      throw new Error(`Could not parse WiX version ${ context.versions.wix }`);
+      throw new Error(`Could not parse WiX version ${ context.dependencies.wix.version }`);
     }
 
     const hostDir = path.join(context.resourcesDir, 'host');
@@ -39,8 +48,22 @@ export class Wix extends GlobalDependency(GitHubDependency) {
     const url = `https://github.com/wixtoolset/wix3/releases/download/${ tagName }/${ archiveName }`;
 
     await fs.promises.mkdir(wixDir, { recursive: true });
-    await download(url, archivePath);
+    await download(url, archivePath, { expectedChecksum: lookupChecksum(context, this.name, archiveName) });
     await simpleSpawn('unzip', ['-q', '-o', archivePath, '-d', wixDir], { cwd: wixDir });
+  }
+
+  async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
+    const tagName = this.versionToTagName(version);
+    const parsed = semver.parse(version);
+
+    if (!parsed) {
+      throw new Error(`Could not parse WiX version ${ version }`);
+    }
+
+    const archiveName = `wix${ parsed.major }${ parsed.minor }-binaries.zip`;
+    const url = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/${ tagName }/${ archiveName }`;
+
+    return { [archiveName]: await downloadAndHash(url) };
   }
 
   versionToTagName(versionString: string): string {

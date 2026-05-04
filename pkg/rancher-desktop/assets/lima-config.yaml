@@ -165,6 +165,8 @@ provision:
     export CAROOT=/run/mkcert
     mkdir -p $CAROOT
     cd $CAROOT
+    # Remove old mkcert certificates
+    rm -f /usr/local/share/ca-certificates/mkcert_development_CA_*.crt
     mkcert -install
     mkcert localhost
     chown -R nobody:nobody $CAROOT

@@ -4,7 +4,14 @@ import path from 'path';
 import { download } from '../lib/download';
 import { simpleSpawn } from '../simple_process';
 
-import { DownloadContext, GitHubDependency, GlobalDependency } from 'scripts/lib/dependencies';
+import {
+  DownloadContext,
+  downloadAndHash,
+  GitHubDependency,
+  GlobalDependency,
+  lookupChecksum,
+  Sha256Checksum,
+} from '@/scripts/lib/dependencies';
 
 export class Moproxy extends GlobalDependency(GitHubDependency) {
   readonly name = 'moproxy';
@@ -13,21 +20,36 @@ export class Moproxy extends GlobalDependency(GitHubDependency) {
 
   async download(context: DownloadContext): Promise<void> {
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
-    const binName = `moproxy_${ context.versions.moproxy }_linux_x86_64_musl.bin`;
+    const binName = `moproxy_${ context.dependencies.moproxy.version }_linux_x86_64_musl.bin`;
     const archiveName = `${ binName }.xz`;
-    const moproxyURL = `${ baseURL }/v${ context.versions.moproxy }/${ archiveName }`;
+    const moproxyURL = `${ baseURL }/v${ context.dependencies.moproxy.version }/${ archiveName }`;
     const archivePath = path.join(context.internalDir, archiveName);
     const moproxyPath = path.join(context.internalDir, 'moproxy');
 
     await download(
       moproxyURL,
       archivePath,
-      { access: fs.constants.W_OK });
+      {
+        expectedChecksum: lookupChecksum(context, this.name, archiveName),
+        access:           fs.constants.W_OK,
+      });
 
     // moproxy uses xz with no tar wrapper; just decompress it manually.
-    await simpleSpawn('7z', ['e', archivePath], { cwd: context.internalDir });
+    // Keep archivePath beside moproxyPath so download() hits its cache on
+    // subsequent postinstall runs; electron-builder.yml excludes *.xz.
+    // Pass -y to auto-confirm the overwrite prompt; otherwise a
+    // leftover binName from a partial-failure retry stalls postinstall.
+    await simpleSpawn('7z', ['e', '-y', archivePath], { cwd: context.internalDir });
     await fs.promises.rename(path.join(context.internalDir, binName), moproxyPath);
-    await fs.promises.rm(archivePath);
+  }
+
+  async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
+    // Upstream does not publish a checksum file, so we record the sha256 we
+    // observe at bump time.
+    const archiveName = `moproxy_${ version }_linux_x86_64_musl.bin.xz`;
+    const url = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }/${ archiveName }`;
+
+    return { [archiveName]: await downloadAndHash(url) };
   }
 }
 
@@ -38,10 +60,22 @@ export class WSLDistro extends GlobalDependency(GitHubDependency) {
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
-    const tarName = `distro-${ context.versions.WSLDistro }.tar`;
-    const url = `${ baseUrl }/v${ context.versions.WSLDistro }/${ tarName }`;
+    const tarName = `distro-${ context.dependencies.WSLDistro.version }.tar`;
+    const url = `${ baseUrl }/v${ context.dependencies.WSLDistro.version }/${ tarName }`;
     const destPath = path.join(context.resourcesDir, context.platform, 'staging', tarName);
 
-    await download(url, destPath, { access: fs.constants.W_OK });
+    await download(url, destPath, {
+      expectedChecksum: lookupChecksum(context, this.name, tarName),
+      access:           fs.constants.W_OK,
+    });
+  }
+
+  async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
+    // Upstream does not publish a checksum file, so we record the sha256 we
+    // observe at bump time.
+    const tarName = `distro-${ version }.tar`;
+    const url = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }/${ tarName }`;
+
+    return { [tarName]: await downloadAndHash(url) };
   }
 }

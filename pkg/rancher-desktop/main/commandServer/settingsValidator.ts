@@ -1,3 +1,4 @@
+import net from 'net';
 import os from 'os';
 
 import _ from 'lodash';
@@ -17,6 +18,7 @@ import {
 import { NavItemName, navItemNames, TransientSettings } from '@pkg/config/transientSettings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { parseImageReference, validateImageName, validateImageTag } from '@pkg/utils/dockerUtils';
+import { stripNoproxyPrefix } from '@pkg/utils/networks';
 import { getMacOsVersion } from '@pkg/utils/osVersion';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 import { preferencesNavItems } from '@pkg/window/preferenceConstants';
@@ -97,6 +99,7 @@ export default class SettingsValidator {
         startInBackground:      this.checkBoolean,
         hideNotificationIcon:   this.checkBoolean,
         window:                 { quitOnClose: this.checkBoolean },
+        theme:                  this.checkEnum('system', 'light', 'dark'),
       },
       containerEngine: {
         allowedImages: {
@@ -147,7 +150,7 @@ export default class SettingsValidator {
             password: this.checkPlatform('win32', this.checkString),
             port:     this.checkPlatform('win32', this.checkNumber(1, 65535)),
             username: this.checkPlatform('win32', this.checkString),
-            noproxy:  this.checkPlatform('win32', this.checkUniqueStringArray),
+            noproxy:  this.checkPlatform('win32', this.checkNoproxyList),
           },
           sshPortForwarder: this.checkLima(this.checkBoolean),
         },
@@ -660,6 +663,81 @@ export default class SettingsValidator {
     }
 
     return Array.from(duplicates).concat(whiteSpaceMembers);
+  }
+
+  /**
+   * Validate that a string is an IP address or CIDR subnet.
+   * Accepts IPv4 and IPv6 addresses with optional prefix length.
+   */
+  protected static isIPAddressOrCIDR(entry: string): boolean {
+    const slashIndex = entry.indexOf('/');
+
+    if (slashIndex === -1) {
+      return net.isIP(entry) !== 0;
+    }
+    const address = entry.substring(0, slashIndex);
+    const prefixStr = entry.substring(slashIndex + 1);
+    const ipVersion = net.isIP(address);
+
+    if (ipVersion === 0) {
+      return false;
+    }
+    if (!/^\d+$/.test(prefixStr)) {
+      return false;
+    }
+    const prefix = parseInt(prefixStr, 10);
+    const maxPrefix = ipVersion === 4 ? 32 : 128;
+
+    return prefix >= 0 && prefix <= maxPrefix;
+  }
+
+  /**
+   * Validate that a string is a domain name, optionally with a wildcard prefix.
+   * Accepts "example.com", "*.example.com", and ".example.com" (NO_PROXY convention).
+   */
+  protected static isDomainName(entry: string): boolean {
+    const domain = stripNoproxyPrefix(entry);
+
+    if (domain.length === 0 || domain.length > 253) {
+      return false;
+    }
+    // Reject prefixed IP addresses like "*.10.0.0.1" or ".10.0.0.1".
+    if (net.isIP(domain) !== 0) {
+      return false;
+    }
+    const labels = domain.split('.');
+    const labelRE = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+
+    return labels.every(label => labelRE.test(label));
+  }
+
+  /**
+   * Validate the noproxy list: must be unique strings, each a valid IP address,
+   * CIDR subnet, domain name, or wildcard domain.
+   */
+  protected checkNoproxyList<S>(mergedSettings: S, currentValue: string[], desiredValue: string[], errors: string[], fqname: string): boolean {
+    if (!Array.isArray(desiredValue) || desiredValue.some(s => typeof (s) !== 'string')) {
+      errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+      return false;
+    }
+    const duplicateValues = this.findDuplicates(desiredValue);
+
+    if (duplicateValues.length > 0) {
+      duplicateValues.sort(Intl.Collator().compare);
+      errors.push(`field "${ fqname }" has duplicate entries: "${ duplicateValues.join('", "') }"`);
+
+      return false;
+    }
+    const invalidEntries = desiredValue.filter(entry => !SettingsValidator.isIPAddressOrCIDR(entry) && !SettingsValidator.isDomainName(entry));
+
+    if (invalidEntries.length > 0) {
+      errors.push(`field "${ fqname }" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "${ invalidEntries.join('", "') }"`);
+
+      return false;
+    }
+
+    return currentValue.length !== desiredValue.length || currentValue.some((v, i) => v !== desiredValue[i]);
   }
 
   protected checkInstalledExtensions(

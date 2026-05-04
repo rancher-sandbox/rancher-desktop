@@ -1,13 +1,11 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/nerdctl-stub
 
-go 1.24.0
-
-toolchain go1.24.2
+go 1.25.0
 
 require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/sys v0.40.0
+	golang.org/x/sys v0.43.0
 )
 
 require (

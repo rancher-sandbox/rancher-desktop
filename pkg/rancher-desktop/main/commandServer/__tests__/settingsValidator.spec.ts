@@ -7,7 +7,7 @@ import _ from 'lodash';
 import { SemVer } from 'semver';
 
 import * as settings from '@pkg/config/settings';
-import { MountType, VMType } from '@pkg/config/settings';
+import { MountType, Theme, VMType } from '@pkg/config/settings';
 import { getDefaultMemory } from '@pkg/config/settingsImpl';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import mockModules from '@pkg/utils/testUtils/mockModules';
@@ -78,6 +78,7 @@ describe('SettingsValidator', () => {
     // Special fields that cannot be checked here; this includes enums and maps.
     const specialFields = [
       ['application', 'pathManagementStrategy'],
+      ['application', 'theme'],
       ['containerEngine', 'allowedImages', 'locked'],
       ['containerEngine', 'mobyStorageDriver'],
       ['containerEngine', 'name'],
@@ -431,6 +432,34 @@ describe('SettingsValidator', () => {
         needToUpdate: false,
         errors:       [`Kubernetes version "pikachu" not found.`],
         isFatal:      false,
+      });
+    });
+  });
+
+  describe('application.theme', () => {
+    describe('should accept valid settings', () => {
+      test.each(Object.keys(Theme))('%s', (key) => {
+        const value = Theme[key as keyof typeof Theme];
+        const [needToUpdate, errors] = subject.validateSettings({
+          ...cfg,
+          application: { ...cfg.application, theme: Theme.SYSTEM },
+        }, { application: { theme: value } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: value !== Theme.SYSTEM,
+          errors:       [],
+        });
+      });
+    });
+
+    it('should reject invalid values', () => {
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg,
+        { application: { theme: 'invalid' as Theme } });
+
+      expect({ needToUpdate, errors, isFatal }).toEqual({
+        needToUpdate: false,
+        errors:       [`Invalid value for "application.theme": <"invalid">; must be one of ["system","light","dark"]`],
+        isFatal:      true,
       });
     });
   });
@@ -962,6 +991,216 @@ describe('SettingsValidator', () => {
         'Setting virtualMachine.type to \"qemu\" requires that ' +
         'virtual-machine.mount.type is \"reverse-sshfs\" or \"9p\".',
       );
+    });
+  });
+
+  describe('noproxy', () => {
+    const fqname = 'experimental.virtualMachine.proxy.noproxy';
+
+    function noproxySetting(noproxy: string[]): RecursivePartial<settings.Settings> {
+      return { experimental: { virtualMachine: { proxy: { noproxy } } } };
+    }
+
+    beforeEach(() => {
+      modules.os.platform.mockReturnValue('win32');
+    });
+
+    it('should accept an empty noproxy list', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting([]));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept valid IPv4 addresses', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['192.168.1.1']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept valid IPv4 CIDR subnets', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['10.0.0.0/8', '172.16.0.0/12']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept valid IPv6 addresses', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['::1', 'fe80::1']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept valid IPv6 CIDR subnets', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['fd00::/8', '::1/128']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept the default noproxy list unchanged without errors', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(cfg.experimental.virtualMachine.proxy.noproxy));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: false, errors: [] });
+    });
+
+    it('should accept domain names', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['example.com']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept wildcard domain entries', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['*.example.com']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept leading-dot domain entries', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['.example.com']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept domain names with subdomains', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['sub.example.com']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept mixed IP and domain entries', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['10.0.0.0/8', 'example.com', '*.internal.corp']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should accept single-label hostnames', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['localhost']));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should reject bare wildcard', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['*.']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should reject domains with labels starting with hyphens', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['-example.com']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should reject duplicate entries', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['10.0.0.1', '10.0.0.1']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('duplicate');
+    });
+
+    it('should reject non-array values', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, { experimental: { virtualMachine: { proxy: { noproxy: 'not-an-array' as any } } } });
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+    });
+
+    it('should reject CIDR with out-of-range prefix length', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['10.0.0.0/33']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should reject CIDR with non-numeric prefix', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['10.0.0.0/abc']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should report all invalid entries at once', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['-invalid', '10.0.0.0/8', 'also-invalid-']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('-invalid');
+      expect(errors[0]).toContain('also-invalid-');
+    });
+
+    it('should reject IPv6 CIDR with out-of-range prefix length', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['::1/129']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should reject entries with whitespace', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting([' 10.0.0.1', '10.0.0.2 ', 'example .com']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should reject wildcard or dot-prefixed IP addresses', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['*.10.0.0.1', '.10.0.0.1', '*.::1', '.::1']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should accept a domain at the 253-character maximum length', () => {
+      // 3 labels of 63 chars + 3 dots + final label = 192 + final label length
+      const label63 = 'a'.repeat(63);
+      const domain = `${ label63 }.${ label63 }.${ label63 }.${ 'a'.repeat(61) }`;
+
+      expect(domain.length).toBe(253);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting([domain]));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should reject a domain exceeding 253 characters', () => {
+      const label63 = 'a'.repeat(63);
+      const domain = `${ label63 }.${ label63 }.${ label63 }.${ 'a'.repeat(62) }`;
+
+      expect(domain.length).toBe(254);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting([domain]));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should accept a label at the 63-character maximum length', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting([`${ 'a'.repeat(63) }.com`]));
+
+      expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+    });
+
+    it('should reject a label exceeding 63 characters', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting([`${ 'a'.repeat(64) }.com`]));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('invalid entries');
+    });
+
+    it('should be gated to win32 platform', () => {
+      modules.os.platform.mockReturnValue('darwin');
+      const [needToUpdate, errors] = subject.validateSettings(cfg, noproxySetting(['10.0.0.1']));
+
+      expect(needToUpdate).toBe(false);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('isn\'t supported');
     });
   });
 });

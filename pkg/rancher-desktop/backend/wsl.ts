@@ -2,6 +2,7 @@
 
 import events from 'events';
 import fs from 'fs';
+import net from 'net';
 import os from 'os';
 import path from 'path';
 import stream from 'stream';
@@ -54,6 +55,7 @@ import BackgroundProcess from '@pkg/utils/backgroundProcess';
 import * as childProcess from '@pkg/utils/childProcess';
 import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
+import { stripNoproxyPrefix } from '@pkg/utils/networks';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
@@ -85,7 +87,7 @@ export enum Action {
 }
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = DEPENDENCY_VERSIONS.WSLDistro;
+const DISTRO_VERSION = DEPENDENCY_VERSIONS.WSLDistro.version;
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -776,7 +778,29 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.writeFile(`/etc/moproxy/proxy.ini`, '; no proxy defined');
     }
 
-    await this.modifyConf('moproxy', { MOPROXY_NOPROXY: proxy.noproxy.join(',') });
+    const ipv4Entries: string[] = [];
+    const ipv6Entries: string[] = [];
+    const domainRules: string[] = [];
+
+    for (const entry of proxy.noproxy) {
+      const ipVersion = net.isIP(entry) || net.isIP(entry.split('/')[0]);
+
+      if (ipVersion === 4) {
+        ipv4Entries.push(entry);
+      } else if (ipVersion === 6) {
+        ipv6Entries.push(entry);
+      } else {
+        // moproxy's "dst domain" matches subdomains too.
+        domainRules.push(`dst domain ${ stripNoproxyPrefix(entry) } direct`);
+      }
+    }
+
+    await this.writeFile('/etc/moproxy/policy.rules',
+      domainRules.length > 0 ? `${ domainRules.join('\n') }\n` : '# no domain noproxy rules\n');
+    await this.modifyConf('moproxy', {
+      MOPROXY_NOPROXY:  ipv4Entries.join(','),
+      MOPROXY_NOPROXY6: ipv6Entries.join(','),
+    });
   }
 
   /**
@@ -1356,21 +1380,22 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
                   await this.execCommand({ root: true }, 'rm', '-f', obsoleteImageAllowListConf);
                 }),
-                await this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
+                this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
                 // Remove any residual rc artifacts from previous version
-                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/vtunnel-peer', '/etc/runlevels/default/vtunnel-peer'),
-                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/host-resolver', '/etc/runlevels/default/host-resolver'),
-                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/dnsmasq-generate', '/etc/runlevels/default/dnsmasq-generate'),
-                await this.execCommand({ root: true }, 'rm', '-f', '/etc/init.d/dnsmasq', '/etc/runlevels/default/dnsmasq'),
+                this.execCommand({ root: true }, 'rm', '-f',
+                  '/etc/init.d/vtunnel-peer', '/etc/runlevels/default/vtunnel-peer',
+                  '/etc/init.d/host-resolver', '/etc/runlevels/default/host-resolver',
+                  '/etc/init.d/dnsmasq-generate', '/etc/runlevels/default/dnsmasq-generate',
+                  '/etc/init.d/dnsmasq', '/etc/runlevels/default/dnsmasq'),
               ]);
 
               await this.writeFile('/usr/local/bin/wsl-exec', WSL_EXEC, 0o755);
               await this.runInit();
               if (configureWASM) {
                 try {
-                  const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI);
+                  const version = semver.parse(DEPENDENCY_VERSIONS.spinCLI.version);
                   const env = {
-                    KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin,
+                    KUBE_PLUGIN_VERSION: DEPENDENCY_VERSIONS.spinKubePlugin.version,
                     SPIN_TEMPLATES_TAG:  (version ? `spin/templates/v${ version.major }.${ version.minor }` : 'unknown'),
                   };
                   const wslenv = Object.keys(env).join(':');
@@ -1690,7 +1715,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     await this.writeProxySettings(proxy);
     if (this.currentAction === Action.NONE && this.process) {
       if (proxy.enabled && proxy.address && proxy.port) {
-        await this.execService('moproxy', 'reload', '--ifstarted');
+        // Restart instead of reload: moproxy's SIGHUP handler only reloads the
+        // proxy server list, not the --policy file used for domain noproxy rules.
+        await this.stopService('moproxy');
         await this.startService('moproxy');
       } else {
         await this.stopService('moproxy');

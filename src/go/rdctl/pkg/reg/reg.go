@@ -18,8 +18,19 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/utils"
 )
 
-const HkcuRegistryHive = "hkcu"
-const HklmRegistryHive = "hklm"
+type RegistryHive string
+
+const (
+	HkcuRegistryHive RegistryHive = "hkcu"
+	HklmRegistryHive RegistryHive = "hklm"
+)
+
+type ProfileType string
+
+const (
+	DefaultsProfileType ProfileType = "defaults"
+	LockedProfileType   ProfileType = "locked"
+)
 
 func escape(s string) string {
 	s1 := strings.ReplaceAll(s, "\\", "\\\\")
@@ -47,7 +58,7 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 		}
 		return convertToRegFormat(pathParts, structType, value.Elem(), jsonTag, path)
 	}
-	if value.Kind() == reflect.Ptr {
+	if value.Kind() == reflect.Pointer {
 		return nil, fmt.Errorf("reg-file generation: got an unexpected pointer for %s value %v, expecting type %v", path, value, structType)
 	}
 	switch kind {
@@ -96,7 +107,7 @@ func convertToRegFormat(pathParts []string, structType reflect.Type, value refle
 		retLines = append(retLines, scalarReturnedLines...)
 		retLines = append(retLines, nestedReturnedLines...)
 		return retLines, nil
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return convertToRegFormat(pathParts, structType.Elem(), value, jsonTag, path)
 	case reflect.Slice, reflect.Array:
 		if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
@@ -181,14 +192,14 @@ func stringToMultiStringHexBytes(values []string) string {
 // @param profileType: "defaults" or "locked"
 // @param settingsBodyAsJSON - options marshaled as JSON
 // @returns: array of strings, intended for writing to a reg file
-func JSONToReg(hiveType, profileType, settingsBodyAsJSON string) ([]string, error) {
+func JSONToReg(hiveType RegistryHive, profileType ProfileType, settingsBodyAsJSON string) ([]string, error) {
 	var actualSettingsJSON map[string]interface{}
 
-	fullHiveType, ok := map[string]string{"hklm": "HKEY_LOCAL_MACHINE", "hkcu": "HKEY_CURRENT_USER"}[hiveType]
+	fullHiveType, ok := map[RegistryHive]string{HklmRegistryHive: "HKEY_LOCAL_MACHINE", HkcuRegistryHive: "HKEY_CURRENT_USER"}[hiveType]
 	if !ok {
 		return nil, fmt.Errorf(`unrecognized hiveType of %q, must be "hklm" or "hkcu"`, hiveType)
 	}
-	_, ok = map[string]bool{"defaults": true, "locked": true}[profileType]
+	_, ok = map[ProfileType]bool{DefaultsProfileType: true, LockedProfileType: true}[profileType]
 	if !ok {
 		return nil, fmt.Errorf(`unrecognized profileType of %q, must be "defaults" or "locked"`, profileType)
 	}
@@ -200,7 +211,7 @@ func JSONToReg(hiveType, profileType, settingsBodyAsJSON string) ([]string, erro
 		actualSettingsJSON["version"] = options.CURRENT_SETTINGS_VERSION
 	}
 	headerLines := []string{"Windows Registry Editor Version 5.00"}
-	bodyLines, err := convertToRegFormat([]string{fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop", profileType}, reflect.TypeOf(options.ServerSettingsForJSON{}), reflect.ValueOf(actualSettingsJSON), "", "")
+	bodyLines, err := convertToRegFormat([]string{fullHiveType, "SOFTWARE", "Policies", "Rancher Desktop", string(profileType)}, reflect.TypeOf(options.ServerSettingsForJSON{}), reflect.ValueOf(actualSettingsJSON), "", "")
 	if err != nil {
 		return nil, err
 	}

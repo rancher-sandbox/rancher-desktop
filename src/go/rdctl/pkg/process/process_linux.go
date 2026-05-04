@@ -64,7 +64,7 @@ func WaitForProcess(pid int) error {
 	}()
 
 	pollFd := unix.PollFd{
-		Fd:     int32(pidfd), //nolint:gosec // PIDs aren't that big.
+		Fd:     int32(pidfd),
 		Events: unix.POLLIN,
 	}
 	_, err = unix.Poll([]unix.PollFd{pollFd}, -1)

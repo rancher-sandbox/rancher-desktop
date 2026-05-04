@@ -124,8 +124,13 @@ test.describe.serial('Extensions', () => {
   test('build and install testing extension', async() => {
     const dataDir = path.join(srcDir, 'bats', 'tests', 'extensions', 'testdata');
 
-    await ctrctl('build', '--tag', 'rd/extension/everything', '--build-arg', 'variant=everything', dataDir);
-    await spawnFile(rdctl, ['api', '-XPOST', '/v1/extensions/install?id=rd/extension/everything']);
+    try {
+      await ctrctl('build', '--tag', 'rd/extension/everything', '--build-arg', 'variant=everything', dataDir);
+      await spawnFile(rdctl, ['api', '-XPOST', '/v1/extensions/install?id=rd/extension/everything']);
+    } catch (ex) {
+      console.error(ex);
+      throw ex;
+    }
   });
 
   test('use extension protocol handler', async() => {

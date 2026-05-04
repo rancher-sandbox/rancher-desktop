@@ -74,9 +74,9 @@ export class DockerDirManager {
       const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
 
       return JSON.parse(rawConfig);
-    } catch (error: any) {
-      if (error.code !== 'ENOENT') {
-        throw new Error(`Failed to parse Docker config file '${ this.dockerConfigPath }'. Error: ${ error.message }`);
+    } catch (cause: any) {
+      if (cause.code !== 'ENOENT') {
+        throw new Error(`Failed to parse Docker config file '${ this.dockerConfigPath }'. Error: ${ cause.message }`, { cause });
       }
       console.log('No docker config file found');
 

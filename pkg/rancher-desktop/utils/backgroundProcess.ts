@@ -87,7 +87,7 @@ export default class BackgroundProcess {
    * Check if the monitored process is still running.
    */
   protected isRunning() {
-    return this.process && this.process.exitCode === null && this.process.signalCode === null;
+    return this.process?.exitCode === null && this.process.signalCode === null;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 SUSE LLC
+Copyright © 2026 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ module.exports = {
       'Zlib',
       // The default CNCF license, not in the above list.
       'Apache-2.0',
+      // Blue-Oak has been approved by SUSE Legal
+      'BlueOak-1.0.0',
       // Extra accepted licenses.
       'Unlicense',
     ]);
@@ -53,9 +55,7 @@ module.exports = {
      * specified in package.json (verified by browsing the source code).
      * @type Record<string, string>
      */
-    const overrides = {
-      'esprima@npm:1.2.2': 'BSD-2-Clause', // https://github.com/jquery/esprima/pull/1181
-    };
+    const overrides = {};
 
     /**
      * LicenseParser is used to determine if a license is acceptable for use.

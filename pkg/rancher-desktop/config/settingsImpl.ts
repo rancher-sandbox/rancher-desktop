@@ -20,7 +20,6 @@ import clone from '@pkg/utils/clone';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
-import { getProductionVersion } from '@pkg/utils/version';
 
 const console = Logging.settings;
 
@@ -142,15 +141,17 @@ function finishConfiguringSettings(cfg: Settings, deploymentProfiles: Deployment
   } else if (os.platform() === 'linux' && !process.env.APPIMAGE) {
     cfg.application.updater.enabled = false;
   } else {
-    const appVersion = getProductionVersion();
+    const appVersion = process.env.RD_VERSION ?? 'unknown?';
 
     console.log(`appVersion is ${ appVersion }`);
     // Auto-update doesn't work for CI or local builds, so don't enable it by default.
     // CI builds use a version string like `git describe`, e.g. "v1.1.0-4140-g717225dc".
-    // Versions like "1.9.0-tech-preview" are pre-releases and not CI builds, so should not disable auto-update.
-    if ((/^v?\d+\.\d+\.\d+-\d+-g[0-9a-f]+$/.exec(appVersion)) || appVersion.includes('?')) {
+    // Versions like "1.9.0-tech-preview" are pre-releases and not CI builds, so should not disable
+    // auto-update; however, "1.9.0-fallback" means we failed to parse the version, and it _should_
+    // disable auto-update, since we don't know what version we're running.
+    if ((/^v?\d+\.\d+\.\d+-(?:\d+-g[0-9a-f]+|fallback)$/.exec(appVersion)) || appVersion.includes('?')) {
       cfg.application.updater.enabled = false;
-      console.log('updates disabled');
+      console.log('updates disabled due to unsupported version');
     }
   }
   // Replace existing settings fields with whatever is set in the locked deployment-profile

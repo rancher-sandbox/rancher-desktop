@@ -618,7 +618,7 @@ export class ExtensionManagerImpl implements ExtensionManager {
     this.processes[fullId] = new WeakRef(process);
   }
 
-  async shutdown() {
+  shutdown() {
     // Remove our event listeners (to avoid issues when we switch backends).
     for (const untypedChannel in this.eventListeners) {
       const channel = untypedChannel as keyof IpcMainEvents;
@@ -631,11 +631,13 @@ export class ExtensionManagerImpl implements ExtensionManager {
       ipcMain.removeHandler(untypedChannel as keyof IpcMainInvokeEvents);
     }
 
-    await Promise.allSettled(Object.values(this.processes).map((proc) => {
+    for (const proc of Object.values(this.processes)) {
       proc.deref()?.kill();
-    }));
+    }
 
     mainEvents.handle('extensions/shutdown', undefined);
+
+    return Promise.resolve();
   }
 
   triggerExtensionShutdown = async() => {

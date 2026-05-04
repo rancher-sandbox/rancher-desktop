@@ -72,9 +72,9 @@ async function setWindowsUserLegacyProfile(userProfile: RecursivePartial<Setting
         const keyPath = `HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\${ registryType }`;
 
         await childProcess.spawnFile('reg.exe', ['DELETE', keyPath, '/f'], { stdio: 'pipe' });
-      } catch (ex: any) {
-        if (!/unable to find/.test(Object(ex).stderr ?? '')) {
-          throw new Error(`Error trying to delete a user registry hive: ${ ex }`);
+      } catch (cause: any) {
+        if (!/unable to find/.test(Object(cause).stderr ?? '')) {
+          throw new Error(`Error trying to delete a user registry hive: ${ cause }`, { cause });
         }
       }
 
@@ -86,8 +86,8 @@ async function setWindowsUserLegacyProfile(userProfile: RecursivePartial<Setting
         try {
           await fs.promises.writeFile(regFile, genResult);
           await childProcess.spawnFile('reg.exe', ['IMPORT', regFile], { stdio: 'ignore' });
-        } catch (ex: any) {
-          throw new Error(`Error trying to create a user registry hive: ${ ex }`);
+        } catch (cause: any) {
+          throw new Error(`Error trying to create a user registry hive: ${ cause }`, { cause });
         }
       }
     }
@@ -208,7 +208,7 @@ export async function teardownApp(app: ElectronApplication) {
       // Send SIGTERM to the process group, wait three seconds, then send
       // SIGKILL and wait for one more second.
       for (const [signal, timeout] of [['TERM', 3_000], ['KILL', 1_000]] as const) {
-        let pids: string[] = [];
+        let pids: string[];
 
         try {
           const args = ['-o', 'pid=', process.platform === 'darwin' ? '-g' : '--sid', `${ pid }`];

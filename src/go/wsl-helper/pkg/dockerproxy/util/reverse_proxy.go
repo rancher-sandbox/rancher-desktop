@@ -168,6 +168,7 @@ func (proxy *ReverseProxy) forwardRequest(w http.ResponseWriter, r *http.Request
 	// long-running, streaming connections like "docker log -f"
 	fw := newFlushedWriter(ctx, w)
 	_, err = io.Copy(fw, backendResponse.Body)
+	fw.stopFlushing()
 	if err != nil {
 		proxy.logf("failed to stream the response body to the client: %v", err)
 	}
@@ -271,10 +272,11 @@ func (proxy *ReverseProxy) logf(format string, args ...any) {
 // flushedWriter wraps an io.Writer with periodic flushing capability.
 // It ensures that data is periodically flushed to the underlying writer.
 type flushedWriter struct {
-	w     io.Writer       // Underlying writer to which data is written.
-	mu    sync.Mutex      // Mutex to protect concurrent access to the writer and dirty flag.
-	ctx   context.Context // Context to control the lifecycle of the periodic flusher.
-	dirty bool            // Flag indicating whether the writer may have unflushed data.
+	w      io.Writer          // Underlying writer to which data is written.
+	mu     sync.Mutex         // Mutex to protect concurrent access to the writer and dirty flag.
+	ctx    context.Context    // Context to control the lifecycle of the periodic flusher.
+	cancel context.CancelFunc // Cancels the periodic flusher context.
+	dirty  bool               // Flag indicating whether the writer may have unflushed data.
 }
 
 // NewFlushedWriter creates and initializes a new flushedWriter instance.
@@ -284,9 +286,11 @@ type flushedWriter struct {
 // that w implements http.Flusher before instantiation if periodic flushing
 // is required.
 func newFlushedWriter(ctx context.Context, w io.Writer) *flushedWriter {
+	flushCtx, flushCancel := context.WithCancel(ctx)
 	fw := &flushedWriter{
-		w:   w,
-		ctx: ctx,
+		w:      w,
+		ctx:    flushCtx,
+		cancel: flushCancel,
 	}
 
 	// periodicFlusher runs a loop that periodically flushes the writer
@@ -328,4 +332,13 @@ func (fw *flushedWriter) Write(p []byte) (n int, err error) {
 		fw.dirty = true
 	}
 	return n, err
+}
+
+// stopFlushing stops the periodic flusher and clears any pending flush state.
+// It should be called after streaming completes to avoid concurrent flushes on close.
+func (fw *flushedWriter) stopFlushing() {
+	fw.mu.Lock()
+	fw.dirty = false
+	fw.cancel()
+	fw.mu.Unlock()
 }
