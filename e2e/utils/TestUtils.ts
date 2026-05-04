@@ -9,7 +9,7 @@ import util from 'util';
 import { expect, _electron, ElectronApplication, TestInfo } from '@playwright/test';
 import _, { GetFieldType } from 'lodash';
 import { Page } from 'playwright-core';
-import plist from 'plist';
+import * as plist from 'plist';
 
 import { defaultSettings, LockedSettingsType, Settings } from '@pkg/config/settings';
 import { getDefaultMemory } from '@pkg/config/settingsImpl';
