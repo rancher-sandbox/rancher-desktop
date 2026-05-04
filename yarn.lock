@@ -5129,9 +5129,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/test-utils@npm:2.4.8":
-  version: 2.4.8
-  resolution: "@vue/test-utils@npm:2.4.8"
+"@vue/test-utils@npm:2.4.9":
+  version: 2.4.9
+  resolution: "@vue/test-utils@npm:2.4.9"
   dependencies:
     js-beautify: "npm:^1.14.9"
     vue-component-type-helpers: "npm:^3.0.0"
@@ -5142,7 +5142,7 @@ __metadata:
   peerDependenciesMeta:
     "@vue/server-renderer":
       optional: true
-  checksum: 10c0/3de2f5cf86763af2acf28f74cdc3d5f6c72b640b928e1ce0dbc9d7abad9f90816f0ed6d28a433ec17a525913fd5036588a616a572489106080754ae1d750dfc4
+  checksum: 10c0/a38f06d72108e2e64cf3600074121f236c0945b91f191a69cd7efb202c6109acceb5f9209550eac962ece5a2b4fc549f5422ff010e609dc0b461e9c773b7f306
   languageName: node
   linkType: hard
 
@@ -14322,7 +14322,7 @@ __metadata:
     "@vue/compiler-sfc": "npm:3.5.33"
     "@vue/eslint-config-standard-with-typescript": "npm:9.2.0"
     "@vue/eslint-config-typescript": "npm:14.7.0"
-    "@vue/test-utils": "npm:2.4.8"
+    "@vue/test-utils": "npm:2.4.9"
     "@xterm/addon-fit": "npm:0.11.0"
     "@xterm/addon-search": "npm:0.16.0"
     "@xterm/addon-web-links": "npm:0.12.0"

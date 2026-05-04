@@ -124,7 +124,7 @@
     "@vue/compiler-sfc": "3.5.33",
     "@vue/eslint-config-standard-with-typescript": "9.2.0",
     "@vue/eslint-config-typescript": "14.7.0",
-    "@vue/test-utils": "2.4.8",
+    "@vue/test-utils": "2.4.9",
     "@yarnpkg/cli": "^4.14.1",
     "@yarnpkg/core": "^4.7.0",
     "@yarnpkg/types": "^4.0.1",
