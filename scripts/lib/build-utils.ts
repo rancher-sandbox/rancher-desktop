@@ -173,6 +173,7 @@ export default {
           },
           {
             test: /(?:^|[/\\])assets[/\\]scripts[/\\]/,
+            type: 'javascript/auto',
             use:  { loader: 'raw-loader' },
           },
         ],

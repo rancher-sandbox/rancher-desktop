@@ -8,6 +8,7 @@ import yaml from 'yaml';
 import CERT_MANAGER from '@pkg/assets/scripts/cert-manager.yaml';
 import INSTALL_CONTAINERD_SHIMS_SCRIPT from '@pkg/assets/scripts/install-containerd-shims';
 import CONTAINERD_CONFIG from '@pkg/assets/scripts/k3s-containerd-config.toml';
+import SECCOMP_PROFILE from '@pkg/assets/scripts/seccomp.json';
 import SPIN_OPERATOR from '@pkg/assets/scripts/spin-operator.yaml';
 import { BackendSettings, VMExecutor } from '@pkg/backend/backend';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
@@ -23,6 +24,7 @@ import { showMessageBox } from '@pkg/window';
 
 const CONTAINERD_CONFIG_TOML = '/etc/containerd/config.toml';
 const DOCKER_DAEMON_JSON = '/etc/docker/daemon.json';
+const SECCOMP_PROFILE_PATH = '/etc/rancher-desktop/seccomp.json';
 
 const MANIFEST_DIR = '/var/lib/rancher/k3s/server/manifests';
 
@@ -433,6 +435,7 @@ export default class BackendHelper {
       config = {};
     }
     config['min-api-version'] = '1.41';
+    config['seccomp-profile'] = SECCOMP_PROFILE_PATH;
     config['features'] ??= {};
     config['features']['containerd-snapshotter'] = useSnapshotter;
 
@@ -444,9 +447,19 @@ export default class BackendHelper {
     await vmx.writeFile(DOCKER_DAEMON_JSON, jsonStringifyWithWhiteSpace(config), 0o644);
   }
 
+  /**
+   * Write the AF_ALG-blocking seccomp profile (CVE-2026-31431 mitigation) to
+   * the VM. nerdctl picks it up via the wrapper script; Docker via daemon.json.
+   */
+  static async writeSeccompProfile(vmx: VMExecutor): Promise<void> {
+    await vmx.execCommand({ root: true }, 'mkdir', '-p', '/etc/rancher-desktop');
+    await vmx.writeFile(SECCOMP_PROFILE_PATH, SECCOMP_PROFILE, 0o644);
+  }
+
   static async configureContainerEngine(vmx: VMExecutor, configureWASM: boolean, mobyStorageDriver: 'classic' | 'snapshotter' | 'auto') {
     await BackendHelper.installContainerdShims(vmx, configureWASM);
     await BackendHelper.writeContainerdConfig(vmx, configureWASM);
+    await BackendHelper.writeSeccompProfile(vmx);
     await BackendHelper.configureMobyStorage(vmx, mobyStorageDriver, configureWASM);
   }
 }

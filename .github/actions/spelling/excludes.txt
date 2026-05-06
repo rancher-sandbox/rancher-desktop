@@ -91,6 +91,8 @@
 ^\QSECURITY.md\E$
 ^pkg/rancher-desktop/assets/scripts/logrotate-k3s$
 ^pkg/rancher-desktop/assets/scripts/logrotate-lima-guestagent$
+# Vendored from moby/profiles
+^\Qpkg/rancher-desktop/assets/scripts/seccomp.json\E$
 ^pkg/rancher-desktop/sudo-prompt/
 ^pkg/rancher-desktop/utils/processOutputInterpreters/__tests__/assets/trivy-image-postgres
 ignore$
