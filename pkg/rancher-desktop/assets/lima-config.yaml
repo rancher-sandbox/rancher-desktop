@@ -24,17 +24,21 @@ provision:
     mount --bind / /bootfs
     # /bootfs/etc is empty on first boot because it has been moved to /mnt/data/etc by lima
     if [ -f /bootfs/etc/os-release ]; then
-      # Trigger matrix once /bootfs/etc has ISO content:
-      #   /etc/os-release  | matches ISO  | action
-      #   ---              | ---          | ---
-      #   symlink          | yes          | dereference only  (fresh VM 2nd boot, or pre-1.22 upgrade)
-      #   symlink          | no           | dereference + full migration
-      #   regular file     | yes          | no-op (steady state)
-      #   regular file     | no           | full migration
+      # Alpine ships /etc/os-release as a symlink to ../usr/lib/os-release; lima's
+      # first-boot `mv /etc /mnt/data/` preserves that symlink in /mnt/data/etc.
+      # Symlinks always resolve to the current ISO's /usr/lib/os-release on the root
+      # tmpfs, so `diff -q` against /bootfs/etc/os-release matches while
+      # /etc/os-release is a symlink; the destructive migration below cannot fire in
+      # that state. Pre-1.22 RD never dereferenced; from 1.22 onward we dereference
+      # once so that future content checks compare regular files, and the destructive
+      # migration fires only on a real ISO content change.
       #
-      # Lima's first-boot `mv /etc /mnt/data/` leaves the ISO's symlink in the persistent
-      # /etc, so the "symlink" rows match every fresh VM's second boot, not just upgrades
-      # from RD < 1.22.
+      # Reachable states once /bootfs/etc has ISO content:
+      #   /etc/os-release  | matches ISO  | how it arose                           | action
+      #   ---              | ---          | ---                                    | ---
+      #   symlink          | yes          | fresh VM 2nd boot, or pre-1.22 upgrade | dereference only
+      #   regular file     | yes          | RD >= 1.22 steady state                | no-op
+      #   regular file     | no           | real ISO content change                | full migration
       if [ -L /etc/os-release ]; then
         # Using a temp file just in case dereferencing a symlink onto itself has a race condition.
         cp -L /etc/os-release /etc/os-release.tmp
