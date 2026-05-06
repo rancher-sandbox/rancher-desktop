@@ -24,9 +24,23 @@ provision:
     mount --bind / /bootfs
     # /bootfs/etc is empty on first boot because it has been moved to /mnt/data/etc by lima
     if [ -f /bootfs/etc/os-release ]; then
-      # Alpine turned /etc/os-release into a symlink; we dereference it again. If we still have a symlink
-      # here, then this is an upgrade from an older version and needs to go through the migration.
-      if [ -L /etc/os-release ] || ! diff -q /etc/os-release /bootfs/etc/os-release; then
+      # Trigger matrix once /bootfs/etc has ISO content:
+      #   /etc/os-release  | matches ISO  | action
+      #   ---              | ---          | ---
+      #   symlink          | yes          | dereference only  (fresh VM 2nd boot, or pre-1.22 upgrade)
+      #   symlink          | no           | dereference + full migration
+      #   regular file     | yes          | no-op (steady state)
+      #   regular file     | no           | full migration
+      #
+      # Lima's first-boot `mv /etc /mnt/data/` leaves the ISO's symlink in the persistent
+      # /etc, so the "symlink" rows match every fresh VM's second boot, not just upgrades
+      # from RD < 1.22.
+      if [ -L /etc/os-release ]; then
+        # Using a temp file just in case dereferencing a symlink onto itself has a race condition.
+        cp -L /etc/os-release /etc/os-release.tmp
+        mv /etc/os-release.tmp /etc/os-release
+      fi
+      if ! diff -q /etc/os-release /bootfs/etc/os-release; then
         # When we are upgrading from an ISO we will install new packages during boot.
         # But Lima will restore the old /etc/apk/world file and run `apk fix --no-network`
         # to restore packages from cache that were installed manually. This will however
@@ -37,9 +51,16 @@ provision:
         apk add --no-network --keys-dir /bootfs/etc/apk/keys --repositories-file /bootfs/etc/apk/repositories \
           $(cat /bootfs/etc/apk/world)
 
-        # Using a temp file just in case dereferencing a symlink onto itself has a race condition.
-        cp -L /etc/os-release /etc/os-release.tmp
-        mv /etc/os-release.tmp /etc/os-release
+        # `apk add` above wrote the merged world (ISO packages + any user-installed ones)
+        # to /etc/apk/world. Copy it to /bootfs/etc so it survives the destructive mv below
+        # and lands in the new /etc/apk/world.
+        cp /etc/apk/world /bootfs/etc/apk/world
+
+        # Same pattern for /etc/apk/repositories: append entries unique to the persistent
+        # file so user-added repositories survive the destructive mv below. Busybox grep
+        # requires short flags here: -v (invert), -x (whole-line), -F (literal patterns),
+        # -f FILE (patterns from file). Exits 1 on empty output; tolerate it.
+        grep -vxFf /bootfs/etc/apk/repositories /etc/apk/repositories >> /bootfs/etc/apk/repositories || true
 
         cp /etc/machine-id /bootfs/etc
         cp /etc/ssh/ssh_host* /bootfs/etc/ssh/
