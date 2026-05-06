@@ -24,9 +24,27 @@ provision:
     mount --bind / /bootfs
     # /bootfs/etc is empty on first boot because it has been moved to /mnt/data/etc by lima
     if [ -f /bootfs/etc/os-release ]; then
-      # Alpine turned /etc/os-release into a symlink; we dereference it again. If we still have a symlink
-      # here, then this is an upgrade from an older version and needs to go through the migration.
-      if [ -L /etc/os-release ] || ! diff -q /etc/os-release /bootfs/etc/os-release; then
+      # Alpine ships /etc/os-release as a symlink to ../usr/lib/os-release; lima's
+      # first-boot `mv /etc /mnt/data/` preserves that symlink in /mnt/data/etc.
+      # Symlinks always resolve to the current ISO's /usr/lib/os-release on the root
+      # tmpfs, so `diff -q` against /bootfs/etc/os-release matches while
+      # /etc/os-release is a symlink; the destructive migration below cannot fire in
+      # that state. Pre-1.22 RD never dereferenced; from 1.22 onward we dereference
+      # once so that future content checks compare regular files, and the destructive
+      # migration fires only on a real ISO content change.
+      #
+      # Reachable states once /bootfs/etc has ISO content:
+      #   /etc/os-release  | matches ISO  | how it arose                           | action
+      #   ---              | ---          | ---                                    | ---
+      #   symlink          | yes          | fresh VM 2nd boot, or pre-1.22 upgrade | dereference only
+      #   regular file     | yes          | RD >= 1.22 steady state                | no-op
+      #   regular file     | no           | real ISO content change                | full migration
+      if [ -L /etc/os-release ]; then
+        # Using a temp file just in case dereferencing a symlink onto itself has a race condition.
+        cp -L /etc/os-release /etc/os-release.tmp
+        mv /etc/os-release.tmp /etc/os-release
+      fi
+      if ! diff -q /etc/os-release /bootfs/etc/os-release; then
         # When we are upgrading from an ISO we will install new packages during boot.
         # But Lima will restore the old /etc/apk/world file and run `apk fix --no-network`
         # to restore packages from cache that were installed manually. This will however
@@ -37,9 +55,16 @@ provision:
         apk add --no-network --keys-dir /bootfs/etc/apk/keys --repositories-file /bootfs/etc/apk/repositories \
           $(cat /bootfs/etc/apk/world)
 
-        # Using a temp file just in case dereferencing a symlink onto itself has a race condition.
-        cp -L /etc/os-release /etc/os-release.tmp
-        mv /etc/os-release.tmp /etc/os-release
+        # `apk add` above wrote the merged world (ISO packages + any user-installed ones)
+        # to /etc/apk/world. Copy it to /bootfs/etc so it survives the destructive mv below
+        # and lands in the new /etc/apk/world.
+        cp /etc/apk/world /bootfs/etc/apk/world
+
+        # Same pattern for /etc/apk/repositories: append entries unique to the persistent
+        # file so user-added repositories survive the destructive mv below. Busybox grep
+        # requires short flags here: -v (invert), -x (whole-line), -F (literal patterns),
+        # -f FILE (patterns from file). Exits 1 on empty output; tolerate it.
+        grep -vxFf /bootfs/etc/apk/repositories /etc/apk/repositories >> /bootfs/etc/apk/repositories || true
 
         cp /etc/machine-id /bootfs/etc
         cp /etc/ssh/ssh_host* /bootfs/etc/ssh/
