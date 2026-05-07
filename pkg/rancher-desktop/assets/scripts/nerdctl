@@ -4,33 +4,6 @@ if [ -f /usr/local/openresty/nginx/conf/allowed-images.conf ]; then
   export HTTPS_PROXY=http://127.0.0.1:3128
 fi
 
-# Apply the Docker default seccomp profile unless the caller has already
-# specified a seccomp policy.  nerdctl on WSL2 runs containers unconfined
-# without this; the profile also blocks AF_ALG sockets (CVE-2026-31431).
-SECCOMP_PROFILE=/etc/rancher-desktop/seccomp.json
-if [ -f "$SECCOMP_PROFILE" ]; then
-  case "$1" in
-    run|create)
-      has_seccomp=0
-      prev_security_opt=0
-      for arg in "$@"; do
-        if [ "$prev_security_opt" -eq 1 ]; then
-          case "$arg" in seccomp=*) has_seccomp=1; break;; esac
-          prev_security_opt=0
-        fi
-        case "$arg" in
-          --security-opt=seccomp=*) has_seccomp=1; break;;
-          --security-opt) prev_security_opt=1;;
-        esac
-      done
-      if [ "$has_seccomp" -eq 0 ]; then
-        cmd="$1"; shift
-        set -- "$cmd" "--security-opt" "seccomp=$SECCOMP_PROFILE" "$@"
-      fi
-      ;;
-  esac
-fi
-
 # On WSL, we need to enter the correct pid &c. namespace for nerdctl to work
 # correctly.
 

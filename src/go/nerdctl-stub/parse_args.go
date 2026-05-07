@@ -251,6 +251,7 @@ func parseArgs() (*parsedArgs, error) {
 		_ = cleanupParseArgs()
 		return nil, err
 	}
+	result.args = injectSeccompOpt(result.args)
 	return result, nil
 }
 
