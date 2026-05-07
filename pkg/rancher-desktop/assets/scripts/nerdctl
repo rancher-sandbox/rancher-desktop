@@ -9,6 +9,12 @@ fi
 # without this; the profile also blocks AF_ALG sockets (CVE-2026-31431).
 SECCOMP_PROFILE=/etc/rancher-desktop/seccomp.json
 if [ -f "$SECCOMP_PROFILE" ]; then
+  # nerdctl-stub (Windows) prepends "--address <sock>" before the subcommand;
+  # strip it here since CONTAINERD_ADDRESS is already exported above.
+  case "$1" in
+    --address|-a) shift 2;;
+    --address=*|-a=*) shift;;
+  esac
   case "$1" in
     run|create)
       has_seccomp=0
