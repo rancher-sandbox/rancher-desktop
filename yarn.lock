@@ -5334,6 +5334,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@xmldom/xmldom@npm:^0.9.10":
+  version: 0.9.10
+  resolution: "@xmldom/xmldom@npm:0.9.10"
+  checksum: 10c0/38a9c9b95450d7fccebc61371c8e0b90ceaae992886484108333d29ccbd2640e3555b6af012f15ce1beb5067aeb40486659b6183fad38af179e82d28028bfc5d
+  languageName: node
+  linkType: hard
+
 "@xterm/addon-fit@npm:0.11.0":
   version: 0.11.0
   resolution: "@xterm/addon-fit@npm:0.11.0"
@@ -13605,6 +13612,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"plist@npm:4.0.0":
+  version: 4.0.0
+  resolution: "plist@npm:4.0.0"
+  dependencies:
+    "@xmldom/xmldom": "npm:^0.9.10"
+    xmlbuilder: "npm:^15.1.1"
+  checksum: 10c0/e2d97e11407e873e39764c7397207790dc31b2ddf8a7685bf602ce828de986ee7cce334deb3a630b65e5e99c4be95ea2f14f8c6bb44a900d11edc7f488ab16a8
+  languageName: node
+  linkType: hard
+
 "portfinder@npm:^1.0.26":
   version: 1.0.36
   resolution: "portfinder@npm:1.0.36"
@@ -14370,7 +14387,7 @@ __metadata:
     node-gyp-build: "npm:4.8.4"
     node-loader: "npm:^2.1.0"
     octokit: "npm:5.0.5"
-    plist: "npm:3.1.0"
+    plist: "npm:4.0.0"
     posix-node: "npm:0.12.0"
     proxy-agent: "npm:^8.0.0"
     ps-tree: "npm:1.2.0"

@@ -6,7 +6,7 @@ import path from 'path';
 
 import { jest } from '@jest/globals';
 import _ from 'lodash';
-import plist from 'plist';
+import * as plist from 'plist';
 
 import * as settings from '../settings';
 import * as settingsImpl from '../settingsImpl';
