@@ -1,0 +1,375 @@
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"strings"
+
+	"gopkg.in/yaml.v3"
+)
+
+// mergeEntry holds a translated key-value pair with an optional comment.
+type mergeEntry struct {
+	key      string
+	value    string
+	comment  string // may be multi-line (joined with "\n")
+	override bool   // true if comment contains @override
+}
+
+func runMerge(args []string) error {
+	fs := flag.NewFlagSet("merge", flag.ExitOnError)
+	locale := fs.String("locale", "", "Target locale code (required)")
+	dryRun := fs.Bool("dry-run", false, "Show what would change without writing")
+	mode := fs.String("mode", "normal", "Merge mode: normal, drift, improve")
+	includeOverrides := fs.Bool("include-overrides", false, "In improve mode, also overwrite @override keys")
+	fs.Parse(args)
+
+	if *locale == "" {
+		return fmt.Errorf("--locale is required")
+	}
+
+	validModes := map[string]bool{"normal": true, "drift": true, "improve": true}
+	if !validModes[*mode] {
+		return fmt.Errorf("--mode must be normal, drift, or improve")
+	}
+
+	root, err := repoRoot()
+	if err != nil {
+		return err
+	}
+	return reportMerge(root, *locale, fs.Args(), *dryRun, *mode, *includeOverrides)
+}
+
+// reportMerge reads flat key=value pairs with @reason comments and writes
+// (or updates) a nested YAML locale file. It operates on the yaml.Node tree
+// directly, preserving all existing leaf comments. Input sources:
+//   - File arguments: agent output (JSONL), markdown, or raw flat text
+//   - Stdin (when no files given): raw flat text
+//
+// Merge modes control how @override keys are handled:
+//   - normal: write everything unconditionally
+//   - drift: write everything, warn when overwriting @override keys
+//   - improve: skip @override keys unless includeOverrides is set
+func reportMerge(root, locale string, files []string, dryRun bool, mode string, includeOverrides bool) error {
+	localePath := translationsPath(root, locale+".yaml")
+
+	// Load existing YAML as a node tree (empty tree if file does not exist).
+	doc, err := loadYAMLDocument(localePath)
+	if err != nil {
+		return fmt.Errorf("loading existing %s: %w", localePath, err)
+	}
+	treeRoot := documentRoot(doc)
+	if treeRoot.Kind != yaml.MappingNode {
+		return fmt.Errorf("%s has a non-mapping root node (kind %d); refusing to modify", localePath, treeRoot.Kind)
+	}
+
+	// Build input reader from file arguments or stdin.
+	var inputReader io.Reader
+	if len(files) > 0 {
+		var combined strings.Builder
+		for _, path := range files {
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return fmt.Errorf("reading %s: %w", path, err)
+			}
+			combined.WriteString(extractTranslationText(data))
+			combined.WriteString("\n")
+		}
+		inputReader = strings.NewReader(combined.String())
+	} else {
+		inputReader = os.Stdin
+	}
+
+	// Parse new entries.
+	newEntries, err := parseMergeInput(inputReader)
+	if err != nil {
+		return err
+	}
+
+	if len(newEntries) == 0 {
+		return fmt.Errorf("no translation entries found in input")
+	}
+
+	// Reject conflicting duplicate keys in input.
+	seen := make(map[string]string, len(newEntries))
+	for _, e := range newEntries {
+		if prev, exists := seen[e.key]; exists && prev != e.value {
+			return fmt.Errorf("conflicting values for key %q in input:\n  first:  %s\n  second: %s", e.key, prev, e.value)
+		}
+		seen[e.key] = e.value
+	}
+
+	// Reject keys not present in the English source.
+	enPath := translationsPath(root, "en-us.yaml")
+	enKeys, err := loadYAMLFlat(enPath)
+	if err != nil {
+		return fmt.Errorf("loading source keys: %w", err)
+	}
+	var unknown []string
+	for _, e := range newEntries {
+		if _, exists := enKeys[e.key]; !exists {
+			unknown = append(unknown, e.key)
+		}
+	}
+	if len(unknown) > 0 {
+		return fmt.Errorf("input contains %d keys not in en-us.yaml: %s", len(unknown), strings.Join(unknown, ", "))
+	}
+
+	// Apply new entries to the tree, respecting mode.
+	var added, overwritten, skipped, warned int
+	for _, e := range newEntries {
+		existingVal, _, found := nodeGetLeaf(treeRoot, e.key)
+		if found {
+			hasOverride := nodeHasOverride(treeRoot, e.key)
+
+			// In improve mode, skip @override keys unless --include-overrides.
+			if mode == "improve" && hasOverride && !includeOverrides {
+				skipped++
+				if dryRun {
+					fmt.Printf("skip %s (@override)\n", e.key)
+				}
+				continue
+			}
+
+			if existingVal != e.value {
+				overwritten++
+				if dryRun {
+					fmt.Printf("overwrite %s\n  old: %s\n  new: %s\n", e.key, existingVal, e.value)
+				}
+				// In drift mode, warn when overwriting @override keys.
+				if mode == "drift" && hasOverride {
+					warned++
+					fmt.Fprintf(os.Stderr, "Warning: overwriting @override key %s\n", e.key)
+				}
+			}
+		} else {
+			added++
+			if dryRun {
+				fmt.Printf("add %s: %s\n", e.key, e.value)
+			}
+		}
+		if !dryRun {
+			if err := nodeSetLeaf(treeRoot, e.key, e.value, e.comment); err != nil {
+				return fmt.Errorf("setting %s: %w", e.key, err)
+			}
+		}
+	}
+
+	if dryRun {
+		total := len(nodeAllLeaves(treeRoot)) + added
+		fmt.Fprintf(os.Stderr, "Dry run: %d new, %d overwritten", added, overwritten)
+		if skipped > 0 {
+			fmt.Fprintf(os.Stderr, ", %d skipped (@override)", skipped)
+		}
+		if warned > 0 {
+			fmt.Fprintf(os.Stderr, ", %d @override warnings", warned)
+		}
+		fmt.Fprintf(os.Stderr, ", %d total\n", total)
+		return nil
+	}
+
+	// Serialize both files before writing either, so a serialization failure
+	// leaves both files untouched. The writes themselves are sequential, so a
+	// crash between them can leave metadata stale. Run `i18n-report meta` to
+	// regenerate if that happens.
+	var buf strings.Builder
+	serializeYAMLNode(&buf, doc)
+	localeData := []byte(buf.String())
+
+	total := len(nodeAllLeaves(treeRoot))
+
+	enKeys, err = loadYAMLFlat(enPath)
+	if err != nil {
+		return fmt.Errorf("loading English for metadata: %w", err)
+	}
+	localeKeys := make(map[string]string, total)
+	for k, e := range nodeAllLeaves(treeRoot) {
+		localeKeys[k] = e.value
+	}
+
+	// Write both files together.
+	if err := os.WriteFile(localePath, localeData, 0644); err != nil {
+		return fmt.Errorf("writing %s: %w", localePath, err)
+	}
+	if err := writeMetadata(root, locale, enKeys, localeKeys); err != nil {
+		return err
+	}
+
+	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (%d overwritten", added, localePath, overwritten)
+	if skipped > 0 {
+		fmt.Fprintf(os.Stderr, ", %d skipped", skipped)
+	}
+	if warned > 0 {
+		fmt.Fprintf(os.Stderr, ", %d @override warnings", warned)
+	}
+	fmt.Fprintf(os.Stderr, ", %d total)\n", total)
+	return nil
+}
+
+// extractTranslationText extracts flat translation content from raw bytes.
+// It handles three input formats:
+//  1. JSONL agent output — parses JSON, extracts text from assistant messages
+//  2. Markdown with ```yaml fences — extracts content between fences
+//  3. Raw flat key-value text — passed through unchanged
+func extractTranslationText(data []byte) string {
+	content := string(data)
+
+	// Detect JSONL by checking whether the first non-whitespace character is '{'.
+	// Sufficient for the agent output formats we consume.
+	firstLine := ""
+	for _, line := range strings.Split(content, "\n") {
+		if trimmed := strings.TrimSpace(line); trimmed != "" {
+			firstLine = trimmed
+			break
+		}
+	}
+	if len(firstLine) > 0 && firstLine[0] == '{' && json.Valid([]byte(firstLine)) {
+		var extracted strings.Builder
+		for _, line := range strings.Split(content, "\n") {
+			line = strings.TrimSpace(line)
+			if line == "" || line[0] != '{' {
+				continue
+			}
+			var msg struct {
+				Message struct {
+					Role    string          `json:"role"`
+					Content json.RawMessage `json:"content"`
+				} `json:"message"`
+			}
+			if err := json.Unmarshal([]byte(line), &msg); err != nil {
+				continue
+			}
+			if msg.Message.Role != "assistant" {
+				continue
+			}
+			// Content may be a string or an array of content blocks.
+			var text string
+			if err := json.Unmarshal(msg.Message.Content, &text); err == nil {
+				extracted.WriteString(text)
+				extracted.WriteString("\n")
+			} else {
+				var blocks []struct {
+					Type string `json:"type"`
+					Text string `json:"text"`
+				}
+				if err := json.Unmarshal(msg.Message.Content, &blocks); err == nil {
+					for _, b := range blocks {
+						if b.Type == "text" {
+							extracted.WriteString(b.Text)
+							extracted.WriteString("\n")
+						}
+					}
+				}
+			}
+		}
+		content = extracted.String()
+	}
+
+	// Extract content from ```yaml fences if present.
+	if strings.Contains(content, "```yaml") {
+		var extracted strings.Builder
+		inFence := false
+		for _, line := range strings.Split(content, "\n") {
+			trimmed := strings.TrimSpace(line)
+			if trimmed == "```yaml" {
+				inFence = true
+				continue
+			}
+			if trimmed == "```" && inFence {
+				inFence = false
+				continue
+			}
+			if inFence {
+				extracted.WriteString(line)
+				extracted.WriteString("\n")
+			}
+		}
+		if extracted.Len() > 0 {
+			content = extracted.String()
+		}
+	}
+
+	return content
+}
+
+// parseMergeInput reads flat key=value or key: value lines from a reader,
+// collecting @reason comments and associating them with the next key.
+// Blank lines and non-@reason comments are skipped.
+func parseMergeInput(r io.Reader) ([]mergeEntry, error) {
+	scanner := bufio.NewScanner(r)
+	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
+
+	var entries []mergeEntry
+	var pendingComment strings.Builder
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
+
+		// Skip blank lines.
+		if trimmed == "" || trimmed == "---" {
+			pendingComment.Reset()
+			continue
+		}
+
+		// Accumulate @reason comments.
+		if strings.HasPrefix(trimmed, "# @reason") {
+			if pendingComment.Len() > 0 {
+				pendingComment.WriteString("\n")
+			}
+			pendingComment.WriteString(trimmed)
+			continue
+		}
+		// Accumulate continuation lines for multi-line @reason comments.
+		if strings.HasPrefix(trimmed, "#   ") && pendingComment.Len() > 0 {
+			pendingComment.WriteString("\n")
+			pendingComment.WriteString(trimmed)
+			continue
+		}
+
+		// Skip other comment lines.
+		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+
+		// Parse key-value pair: try "key: value" then "key=value".
+		var key, value string
+		if idx := strings.Index(trimmed, ": "); idx > 0 {
+			candidate := trimmed[:idx]
+			if isValidDottedKey(candidate) {
+				key = candidate
+				value = stripYAMLQuotes(trimmed[idx+2:])
+			}
+		}
+		if key == "" {
+			if idx := strings.Index(trimmed, "="); idx > 0 {
+				candidate := trimmed[:idx]
+				if isValidDottedKey(candidate) {
+					key = candidate
+					value = stripYAMLQuotes(trimmed[idx+1:])
+				}
+			}
+		}
+
+		if key == "" {
+			pendingComment.Reset()
+			continue
+		}
+
+		entries = append(entries, mergeEntry{
+			key:     key,
+			value:   value,
+			comment: pendingComment.String(),
+		})
+		pendingComment.Reset()
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("reading input: %w", err)
+	}
+	return entries, nil
+}

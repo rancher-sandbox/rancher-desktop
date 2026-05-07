@@ -105,3 +105,5 @@ ignore$
 ^\Qscripts/assets/extension-data.yaml\E$
 # Test data
 ^screenshots/test-data/
+# i18n tool tests use German sample translations
+^src/go/i18n-report/.*_test\.go$
