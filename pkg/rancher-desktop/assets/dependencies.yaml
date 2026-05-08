@@ -100,17 +100,13 @@ trivy:
     trivy_0.70.0_Linux-64bit.tar.gz: sha256:8b4376d5d6befe5c24d503f10ff136d9e0c49f9127a4279fd110b727929a5aa9
     trivy_0.70.0_Linux-ARM64.tar.gz: sha256:2f6bb988b553a1bbac6bdd1ce890f5e412439564e17522b88a4541b4f364fc8d
 steve:
-  version: 0.1.0-beta9.1
+  version: 0.1.0-beta9.2
   checksums:
-    steve-linux-amd64.tar.gz: sha256:eb2f6b11ce0c46e27dceb8d2a7528b88e966d28d72a0ccb07c4022bf9c02b662
-    steve-linux-arm64.tar.gz: sha256:e9f50fabc0c2aaebc47c8372b8b835457e72b9d337e81405f818d440e82e8fb2
-    steve-darwin-amd64.tar.gz: sha256:c62c65b4af5ad8932c2a2f14a88617da597ea141751eead6297c0ab914f0cdd6
-    steve-darwin-arm64.tar.gz: sha256:972f7a1c7e288b445b3767f6220a5cac90aa4df7ced178cce4ad7c9179dc5226
-    steve-windows-amd64.tar.gz: sha256:5788fbbdf02a6efbf7baaea48c05b2e5ae4c213eb35cb6777c44bd66973b1f49
-rancherDashboard:
-  version: 2.11.1.rd4
-  checksums:
-    rancher-dashboard-desktop-embed.tar.gz: sha256:944b39416d59758697b38a9fbcc0fefe3c4281d6739cd36fb3172c61e758ec1d
+    steve-darwin-amd64.tar.gz: sha256:0886c0bf0823f1c0893d7d05fd3a34b4bea4a7999c8d66a7241549cadecea676
+    steve-darwin-arm64.tar.gz: sha256:901f858c27f96481fad3f3fcc734080a1861838005963a9913a68dbefc2792b9
+    steve-linux-amd64.tar.gz: sha256:31d68b0c92b688984dc0db270c17b87164c07626c0b69f92f0b2f7f31017d3de
+    steve-linux-arm64.tar.gz: sha256:f976de1c9c63a1732c0e7f0365c228747e669a62ad9a4fa7ae98dc2277919970
+    steve-windows-amd64.tar.gz: sha256:a70a9bfecb43abd94350eb8919a5d86425632393c2d04f15b8bafcdf158da39d
 dockerProvidedCredentialHelpers:
   version: 0.9.7
   checksums:
