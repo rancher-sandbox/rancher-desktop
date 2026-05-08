@@ -47,5 +47,19 @@ if [ -f /var/lib/resolv.conf ]; then
     ln -s -f /var/lib/resolv.conf /etc/resolv.conf
 fi
 
+# Block modules that enable known exploit paths:
+#   esp4/esp6  — dirtyfrag (CVE-2026-43284) XFRM ESP page-cache write primitive
+#   rxrpc      — dirtyfrag (CVE-2026-43500) AF_RXRPC path via pcbc(fcrypt)
+#   algif_aead — copy.fail (CVE-2026-31431) AF_ALG AEAD in-place page-cache write
+rm -f \
+    /lib/modules/*/kernel/net/ipv4/esp4.ko \
+    /lib/modules/*/kernel/net/ipv4/esp4.ko.xz \
+    /lib/modules/*/kernel/net/ipv6/esp6.ko \
+    /lib/modules/*/kernel/net/ipv6/esp6.ko.xz \
+    /lib/modules/*/kernel/net/rxrpc/rxrpc.ko \
+    /lib/modules/*/kernel/net/rxrpc/rxrpc.ko.xz \
+    /lib/modules/*/kernel/crypto/algif_aead.ko \
+    /lib/modules/*/kernel/crypto/algif_aead.ko.xz
+
 # Run init (which never exits).
 exec /sbin/init
