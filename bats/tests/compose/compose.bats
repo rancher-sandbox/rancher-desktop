@@ -19,7 +19,7 @@ local_setup() {
 @test 'compose up' {
     ctrctl compose --project-directory "$TESTDATA_DIR_HOST" build \
         --build-arg IMAGE_NGINX="$IMAGE_NGINX" \
-        --build-arg IMAGE_PYTHON="$IMAGE_PYTHON_3_9_SLIM"
+        --build-arg IMAGE_PYTHON="$IMAGE_PYTHON"
     ctrctl compose --project-directory "$TESTDATA_DIR_HOST" up -d --no-build
 }
 
