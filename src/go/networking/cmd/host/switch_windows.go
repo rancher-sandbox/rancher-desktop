@@ -22,10 +22,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
-	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/containers/gvisor-tap-vsock/pkg/virtualnetwork"
 	"github.com/dustin/go-humanize"
 	"github.com/linuxkit/virtsock/pkg/hvsock"
@@ -46,6 +46,7 @@ const (
 	vsockListenPort    = 6656
 	vsockHandshakePort = 6669
 	timeoutSeconds     = 5 * 60
+	debugLogInterval   = 5 * time.Second
 )
 
 func main() {
@@ -82,14 +83,32 @@ func main() {
 
 	cfg := newConfig(*subnet, portForwarding, debug)
 
-	ln, err := vsockHandshake(ctx, vsockHandshakePort, vsock.SignaturePhrase)
+	logrus.Debugf("attempting to start a virtual network with the following config: %+v", cfg)
+	vn, err := virtualnetwork.New(&cfg)
 	if err != nil {
-		logrus.Fatalf("handshake with peer process failed: %v", err)
+		logrus.Fatalf("creating virtual network failed: %v", err)
 	}
 
-	logrus.Debugf("attempting to start a virtual network with the following config: %+v", cfg)
+	apiServer := fmt.Sprintf("%s:80", cfg.GatewayIP)
+	vnLn, err := vn.Listen("tcp", apiServer)
+	if err != nil {
+		logrus.Fatalf("listening on port forwarding API failed: %v", err)
+	}
+	mux := http.NewServeMux()
+	mux.Handle("/services/forwarder/all", vn.Mux())
+	mux.Handle("/services/forwarder/expose", vn.Mux())
+	mux.Handle("/services/forwarder/unexpose", vn.Mux())
+	httpServe(ctx, groupErrs, vnLn, mux)
+	logrus.Infof("port forwarding API server is running on: %s", apiServer)
+
+	if debug {
+		groupErrs.Go(func() error {
+			return debugLogLoop(ctx, vn, debugLogInterval)
+		})
+	}
+
 	groupErrs.Go(func() error {
-		return run(ctx, groupErrs, &cfg, ln)
+		return runHandshakeLoop(ctx, vn)
 	})
 
 	// Wait for something to happen
@@ -110,56 +129,69 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, g *errgroup.Group, cfg *types.Configuration, ln net.Listener) error {
-	vn, err := virtualnetwork.New(cfg)
-	if err != nil {
-		return err
-	}
-	logrus.Info("waiting for clients...")
-	go func() {
-		for {
-			conn, err := ln.Accept()
-			if err != nil {
-				logrus.Errorf("failed to accept: %v", err)
-			}
-			// AcceptStdio calls the underlying virtual network switch Accept function
-			err = vn.AcceptStdio(ctx, conn)
-			if err != nil {
-				logrus.Errorf("failed to accept connection: %v", err)
-			} else {
-				logrus.Infof("accepted connection: ctx=%+v conn=%+v", ctx, conn)
-			}
+// runHandshakeLoop owns the handshake-and-accept lifecycle.  The peer (the
+// Linux network-setup process inside the WSL distro) can disappear and come
+// back -- most notably when Rancher Desktop switches container engines, which
+// terminates and re-creates the WSL distro.  When that happens, residual
+// Hyper-V vsock state can let an initial handshake "succeed" even though no
+// real Linux peer is up yet (see handshakeWithRetry); the phantom data
+// connection then dies after about 30 seconds.  When that data connection
+// (or any successor) goes away, we redo the entire handshake so a fresh
+// network-setup peer can attach.
+//
+// A more direct fix would be to add a nonce exchange to the data-connection
+// protocol so a phantom peer cannot mimic one, but that requires a
+// coordinated change in the WSL distro tarball (network-setup) and bumping
+// the WSLDistro version.  This loop is a host-only workaround that keeps the
+// fix self-contained.
+func runHandshakeLoop(ctx context.Context, vn *virtualnetwork.VirtualNetwork) error {
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
 		}
-	}()
+		ln, err := handshakeWithRetry(ctx, vsockHandshakePort, vsock.SignaturePhrase)
+		if err != nil {
+			return err
+		}
+		logrus.Info("waiting for clients...")
+		serveAccepts(ctx, vn, ln)
+		_ = ln.Close()
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		logrus.Warn("data connection lost; restarting handshake")
+	}
+}
 
-	apiServer := fmt.Sprintf("%s:80", cfg.GatewayIP)
-	vnLn, err := vn.Listen("tcp", apiServer)
+// serveAccepts handles a single connection from ln through vn, returning when
+// the connection ends — because the context is cancelled or because the peer
+// has gone away.  Either way, the caller should redo the handshake.
+func serveAccepts(ctx context.Context, vn *virtualnetwork.VirtualNetwork, ln net.Listener) {
+	conn, err := ln.Accept()
 	if err != nil {
-		return err
+		logrus.Errorf("failed to accept: %v", err)
+		return
 	}
-	mux := http.NewServeMux()
-	mux.Handle("/services/forwarder/all", vn.Mux())
-	mux.Handle("/services/forwarder/expose", vn.Mux())
-	mux.Handle("/services/forwarder/unexpose", vn.Mux())
-	httpServe(ctx, g, vnLn, mux)
-	logrus.Infof("port forwarding API server is running on: %s", apiServer)
+	// AcceptStdio blocks for the lifetime of the connection, returning when
+	// the peer goes away.  Returning here lets runHandshakeLoop redo the
+	// handshake.
+	err = vn.AcceptStdio(ctx, conn)
+	if err != nil {
+		logrus.Errorf("data connection error: %v", err)
+	} else {
+		logrus.Info("data connection closed by peer")
+	}
+}
 
-	logInterval := time.Second * 5
-	if debug {
-		g.Go(func() error {
-		debugLog:
-			for {
-				select {
-				case <-time.After(logInterval):
-					logrus.Debugf("%v sent to the VM, %v received from the VM", humanize.Bytes(vn.BytesSent()), humanize.Bytes(vn.BytesReceived()))
-				case <-ctx.Done():
-					break debugLog
-				}
-			}
+func debugLogLoop(ctx context.Context, vn *virtualnetwork.VirtualNetwork, interval time.Duration) error {
+	for {
+		select {
+		case <-time.After(interval):
+			logrus.Debugf("%v sent to the VM, %v received from the VM", humanize.Bytes(vn.BytesSent()), humanize.Bytes(vn.BytesReceived()))
+		case <-ctx.Done():
 			return nil
-		})
+		}
 	}
-	return nil
 }
 
 func httpServe(ctx context.Context, g *errgroup.Group, ln net.Listener, mux http.Handler) {
@@ -198,6 +230,104 @@ func vsockHandshake(ctx context.Context, handshakePort uint32, signature string)
 	}
 	return ln, nil
 }
+
+// handshakeValidationTimeout is how long to wait for a real data connection
+// from the peer after vsockHandshake reports success.  If no connection
+// arrives, the handshake is treated as a phantom and retried.
+const handshakeValidationTimeout = 10 * time.Second
+
+// handshakeMaxAttempts caps the retries when the peer never produces a data
+// connection.  This guards against an infinite loop if the peer is
+// unreachable; the underlying vsockHandshake already has its own
+// timeoutSeconds budget per attempt for finding the VMGUID.
+const handshakeMaxAttempts = 5
+
+// firstConnListener wraps a net.Listener and replays one already-accepted
+// connection on its first Accept call.  Subsequent Accept calls delegate to
+// the underlying listener.  This lets handshakeWithRetry validate the peer by
+// accepting the data connection inside the handshake routine, without forcing
+// the rest of host-switch to know about validation.
+type firstConnListener struct {
+	net.Listener
+	first  net.Conn
+	served atomic.Bool
+}
+
+func (l *firstConnListener) Accept() (net.Conn, error) {
+	if l.served.CompareAndSwap(false, true) {
+		return l.first, nil
+	}
+	return l.Listener.Accept()
+}
+
+// handshakeWithRetry performs vsockHandshake and then validates that a real
+// peer is on the other end by waiting for the data connection it is about to
+// initiate.  If the validation times out (a phantom handshake — observed when
+// engine-switching tears down and re-creates the WSL distro, and stale
+// Hyper-V vsock state responds before the new peer comes up), we close the
+// listener and retry from scratch.  The first real connection is preserved
+// and replayed via firstConnListener, so the caller's accept loop sees it as
+// the first client connection.
+func handshakeWithRetry(ctx context.Context, handshakePort uint32, signature string) (net.Listener, error) {
+	var lastErr error
+	for attempt := 1; attempt <= handshakeMaxAttempts; attempt++ {
+		ln, err := vsockHandshake(ctx, handshakePort, signature)
+		if err != nil {
+			return nil, err
+		}
+		conn, err := acceptWithTimeout(ctx, ln, handshakeValidationTimeout)
+		if err == nil {
+			logrus.Infof("validated handshake on attempt %d", attempt)
+			return &firstConnListener{Listener: ln, first: conn}, nil
+		}
+		_ = ln.Close()
+		if ctx.Err() != nil {
+			return nil, err
+		}
+		lastErr = err
+		logrus.Warnf("handshake attempt %d unvalidated (%v); retrying", attempt, err)
+	}
+	return nil, fmt.Errorf("handshake never produced a data connection after %d attempts: %w", handshakeMaxAttempts, lastErr)
+}
+
+// acceptWithTimeout calls ln.Accept in a goroutine and returns the result, or
+// errAcceptTimeout if no connection arrives in time.  On timeout (or context
+// cancellation) it closes ln, which unblocks the goroutine so it does not
+// leak.
+func acceptWithTimeout(ctx context.Context, ln net.Listener, timeout time.Duration) (net.Conn, error) {
+	type result struct {
+		conn net.Conn
+		err  error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		conn, err := ln.Accept()
+		ch <- result{conn, err}
+	}()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	// On timeout or cancellation, close ln to unblock the goroutine, then drain
+	// ch.  If Accept won the race, close the returned connection; otherwise
+	// the peer's data connection leaks and the retry hits the same deadlock.
+	select {
+	case r := <-ch:
+		return r.conn, r.err
+	case <-timer.C:
+		_ = ln.Close()
+		if r := <-ch; r.conn != nil {
+			_ = r.conn.Close()
+		}
+		return nil, errAcceptTimeout
+	case <-ctx.Done():
+		_ = ln.Close()
+		if r := <-ch; r.conn != nil {
+			_ = r.conn.Close()
+		}
+		return nil, ctx.Err()
+	}
+}
+
+var errAcceptTimeout = errors.New("timed out waiting for peer data connection")
 
 func signalVsockListenerReady(vmGUID hvsock.GUID, peerPort uint32) error {
 	conn, err := vsock.GetVsockConnection(vmGUID, peerPort)
