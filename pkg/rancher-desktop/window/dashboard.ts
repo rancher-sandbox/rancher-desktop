@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron';
 
 import { windowMapping, restoreWindow } from '.';
 
-const dashboardURL = 'http://127.0.0.1:6120/c/local/explorer';
+import { Steve } from '@pkg/backend/steve';
 
 const getDashboardWindow = () => ('dashboard' in windowMapping) ? BrowserWindow.fromId(windowMapping['dashboard']) : null;
 
@@ -20,7 +20,7 @@ export function openDashboard() {
     show:   false,
   });
 
-  window.loadURL(dashboardURL);
+  window.loadURL(`http://127.0.0.1:${ Steve.getInstance().port }/`);
 
   windowMapping['dashboard'] = window.id;
 

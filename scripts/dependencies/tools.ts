@@ -330,119 +330,23 @@ export class Steve extends GlobalDependency(GitHubDependency) {
     const archiveName = `steve-${ context.goPlatform }-${ arch }.tar.gz`;
     const steveURL = `${ steveURLBase }/${ archiveName }`;
     const stevePath = path.join(context.internalDir, exeName(context, 'steve'));
-    const steveSHA = lookupChecksum(context, this.name, archiveName);
+    const expectedChecksum = lookupChecksum(context, this.name, archiveName);
 
-    await downloadTarGZ(
-      steveURL,
-      stevePath,
-      {
-        expectedChecksum: steveSHA,
-      });
+    await downloadTarGZ(steveURL, stevePath, { expectedChecksum });
   }
 
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const steveURLBase = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
-    const platforms: [string, string][] = [
-      ['linux', 'amd64'], ['linux', 'arm64'],
-      ['darwin', 'amd64'], ['darwin', 'arm64'],
-      ['windows', 'amd64'],
-    ];
+    const upstream = await fetchUpstreamChecksums(`${ steveURLBase }/steve.sha512sum`, 'sha512');
 
-    return Object.fromEntries(await Promise.all(platforms.map(async([goPlatform, arch]) => {
-      const archiveName = `steve-${ goPlatform }-${ arch }.tar.gz`;
+    return Object.fromEntries(await Promise.all(Object.keys(upstream).map(async(archiveName) => {
       const url = `${ steveURLBase }/${ archiveName }`;
-      const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
       const checksum = await downloadAndHash(url, {
-        verify: { algorithm: 'sha512', expected: sidecar[archiveName] },
+        verify: { algorithm: 'sha512', expected: upstream[archiveName] },
       });
 
       return [archiveName, checksum];
     })));
-  }
-}
-
-export class RancherDashboard extends GlobalDependency(GitHubDependency) {
-  readonly name = 'rancherDashboard';
-  readonly githubOwner = 'rancher-sandbox';
-  readonly githubRepo = 'rancher-desktop-dashboard';
-  readonly releaseFilter = 'custom';
-
-  async download(context: DownloadContext): Promise<void> {
-    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/desktop-v${ context.dependencies.rancherDashboard.version }`;
-    const archiveName = 'rancher-dashboard-desktop-embed.tar.gz';
-    const url = `${ baseURL }/${ archiveName }`;
-    const destPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
-    const expectedChecksum = lookupChecksum(context, this.name, archiveName);
-    const rancherDashboardDir = path.join(context.resourcesDir, 'rancher-dashboard');
-    // Stamp records the manifest digest of the archive that produced the
-    // extracted directory.  Re-extract unless the stamp matches.  A crash
-    // between mkdir and tar leaves the stamp absent, so the next run
-    // starts over.
-    const stampPath = path.join(rancherDashboardDir, '.source-sha256');
-    const stamp = await fs.promises.readFile(stampPath, 'utf-8').catch(() => '');
-
-    if (stamp === expectedChecksum) {
-      console.log(`${ rancherDashboardDir } already extracted with expected checksum, not re-downloading.`);
-
-      return;
-    }
-
-    await fs.promises.rm(rancherDashboardDir, { recursive: true, force: true, maxRetries: 10 });
-    await download(
-      url,
-      destPath,
-      {
-        expectedChecksum,
-        access: fs.constants.W_OK,
-      });
-
-    await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
-
-    const args = ['tar', '-xf', destPath];
-
-    if (os.platform().startsWith('win')) {
-      // On Windows, force use the bundled bsdtar.
-      // We may find GNU tar on the path, which looks at the Windows-style path
-      // and considers C:\Temp to be a reference to a remote host named `C`.
-      const systemRoot = process.env.SystemRoot;
-
-      if (!systemRoot) {
-        throw new Error('Could not find system root');
-      }
-      args[0] = path.join(systemRoot, 'system32', 'tar.exe');
-    }
-
-    console.log('Extracting rancher dashboard...');
-    await simpleSpawn(args[0], args.slice(1), {
-      cwd:   rancherDashboardDir,
-      stdio: ['ignore', 'inherit', 'inherit'],
-    });
-
-    await fs.promises.writeFile(stampPath, expectedChecksum, { encoding: 'utf-8' });
-    await fs.promises.rm(destPath, { recursive: true, maxRetries: 10 });
-  }
-
-  async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
-    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/desktop-v${ version }`;
-    const archiveName = 'rancher-dashboard-desktop-embed.tar.gz';
-    const url = `${ baseURL }/${ archiveName }`;
-    const sidecar = await fetchUpstreamChecksums(`${ url }.sha512sum`, 'sha512');
-
-    return {
-      [archiveName]: await downloadAndHash(url, {
-        verify: { algorithm: 'sha512', expected: sidecar[archiveName] },
-      }),
-    };
-  }
-
-  async getAvailableVersions(): Promise<string[]> {
-    const tagNames = await getPublishedReleaseTagNames(this.githubOwner, this.githubRepo, 'published');
-
-    return tagNames.map((tagName: string) => tagName.replace(/^desktop-v/, ''));
-  }
-
-  versionToTagName(version: string): string {
-    return `desktop-v${ version }`;
   }
 }
 

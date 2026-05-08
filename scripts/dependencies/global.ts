@@ -20,7 +20,6 @@ export const globalDependencies: VersionedDependency[] = [
   new tools.CheckSpelling(),
   new tools.Trivy(),
   new tools.Steve(),
-  new tools.RancherDashboard(),
   new tools.ECRCredHelper(),
   new Lima(),
   new Qemu(),

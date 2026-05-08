@@ -27,7 +27,6 @@ import { BackendState, CommandWorkerInterface, HttpCommandServer } from '@pkg/ma
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { ContainerExecHandler } from '@pkg/main/containerExec';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
-import { DashboardServer } from '@pkg/main/dashboardServer';
 import { DeploymentProfileError, readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { ExtensionErrorCode, isExtensionError } from '@pkg/main/extensions';
@@ -35,7 +34,7 @@ import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
 import buildApplicationMenu from '@pkg/main/mainmenu';
-import setupNetworking, { setSteveCertPort } from '@pkg/main/networking';
+import setupNetworking from '@pkg/main/networking';
 import { Snapshots } from '@pkg/main/snapshots/snapshots';
 import { Snapshot, SnapshotDialog } from '@pkg/main/snapshots/types';
 import { Tray } from '@pkg/main/tray';
@@ -228,8 +227,6 @@ Electron.app.whenReady().then(async() => {
     await checkPrerequisites();
 
     await setupNetworking();
-
-    DashboardServer.getInstance().init();
 
     try {
       deploymentProfiles = await readDeploymentProfiles();
@@ -1272,14 +1269,7 @@ function newK8sManager() {
 
         if (enabledK8s) {
           try {
-            const [stevePort] = await getAvailablePorts(1);
-
-            console.log(`Steve HTTPS port: ${ stevePort }`);
-            // Set the Steve HTTPS port for certificate checking before setting
-            // up Steve itself.
-            setSteveCertPort(stevePort);
-            await Steve.getInstance().start(stevePort);
-            DashboardServer.getInstance().setStevePort(stevePort); // recreate proxy middleware
+            await Steve.getInstance().start();
           } catch (ex) {
             console.error('Failed to start Steve:', ex);
           }

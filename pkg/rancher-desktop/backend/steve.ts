@@ -6,6 +6,7 @@ import { setTimeout } from 'timers/promises';
 import Electron from 'electron';
 
 import K3sHelper from '@pkg/backend/k3sHelper';
+import Latch from '@pkg/utils/latch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 
@@ -16,10 +17,10 @@ const console = Logging.steve;
  */
 export class Steve {
   private static instance: Steve;
-  private process!:        ChildProcess;
+  private process:         ChildProcess | undefined;
 
   private isRunning: boolean;
-  private httpsPort = 0;
+  #port = 0;
 
   private constructor() {
     this.isRunning = false;
@@ -40,18 +41,16 @@ export class Steve {
   /**
    * @description Starts the Steve API if one is not already running.
    * Returns only after Steve is ready to accept connections.
-   * @param httpsPort The HTTPS port for Steve to listen on.
+   * @returns The port Steve is listening on.
    */
-  public async start(httpsPort: number) {
+  public async start(): Promise<number> {
     const { pid } = this.process || { };
 
     if (this.isRunning && pid) {
       console.debug(`Steve is already running with pid: ${ pid }`);
 
-      return;
+      return this.#port;
     }
-
-    this.httpsPort = httpsPort;
 
     const osSpecificName = /^win/i.test(os.platform()) ? 'steve.exe' : 'steve';
     const stevePath = path.join(paths.resources, os.platform(), 'internal', osSpecificName);
@@ -62,62 +61,72 @@ export class Steve {
     } catch {
       // do nothing
     }
-    this.process = spawn(
-      stevePath,
-      [
-        '--context',
-        'rancher-desktop',
-        '--ui-path',
-        path.join(paths.resources, 'rancher-dashboard'),
-        '--offline',
-        'true',
-        '--https-listen-port',
-        String(httpsPort),
-        '--http-listen-port',
-        '0', // Disable HTTP support; it does not work correctly anyway.
-      ],
-      { env },
-    );
+    console.debug(`Starting Steve with KUBECONFIG=${ env.KUBECONFIG }`);
+    this.process = spawn(stevePath, ['--context', 'rancher-desktop'],
+      { env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
 
     const { stdout, stderr } = this.process;
+    let portBuffer = '';
+    const portLatch = Latch<number>();
 
     if (!stdout || !stderr) {
       console.error('Unable to get child process...');
 
-      return;
+      throw new Error(`Failed to start Steve: could not get output`);
     }
 
-    stdout.on('data', (data: any) => {
-      console.log(`stdout: ${ data }`);
+    // Steve has been modified to output the port to stdout and then immediate
+    // close it, leaving stderr open for logs.
+    console.debug('Waiting for Steve to output port...');
+    stdout.on('data', (data) => {
+      portBuffer += data.toString();
+    });
+    stdout.on('end', () => {
+      const port = parseInt(portBuffer, 10);
+      if (port) {
+        portLatch.resolve(port);
+      } else {
+        portLatch.reject(new Error(`Failed to parse Steve port from output: ${ portBuffer }`));
+      }
     });
 
-    stderr.on('data', (data: any) => {
+    stderr.on('data', (data) => {
       console.error(`stderr: ${ data }`);
     });
 
-    this.process.on('close', (code: any) => {
-      console.log(`child process exited with code ${ code }`);
+    this.process.on('exit', (code, signal) => {
+      console.log(`child process exited with code ${ code } and signal ${ signal }`);
       this.isRunning = false;
+      portLatch.reject(new Error(`Steve process exited unexpectedly with code ${ code } and signal ${ signal }`));
     });
 
     await new Promise<void>((resolve, reject) => {
-      this.process.once('spawn', () => {
+      this.process?.once('spawn', () => {
         this.isRunning = true;
-        console.debug(`Spawned child pid: ${ this.process.pid }`);
+        console.debug(`Spawned child pid: ${ this.process?.pid }`);
         resolve();
       });
-      this.process.once('error', (err) => {
+      this.process?.once('error', (err) => {
         reject(new Error(`Failed to spawn Steve: ${ err.message }`, { cause: err }));
       });
+      setTimeout(10_000).then(() => reject(new Error('Timed out waiting for Steve to start')));
     });
+    this.#port = await portLatch;
+    console.debug(`Steve is listening on port: ${ this.#port }`);
 
-    await this.waitForReady();
+    await this.waitForReady(this.#port);
+
+    return this.#port;
+  }
+
+  public get port() {
+    return this.#port;
   }
 
   /**
    * Wait for Steve to be ready to serve API requests.
    */
-  private async waitForReady(): Promise<void> {
+  private async waitForReady(port: number): Promise<void> {
     const maxAttempts = 60;
     const delayMs = 500;
 
@@ -126,7 +135,7 @@ export class Steve {
         throw new Error('Steve process exited before becoming ready');
       }
 
-      if (await this.isPortReady()) {
+      if (await this.isPortReady(port)) {
         console.debug(`Steve is ready after ${ attempt } / ${ maxAttempts } attempt(s)`);
 
         return;
@@ -146,55 +155,17 @@ export class Steve {
    * we probe a core resource endpoint that returns 404 until the
    * schema controller has registered it.
    */
-  private isPortReady(): Promise<boolean> {
-    // Steve's HTTP port just redirects to HTTPS, so we might as well go to the
-    // HTTPS port directly.  We will need to ignore certificate errors; however,
-    // neither the NodeJS stack nor Electron.net.request() would pass through
-    // the `Electron.app.on('certificate-error', ...)` handler, so we cannot use
-    // the normal certificate handling for this health check.  Instead, we
-    // create a temporary session with a certificate verify proc that ignores
-    // errors, and use that session for the health check request.
-    return new Promise((resolve) => {
-      const session = Electron.session.fromPartition('steve-healthcheck', { cache: false });
-
-      session.setCertificateVerifyProc((request, callback) => {
-        if (request.hostname === '127.0.0.1') {
-          // We do not have any more information to narrow down the certificate;
-          // given that we're doing this in a private partition, it should be
-          // safe to allow all localhost certificates.  In particular, we do not
-          // get access to the port number, and all the Steve certificates have
-          // generic fields (e.g. subject).
-          callback(0);
-        } else {
-          // Unexpected request; not sure how this could happen in a new session,
-          // but we can at least pretend to do the right thing.
-          callback(-3); // Use Chromium's default verification.
-        }
-      });
-
-      const req = Electron.net.request({
-        protocol: 'https:',
-        hostname: '127.0.0.1',
-        port:     this.httpsPort,
-        path:     '/v1/namespaces',
-        method:   'GET',
-        redirect: 'error',
-        session,
-      });
-
-      req.on('response', (res) => resolve(res.statusCode === 200));
-      req.on('error', () => resolve(false));
-      // Timeout if we don't get a response in a reasonable time.
-      setTimeout(1_000).then(() => {
-        try {
-          req.abort();
-        } catch {
-          // ignore
-        }
-        resolve(false);
-      });
-      req.end();
-    });
+  private async isPortReady(port: number): Promise<boolean> {
+    try {
+      // Set up a short time out, so we don't wait too long.
+      const signal = AbortSignal.timeout(1_000);
+      const resp = await Electron.net.fetch(
+        `http://127.0.0.1:${ port }/v1/namespaces`,
+        { redirect: 'error', signal });
+      return resp.ok;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -205,6 +176,7 @@ export class Steve {
       return;
     }
 
-    this.process.kill('SIGINT');
+    this.process?.kill('SIGINT');
+    this.#port = 0;
   }
 }
