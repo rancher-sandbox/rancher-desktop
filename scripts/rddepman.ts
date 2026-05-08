@@ -245,6 +245,14 @@ async function checkDependencies(): Promise<void> {
 
   if (!process.env.CI) {
     // When not running in CI, don't try to make pull requests.
+
+    if (process.env.RD_DEPMAN_LOCAL_CHANGES) {
+      console.log('Forcing local changes without pull requests');
+      for (const { dependency, latestVersion } of updatesAvailable) {
+        const newChecksums = await dependency.getChecksums(latestVersion);
+        await dependency.updateManifest(latestVersion, newChecksums);
+      }
+    }
     if (updatesAvailable.length) {
       console.log(`Not running in CI, skipping creation of ${ updatesAvailable.length } pull requests.`);
     }
