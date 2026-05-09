@@ -10606,19 +10606,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http-proxy-middleware@npm:4.0.0":
-  version: 4.0.0
-  resolution: "http-proxy-middleware@npm:4.0.0"
-  dependencies:
-    debug: "npm:^4.4.3"
-    httpxy: "npm:^0.5.1"
-    is-glob: "npm:^4.0.3"
-    is-plain-obj: "npm:^4.1.0"
-    micromatch: "npm:^4.0.8"
-  checksum: 10c0/956cfec006b3619433e5c5ce24e9379bbe2e2ae885705df82c261530392c94c101205ef891845fe7d39b9d646a463c302b3b6d90125dc6e8dc42fbd7c6211c69
-  languageName: node
-  linkType: hard
-
 "http-proxy-middleware@npm:^2.0.3":
   version: 2.0.9
   resolution: "http-proxy-middleware@npm:2.0.9"
@@ -10675,13 +10662,6 @@ __metadata:
     agent-base: "npm:^7.1.2"
     debug: "npm:4"
   checksum: 10c0/f729219bc735edb621fa30e6e84e60ee5d00802b8247aac0d7b79b0bd6d4b3294737a337b93b86a0bd9e68099d031858a39260c976dc14cdbba238ba1f8779ac
-  languageName: node
-  linkType: hard
-
-"httpxy@npm:^0.5.1":
-  version: 0.5.1
-  resolution: "httpxy@npm:0.5.1"
-  checksum: 10c0/46c5297012c845a444dc35879716b6145611187e67e13a97f547d93a5f7e401ee00505e722c1fcf7cc42a2a273575491626a13d4a3b1ea468cae0fd3930c6df4
   languageName: node
   linkType: hard
 
@@ -11028,13 +11008,6 @@ __metadata:
   version: 3.0.0
   resolution: "is-plain-obj@npm:3.0.0"
   checksum: 10c0/8e6483bfb051d42ec9c704c0ede051a821c6b6f9a6c7a3e3b55aa855e00981b0580c8f3b1f5e2e62649b39179b1abfee35d6f8086d999bfaa32c1908d29b07bc
-  languageName: node
-  linkType: hard
-
-"is-plain-obj@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "is-plain-obj@npm:4.1.0"
-  checksum: 10c0/32130d651d71d9564dc88ba7e6fda0e91a1010a3694648e9f4f47bb6080438140696d3e3e15c741411d712e47ac9edc1a8a9de1fe76f3487b0d90be06ac9975e
   languageName: node
   linkType: hard
 
@@ -14633,7 +14606,6 @@ __metadata:
     fs-extra: "npm:11.3.5"
     glob: "npm:^13.0.3"
     globals: "npm:17.6.0"
-    http-proxy-middleware: "npm:4.0.0"
     intl-messageformat: "npm:11.2.6"
     jest: "npm:30.4.2"
     jest-environment-jsdom: "npm:30.4.1"
