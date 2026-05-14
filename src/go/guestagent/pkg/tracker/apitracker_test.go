@@ -16,6 +16,7 @@ package tracker_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -465,6 +466,120 @@ func TestRemoveWithError(t *testing.T) {
 	assert.Nil(t, actualPortMapping)
 }
 
+// TestRemoveWSLProxyFailureIsDistinguishable confirms that when every
+// host-switch unexpose succeeds but the wsl-proxy notification fails,
+// Remove reports the failure tagged ErrWSLProxy and NOT ErrUnexposeAPI.
+// The /proc/net scanner's retireDisappeared relies on that distinction to
+// tell that the host-switch proxy is gone and its loopback rule is now safe
+// -- in fact necessary -- to delete.
+func TestRemoveWSLProxyFailureIsDistinguishable(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	// Send fails only for the Remove notification, so Add still succeeds.
+	wslProxy := &testForwarder{
+		failCondition: func(pm guestagentType.PortMapping) error {
+			if pm.Remove {
+				return errors.New("simulated wsl proxy failure")
+			}
+
+			return nil
+		},
+	}
+	apiTracker := tracker.NewAPITracker(context.Background(), wslProxy, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	portMapping := nat.PortMap{
+		protoPort: []nat.PortBinding{
+			{
+				HostIP:   hostIP,
+				HostPort: hostPort,
+			},
+		},
+	}
+
+	err = apiTracker.Add(containerID, portMapping)
+	require.NoError(t, err)
+
+	err = apiTracker.Remove(containerID)
+	require.Error(t, err)
+	require.ErrorIs(t, err, tracker.ErrWSLProxy,
+		"a wsl-proxy Send failure must be tagged ErrWSLProxy")
+	require.NotErrorIs(t, err, forwarder.ErrUnexposeAPI,
+		"a wsl-proxy-only failure must not be mistaken for an unexpose failure")
+}
+
+// TestAddBothFailuresAreDistinguishable confirms that when one Expose
+// call fails (host-switch unreachable for that binding) AND the
+// wsl-proxy notification also fails on the still-successful bindings,
+// Add returns an error joined under both sentinels. Procnet decides
+// recovery actions by classifying these sentinels independently, so a
+// future refactor that early-returns after the Expose failure must not
+// silently swallow the wsl-proxy failure.
+func TestAddBothFailuresAreDistinguishable(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+		var tmpReq *types.ExposeRequest
+		err := json.NewDecoder(r.Body).Decode(&tmpReq)
+		require.NoError(t, err)
+		if tmpReq.Local == ipPortBuilder(hostIP2, hostPort) {
+			http.Error(w, "simulated host-switch error", http.StatusRequestTimeout)
+
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	// Send fails only for the Add notification, so successfullyForwarded
+	// is non-empty (the hostIP and hostIP3 bindings succeeded) and the
+	// wsl-proxy path runs and fails.
+	wslProxy := &testForwarder{
+		failCondition: func(pm guestagentType.PortMapping) error {
+			if !pm.Remove {
+				return errors.New("simulated wsl proxy failure")
+			}
+
+			return nil
+		},
+	}
+	apiTracker := tracker.NewAPITracker(context.Background(), wslProxy, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	portMapping := nat.PortMap{
+		protoPort: []nat.PortBinding{
+			{HostIP: hostIP, HostPort: hostPort},
+			{HostIP: hostIP2, HostPort: hostPort},
+			{HostIP: hostIP3, HostPort: hostPort},
+		},
+	}
+
+	err = apiTracker.Add(containerID, portMapping)
+	require.Error(t, err)
+	require.ErrorIs(t, err, forwarder.ErrExposeAPI,
+		"an Expose failure on one binding must be tagged ErrExposeAPI")
+	require.ErrorIs(t, err, tracker.ErrWSLProxy,
+		"a wsl-proxy Send failure on the successful bindings must be tagged ErrWSLProxy")
+}
+
 func TestRemoveAll(t *testing.T) {
 	t.Parallel()
 
@@ -611,6 +726,73 @@ func TestRemoveAllWithError(t *testing.T) {
 
 	expectedPortMapping2 := apiTracker.Get(containerID2)
 	assert.Nil(t, expectedPortMapping2)
+}
+
+// TestRemoveAllBothFailuresAreDistinguishable confirms that when one
+// Unexpose call fails AND the wsl-proxy notification fails on the
+// surviving mappings, RemoveAll returns an error joined under both
+// sentinels. Before APITracker switched to errors.Join, RemoveAll
+// silently dropped the wsl-proxy failure once any Unexpose had
+// errored; this test locks the new contract so a future refactor
+// cannot regress to the early-return shape.
+func TestRemoveAllBothFailuresAreDistinguishable(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
+		var tmpReq *types.UnexposeRequest
+		err := json.NewDecoder(r.Body).Decode(&tmpReq)
+		require.NoError(t, err)
+		if tmpReq.Local == ipPortBuilder(hostIP2, hostPort2) {
+			http.Error(w, "simulated unexpose error", http.StatusRequestTimeout)
+
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	wslProxy := &testForwarder{
+		failCondition: func(pm guestagentType.PortMapping) error {
+			if pm.Remove {
+				return errors.New("simulated wsl proxy failure")
+			}
+
+			return nil
+		},
+	}
+	apiTracker := tracker.NewAPITracker(context.Background(), wslProxy, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	protoPort2, err := nat.NewPort(protocolTCP, hostPort2)
+	require.NoError(t, err)
+
+	err = apiTracker.Add(containerID, nat.PortMap{
+		protoPort: []nat.PortBinding{{HostIP: hostIP, HostPort: hostPort}},
+	})
+	require.NoError(t, err)
+
+	err = apiTracker.Add(containerID2, nat.PortMap{
+		protoPort2: []nat.PortBinding{
+			{HostIP: hostIP2, HostPort: hostPort2},
+			{HostIP: hostIP3, HostPort: hostPort2},
+		},
+	})
+	require.NoError(t, err)
+
+	err = apiTracker.RemoveAll()
+	require.Error(t, err)
+	require.ErrorIs(t, err, forwarder.ErrUnexposeAPI,
+		"an Unexpose failure must be tagged ErrUnexposeAPI")
+	require.ErrorIs(t, err, tracker.ErrWSLProxy,
+		"a concurrent wsl-proxy Send failure must be tagged ErrWSLProxy")
 }
 
 func TestNonAdminInstall(t *testing.T) {

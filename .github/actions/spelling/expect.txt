@@ -158,11 +158,12 @@ distros
 Dlg
 dlgbmp
 dlicense
-DNAT
+dnat
 dnsmasq
 doclink
 donotuse
 dport
+dpts
 dri
 Duex
 dustin
@@ -297,6 +298,7 @@ installable
 INSTALLMESSAGE
 INSTALLPROPERTY
 IPlugin
+ipt
 iptable
 Isf
 islabel
@@ -405,6 +407,7 @@ NEWNET
 newpid
 NEWSA
 NEWUSER
+nft
 nginx
 ngx
 ninep
@@ -502,6 +505,7 @@ projectroletemplatebinding
 Prometheis
 prometheusrule
 PROMPTROLLBACKCOST
+prot
 protip
 PROXYLIST
 PSelected
@@ -751,6 +755,7 @@ XFRMA
 xfs
 xmlout
 xorg
+xtables
 XVar
 xwininfo
 xyzzy

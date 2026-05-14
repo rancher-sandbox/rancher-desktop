@@ -120,6 +120,14 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 		}
 	}
 
+	// Report the host-switch expose failures and the wsl-proxy failure
+	// under distinct sentinels, joined so neither is swallowed -- matching
+	// APITracker.Remove.
+	var retErr error
+	if len(errs) != 0 {
+		retErr = fmt.Errorf("%w: %+v", forwarder.ErrExposeAPI, errs)
+	}
+
 	if len(successfullyForwarded) != 0 {
 		a.portStorage.add(containerID, successfullyForwarded)
 		portMapping := guestagentTypes.PortMapping{
@@ -127,17 +135,12 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 			Ports:  successfullyForwarded,
 		}
 		log.Debugf("forwarding to wsl-proxy to add port mapping: %+v", portMapping)
-		err := a.wslProxyForwarder.Send(portMapping)
-		if err != nil {
-			return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
+		if err := a.wslProxyForwarder.Send(portMapping); err != nil {
+			retErr = errors.Join(retErr, fmt.Errorf("%w: %w", ErrWSLProxy, err))
 		}
 	}
 
-	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", forwarder.ErrExposeAPI, errs)
-	}
-
-	return nil
+	return retErr
 }
 
 // Get looks up the port mapping by containerID and returns the result.
@@ -151,7 +154,7 @@ func (a *APITracker) Remove(containerID string) error {
 	portMap := a.portStorage.get(containerID)
 	defer a.portStorage.remove(containerID)
 
-	var errs []error
+	var unexposeErrs []error
 
 	for portProto, portBindings := range portMap {
 		for _, portBinding := range portBindings {
@@ -170,12 +173,23 @@ func (a *APITracker) Remove(containerID string) error {
 					Protocol: types.TransportProtocol(strings.ToLower(portProto.Proto())),
 				})
 			if err != nil {
-				errs = append(errs,
+				unexposeErrs = append(unexposeErrs,
 					fmt.Errorf("unexposing %+v failed: %w", portBinding, err))
 
 				continue
 			}
 		}
+	}
+
+	// Report the host-switch unexpose failures and the wsl-proxy failure
+	// under distinct sentinels, joined so neither is swallowed. The
+	// /proc/net scanner's retireDisappeared keys off forwarder.ErrUnexposeAPI
+	// to decide whether the host-switch proxy may still be bound, so a
+	// wsl-proxy-only failure -- where every Unexpose landed and the proxy is
+	// gone -- must stay distinguishable from an unexpose failure.
+	var retErr error
+	if len(unexposeErrs) != 0 {
+		retErr = fmt.Errorf("%w: %+v", forwarder.ErrUnexposeAPI, unexposeErrs)
 	}
 
 	if len(portMap) != 0 {
@@ -184,17 +198,12 @@ func (a *APITracker) Remove(containerID string) error {
 			Ports:  portMap,
 		}
 		log.Debugf("forwarding to wsl-proxy to remove port mapping: %+v", portMapping)
-		err := a.wslProxyForwarder.Send(portMapping)
-		if err != nil {
-			return fmt.Errorf("sending port mappings to wsl proxy error: %w", err)
+		if err := a.wslProxyForwarder.Send(portMapping); err != nil {
+			retErr = errors.Join(retErr, fmt.Errorf("%w: %w", ErrWSLProxy, err))
 		}
 	}
 
-	if len(errs) != 0 {
-		return fmt.Errorf("%w: %+v", forwarder.ErrUnexposeAPI, errs)
-	}
-
-	return nil
+	return retErr
 }
 
 // RemoveAll calls the /services/forwarder/unexpose
@@ -241,15 +250,19 @@ func (a *APITracker) RemoveAll() error {
 
 	a.portStorage.removeAll()
 
+	// Report the host-switch unexpose failures and the wsl-proxy
+	// failures under distinct sentinels, joined so neither is swallowed
+	// -- matching APITracker.Remove.
+	var retErr error
 	if len(apiErrs) != 0 {
-		return fmt.Errorf("%w: %+v", forwarder.ErrUnexposeAPI, apiErrs)
+		retErr = fmt.Errorf("%w: %+v", forwarder.ErrUnexposeAPI, apiErrs)
 	}
 
 	if len(wslProxyErrs) != 0 {
-		return fmt.Errorf("%w: %+v", ErrWSLProxy, wslProxyErrs)
+		retErr = errors.Join(retErr, fmt.Errorf("%w: %+v", ErrWSLProxy, wslProxyErrs))
 	}
 
-	return nil
+	return retErr
 }
 
 func (a *APITracker) determineHostIP(hostIP string) string {

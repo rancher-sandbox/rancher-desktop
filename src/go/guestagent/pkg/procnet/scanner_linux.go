@@ -22,10 +22,12 @@ package procnet
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -35,7 +37,6 @@ import (
 	"github.com/lima-vm/lima/pkg/guestagent/procnettcp"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
 
 type action string
@@ -47,6 +48,38 @@ const (
 
 const routeLocalnet = "/proc/sys/net/ipv4/conf/eth0/route_localnet"
 
+// loopbackIP is the host-local address procnet redirects --network=host
+// loopback listeners to.
+const loopbackIP = "127.0.0.1"
+
+// engineDNATChains is the closed list of container-engine PREROUTING
+// chains procnet probes for an existing DNAT to a host port. Adding a
+// third engine (e.g. a future containerd-native portmap implementation)
+// requires extending this list, or engineChainManagesPort silently
+// returns false for ports the new engine handles -- recreating the
+// original shadow-DNAT bug. NewProcNetScanner logs the active list at
+// startup so a support-bundle reader sees what procnet considered.
+var engineDNATChains = []string{"CNI-HOSTPORT-DNAT", "DOCKER"}
+
+// portAlreadyExposedSubstring is the substring tracker.Add returns when
+// another component has already exposed the port (typically the
+// containerd or docker events handler on /tasks/start). The string
+// originates in the /services/forwarder/expose API response and survives
+// the tracker's wrapping. handleAlreadyExposed disambiguates the two
+// cases it covers: an engine owns the proxy (delegate), or procnet owns
+// it after a partial-failure retry (resume ownership and install the
+// loopback rule the partial-failure path skipped).
+const portAlreadyExposedSubstring = "proxy already running"
+
+// dnatRuleRe matches a single DNAT rule line in `iptables --list <chain>
+// --numeric` output. Capture groups: (1) protocol (tcp|udp), then ONE of
+// (2) single-port `dpt:N` or (3) multiport list `dports N[,N…]`. The
+// port-range form `dpts:LO:HI` is intentionally NOT matched; see
+// dnatChainContainsPort for the rationale.
+var dnatRuleRe = regexp.MustCompile(
+	`\b(tcp|udp)\b[^\n]*?(?:dpt:([0-9]+)|dports ([0-9]+(?:,[0-9]+)*))\b`,
+)
+
 type ProcNetScanner struct {
 	context       context.Context
 	LocalnetRoute bool
@@ -55,6 +88,7 @@ type ProcNetScanner struct {
 }
 
 func NewProcNetScanner(ctx context.Context, t tracker.Tracker, scanInterval time.Duration) (*ProcNetScanner, error) {
+	log.Infof("/proc/net scanner probing PREROUTING chains for engine-managed ports: %s", strings.Join(engineDNATChains, ", "))
 	return &ProcNetScanner{
 		context:      ctx,
 		tracker:      t,
@@ -62,11 +96,23 @@ func NewProcNetScanner(ctx context.Context, t tracker.Tracker, scanInterval time
 	}, enableLocalnetRouting()
 }
 
+// ForwardPorts polls /proc/net every scanInterval and delegates each
+// observation to portStateTracker.Tick. The stability gate, engine-chain
+// probing, tracker accounting, and iptables management all live in
+// portStateTracker; this loop only parses the procfs snapshot and drives
+// the tick cadence.
+//
+// The two-scan stability gate inside portStateTracker filters out the
+// transient reservation socket that nerdctl's OCI createRuntime hook
+// opens before CNI installs its iptables rules. The gate costs one tick
+// (~3 s) before genuine --network=host listeners reach the host.
+// Bridge-network ports are unaffected; the containerd/docker events
+// handler exposes them via tracker.Add on /tasks/start.
 func (p *ProcNetScanner) ForwardPorts() error {
 	ticker := time.NewTicker(p.scanInterval)
 	defer ticker.Stop()
 
-	var previousPortMap nat.PortMap
+	pst := newPortStateTracker(p.tracker, &realIptablesRunner{ctx: p.context})
 
 	for {
 		select {
@@ -85,90 +131,238 @@ func (p *ProcNetScanner) ForwardPorts() error {
 					continue
 				}
 			}
-
-			// Add new ports
-			for port, bindings := range newPortMap {
-				if _, exists := previousPortMap[port]; !exists {
-					log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
-					err := p.tracker.Add(utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())), nat.PortMap{
-						port: bindings,
-					})
-					if err != nil {
-						log.Errorf("/proc/net scanner failed to add port: %s", err)
-						continue
-					}
-					if err = p.execLoopbackIPtablesRule(bindings, port, Append); err != nil {
-						log.Errorf("/proc/net scanner creating loopback iptable rules for portbinding: %v failed: %s", bindings, err)
-					}
-				}
-			}
-
-			// Remove old ports
-			for port, previousBindings := range previousPortMap {
-				if _, exists := newPortMap[port]; !exists {
-					log.Infof("/proc/net scanner removed port: %s -> %+v", port, previousBindings)
-					err := p.tracker.Remove(utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())))
-					if err != nil {
-						log.Errorf("/proc/net scanner failed to remove port: %s", err)
-						continue
-					}
-
-					if err = p.execLoopbackIPtablesRule(previousBindings, port, Delete); err != nil {
-						log.Errorf("/proc/net scanner deleting loopback iptable rules for portbinding: %v failed: %s", previousBindings, err)
-					}
-				}
-			}
-
-			previousPortMap = newPortMap
+			pst.Tick(newPortMap)
 		}
 	}
 }
 
-// execLoopbackIPtablesRule modifies iptables NAT rules to handle loopback traffic for a specified port
-// and protocol. This function is only necessary when the container is using the host network driver
-// (i.e., with --network=host), as in this case the container shares the host's network namespace.
+// iptablesCommand builds an exec.Cmd for iptables with the locale pinned
+// to C. isIptablesRuleAbsent classifies a --check or --list failure by
+// substring-matching iptables' English stderr, so a localized iptables
+// build must not be allowed to translate those diagnostics -- a
+// translated "No chain ... by that name" would be misread as a transient
+// failure and defer the port indefinitely.
+func iptablesCommand(ctx context.Context, args ...string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "iptables", args...)
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	return cmd
+}
+
+// applyLoopbackIPtablesRule appends or deletes the loopback PREROUTING
+// DNAT rule for protocol/hostPort. Meaningful only for --network=host
+// containers, where traffic bound to 127.0.0.1 must be redirected from
+// outside the network namespace.
 //
-// When using the host network driver, network traffic bound to 127.0.0.1 needs to be redirected from
-// outside the network namespace to the localhost (127.0.0.1). This function adds or removes DNAT rules
-// that allow traffic to be forwarded to the specified port on localhost, based on the provided 'action'
-// ('append' or 'delete').
+// The Append path relies on the caller (portStateTracker, via
+// anyEngineBinding) having already verified that no container-engine
+// chain manages the port. On iptables-nft (the default on supported
+// WSL2 kernels) DNAT in PREROUTING terminates the chain, so a procnet
+// rule for an engine-managed port shadows the engine's authoritative
+// rule and hangs external traffic. Both the bug and the fix depend on
+// this chain-terminating behavior; revisit the probes if the kernel
+// default changes. The end-to-end coverage in
+// bats/tests/containers/published-ports.bats exercises the live
+// shadow-DNAT path but does not assert the chain-terminating behavior
+// itself, so a future WSL2 kernel that ships with iptables-legacy
+// defaults would silently invalidate the design's foundation: a probe
+// of `iptables-save -t nat | grep '^:PREROUTING ACCEPT'` plus a
+// kernel-version check in the bats setup would catch a regression.
 //
-// The function iterates over the provided list of port bindings. For each binding where the HostIP is set
-// to 127.0.0.1, it constructs and executes the corresponding iptables command to either add or delete the
-// appropriate DNAT rule.
+// Both paths probe preroutingHasLoopbackRule first. The Delete probe
+// avoids logging spurious errors for rules we never wrote. The Append
+// probe is the idempotency gate: when the rule already exists (because
+// a previous tick's iptables call committed the rule but returned
+// non-zero, or an external party wrote the same rule), the second
+// Append would otherwise install a duplicate PREROUTING DNAT, and a
+// later Delete would remove only one of the pair. Both probes return
+// the probe error on transient failure so the caller can defer.
 //
-// The iptables rule ensures that incoming traffic from outside the network namespace (i.e., from the
-// host machine) on the specified port and protocol is redirected to the same port on localhost, where the
-// container's service can be accessed.
+// The idempotency gate shells out to real iptables, so the fake
+// iptablesRunner in the unit tests cannot reach it; published-ports.bats
+// covers it end to end.
 //
-// Example iptables rule when 'action' is "append":
+// Example iptables rule when act is Append:
 //
 //	iptables -t nat -A PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
 //
-// Example iptables rule when 'action' is "delete":
+// Example iptables rule when act is Delete:
 //
 //	iptables -t nat -D PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
-func (p *ProcNetScanner) execLoopbackIPtablesRule(bindings []nat.PortBinding, portProto nat.Port, action action) error {
-	for _, binding := range bindings {
-		if binding.HostIP == "127.0.0.1" {
-			// iptables -t nat -D PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
-			//nolint:gosec // None of the arguments are user-supplied.
-			iptablesCmd := exec.CommandContext(p.context,
-				"iptables",
-				"--table", "nat",
-				fmt.Sprintf("--%s", action), "PREROUTING",
-				"--protocol", portProto.Proto(),
-				"--dport", binding.HostPort,
-				"--jump", "DNAT",
-				"--to-destination", fmt.Sprintf("%s:%s", binding.HostIP, binding.HostPort),
-			)
-			if err := iptablesCmd.Run(); err != nil {
-				return err
+func applyLoopbackIPtablesRule(ctx context.Context, protocol, hostPort string, act action) error {
+	exists, err := preroutingHasLoopbackRule(ctx, protocol, hostPort)
+	if err != nil {
+		return fmt.Errorf("iptables --check for %s/%s: %w", protocol, hostPort, err)
+	}
+	if act == Delete && !exists {
+		log.Debugf("skipping PREROUTING DNAT delete for %s/%s: rule not present", protocol, hostPort)
+		return nil
+	}
+	if act == Append && exists {
+		log.Debugf("skipping PREROUTING DNAT append for %s/%s: rule already present", protocol, hostPort)
+		return nil
+	}
+	// iptables -t nat --wait 2 -<A|D> PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
+	iptablesCmd := iptablesCommand(ctx,
+		"--wait", "2",
+		"--table", "nat",
+		fmt.Sprintf("--%s", act), "PREROUTING",
+		"--protocol", protocol,
+		"--dport", hostPort,
+		"--jump", "DNAT",
+		"--to-destination", fmt.Sprintf("%s:%s", loopbackIP, hostPort),
+	)
+	// Output() rather than Run() so a non-zero exit carries iptables'
+	// stderr; the command produces no stdout worth keeping.
+	if _, err := iptablesCmd.Output(); err != nil {
+		return wrapExitError(err)
+	}
+	log.Debugf("running the following iptables rule [%s]", iptablesCmd.String())
+	return nil
+}
+
+// engineChainManagesPort reports whether a container-engine chain
+// already references the port as a DNAT destination for protocol.
+// When true, procnet must not add its own PREROUTING DNAT.
+//
+// The chain list is closed to the two engines Rancher Desktop ships
+// (CNI-HOSTPORT-DNAT for nerdctl/CNI portmap, DOCKER for docker).
+// Revisit (and update this docstring) when adding a third engine;
+// otherwise the helper silently misses its DNAT rules and the original
+// shadow-DNAT bug reappears.
+//
+// Returns (false, nil) when a chain does not exist (the engine has not
+// yet created it). Returns (false, err) on transient iptables failure
+// (xtables lock contention, fork/exec failure) so the caller can defer
+// the port to a later scan; mirrors the precedent at
+// pkg/iptables/iptables.go that treats exit status 4 as transient.
+// Shells out to iptables directly; end-to-end behavior is covered by
+// published-ports.bats. Distinguishing absent from transient errors
+// is unit-tested through isIptablesRuleAbsent.
+func engineChainManagesPort(ctx context.Context, protocol, port string) (bool, error) {
+	for _, chain := range engineDNATChains {
+		cmd := iptablesCommand(ctx,
+			"--wait", "2",
+			"--table", "nat",
+			"--list", chain,
+			"--numeric")
+		out, err := cmd.Output()
+		if err != nil {
+			if isIptablesRuleAbsent(err) {
+				continue
 			}
-			log.Debugf("running the following iptables rule [%s] for port bindings: %v", iptablesCmd.String(), binding)
+			return false, fmt.Errorf("iptables --list %s: %w", chain, wrapExitError(err))
+		}
+		if dnatChainContainsPort(string(out), protocol, port) {
+			return true, nil
 		}
 	}
-	return nil
+	return false, nil
+}
+
+// dnatChainContainsPort reports whether `iptables --list <chain>
+// --numeric` output references port as a DNAT destination for protocol.
+// It matches both the single-port form (`tcp dpt:<port>`) and the
+// multiport list form (`tcp multiport dports <port>[,…]`). Word
+// boundaries prevent matching `80` against `8080` or against IP-address
+// octets in `to:` clauses.
+//
+// Limitation: port-range syntax in either form is NOT matched. The
+// standalone single-rule range (`tcp dpts:LO:HI`) is ignored entirely;
+// the multiport-embedded range (`multiport dports 80,1000:2000,3000`)
+// is captured only up to the first colon, so individual ports listed
+// before the colon match while ports inside (or after) the range are
+// missed. The engines Rancher Desktop ships (nerdctl-CNI portmap and
+// docker) emit per-port DNAT rules even for `-p LO-HI:LO-HI`
+// publishes, so both gaps are theoretical for shipped engines but
+// real for hand-rolled iptables setups that target the same chains.
+// The dpts: and embedded-range fixtures in the test file lock the
+// current (intentional) miss.
+func dnatChainContainsPort(out, protocol, port string) bool {
+	for _, m := range dnatRuleRe.FindAllStringSubmatch(out, -1) {
+		if m[1] != protocol {
+			continue
+		}
+		if m[2] != "" && m[2] == port {
+			return true
+		}
+		if m[3] != "" {
+			for _, p := range strings.Split(m[3], ",") {
+				if p == port {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// preroutingHasLoopbackRule reports whether the exact PREROUTING DNAT
+// rule applyLoopbackIPtablesRule would Append already exists. Gates the
+// Delete path so we do not log errors for rules we never wrote.
+//
+// Returns (false, nil) when iptables reports the rule is absent (the
+// expected case when the Append was previously skipped or cleaned up
+// out of band). Returns (false, err) on transient iptables failure. The
+// Append path records appendFailed and retries; the Delete path has no
+// retry, so a transient Delete-probe failure leaks the rule until RD
+// restart.
+func preroutingHasLoopbackRule(ctx context.Context, protocol, port string) (bool, error) {
+	cmd := iptablesCommand(ctx,
+		"--wait", "2",
+		"--table", "nat",
+		"--check", "PREROUTING",
+		"--protocol", protocol,
+		"--dport", port,
+		"--jump", "DNAT",
+		"--to-destination", fmt.Sprintf("%s:%s", loopbackIP, port),
+	)
+	// cmd.Output() so the ExitError carries stderr for isIptablesRuleAbsent.
+	if _, err := cmd.Output(); err != nil {
+		if isIptablesRuleAbsent(err) {
+			return false, nil
+		}
+		return false, wrapExitError(err)
+	}
+	return true, nil
+}
+
+// isIptablesRuleAbsent reports whether an iptables --check or --list
+// failure indicates that the rule or chain does not exist. The
+// canonical iptables stderr messages we treat as "absent" are:
+//
+//	No chain/target/match by that name        -- chain does not exist
+//	Bad rule (does a matching rule exist ...) -- rule does not exist
+//
+// Every other failure mode (exit status 4 from xtables lock
+// contention, fork/exec failure, invalid-argument errors, etc.)
+// returns false so the caller bubbles the error and defers the scan.
+// "Absent" here means a steady-state "no" the caller can act on now;
+// anything else might succeed on the next tick.
+func isIptablesRuleAbsent(err error) bool {
+	if err == nil {
+		return false
+	}
+	var exitErr *exec.ExitError
+	if !errors.As(err, &exitErr) {
+		return false
+	}
+	stderr := string(exitErr.Stderr)
+	return strings.Contains(stderr, "No chain/target/match by that name") ||
+		strings.Contains(stderr, "does a matching rule exist in that chain")
+}
+
+// wrapExitError annotates err with the stderr that exec.Cmd.Output
+// captured into *exec.ExitError. iptables exits non-zero with a one-line
+// diagnostic on stderr (xtables lock contention, invalid argument), but a
+// bare *exec.ExitError stringifies only as "exit status N", so the
+// caller's log line would otherwise lose the reason. err is returned
+// unchanged when it is not an *exec.ExitError or carries no stderr.
+func wrapExitError(err error) error {
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && len(exitErr.Stderr) > 0 {
+		return fmt.Errorf("%w: %s", err, strings.TrimSpace(string(exitErr.Stderr)))
+	}
+	return err
 }
 
 func addValidProtoEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
