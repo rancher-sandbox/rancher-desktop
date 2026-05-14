@@ -154,11 +154,12 @@ distros
 Dlg
 dlgbmp
 dlicense
-DNAT
+dnat
 dnsmasq
 doclink
 donotuse
 dport
+dpts
 dri
 Duex
 dustin
@@ -393,6 +394,7 @@ neu
 newauth
 newfs
 newpid
+nft
 nginx
 ngx
 ninep
@@ -485,6 +487,7 @@ projectroletemplatebinding
 Prometheis
 prometheusrule
 PROMPTROLLBACKCOST
+prot
 protip
 PROXYLIST
 PSelected
@@ -726,6 +729,7 @@ xfrm
 xfs
 xmlout
 xorg
+xtables
 XVar
 xwininfo
 xyzzy
