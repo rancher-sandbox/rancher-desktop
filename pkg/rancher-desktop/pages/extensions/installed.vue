@@ -10,6 +10,23 @@ import useCredentials from '@pkg/hocs/withCredentials';
 import type { ExtensionState } from '@pkg/store/extensions';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
+type InstalledExtensionRow = ExtensionState & {
+  title:       string;
+  vendor:      string;
+  description: string;
+  moreInfo:    string;
+};
+
+interface ExtensionMetadataSource {
+  id:      string;
+  labels?: Record<string, string>;
+}
+
+const LABEL_TITLE = 'org.opencontainers.image.title';
+const LABEL_VENDOR = 'org.opencontainers.image.vendor';
+const LABEL_DESCRIPTION = 'org.opencontainers.image.description';
+const LABEL_MORE_INFO = 'io.rancherdesktop.extension.more-info';
+
 export default defineComponent({
   name:       'extensions-installed',
   components: {
@@ -27,13 +44,30 @@ export default defineComponent({
           width: 35,
         },
         {
-          name:  'id',
+          name:  'title',
           label: 'Name',
+          sort:  ['title', 'id'],
+        },
+        {
+          name:  'vendor',
+          label: 'Vendor',
+          sort:  ['vendor', 'title', 'id'],
+          width: 160,
+        },
+        {
+          name:  'description',
+          label: 'Description',
+          sort:  ['description', 'title', 'id'],
+        },
+        {
+          name:  'moreInfo',
+          label: 'More information',
+          width: 150,
         },
         {
           name:  'actions',
           label: ' ',
-          width: 76,
+          width: 170,
         },
       ],
       loading: true,
@@ -50,6 +84,15 @@ export default defineComponent({
     emptyStateBody(): string {
       return this.t('extensions.installed.emptyState.body', { }, true);
     },
+    installedExtensionRows(): InstalledExtensionRow[] {
+      return this.installedExtensions.map(extension => ({
+        ...extension,
+        title:       this.extensionTitle(extension),
+        vendor:      this.extensionVendor(extension),
+        description: this.extensionDescription(extension),
+        moreInfo:    this.extensionLink(extension),
+      }));
+    },
     ...mapGetters('extensions', ['installedExtensions']) as {
       installedExtensions: () => ExtensionState[],
     },
@@ -62,11 +105,33 @@ export default defineComponent({
     this.loading = false;
   },
   methods: {
+    extensionLabel(ext: { labels?: Record<string, string> }, label: string, fallback = ''): string {
+      return ext.labels?.[label]?.trim() || fallback;
+    },
+    extensionTitle(ext: ExtensionMetadataSource): string {
+      return this.extensionLabel(ext, LABEL_TITLE, ext.id);
+    },
+    extensionVendor(ext: { labels?: Record<string, string> }): string {
+      return this.extensionLabel(ext, LABEL_VENDOR);
+    },
+    extensionDescription(ext: { labels?: Record<string, string> }): string {
+      return this.extensionLabel(ext, LABEL_DESCRIPTION);
+    },
+    extensionLink(ext: ExtensionMetadataSource): string {
+      const preferredURL = this.extensionLabel(ext, LABEL_MORE_INFO);
+
+      if (preferredURL) {
+        return preferredURL;
+      }
+
+      if (!/^[^./]+\//.test(ext.id)) {
+        return `https://${ ext.id }`;
+      }
+
+      return `https://hub.docker.com/extensions/${ ext.id }`;
+    },
     browseExtensions() {
       this.$emit('click:browse');
-    },
-    extensionTitle(ext: { id: string, labels: Record<string, string> }): string {
-      return ext.labels?.['org.opencontainers.image.title'] ?? ext.id;
     },
     async uninstall(installed: ExtensionState) {
       this.busy = { ...this.busy, [installed.id]: true };
@@ -104,7 +169,7 @@ export default defineComponent({
       key-field="id"
       :loading="loading"
       :headers="headers"
-      :rows="installedExtensions"
+      :rows="installedExtensionRows"
       :search="false"
       :table-actions="false"
       :row-actions="false"
@@ -132,9 +197,41 @@ export default defineComponent({
           <nav-icon-extension :extension-id="row.id" />
         </td>
       </template>
-      <template #col:id="{ row }">
+      <template #col:title="{ row }">
         <td>
-          {{ extensionTitle(row) }}
+          {{ row.title }}
+        </td>
+      </template>
+      <template #col:vendor="{ row }">
+        <td>
+          <span v-if="row.vendor">{{ row.vendor }}</span>
+          <span
+            v-else
+            class="empty-cell"
+          >-</span>
+        </td>
+      </template>
+      <template #col:description="{ row }">
+        <td class="description">
+          <span v-if="row.description">{{ row.description }}</span>
+          <span
+            v-else
+            class="empty-cell"
+          >-</span>
+        </td>
+      </template>
+      <template #col:moreInfo="{ row }">
+        <td>
+          <a
+            class="more-info-link"
+            :href="row.moreInfo"
+            :title="row.moreInfo"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ t('marketplace.moreInfo') }}
+            <i class="icon icon-external-link" />
+          </a>
         </td>
       </template>
       <template #col:actions="{ row }">
@@ -177,5 +274,18 @@ export default defineComponent({
   & > * {
     margin-left: 10px;
   }
+}
+
+.description {
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.empty-cell {
+  color: var(--muted);
+}
+
+.more-info-link {
+  white-space: nowrap;
 }
 </style>
