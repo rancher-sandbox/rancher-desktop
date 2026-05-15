@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { includeIgnoreFile } from '@eslint/compat';
+import { includeIgnoreFile } from '@eslint/config-helpers';
 import eslint from '@eslint/js';
 import { standardTypeChecked } from '@vue/eslint-config-standard-with-typescript';
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript';

@@ -2117,6 +2117,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@eslint/config-helpers@npm:0.6.0":
+  version: 0.6.0
+  resolution: "@eslint/config-helpers@npm:0.6.0"
+  dependencies:
+    "@eslint/core": "npm:^1.2.1"
+  checksum: 10c0/f9af20e8b60b0ba27edb74b8eb40c0c5d51a9bf9baf9e053bb57833a87cb0a1c49b4dfaad88fc24d49c907ad1324c8a0b668684fa9c321351dac4bc9155ec10a
+  languageName: node
+  linkType: hard
+
 "@eslint/config-helpers@npm:^0.5.5":
   version: 0.5.5
   resolution: "@eslint/config-helpers@npm:0.5.5"
@@ -14412,6 +14421,7 @@ __metadata:
     "@electron/fuses": "npm:^2.1.1"
     "@electron/notarize": "npm:3.1.1"
     "@eslint/compat": "npm:2.1.0"
+    "@eslint/config-helpers": "npm:0.6.0"
     "@eslint/js": "npm:10.0.1"
     "@kubernetes/client-node": "npm:1.4.0"
     "@napi-rs/xattr": "npm:^1.0.3"
