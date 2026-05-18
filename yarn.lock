@@ -14653,7 +14653,7 @@ __metadata:
     vuex: "npm:4.1.0"
     webpack: "npm:5.100.2"
     which: "npm:7.0.0"
-    yaml: "npm:2.8.4"
+    yaml: "npm:2.9.0"
   dependenciesMeta:
     dmg-license:
       optional: true
@@ -17764,12 +17764,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:2.8.4":
-  version: 2.8.4
-  resolution: "yaml@npm:2.8.4"
+"yaml@npm:2.9.0":
+  version: 2.9.0
+  resolution: "yaml@npm:2.9.0"
   bin:
     yaml: bin.mjs
-  checksum: 10c0/0a33a1fa28d4bc79f61a12ec7ef7a2bce0ce5f8e80c6eaecfb4a0c88c08767dd1ede372b6a3bcd70891213b8c9f3169b355c97e77026d3b3459e10d2cccaef1e
+  checksum: 10c0/f340718df45e97a9551b9bf9dac61c80050bc464513b710debfb5067c380c8472e3b67809cffacb4ab5ffb5e66ef9310816c88b05f371cec60abfedd8c88e0a2
   languageName: node
   linkType: hard
 
