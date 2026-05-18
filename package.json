@@ -141,7 +141,7 @@
     "extract-zip": "2.0.1",
     "glob": "^13.0.3",
     "globals": "17.6.0",
-    "jest": "30.3.0",
+    "jest": "30.4.2",
     "jest-environment-jsdom": "30.4.1",
     "js-yaml-loader": "1.2.2",
     "mustache": "4.2.0",
