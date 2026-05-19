@@ -656,6 +656,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     delete (config as unknown as Record<string, unknown>).k3s;
     delete (config as unknown as Record<string, unknown>).paths;
 
+    // The top-level cpuType field is deprecated in favour of vmOpts.qemu.cpuType.
+    // Drop it so an upgraded VM's lima.yaml doesn't keep triggering lima's deprecation warning.
+    delete (config as unknown as Record<string, unknown>).cpuType;
+
     if (os.platform() === 'darwin') {
       if (allowRoot) {
         const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
