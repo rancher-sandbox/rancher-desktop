@@ -74,14 +74,14 @@ dockerCLI:
     docker-windows-amd64.exe: sha256:08460f46f72d9b3babe6725edea3b34d2c0d0343eefd8f80fd5571b6eab51483
     docker-windows-arm64.exe: sha256:b78239499ee15795ff9ce4ae0fb5566a1e89e6872dddb67073940b70c6287975
 dockerBuildx:
-  version: 0.34.0
+  version: 0.34.1
   checksums:
-    buildx-v0.34.0.linux-amd64: sha256:0144479d5a1cd710be3464ae898628cfa68033e16b225aef52f81930c45ac9b5
-    buildx-v0.34.0.linux-arm64: sha256:565605fe0bb393ed5d11771e5b52fc7ef05c701868861fa85609747c9d74a440
-    buildx-v0.34.0.darwin-amd64: sha256:fb7da95b09df7918527a6a35d9063e749fe4b2a6fc3954c75325dafe41d92124
-    buildx-v0.34.0.darwin-arm64: sha256:503b37f7b61b24b64287c9b79d89f3eb86d5eab6e6ac5383fd5fb234ac9d5dcb
-    buildx-v0.34.0.windows-amd64.exe: sha256:96a10e259fa1380e7bbf9a3cb04872f201a6e7e331ddeeec8d3e38aa2650ddc5
-    buildx-v0.34.0.windows-arm64.exe: sha256:86f5d9655e6f04c19210a696f9de1f6682e9bded9f0b71702ef4e5139eeffa5a
+    buildx-v0.34.1.linux-amd64: sha256:f1332ddb9010bd0b72628266c3a906d9a6979848033df4c8d9bd2cd113bae12b
+    buildx-v0.34.1.linux-arm64: sha256:c34e32dd6ea2653d960d6c099c9f09b9077e4a37504d2d31e5066eccc3904231
+    buildx-v0.34.1.darwin-amd64: sha256:a4a74ff86e70706a0ae24330052ab52989da9f2090dc8fc478e398813de7b550
+    buildx-v0.34.1.darwin-arm64: sha256:e5040acdaac1a349de84c0e7a80c861a368e0d141bf7260e1fd9a74b16749477
+    buildx-v0.34.1.windows-amd64.exe: sha256:41e1b3fff6541d5f5febb18ff4c9108bec30afd7bf9133b82783735c2078eac1
+    buildx-v0.34.1.windows-arm64.exe: sha256:413e9cc2008e78e377c0f70b67f9f3da4708fec6c8baafbad51d0df4a65b4c11
 dockerCompose:
   version: 5.1.3
   checksums:
