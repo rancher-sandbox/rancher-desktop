@@ -34,6 +34,18 @@ mac:
   extraFiles:
   - build/signing-config-mac.yaml
   - { from: dist/electron-builder.yaml, to: electron-builder.yml }
+dmg:
+  # title is set programmatically in scripts/package.ts so we can include the
+  # architecture (electron-builder's title macros don't expose ${arch}).
+  background: build/background.png
+  window:
+    width: 540
+    height: 380
+  contents:
+  - { x: 140, y: 200, type: file }
+  - { x: 400, y: 200, type: link, path: /Applications }
+  iconSize: 100
+  iconTextSize: 14
 win:
   target: [ zip ]
   signtoolOptions:
