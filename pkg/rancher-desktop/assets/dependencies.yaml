@@ -35,11 +35,11 @@ socketVMNet:
     socket_vmnet-1.2.2-arm64.tar.gz: sha256:c7bf62308fbcfdc29bdfb8373c9b1951f7ac2396446e4390919796a94972e6dc
 alpineLimaISO:
   version:
-    isoVersion: 0.2.47.rd4
+    isoVersion: 0.2.47.rd5
     alpineVersion: 3.23.0
   checksums:
-    alpine-lima-rd-3.23.0-x86_64.iso: sha256:08c9656457c1b2641afe1304ea51eb597bc99143826a171ed37811eef6284876
-    alpine-lima-rd-3.23.0-aarch64.iso: sha256:f39f670baf37cdb9b157f540ab08df8b8d7a41305a6a0dfbfc61c54c66af39b4
+    alpine-lima-rd-3.23.0-x86_64.iso: sha256:e1a6a14e601ccfa19200aecf5daae7c908f9074f3c0bc919bd77d6f60b8b64cf
+    alpine-lima-rd-3.23.0-aarch64.iso: sha256:2f71a1f08c3b26a90165a1e73e7a6726f3b142bdd81450781336e7269d81fd80
 WSLDistro:
   version: "0.95"
   checksums:
