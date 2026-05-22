@@ -193,7 +193,7 @@
                 v-for="(entry, i) in portEntries"
                 :key="i"
               >
-                <th></th>
+                <th />
                 <td>{{ entry }}</td>
               </tr>
             </tbody>
