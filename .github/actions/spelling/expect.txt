@@ -44,8 +44,10 @@ assumeyes
 atk
 authconfig
 authdata
+authencesn
 Authenticode
 authprovider
+AUTHSIZE
 auxww
 Awop
 backgrounding
@@ -76,6 +78,7 @@ buildroot
 bulbasaur
 bulkable
 bulkaction
+Bxxxxxxx
 cacerts
 camelpunch
 CAPI
@@ -125,6 +128,8 @@ crond
 cshrc
 ctrctl
 ctxs
+curlft
+daddr
 daemonset
 dapp
 datadog
@@ -219,6 +224,7 @@ FOLDERID
 fontstack
 fqname
 freeipa
+fromhex
 frontends
 fscache
 gabcdef
@@ -280,7 +286,9 @@ ifaces
 ifname
 ifnotstart
 ifstarted
+IHHII
 iidfile
+IIHBB
 imageinfo
 IMAGENAME
 IMAGEPATH
@@ -328,6 +336,7 @@ Kubewarden
 kurrent
 kwctl
 ldconfig
+lft
 LGHT
 limactl
 limaiptables
@@ -392,10 +401,18 @@ networkpolicy
 neu
 newauth
 newfs
+NEWNET
 newpid
+NEWSA
+NEWUSER
 nginx
 ngx
 ninep
+nla
+nlattr
+nlhdr
+NLMSG
+nlmsghdr
 noarch
 nocopy
 nologin
@@ -494,6 +511,7 @@ ptn
 publicdomain
 pushable
 pvc
+PWND
 PWSTR
 qcow
 rackspace
@@ -523,6 +541,7 @@ remotedns
 replicaset
 replicationcontroller
 repofile
+reqid
 requried
 resourcequota
 resourceset
@@ -532,6 +551,7 @@ reswan
 reusecab
 rioinfo
 rke
+rlen
 RLENGTH
 rmi
 rockylinux
@@ -552,6 +572,7 @@ runtimeclass
 runtimeclasses
 rvf
 rxrpc
+SAs
 scaleio
 scanbenchmark
 scanprofile
@@ -668,6 +689,7 @@ upperdir
 useb
 userdb
 userpreference
+usersa
 UTCTIME
 vcenter
 vcpus
@@ -687,6 +709,7 @@ vishvananda
 VMGUID
 VMID
 vmnet
+vmsplice
 vmwarevsphere
 vmx
 vnc
@@ -705,6 +728,7 @@ wixobj
 WIXUI
 wontfix
 wordpress
+writeback
 wslconfig
 wslenv
 WSLg
@@ -723,6 +747,7 @@ XAUTHORITY
 xdev
 xec
 xfrm
+XFRMA
 xfs
 xmlout
 xorg

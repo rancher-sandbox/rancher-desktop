@@ -1,4 +1,4 @@
-ARG IMAGE_PYTHON=python:3.9-slim
+ARG IMAGE_PYTHON=python:3.12-alpine
 FROM ${IMAGE_PYTHON}
 
 WORKDIR /app
