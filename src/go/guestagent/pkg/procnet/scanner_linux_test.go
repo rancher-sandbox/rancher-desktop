@@ -217,16 +217,17 @@ func TestWrapExitError(t *testing.T) {
 	require.NoError(t, wrapExitError(nil))
 }
 
-// TestPortAlreadyExposedSubstringIsReachable pins the substring contract
-// that the procnet delegation path depends on. The substring originates
-// in gvisor-tap-vsock's host-port forwarder; the response body passes
-// through forwarder.verifyResponseBody ("%w: %s" wrap of ErrAPI), then
-// through tracker.APITracker.Add ("%w: %+v" wrap of ErrExposeAPI). If
-// either wrap layer ever drops the body, this test fails before the
-// procnet scanner silently regresses. An upstream rename of the message
-// is an unguarded risk: the handler below hardcodes the string, and the
-// upstream constant is not an exported symbol to assert against.
-func TestPortAlreadyExposedSubstringIsReachable(t *testing.T) {
+// TestPortAlreadyExposedSentinelIsReachable pins the wire contract that
+// the procnet delegation path depends on. The "proxy already running"
+// substring originates in gvisor-tap-vsock's host-port forwarder; the
+// response body passes through forwarder.verifyResponseBody ("%w: %s"
+// wrap of ErrAPI) and tracker.APITracker.Add must recognise it and
+// surface tracker.ErrPortAlreadyExposed. If either the substring match
+// in Add or the wire shape from gvisor-tap-vsock changes, this test
+// fails before procnet silently regresses. An upstream rename of the
+// message is an unguarded risk: the handler below hardcodes the string,
+// and the upstream constant is not an exported symbol to assert against.
+func TestPortAlreadyExposedSentinelIsReachable(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -242,9 +243,8 @@ func TestPortAlreadyExposedSubstringIsReachable(t *testing.T) {
 	addErr := tr.Add("synthetic-tcp-8080", nat.PortMap{
 		port: []nat.PortBinding{{HostIP: loopbackIP, HostPort: "8080"}},
 	})
-	require.Error(t, addErr)
-	require.Contains(t, addErr.Error(), portAlreadyExposedSubstring,
-		"the delegation marker must survive the forwarder/tracker wrap chain")
+	require.ErrorIs(t, addErr, tracker.ErrPortAlreadyExposed,
+		"the delegation sentinel must survive the forwarder/tracker wrap chain")
 }
 
 type noopForwarder struct{}

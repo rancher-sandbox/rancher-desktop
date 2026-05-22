@@ -16,6 +16,7 @@ package iptables
 
 import (
 	"context"
+	"errors"
 	"net"
 	"strconv"
 	"strings"
@@ -120,11 +121,14 @@ func (i *Iptables) ForwardPorts() error {
 				portMap[portMapKey] = []nat.PortBinding{portBinding}
 			}
 			name := entryToString(p)
-			if err := i.apiTracker.Add(utils.GenerateID(name), portMap); err != nil {
+			switch err := i.apiTracker.Add(utils.GenerateID(name), portMap); {
+			case err == nil:
+				log.Infof("iptables scanner forwarded portmap for %s", name)
+			case errors.Is(err, tracker.ErrPortAlreadyExposed):
+				log.Debugf("iptables scanner: portmap for %s already exposed elsewhere", name)
+			default:
 				log.Errorf("iptables scanner failed to forward portmap for %s: %s", name, err)
-				continue
 			}
-			log.Infof("iptables scanner forwarded portmap for %s", name)
 		}
 	}
 }

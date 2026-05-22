@@ -254,7 +254,7 @@ func TestResumeOwnershipInstallsAppend(t *testing.T) {
 		{err: fmt.Errorf("%w: simulated", tracker.ErrWSLProxy), seedStorage: true},
 		// Tick 3: apiForwarder.Expose returns "proxy already running"
 		// (gvisor-tap-vsock still holds the proxy from tick 2).
-		{err: fmt.Errorf("expose api error: %s", portAlreadyExposedSubstring), seedStorage: false},
+		{err: tracker.ErrPortAlreadyExposed, seedStorage: false},
 	}
 	pst := newPortStateTracker(fakeT, fakeIPT)
 	pm := makePortMap(t)
@@ -496,7 +496,7 @@ func TestProxyAlreadyRunningWithoutOwnershipDelegates(t *testing.T) {
 	// container ID; our synthetic Add loses the race and portStorage
 	// is NOT seeded for the synthetic ID.
 	fakeT.addBehavior = []addBehavior{
-		{err: fmt.Errorf("expose api error: %s", portAlreadyExposedSubstring), seedStorage: false},
+		{err: tracker.ErrPortAlreadyExposed, seedStorage: false},
 	}
 	pst := newPortStateTracker(fakeT, fakeIPT)
 	pm := makePortMap(t)
@@ -790,7 +790,7 @@ func TestRemoveFailureRetainsRuleForReappearance(t *testing.T) {
 	// from the stale proxy, with storage empty (cleared by Remove).
 	fakeT.removeErr = nil
 	fakeT.addBehavior = []addBehavior{
-		{err: fmt.Errorf("expose api error: %s", portAlreadyExposedSubstring), seedStorage: false},
+		{err: tracker.ErrPortAlreadyExposed, seedStorage: false},
 	}
 	pst.Tick(pm) // 4: reappearance, defer
 	pst.Tick(pm) // 5: tracker.Add → "proxy already running", Get==0 → delegate

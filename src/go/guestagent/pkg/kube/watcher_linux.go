@@ -174,16 +174,20 @@ func WatchForServices(
 
 						continue
 					}
-					if err := portTracker.Add(string(event.UID), portMapping); err != nil {
+					switch err := portTracker.Add(string(event.UID), portMapping); {
+					case err == nil:
+						log.Debugf("kubernetes service: port mapping added %s/%s:%v",
+							event.namespace, event.name, event.portMapping)
+					case errors.Is(err, tracker.ErrPortAlreadyExposed):
+						log.Debugf("kubernetes service: port mapping already exposed elsewhere %s/%s:%v",
+							event.namespace, event.name, event.portMapping)
+					default:
 						log.Errorf("failed to add port mapping: %v from tracker UID: %v namespace: %s name: %s failed: %s",
 							event.portMapping,
 							event.UID,
 							event.namespace,
 							event.name,
 							err)
-					} else {
-						log.Debugf("kubernetes service: port mapping added %s/%s:%v",
-							event.namespace, event.name, event.portMapping)
 					}
 				}
 			}

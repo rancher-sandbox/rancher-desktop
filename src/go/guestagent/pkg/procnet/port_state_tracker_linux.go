@@ -17,7 +17,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
@@ -34,8 +33,8 @@ import (
 //	  on (its second sighting -- the first only defers).
 //	delegated: an engine owns the proxy. Set when an engine chain
 //	  (CNI-HOSTPORT-DNAT or DOCKER) already references the port, OR
-//	  when tracker.Add returns portAlreadyExposedSubstring against an
-//	  ID procnet does not already own. The cleanup path must skip
+//	  when tracker.Add returns tracker.ErrPortAlreadyExposed against
+//	  an ID procnet does not already own. The cleanup path must skip
 //	  tracker.Remove in this case -- the engine owns the tracker entry
 //	  under its container ID, and our synthetic ID would walk an empty
 //	  portStorage entry.
@@ -68,7 +67,7 @@ import (
 //	  Not engine-managed: tracker.Add.
 //	    Succeeds: Append iptables rule; record success or
 //	      appendFailed=true on transient error.
-//	    "proxy already running": classify via tracker.Get(synthetic).
+//	    tracker.ErrPortAlreadyExposed: classify via tracker.Get(synthetic).
 //	      We own it: install the iptables rule that the partial-failure
 //	        path skipped, mark delegated=false. apiForwarder.Expose
 //	        succeeded on an earlier tick but wsl-proxy.Send failed,
@@ -94,7 +93,7 @@ import (
 //	    chain is installed during container network setup, before the
 //	    engine's portTracker.Add runs, so its presence does not prove
 //	    the engine holds a host-switch proxy. If the engine's Add raced
-//	    procnet's and lost, it got portAlreadyExposedSubstring and
+//	    procnet's and lost, it got tracker.ErrPortAlreadyExposed and
 //	    recorded nothing, and the port keeps no host-switch proxy until
 //	    RD restart. The retry path only runs once the stability gate
 //	    was bypassed under heavy load, so this rides along with that
@@ -328,7 +327,7 @@ func (pst *portStateTracker) exposeNew(port nat.Port, bindings []nat.PortBinding
 		return
 	}
 	if err := pst.tracker.Add(syntheticID, nat.PortMap{port: bindings}); err != nil {
-		if strings.Contains(err.Error(), portAlreadyExposedSubstring) {
+		if errors.Is(err, tracker.ErrPortAlreadyExposed) {
 			pst.handleAlreadyExposed(port, bindings, syntheticID)
 			return
 		}
@@ -357,7 +356,7 @@ func (pst *portStateTracker) exposeNew(port nat.Port, bindings []nat.PortBinding
 }
 
 // handleAlreadyExposed disambiguates the two shapes of
-// portAlreadyExposedSubstring from tracker.Add:
+// tracker.ErrPortAlreadyExposed from tracker.Add:
 //
 //	Genuine engine delegation: the engine's events handler called
 //	  tracker.Add first under its container ID. gvisor-tap-vsock has
@@ -367,7 +366,7 @@ func (pst *portStateTracker) exposeNew(port nat.Port, bindings []nat.PortBinding
 //	Partial-failure retry: a prior tick succeeded at apiForwarder.Expose
 //	  (so gvisor-tap-vsock has the proxy and portStorage[synthetic] is
 //	  populated) but failed downstream (typically wsl-proxy.Send).
-//	  The substring is the same, but we own the entry; install the
+//	  The sentinel is the same, but we own the entry; install the
 //	  iptables rule that the partial-failure path skipped and resume
 //	  ownership.
 func (pst *portStateTracker) handleAlreadyExposed(port nat.Port, bindings []nat.PortBinding, syntheticID string) {

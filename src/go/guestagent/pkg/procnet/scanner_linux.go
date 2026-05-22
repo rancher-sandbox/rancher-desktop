@@ -61,16 +61,6 @@ const loopbackIP = "127.0.0.1"
 // startup so a support-bundle reader sees what procnet considered.
 var engineDNATChains = []string{"CNI-HOSTPORT-DNAT", "DOCKER"}
 
-// portAlreadyExposedSubstring is the substring tracker.Add returns when
-// another component has already exposed the port (typically the
-// containerd or docker events handler on /tasks/start). The string
-// originates in the /services/forwarder/expose API response and survives
-// the tracker's wrapping. handleAlreadyExposed disambiguates the two
-// cases it covers: an engine owns the proxy (delegate), or procnet owns
-// it after a partial-failure retry (resume ownership and install the
-// loopback rule the partial-failure path skipped).
-const portAlreadyExposedSubstring = "proxy already running"
-
 // dnatRuleRe matches a single DNAT rule line in `iptables --list <chain>
 // --numeric` output. Capture groups: (1) protocol (tcp|udp), then ONE of
 // (2) single-port `dpt:N` or (3) multiport list `dports N[,N…]`. The

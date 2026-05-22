@@ -865,6 +865,112 @@ func TestNonAdminInstall(t *testing.T) {
 	assert.Nil(t, portMapping)
 }
 
+// TestAddReturnsPortAlreadyExposedSentinel verifies that when host-switch
+// rejects every Expose with the "proxy already running" body, Add returns
+// the typed sentinel so callers can downgrade the result to a delegation
+// no-op.
+func TestAddReturnsPortAlreadyExposedSentinel(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "host port forwarding: cannot expose 127.0.0.1:80: proxy already running", http.StatusInternalServerError)
+	})
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	err = apiTracker.Add(containerID, nat.PortMap{
+		protoPort: []nat.PortBinding{{HostIP: hostIP, HostPort: hostPort}},
+	})
+	require.ErrorIs(t, err, tracker.ErrPortAlreadyExposed)
+	require.NotErrorIs(t, err, forwarder.ErrExposeAPI,
+		"the sentinel must replace the generic ErrExposeAPI wrap, not be joined with it")
+
+	// portStorage stays empty: no port was successfully forwarded.
+	assert.Empty(t, apiTracker.Get(containerID))
+}
+
+// TestAddPartialAlreadyExposedReturnsNil verifies that when some ports
+// succeed and others are already exposed elsewhere, Add returns nil --
+// the call did real work and the sentinel only applies when nothing was
+// forwarded.
+func TestAddPartialAlreadyExposedReturnsNil(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+		var req *types.ExposeRequest
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+		if req.Local == ipPortBuilder(hostIP2, hostPort) {
+			http.Error(w, "proxy already running", http.StatusInternalServerError)
+		}
+	})
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	err = apiTracker.Add(containerID, nat.PortMap{
+		protoPort: []nat.PortBinding{
+			{HostIP: hostIP, HostPort: hostPort},  // succeeds
+			{HostIP: hostIP2, HostPort: hostPort}, // already exposed
+		},
+	})
+	require.NoError(t, err)
+
+	// Only the successful binding lands in storage.
+	stored := apiTracker.Get(containerID)
+	require.Len(t, stored[protoPort], 1)
+	assert.Equal(t, hostIP, stored[protoPort][0].HostIP)
+}
+
+// TestAddAlreadyExposedPlusRealFailureReturnsRealFailure verifies that a
+// real Expose failure beats the "already exposed" signal: callers must
+// see the genuine ErrExposeAPI wrap so they retry, not the sentinel that
+// would have them treat the call as delegation.
+func TestAddAlreadyExposedPlusRealFailureReturnsRealFailure(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+		var req *types.ExposeRequest
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+		switch req.Local {
+		case ipPortBuilder(hostIP, hostPort):
+			http.Error(w, "proxy already running", http.StatusInternalServerError)
+		case ipPortBuilder(hostIP2, hostPort):
+			http.Error(w, "transient backend error", http.StatusInternalServerError)
+		}
+	})
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	err = apiTracker.Add(containerID, nat.PortMap{
+		protoPort: []nat.PortBinding{
+			{HostIP: hostIP, HostPort: hostPort},  // already exposed
+			{HostIP: hostIP2, HostPort: hostPort}, // real failure
+		},
+	})
+	require.Error(t, err)
+	require.ErrorIs(t, err, forwarder.ErrExposeAPI,
+		"a real Expose failure must surface, not be masked by the sentinel")
+	require.NotErrorIs(t, err, tracker.ErrPortAlreadyExposed,
+		"the sentinel only applies when every port was already exposed")
+}
+
 func ipPortBuilder(ip, port string) string {
 	return ip + ":" + port
 }

@@ -38,7 +38,20 @@ var (
 	ErrAPI         = errors.New("error from API")
 	ErrInvalidIPv4 = errors.New("not an IPv4 address")
 	ErrWSLProxy    = errors.New("error from Rancher Desktop WSL Proxy")
+	// ErrPortAlreadyExposed signals that Add was a no-op because another
+	// component had already exposed every port in the request. Callers
+	// that scan for ports another actor may own (kube watcher, iptables
+	// scanner, /proc/net scanner) should treat this as successful
+	// delegation rather than a failure to retry.
+	ErrPortAlreadyExposed = errors.New("port already exposed by another component")
 )
+
+// portAlreadyExposedSubstring is the substring host-switch's
+// /services/forwarder/expose response carries when the port is already
+// bound. The string is the host-switch wire contract; matching it here
+// lets callers rely on errors.Is(err, ErrPortAlreadyExposed) instead of
+// inspecting message text.
+const portAlreadyExposedSubstring = "proxy already running"
 
 // APITracker keeps track of the port mappings and calls the
 // corresponding API endpoints that is responsible for exposing
@@ -80,8 +93,14 @@ func NewAPITracker(ctx context.Context, wslProxyForwarder forwarder.Forwarder, b
 
 // Add a container ID and port mapping to the tracker and calls the
 // /services/forwarder/expose endpoint to forward the port mappings.
+//
+// If the expose API returns portAlreadyExposedSubstring for every port
+// in the request and no other failures occurred, Add returns
+// ErrPortAlreadyExposed so callers can treat the call as successful
+// delegation rather than a failure to retry.
 func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 	var errs []error
+	var alreadyExposed int
 
 	successfullyForwarded := make(nat.PortMap)
 
@@ -107,6 +126,10 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 					Protocol: types.TransportProtocol(strings.ToLower(portProto.Proto())),
 				})
 			if err != nil {
+				if strings.Contains(err.Error(), portAlreadyExposedSubstring) {
+					alreadyExposed++
+					continue
+				}
 				errs = append(errs, fmt.Errorf("exposing %+v failed: %w", portBinding, err))
 
 				continue
@@ -138,6 +161,14 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 		if err := a.wslProxyForwarder.Send(portMapping); err != nil {
 			retErr = errors.Join(retErr, fmt.Errorf("%w: %w", ErrWSLProxy, err))
 		}
+	}
+
+	// If every Expose call that ran reported the port as already
+	// exposed -- no successful forwards, no other failures, no
+	// wsl-proxy error -- surface the sentinel so callers downgrade
+	// the result from an error to a delegation no-op.
+	if retErr == nil && alreadyExposed > 0 && len(successfullyForwarded) == 0 {
+		retErr = ErrPortAlreadyExposed
 	}
 
 	return retErr
