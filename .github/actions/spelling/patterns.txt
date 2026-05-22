@@ -251,3 +251,6 @@ DNAT\s+.*\s+anywhere anywhere
 
 # Image names
 \bghcr\.io/[A-Za-z0-9_/.-]+(?::[A-Za-z0-9_.-]+)?\b
+
+# Python string prefix / binary prefix
+(?<!['"])\b(?:B|BR|Br|F|FR|Fr|R|RB|RF|Rb|Rf|U|UR|Ur|b|bR|br|f|fR|fr|r|rB|rF|rb|rf|u|uR|ur)['"](?=[A-Z]{3,}|[A-Z][a-z]{2,}|[a-z]{3,})
