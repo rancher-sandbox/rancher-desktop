@@ -1,14 +1,29 @@
 import { jest } from '@jest/globals';
+import { shallowMount } from '@vue/test-utils';
 
 import mockModules from '@pkg/utils/testUtils/mockModules';
 
 const componentStub = { template: '<div />' };
+const sortableTableStub = {
+  name:  'SortableTable',
+  props: {
+    defaultSortBy: String,
+    headers:       Array,
+    rows:          Array,
+    loading:       Boolean,
+    search:        Boolean,
+    tableActions:  Boolean,
+    rowActions:    Boolean,
+    keyField:      String,
+  },
+  template: '<table />',
+};
 
 mockModules({
   '@pkg/components/EmptyState.vue':             componentStub,
   '@pkg/components/LoadingIndicator.vue':       componentStub,
   '@pkg/components/NavIconExtension.vue':       componentStub,
-  '@pkg/components/SortableTable/index.vue':    componentStub,
+  '@pkg/components/SortableTable/index.vue':    sortableTableStub,
   '@pkg/hocs/withCredentials':                  { default: jest.fn() },
   '@pkg/utils/ipcRenderer':                    {
     ipcRenderer: {
@@ -19,6 +34,26 @@ mockModules({
 
 const { default: InstalledExtensions } = await import('@pkg/pages/extensions/installed.vue');
 const methods = (InstalledExtensions as any).methods;
+
+describe('extensions installed table', () => {
+  it('sorts installed extensions by displayed name by default', () => {
+    const wrapper = shallowMount(InstalledExtensions, {
+      computed: {
+        ...(InstalledExtensions as any).computed,
+        installedExtensions: () => [],
+      },
+      global: {
+        mocks: {
+          $store: {
+            dispatch: jest.fn(),
+          },
+        },
+      },
+    });
+
+    expect(wrapper.getComponent(sortableTableStub).props('defaultSortBy')).toBe('title');
+  });
+});
 
 describe('extensions metadata', () => {
   it('builds installed extension metadata from OCI labels', () => {

@@ -170,6 +170,7 @@ export default defineComponent({
       :loading="loading"
       :headers="headers"
       :rows="installedExtensionRows"
+      default-sort-by="title"
       :search="false"
       :table-actions="false"
       :row-actions="false"
