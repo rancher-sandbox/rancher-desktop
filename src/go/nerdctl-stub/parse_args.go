@@ -338,6 +338,7 @@ func init() {
 	registerArgHandler("builder build", "--file", argHandlers.filePathArgHandler)
 	registerArgHandler("builder build", "-f", argHandlers.filePathArgHandler)
 	registerArgHandler("builder build", "--iidfile", argHandlers.outputPathArgHandler)
+	registerArgHandler("builder build", "--source-policy-file", argHandlers.filePathArgHandler)
 	registerArgHandler("builder debug", "--file", argHandlers.filePathArgHandler)
 	registerArgHandler("builder debug", "-f", argHandlers.filePathArgHandler)
 	registerArgHandler("checkpoint create", "--checkpoint-dir", argHandlers.filePathArgHandler)
