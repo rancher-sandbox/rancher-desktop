@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { cartesian } from '@/scripts/dependencies/tools';
-import { downloadAndHash, DownloadContext, GlobalDependency, lookupChecksum, Sha256Checksum, VersionedDependency } from '@/scripts/lib/dependencies';
+import { downloadAndHash, DownloadContext, GlobalDependency, Sha256Checksum, VersionedDependency } from '@/scripts/lib/dependencies';
 import { download } from '@/scripts/lib/download';
 import { simpleSpawn } from '@/scripts/simple_process';
 
@@ -18,15 +18,20 @@ export class Electron extends GlobalDependency(VersionedDependency) {
     return `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }/`;
   }
 
+  private get version(): Promise<string> {
+    return import('electron/package.json').then(({ version }) => version);
+  }
+
   async download(context: DownloadContext): Promise<void> {
-    // We don't actually use the checksums we recorded; instead, we use the ones
-    // embedded from the electron package.  This is to avoid errors running
-    // `yarn install` in the dependabot PRs where `package.json` has been
-    // updated but before the next rddepman run (where we update the checksums).
-    // However, we can at least check if the versions match, and if yes, that
-    // the checksum is correct.
+    // We don't actually use the version or checksums we recorded; instead, we
+    // use the ones embedded from the electron package.  This is to avoid errors
+    // running `yarn install` in the dependabot PRs where `package.json`
+    // has been updated but before the next rddepman run (where we update the
+    // checksums).  However, we can at least check if the versions match, and if
+    // yes, that the checksum is correct.
     const arch = context.isM1 ? 'arm64' : 'x64';
-    const { version, checksums: recordedChecksums } = context.dependencies.electron;
+    const version = await this.version;
+    const { checksums: recordedChecksums, version: recordedVersion } = context.dependencies.electron;
     const baseURL = this.getBaseURL(version);
     const archiveName = `electron-v${ version }-${ context.platform }-${ arch }.zip`;
     const url = `${ baseURL }${ archiveName }`;
@@ -40,11 +45,17 @@ export class Electron extends GlobalDependency(VersionedDependency) {
       win32:  'electron.exe',
     }[context.platform];
 
-    // Check that our recorded checksum matches the upstream one, but only if we
-    // have it recorded for the same file.
-    if (archiveName in (recordedChecksums ?? {})) {
+    if (!expectedChecksum) {
+      // The upstream checksum is expected to always exist; we may need to
+      // update how we look it up.
+      throw new Error(`Upstream checksum is missing for ${ archiveName }`);
+    }
+    // If the version in the dependency manifest matches the version installed
+    // via `package.json`, check that the recorded checksum matches the upstream
+    // checksum; this ensures upstream hasn't been tampered with.
+    if (recordedVersion === version) {
       const recordedChecksum = recordedChecksums[archiveName]?.replace(/^.*?:/, '');
-      if ( recordedChecksum !== expectedChecksum) {
+      if (recordedChecksum !== expectedChecksum) {
         throw new Error(`
           Upstream checksum for Electron archive ${ archiveName }
           is ${ expectedChecksum }, does not match recorded checksum ${ recordedChecksum }.
@@ -59,7 +70,18 @@ export class Electron extends GlobalDependency(VersionedDependency) {
     await fs.promises.writeFile(path.join(path.dirname(outPath), 'path.txt'), executable);
   }
 
-  async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
+  async getChecksums(requestedVersion: string): Promise<Record<string, Sha256Checksum>> {
+    const version = await this.version;
+
+    // We only use the version as installed via `package.json`.  The passed-in
+    // version should only come from `getAvailableVersions`, so it should always
+    // match, but we check just in case.
+    if (requestedVersion !== version) {
+      throw new Error(`
+        Version of Electron installed via package.json (${ version })
+        does not match requested version (${ requestedVersion }).
+        `.replace(/\s+/g, ' '));
+    }
     const baseURL = this.getBaseURL(version);
     const checksums: Record<string, string> = (await import('electron/checksums.json')).default;
     const platforms = cartesian(['darwin', 'linux', 'win32'], ['x64', 'arm64'])
@@ -77,7 +99,6 @@ export class Electron extends GlobalDependency(VersionedDependency) {
 
   async getAvailableVersions(): Promise<string[]> {
     // We do Electron updates via dependabot.
-    const packageJson = await import('@/package.json');
-    return [packageJson.devDependencies.electron];
+    return [await this.version];
   }
 }
