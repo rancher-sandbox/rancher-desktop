@@ -335,3 +335,60 @@ describe('queryUpgradeResponder', () => {
     expect(body.extraInfo.wslVersion).toBe(undefined);
   });
 });
+
+describe('LonghornProvider.getSha512Sum', () => {
+  let LonghornProviderClass: typeof import('../LonghornProvider').default;
+
+  beforeAll(async() => {
+    ({ default: LonghornProviderClass } = await import('../LonghornProvider'));
+  });
+  afterEach(() => {
+    modules.electron.net.fetch.mockReset();
+  });
+
+  function makeProvider() {
+    return new LonghornProviderClass(
+      {} as any,
+      {} as any,
+      { platform: 'win32' } as any,
+    );
+  }
+
+  it('decodes the hex checksum and returns it as base64', async() => {
+    const hex = 'a'.repeat(128);
+
+    modules.electron.net.fetch.mockResolvedValueOnce({
+      ok:         true,
+      status:     200,
+      statusText: 'OK',
+      text:       () => Promise.resolve(`${ hex }  rancher-desktop.msi\n`),
+    });
+
+    await expect(makeProvider()['getSha512Sum']('https://example.test/cs'))
+      .resolves.toBe(Buffer.from(hex, 'hex').toString('base64'));
+  });
+
+  it('rejects when the server returns a non-OK status', async() => {
+    modules.electron.net.fetch.mockResolvedValueOnce({
+      ok:         false,
+      status:     503,
+      statusText: 'Service Unavailable',
+      text:       () => Promise.resolve('<html>oops</html>'),
+    });
+
+    await expect(makeProvider()['getSha512Sum']('https://example.test/cs'))
+      .rejects.toThrow(/503/);
+  });
+
+  it('rejects when the response is not a valid sha512 hex string', async() => {
+    modules.electron.net.fetch.mockResolvedValueOnce({
+      ok:         true,
+      status:     200,
+      statusText: 'OK',
+      text:       () => Promise.resolve('<html>oops</html>'),
+    });
+
+    await expect(makeProvider()['getSha512Sum']('https://example.test/cs'))
+      .rejects.toThrow(/sha512/i);
+  });
+});

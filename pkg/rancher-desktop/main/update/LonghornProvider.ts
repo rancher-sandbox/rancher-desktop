@@ -348,10 +348,27 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
    * @returns Base64-encoded checksum.
    */
   protected async getSha512Sum(checksumURL: string): Promise<string> {
-    const contents = await (await net.fetch(checksumURL)).text();
-    const buffer = Buffer.from(contents.split(/\s+/)[0], 'hex');
+    const response = await net.fetch(checksumURL);
 
-    return buffer.toString('base64');
+    if (!response.ok) {
+      throw newError(
+        `Failed to fetch checksum from ${ checksumURL }: ${ response.status } ${ response.statusText }`,
+        'ERR_UPDATER_CHECKSUM_FETCH_FAILED',
+      );
+    }
+    const hex = (await response.text()).split(/\s+/)[0];
+
+    // Buffer.from(..., 'hex') silently truncates on non-hex input, so an HTML
+    // error page or redirect body would otherwise cache as an empty checksum.
+    // Require the digest to be 128 hex characters before decoding.
+    if (!/^[0-9a-f]{128}$/i.test(hex)) {
+      throw newError(
+        `Invalid sha512 checksum from ${ checksumURL }: ${ JSON.stringify(hex) }`,
+        'ERR_UPDATER_CHECKSUM_INVALID',
+      );
+    }
+
+    return Buffer.from(hex, 'hex').toString('base64');
   }
 
   /**
