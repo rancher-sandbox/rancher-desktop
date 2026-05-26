@@ -1839,7 +1839,21 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           return;
         }
 
-        const vmStatus = await this.status;
+        let vmStatus = await this.status;
+
+        // Recover from an orphaned driver or host agent after an unclean
+        // shutdown; otherwise `limactl start` would fail.
+        // https://github.com/rancher-sandbox/rancher-desktop/issues/7760
+        if (vmStatus?.status === 'Broken') {
+          const orphanError = vmStatus.errors?.find(e => /(driver|host agent) is running but/.test(e));
+
+          if (orphanError) {
+            console.log(`Lima instance is broken (${ orphanError }); cleaning up before restart.`);
+            await this.progressTracker.action('Recovering broken virtual machine', 100,
+              this.lima('stop', '--force', MACHINE_NAME));
+            vmStatus = await this.status;
+          }
+        }
         let isVMAlreadyRunning = vmStatus?.status === 'Running';
 
         // Virtualization Framework only supports RAW disks
