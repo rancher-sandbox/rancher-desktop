@@ -251,7 +251,7 @@ func TestResumeOwnershipInstallsAppend(t *testing.T) {
 		// Tick 2: wsl-proxy.Send fails. APITracker.Add returns the
 		// wrapped wsl-proxy error; portStorage stays populated because
 		// apiForwarder.Expose already succeeded.
-		{err: errors.New("sending port mappings to wsl proxy error: simulated"), seedStorage: true},
+		{err: fmt.Errorf("%w: simulated", tracker.ErrWSLProxy), seedStorage: true},
 		// Tick 3: apiForwarder.Expose returns "proxy already running"
 		// (gvisor-tap-vsock still holds the proxy from tick 2).
 		{err: fmt.Errorf("expose api error: %s", portAlreadyExposedSubstring), seedStorage: false},
@@ -869,7 +869,7 @@ func TestEngineDelegationReleasesPriorPartialAdd(t *testing.T) {
 	fakeT.addBehavior = []addBehavior{
 		// Tick 2: wsl-proxy.Send fails after apiForwarder.Expose succeeded;
 		// portStorage[synthetic] populated.
-		{err: errors.New("sending port mappings to wsl proxy error: simulated"), seedStorage: true},
+		{err: fmt.Errorf("%w: simulated", tracker.ErrWSLProxy), seedStorage: true},
 	}
 	pst := newPortStateTracker(fakeT, fakeIPT)
 	pm := makePortMap(t)
@@ -921,7 +921,7 @@ func TestEngineDelegationAcceptsLeakWhenRemoveFails(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
 	fakeT.addBehavior = []addBehavior{
-		{err: errors.New("sending port mappings to wsl proxy error: simulated"), seedStorage: true},
+		{err: fmt.Errorf("%w: simulated", tracker.ErrWSLProxy), seedStorage: true},
 	}
 	// The Remove on the next tick fails with an unexpose-shaped error,
 	// signalling that the host-switch proxy may still be bound.
@@ -1028,6 +1028,45 @@ func TestEngineDelegationReconcilesLeftoverProcnetRule(t *testing.T) {
 		"I1: engine-delegation must Delete the leftover procnet rule before marking delegated")
 	require.False(t, fakeIPT.rules[iptKey("tcp", "8080")],
 		"I1: the leftover procnet rule must be cleared so it stops shadowing CNI-HOSTPORT-DNAT")
+}
+
+// TestEngineDelegationDeferOnLeftoverDeleteFailure confirms that when
+// the leftover-rule Delete in exposeNew's engine-delegation branch
+// fails transiently, the port stays out of pst.added so the next tick
+// re-enters exposeNew and retries the Delete. Marking the port
+// delegated with the leftover rule still installed would recreate the
+// exact shadow-DNAT bug TestEngineDelegationReconcilesLeftoverProcnetRule
+// guards against; this test pins the deferral as a regression gate.
+func TestEngineDelegationDeferOnLeftoverDeleteFailure(t *testing.T) {
+	fakeT := newFakeTracker()
+	fakeIPT := newFakeIptables()
+	// Pre-seed iptables state: leftover procnet rule + engine chain up.
+	fakeIPT.rules[iptKey("tcp", "8080")] = true
+	fakeIPT.engineManaged[iptKey("tcp", "8080")] = true
+	// The reconciliation Delete fails transiently on tick 2.
+	fakeIPT.applyErrors[applyKey("tcp", "8080", Delete)] = errors.New("xtables lock contention")
+	pst := newPortStateTracker(fakeT, fakeIPT)
+	pm := makePortMap(t)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
+
+	pst.Tick(pm) // 1: stability gate defers
+	pst.Tick(pm) // 2: engine probe true; Delete fails; port must NOT be added
+
+	_, added := pst.added[port]
+	require.False(t, added,
+		"port must stay out of pst.added when the leftover-rule Delete fails -- a delegated marker with the leftover rule still installed reintroduces the shadow-DNAT bug")
+	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")],
+		"the leftover procnet rule must remain installed when the Delete fails")
+
+	// Delete recovers; the next tick must re-enter exposeNew and Delete the rule.
+	delete(fakeIPT.applyErrors, applyKey("tcp", "8080", Delete))
+	pst.Tick(pm) // 3: retry succeeds
+
+	require.True(t, pst.added[port].delegated,
+		"port must end up delegated once the Delete succeeds")
+	require.False(t, fakeIPT.rules[iptKey("tcp", "8080")],
+		"the leftover rule must be cleared by the retried Delete")
 }
 
 // TestMultiplePortsDivergingStatesStayIndependent drives three ports

@@ -112,6 +112,17 @@ import (
 //	    wipes portStorage via a leading defer, so retrying it on a later
 //	    tick is a silent no-op, and retaining the marker deadlocks
 //	    the Add path if the listener reappears.
+//
+// Bindings refresh: state.bindings is captured at the second-sighting
+// tick (or at handleAlreadyExposed's resume path) and is not refreshed
+// when later ticks observe a different binding set for the same
+// nat.Port. Consequence: a --network=host process that opens
+// 127.0.0.1:hostPort AFTER a non-loopback listener on the same hostPort
+// has been acted on misses the PREROUTING DNAT, and external traffic to
+// that loopback-only listener is dropped until the port retires and
+// reappears. The symmetric direction is benign: a loopback rule already
+// in place stays installed, and a 0.0.0.0 listener catches the
+// redirected traffic on its own.
 type portState struct {
 	bindings     []nat.PortBinding
 	delegated    bool
