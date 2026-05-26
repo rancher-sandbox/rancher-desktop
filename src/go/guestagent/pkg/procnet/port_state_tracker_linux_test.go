@@ -678,6 +678,199 @@ func TestMixedBindingsOnlyLoopbackGetsRules(t *testing.T) {
 	require.Equal(t, "8080", fakeIPT.applyCalls[0].hostPort)
 }
 
+// TestLateLoopbackBindingGetsAppend pins the bindings-refresh path.
+// Scenario: a port is first observed with only a non-loopback binding,
+// passes the stability gate, and is acted on without an iptables
+// Append (no loopback binding present). On a later tick a 127.0.0.1
+// binding appears for the same port. The state machine must install
+// the PREROUTING DNAT for the new loopback binding -- otherwise
+// external traffic to that loopback-only listener is dropped until
+// the port retires and reappears.
+func TestLateLoopbackBindingGetsAppend(t *testing.T) {
+	fakeT := newFakeTracker()
+	fakeIPT := newFakeIptables()
+	pst := newPortStateTracker(fakeT, fakeIPT)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
+	pmNonLoopback := nat.PortMap{
+		port: []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+	}
+	pmMixed := nat.PortMap{
+		port: []nat.PortBinding{
+			{HostIP: "0.0.0.0", HostPort: "8080"},
+			{HostIP: loopbackIP, HostPort: "8080"},
+		},
+	}
+
+	pst.Tick(pmNonLoopback) // 1: stability gate defers
+	pst.Tick(pmNonLoopback) // 2: exposeNew; only 0.0.0.0 binding; no Append
+	require.Len(t, fakeT.addCalls, 1)
+	require.Equal(t, 0, countApplyByAction(fakeIPT.applyCalls, Append),
+		"non-loopback-only binding must not trigger an iptables Append")
+
+	pst.Tick(pmMixed) // 3: 127.0.0.1 appears; must install the loopback rule
+
+	require.Equal(t, 1, countApplyByAction(fakeIPT.applyCalls, Append),
+		"late loopback binding must install the PREROUTING DNAT")
+	require.Equal(t, "8080", fakeIPT.applyCalls[len(fakeIPT.applyCalls)-1].hostPort)
+	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")],
+		"the PREROUTING DNAT must end up installed in iptables")
+}
+
+// TestLateLoopbackDelegatesWhenEngineChainPresent pins the late-
+// loopback engine-takeover path. Scenario: a port is acted on with
+// only a non-loopback binding while the engine chain is absent (no
+// loopback to probe), so procnet owns the port. On a later tick a
+// 127.0.0.1 binding appears AND the engine chain is now visible.
+// installLateLoopback's engine-probe must transition the port to
+// delegated via releaseToEngine, not install a procnet PREROUTING DNAT.
+func TestLateLoopbackDelegatesWhenEngineChainPresent(t *testing.T) {
+	fakeT := newFakeTracker()
+	fakeIPT := newFakeIptables()
+	pst := newPortStateTracker(fakeT, fakeIPT)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
+	pmNonLoopback := nat.PortMap{
+		port: []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+	}
+	pmMixed := nat.PortMap{
+		port: []nat.PortBinding{
+			{HostIP: "0.0.0.0", HostPort: "8080"},
+			{HostIP: loopbackIP, HostPort: "8080"},
+		},
+	}
+
+	pst.Tick(pmNonLoopback) // 1: defer
+	pst.Tick(pmNonLoopback) // 2: exposeNew; owned, no Append
+	require.False(t, pst.added[port].delegated)
+	require.Len(t, fakeT.addCalls, 1)
+
+	// Engine chain appears between ticks 2 and 3, alongside the new loopback binding.
+	fakeIPT.engineManaged[iptKey("tcp", "8080")] = true
+
+	pst.Tick(pmMixed) // 3: reconcileBindings → installLateLoopback → engine takeover
+
+	require.True(t, pst.added[port].delegated,
+		"late-loopback with engine chain present must delegate")
+	require.Equal(t, 0, countApplyByAction(fakeIPT.applyCalls, Append),
+		"engine-takeover path must NOT install a procnet rule")
+	require.Len(t, fakeT.removeCalls, 1,
+		"releaseToEngine must call tracker.Remove")
+	require.Nil(t, fakeT.storage[syntheticIDFor(port)],
+		"synthetic portStorage entry must be cleared after release")
+}
+
+// TestLoopbackVanishingTriggersDelete pins the loopback-removed path
+// on an owned port. Scenario: a port is added with a 127.0.0.1 binding
+// (Append installs the PREROUTING DNAT). On a later tick the loopback
+// binding disappears while the port itself remains observable via
+// another listener. reconcileBindings must Delete the rule so it does
+// not outlive its listener.
+func TestLoopbackVanishingTriggersDelete(t *testing.T) {
+	fakeT := newFakeTracker()
+	fakeIPT := newFakeIptables()
+	pst := newPortStateTracker(fakeT, fakeIPT)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
+	pmLoopback := makePortMap(t)
+	pmNonLoopback := nat.PortMap{
+		port: []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+	}
+
+	pst.Tick(pmLoopback) // 1: defer
+	pst.Tick(pmLoopback) // 2: exposeNew installs the loopback Append
+	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")])
+
+	pst.Tick(pmNonLoopback) // 3: loopback binding gone; reconcileBindings deletes
+
+	require.Equal(t, 1, countApplyByAction(fakeIPT.applyCalls, Delete),
+		"vanished loopback binding must trigger an iptables Delete")
+	require.False(t, fakeIPT.rules[iptKey("tcp", "8080")],
+		"the PREROUTING DNAT must be removed when its loopback listener is gone")
+	require.False(t, pst.added[port].delegated,
+		"the port stays owned")
+	require.False(t, pst.added[port].appendFailed,
+		"appendFailed must be cleared once the loopback is gone")
+}
+
+// TestLoopbackVanishingFromDelegatedPortSkipsDelete pins the
+// loopback-removed path on a delegated port. Scenario: a port is
+// delegated at first action (loopback binding + engine chain visible).
+// On a later tick the loopback binding disappears. reconcileBindings
+// must NOT issue an iptables Delete -- the engine owns the rule, and
+// a procnet Delete here would tear down state procnet does not own.
+func TestLoopbackVanishingFromDelegatedPortSkipsDelete(t *testing.T) {
+	fakeT := newFakeTracker()
+	fakeIPT := newFakeIptables()
+	fakeIPT.engineManaged[iptKey("tcp", "8080")] = true
+	pst := newPortStateTracker(fakeT, fakeIPT)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
+	pmLoopback := makePortMap(t)
+	pmNonLoopback := nat.PortMap{
+		port: []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+	}
+
+	pst.Tick(pmLoopback) // 1: defer
+	pst.Tick(pmLoopback) // 2: exposeNew → engine probe true → delegated
+	require.True(t, pst.added[port].delegated)
+	deleteCallsBefore := countApplyByAction(fakeIPT.applyCalls, Delete)
+
+	pst.Tick(pmNonLoopback) // 3: loopback gone, but delegated
+
+	require.Equal(t, deleteCallsBefore, countApplyByAction(fakeIPT.applyCalls, Delete),
+		"delegated port must NOT issue a procnet Delete when its loopback binding vanishes")
+	require.True(t, pst.added[port].delegated,
+		"the port stays delegated")
+}
+
+// TestLateLoopbackDeferOnEngineProbeError pins the engine-probe-
+// failure defer in installLateLoopback. Scenario: a port is acted on
+// with only a non-loopback binding. On a later tick a 127.0.0.1
+// binding appears but the engine-chain probe fails transiently.
+// installLateLoopback must defer without installing a rule and
+// without updating pst.added, so the next tick re-enters the same
+// path. Once the probe recovers, the Append lands.
+func TestLateLoopbackDeferOnEngineProbeError(t *testing.T) {
+	fakeT := newFakeTracker()
+	fakeIPT := newFakeIptables()
+	pst := newPortStateTracker(fakeT, fakeIPT)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
+	pmNonLoopback := nat.PortMap{
+		port: []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+	}
+	pmMixed := nat.PortMap{
+		port: []nat.PortBinding{
+			{HostIP: "0.0.0.0", HostPort: "8080"},
+			{HostIP: loopbackIP, HostPort: "8080"},
+		},
+	}
+
+	pst.Tick(pmNonLoopback) // 1: defer
+	pst.Tick(pmNonLoopback) // 2: exposeNew; owned, no Append
+
+	// Engine-probe fails transiently before tick 3.
+	fakeIPT.engineErrors[iptKey("tcp", "8080")] = errors.New("xtables lock contention")
+
+	pst.Tick(pmMixed) // 3: late-loopback install probe fails → defer
+
+	require.Equal(t, 0, countApplyByAction(fakeIPT.applyCalls, Append),
+		"probe failure must NOT install a rule")
+	require.False(t, pst.added[port].delegated,
+		"probe failure must NOT mark the port delegated")
+
+	// Probe recovers; the next tick re-enters installLateLoopback.
+	delete(fakeIPT.engineErrors, iptKey("tcp", "8080"))
+
+	pst.Tick(pmMixed) // 4: probe succeeds → Append installed
+
+	require.Equal(t, 1, countApplyByAction(fakeIPT.applyCalls, Append),
+		"recovered probe must let installLateLoopback append the rule")
+	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")],
+		"the PREROUTING DNAT must land after the probe recovers")
+}
+
 // TestAppendRetryEngineTakeoverDeletesCommittedRule covers the
 // committed-rule cleanup on engine takeover. Scenario: tracker.Add
 // succeeds, the iptables Append returns an error but still commits

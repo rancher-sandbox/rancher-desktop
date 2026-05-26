@@ -112,16 +112,14 @@ import (
 //	    tick is a silent no-op, and retaining the marker deadlocks
 //	    the Add path if the listener reappears.
 //
-// Bindings refresh: state.bindings is captured at the second-sighting
-// tick (or at handleAlreadyExposed's resume path) and is not refreshed
-// when later ticks observe a different binding set for the same
-// nat.Port. Consequence: a --network=host process that opens
-// 127.0.0.1:hostPort AFTER a non-loopback listener on the same hostPort
-// has been acted on misses the PREROUTING DNAT, and external traffic to
-// that loopback-only listener is dropped until the port retires and
-// reappears. The symmetric direction is benign: a loopback rule already
-// in place stays installed, and a 0.0.0.0 listener catches the
-// redirected traffic on its own.
+// Bindings refresh (per tick): when an already-tracked port's binding
+// set changes, reconcileBindings applies the iptables transition. A
+// loopback binding appearing on an owned port runs the engine-probe +
+// Append (or release-to-engine when the chain has taken over); a
+// loopback binding disappearing from an owned port issues the Delete.
+// Delegated ports refresh state.bindings only -- the engine owns the
+// rule. The non-loopback dimension does not drive iptables; loopback
+// bindings carry the rules.
 //
 // Engine-chain re-probe: addObserved re-probes the engine chain only
 // when appendFailed=true; owned-success and delegated ports skip
@@ -208,9 +206,7 @@ func (pst *portStateTracker) Tick(newPortMap nat.PortMap) {
 func (pst *portStateTracker) addObserved(newPortMap nat.PortMap) {
 	for port, bindings := range newPortMap {
 		if state, alreadyAdded := pst.added[port]; alreadyAdded {
-			if state.appendFailed {
-				pst.retryAppend(port, state)
-			}
+			pst.reconcileBindings(port, bindings, state)
 			continue
 		}
 		if _, sawLastScan := pst.seenLastScan[port]; !sawLastScan {
@@ -394,6 +390,81 @@ func (pst *portStateTracker) handleAlreadyExposed(port nat.Port, bindings []nat.
 	delete(pst.addErrorLogged, port)
 }
 
+// reconcileBindings handles a port already in pst.added when a new
+// scan arrives. It refreshes state.bindings, applies any iptables
+// transition driven by a loopback binding appearing or disappearing,
+// and delegates to retryAppend when appendFailed is set. Without
+// this, the snapshot of state.bindings taken at the first action
+// hides any later binding change: a --network=host process that
+// opens 127.0.0.1:hostPort AFTER a non-loopback listener on the same
+// hostPort has been acted on never gets the PREROUTING DNAT, and
+// external traffic to that loopback-only listener is dropped until
+// the port retires and reappears.
+func (pst *portStateTracker) reconcileBindings(port nat.Port, newBindings []nat.PortBinding, state portState) {
+	oldLoopback := hasLoopbackBinding(state.bindings)
+	newLoopback := hasLoopbackBinding(newBindings)
+	switch {
+	case !oldLoopback && newLoopback && !state.delegated:
+		// Loopback binding appeared on an owned port. installLateLoopback
+		// runs the engine-probe + Append (or release-to-engine) and
+		// updates pst.added with the refreshed bindings.
+		pst.installLateLoopback(port, newBindings)
+		return
+	case oldLoopback && !newLoopback && !state.delegated:
+		// Loopback binding vanished from an owned port. Delete the
+		// PREROUTING DNAT we installed earlier so it does not outlive
+		// its listener. applyLoopbackIPtablesRule probes
+		// preroutingHasLoopbackRule first and no-ops the Delete when
+		// no rule exists, so a previous appendFailed (where the rule
+		// may not have been committed) is harmless here.
+		if err := pst.applyLoopbackRules(state.bindings, port, Delete); err != nil {
+			log.Errorf("/proc/net scanner deleting loopback rule for vanished binding %s: %s", port, err)
+		}
+		state.bindings = newBindings
+		state.appendFailed = false
+		pst.added[port] = state
+		return
+	}
+	// No actionable transition (no change in the loopback dimension,
+	// or delegated -- engine owns the rule). Refresh bindings and let
+	// retryAppend run if appendFailed is set.
+	state.bindings = newBindings
+	pst.added[port] = state
+	if state.appendFailed {
+		pst.retryAppend(port, pst.added[port])
+	}
+}
+
+// installLateLoopback handles a loopback binding that appeared on a
+// port already owned by procnet. It mirrors exposeNew's non-delegated
+// path but operates on a port that already has a tracker entry:
+// engine-probe first, release ownership via releaseToEngine when the
+// chain has taken over; otherwise install the iptables Append.
+// Unlike exposeNew, no prior procnet rule exists to Delete -- the
+// first action did not install one for the non-loopback bindings.
+func (pst *portStateTracker) installLateLoopback(port nat.Port, newBindings []nat.PortBinding) {
+	managed, err := pst.anyEngineBinding(port, newBindings)
+	if err != nil {
+		log.Debugf("/proc/net scanner engine-chain probe failed during late-loopback install for %s; deferring: %s", port, err)
+		return
+	}
+	if managed {
+		pst.releaseToEngine(port, "on late loopback install")
+		pst.added[port] = portState{bindings: newBindings, delegated: true}
+		log.Infof("/proc/net scanner released ownership of %s to engine-managed chain on late loopback install", port)
+		return
+	}
+	appendErr := pst.applyLoopbackRules(newBindings, port, Append)
+	if appendErr != nil {
+		log.Errorf("/proc/net scanner installing late loopback rule for %s failed: %s", port, appendErr)
+	}
+	pst.added[port] = portState{
+		bindings:     newBindings,
+		delegated:    false,
+		appendFailed: appendErr != nil,
+	}
+}
+
 // retryAppend reissues the iptables Append for a port whose previous
 // tick succeeded at tracker.Add but failed at Append. Before retrying,
 // re-probe the engine chain: if the engine chain has appeared since the
@@ -551,6 +622,16 @@ func (pst *portStateTracker) applyLoopbackRules(bindings []nat.PortBinding, port
 
 func syntheticIDFor(port nat.Port) string {
 	return utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
+}
+
+// hasLoopbackBinding reports whether bindings contains a 127.0.0.1 entry.
+func hasLoopbackBinding(bindings []nat.PortBinding) bool {
+	for _, b := range bindings {
+		if b.HostIP == loopbackIP {
+			return true
+		}
+	}
+	return false
 }
 
 // releaseToEngine calls tracker.Remove on the synthetic ID for port and
