@@ -17,14 +17,19 @@ test.describe.serial('Dashboard', () => {
   });
 
   test.afterAll(({ colorScheme }, testInfo) => teardown(electronApp, testInfo));
+  test.afterAll(() => dashboardPage?.close()?.catch(() => { /* ignore */ }));
+  test.afterAll(() => kubectl('delete', '--ignore-not-found', 'pod', 'e2e-nginx').catch(() => { /* ignore */ }));
 
   test('should allow opening the dashboard', async() => {
     const navPage = new NavPage(page);
 
     await navPage.progressBecomesReady();
+
+    // Set up the promise before clicking, to ensure we don't miss the event.
+    const dashboardPromise = electronApp.waitForEvent('window', page => page.url().includes('/c/local/explorer'));
     await navPage.dashboardButton.click();
 
-    dashboardPage = await electronApp.waitForEvent('window', page => page.url().includes('/c/local/explorer'));
+    dashboardPage = await dashboardPromise;
   });
 
   test('kubernetes should be available', async() => {
@@ -70,10 +75,5 @@ test.describe.serial('Dashboard', () => {
     const windowManager = dashboardPage.getByTestId('windowmanager');
     const logs = windowManager.locator('*[id="panel-default/e2e-nginx-logs"] .logs-container');
     await expect(logs).toContainText('docker-entrypoint.sh');
-  });
-
-  test('cleanup', async() => {
-    await dashboardPage.close();
-    await kubectl('delete', 'pod', 'e2e-nginx');
   });
 });

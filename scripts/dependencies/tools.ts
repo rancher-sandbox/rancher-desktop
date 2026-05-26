@@ -2,6 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { defined } from '@/pkg/rancher-desktop/utils/typeUtils';
 import {
   DownloadContext,
   downloadAndHash,
@@ -338,15 +339,20 @@ export class Steve extends GlobalDependency(GitHubDependency) {
   async getChecksums(version: string): Promise<Record<string, Sha256Checksum>> {
     const steveURLBase = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const upstream = await fetchUpstreamChecksums(`${ steveURLBase }/steve.sha512sum`, 'sha512');
+    const archiveMatch = /^steve-(linux|darwin|windows)-(amd64|arm64)\.tar\.gz$/;
 
-    return Object.fromEntries(await Promise.all(Object.keys(upstream).map(async(archiveName) => {
+    return Object.fromEntries((await Promise.all(Object.keys(upstream).map(async(archiveName) => {
+      if (!archiveMatch.test(archiveName)) {
+        return;
+      }
+
       const url = `${ steveURLBase }/${ archiveName }`;
       const checksum = await downloadAndHash(url, {
         verify: { algorithm: 'sha512', expected: upstream[archiveName] },
       });
 
-      return [archiveName, checksum];
-    })));
+      return [archiveName, checksum] as const;
+    }))).filter(defined));
   }
 }
 

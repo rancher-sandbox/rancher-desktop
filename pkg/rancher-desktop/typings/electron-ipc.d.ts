@@ -26,6 +26,8 @@ export interface IpcMainEvents {
   'k8s-integration-set':   (name: string, newState: boolean) => void;
   'factory-reset':         (keepSystemImages: boolean) => void;
   'update-network-status': (status: boolean) => void;
+  /** Trigger the corresponding IPC renderer event. */
+  'steve-port':            () => void;
 
   // #region main/update
   'update-state': () => void;
@@ -192,6 +194,7 @@ export interface IpcRendererEvents {
   'k8s-integrations':          (integrations: Record<string, boolean | string>) => void;
   'service-changed':           (services: ServiceEntry[]) => void;
   'service-error':             (service: ServiceEntry, errorMessage: string) => void;
+  'steve-port':                (port: number) => void;
   'kubernetes-errors-details': (
     titlePart: string,
     mainMessage: string,

@@ -1,16 +1,18 @@
 import { ChildProcess, spawn } from 'child_process';
 import os from 'os';
 import path from 'path';
-import { setTimeout } from 'timers/promises';
 
 import Electron from 'electron';
 
 import K3sHelper from '@pkg/backend/k3sHelper';
+import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import Latch from '@pkg/utils/latch';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
+import { send } from '@pkg/window';
 
 const console = Logging.steve;
+const ipcMainProxy = getIpcMainProxy(console);
 
 /**
  * @description Singleton that manages the lifecycle of the Steve API.
@@ -19,11 +21,17 @@ export class Steve {
   private static instance: Steve;
   private process:         ChildProcess | undefined;
 
-  private isRunning: boolean;
+  // Promise to prevent multiple simultaneous calls to start() from causing
+  // multiple instances of Steve from being created.
+  private pendingStart: Promise<number> | undefined;
+
   #port = 0;
 
   private constructor() {
-    this.isRunning = false;
+    send('steve-port', 0);
+    ipcMainProxy.on('steve-port', () => {
+      send('steve-port', this.port);
+    });
   }
 
   /**
@@ -42,14 +50,34 @@ export class Steve {
    * @description Starts the Steve API if one is not already running.
    * Returns only after Steve is ready to accept connections.
    * @returns The port Steve is listening on.
+   * @note Concurrent calls are serialized.
    */
   public async start(): Promise<number> {
-    const { pid } = this.process || { };
+    // Prevent multiple concurrent calls to start().
+    const promise = this.pendingStart || this.startInternal();
+    this.pendingStart = promise;
+    try {
+      return await promise;
+    } finally {
+      this.pendingStart = undefined;
+    }
+  }
 
-    if (this.isRunning && pid) {
-      console.debug(`Steve is already running with pid: ${ pid }`);
+  /**
+   * This is the implementation of `start()`; it should always be called via
+   * `start()`, as it does not guard against concurrent calls.
+   */
+  private async startInternal(): Promise<number> {
+    if (this.isRunning) {
+      if (this.port) {
+        console.debug(`Steve is already running with port: ${ this.port }`);
 
-      return this.#port;
+        return this.port;
+      }
+      // If the process is running, but we don't have a port, suspect that Steve
+      // is in a bad state and restart it.
+      console.warn(`Steve process is running without a port. Restarting...`);
+      this.stop();
     }
 
     const osSpecificName = /^win/i.test(os.platform()) ? 'steve.exe' : 'steve';
@@ -62,10 +90,11 @@ export class Steve {
       // do nothing
     }
     console.debug(`Starting Steve with KUBECONFIG=${ env.KUBECONFIG }`);
-    this.process = spawn(stevePath, ['--context', 'rancher-desktop'],
+    const childProcess = spawn(stevePath, ['--context', 'rancher-desktop'],
       { env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    this.process = childProcess;
 
-    const { stdout, stderr } = this.process;
+    const { stdout, stderr } = childProcess;
     let portBuffer = '';
     const portLatch = Latch<number>();
 
@@ -75,7 +104,7 @@ export class Steve {
       throw new Error(`Failed to start Steve: could not get output`);
     }
 
-    // Steve has been modified to output the port to stdout and then immediate
+    // Steve has been modified to output the port to stdout and then immediately
     // close it, leaving stderr open for logs.
     console.debug('Waiting for Steve to output port...');
     stdout.on('data', (data) => {
@@ -90,33 +119,70 @@ export class Steve {
       }
     });
 
+    // Set up a handler for the port latch erroring in case we never get to the
+    // point of waiting for it.
+    portLatch.catch((err) => {
+      console.error(err);
+      try {
+        // Kill the child process if it's still alive.
+        childProcess.kill();
+      } catch { /* ignore */ }
+    });
+
     stderr.on('data', (data) => {
       console.error(`stderr: ${ data }`);
     });
 
-    this.process.on('exit', (code, signal) => {
-      console.log(`child process exited with code ${ code } and signal ${ signal }`);
-      this.isRunning = false;
+    childProcess.on('exit', (code, signal) => {
+      if (childProcess !== this.process) {
+        // A stale process has exited; ignore.
+        console.debug(`Stale steve process exited with code ${ code } and signal ${ signal }`);
+        return;
+      }
+      console.log(`Steve process exited with code ${ code } and signal ${ signal }`);
+      this.#port = 0;
+      send('steve-port', 0);
       portLatch.reject(new Error(`Steve process exited unexpectedly with code ${ code } and signal ${ signal }`));
     });
 
     await new Promise<void>((resolve, reject) => {
-      this.process?.once('spawn', () => {
-        this.isRunning = true;
-        console.debug(`Spawned child pid: ${ this.process?.pid }`);
+      const timeout = setTimeout(() => {
+        const error = new Error('Timed out waiting for Steve to start');
+        portLatch.reject(error); // Kills the child process.
+        reject(error);
+      }, 10_000);
+      childProcess.once('spawn', () => {
+        clearTimeout(timeout);
+        console.debug(`Spawned child pid: ${ childProcess.pid }`);
         resolve();
       });
-      this.process?.once('error', (err) => {
+      childProcess.once('error', (err) => {
+        clearTimeout(timeout);
         reject(new Error(`Failed to spawn Steve: ${ err.message }`, { cause: err }));
       });
-      setTimeout(10_000).then(() => reject(new Error('Timed out waiting for Steve to start')));
     });
-    this.#port = await portLatch;
-    console.debug(`Steve is listening on port: ${ this.#port }`);
+    // Set a timeout in case Steve fails to listen to a port.
+    const portTimeout = setTimeout(() => {
+      portLatch.reject(new Error('Timed out waiting for Steve port'));
+    }, 30_000);
+    try {
+      const port = await portLatch;
+      console.debug(`Steve is listening on port: ${ port }`);
 
-    await this.waitForReady(this.#port);
+      await this.waitForReady(port);
+      this.#port = port;
+      send('steve-port', port);
 
-    return this.#port;
+      return port;
+    } finally {
+      clearTimeout(portTimeout);
+    }
+  }
+
+  private get isRunning() {
+    const { pid, exitCode, signalCode } = this.process || { };
+
+    return !!pid && exitCode === null && signalCode === null;
   }
 
   public get port() {
@@ -141,7 +207,7 @@ export class Steve {
         return;
       }
 
-      await setTimeout(delayMs);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
     }
 
     throw new Error(`Steve did not become ready after ${ maxAttempts * delayMs / 1000 } seconds`);
@@ -172,11 +238,10 @@ export class Steve {
    * Stops the Steve API.
    */
   public stop() {
-    if (!this.isRunning) {
-      return;
-    }
-
-    this.process?.kill('SIGINT');
     this.#port = 0;
+    send('steve-port', 0);
+    if (this.isRunning) {
+      this.process?.kill('SIGINT');
+    }
   }
 }

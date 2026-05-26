@@ -457,7 +457,7 @@ test.describe.serial('Extensions', () => {
             await expect(result).resolves.toContain(contents);
           });
         } finally {
-          server.close();
+          await new Promise<Error | void>(resolve => server.close(resolve));
         }
       });
       test.describe('can post values', () => {

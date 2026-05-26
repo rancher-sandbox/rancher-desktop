@@ -13,6 +13,12 @@ export function openDashboard() {
     return window;
   }
 
+  const { port } = Steve.getInstance();
+
+  if (!port) {
+    return;
+  }
+
   window = new BrowserWindow({
     title:  'Rancher Dashboard',
     width:  800,
@@ -20,7 +26,7 @@ export function openDashboard() {
     show:   false,
   });
 
-  window.loadURL(`http://127.0.0.1:${ Steve.getInstance().port }/`);
+  window.loadURL(`http://127.0.0.1:${ port }/c/local/explorer`);
 
   windowMapping['dashboard'] = window.id;
 

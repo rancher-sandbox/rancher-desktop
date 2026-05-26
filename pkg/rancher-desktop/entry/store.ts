@@ -14,6 +14,7 @@ import * as Preferences from '../store/preferences';
 import * as Prefs from '../store/prefs';
 import * as ResourceFetch from '../store/resource-fetch';
 import * as Snapshots from '../store/snapshots';
+import * as Steve from '../store/steve';
 import * as TransientSettings from '../store/transientSettings';
 
 const modules = {
@@ -31,15 +32,20 @@ const modules = {
   prefs:               Prefs,
   'resource-fetch':    ResourceFetch,
   snapshots:           Snapshots,
+  steve:               Steve,
   transientSettings:   TransientSettings,
+};
+
+export type Modules = typeof modules;
+
+export type RootState = {
+  [K in keyof Modules]: ReturnType<Modules[K]['state']>;
 };
 
 export default createStore<any>({
   modules: Object.fromEntries(Object.entries(modules).map(([k, v]) => [k, { namespaced: true, ...v }])),
-  plugins: Object.values(modules).flatMap(v => 'plugins' in v ? v.plugins : []),
+  plugins: Object.values(modules).flatMap<Plugin<RootState>>(v => 'plugins' in v ? v.plugins : []),
 });
-
-export type Modules = typeof modules;
 
 /**
  * mapTypedGetters is a wrapper around mapGetters that is aware of the types of
