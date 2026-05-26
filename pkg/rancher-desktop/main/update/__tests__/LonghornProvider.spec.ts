@@ -347,13 +347,11 @@ describe('LonghornProvider.getSha512Sum', () => {
   });
 
   function makeProvider() {
-    const provider = new LonghornProviderClass(
+    return new LonghornProviderClass(
       {} as any,
       {} as any,
       { platform: 'win32' } as any,
     );
-
-    return provider as unknown as { getSha512Sum(url: string): Promise<string> };
   }
 
   it('decodes the hex checksum and returns it as base64', async() => {
@@ -366,7 +364,7 @@ describe('LonghornProvider.getSha512Sum', () => {
       text:       () => Promise.resolve(`${ hex }  rancher-desktop.msi\n`),
     });
 
-    await expect(makeProvider().getSha512Sum('https://example.test/cs'))
+    await expect(makeProvider()['getSha512Sum']('https://example.test/cs'))
       .resolves.toBe(Buffer.from(hex, 'hex').toString('base64'));
   });
 
@@ -378,7 +376,7 @@ describe('LonghornProvider.getSha512Sum', () => {
       text:       () => Promise.resolve('<html>oops</html>'),
     });
 
-    await expect(makeProvider().getSha512Sum('https://example.test/cs'))
+    await expect(makeProvider()['getSha512Sum']('https://example.test/cs'))
       .rejects.toThrow(/503/);
   });
 
@@ -390,7 +388,7 @@ describe('LonghornProvider.getSha512Sum', () => {
       text:       () => Promise.resolve('<html>oops</html>'),
     });
 
-    await expect(makeProvider().getSha512Sum('https://example.test/cs'))
+    await expect(makeProvider()['getSha512Sum']('https://example.test/cs'))
       .rejects.toThrow(/sha512/i);
   });
 });
