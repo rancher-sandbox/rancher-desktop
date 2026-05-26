@@ -123,6 +123,18 @@ import (
 // reappears. The symmetric direction is benign: a loopback rule already
 // in place stays installed, and a 0.0.0.0 listener catches the
 // redirected traffic on its own.
+//
+// Engine-chain re-probe: addObserved re-probes the engine chain only
+// when appendFailed=true; owned-success and delegated ports skip
+// re-evaluation until they retire and reappear. Two consequences: a
+// delegated port whose engine chain disappears stays delegated --
+// procnet never installs the loopback DNAT, and external traffic to a
+// 127.0.0.1-only listener is dropped; an owned port whose engine later
+// installs a CNI/DOCKER rule keeps procnet's PREROUTING DNAT in place,
+// reintroducing the shadow-DNAT bug along this ordering path. Both
+// require a mid-lifecycle change in the engine chain; chain setup and
+// teardown normally align with listener appearance and disappearance,
+// which the stability gate and retire path already handle.
 type portState struct {
 	bindings     []nat.PortBinding
 	delegated    bool
@@ -263,11 +275,11 @@ func (pst *portStateTracker) exposeNew(port nat.Port, bindings []nat.PortBinding
 		// publish at all, since APITracker.determineHostIP rewrites
 		// every HostIP to 127.0.0.1 when isAdmin is false. The trade-
 		// off is intentional: leaving the synthetic entry in place
-		// would reproduce the R5-I3 leak (gvisor proxy stranded under
-		// the synthetic ID; engine's later Add forever failing with
-		// "proxy already running"), so this regression rides along
-		// with the existing rare-leak path retireDisappeared's default
-		// branch already accepts. The trigger still requires
+		// would strand the gvisor proxy under the synthetic ID, with
+		// the engine's later Add forever failing with "proxy already
+		// running", so this regression rides along with the existing
+		// rare-leak path retireDisappeared's default branch already
+		// accepts. The trigger still requires
 		// stability-gate bypass under heavy load plus a transient
 		// wsl-proxy.Send failure, and the collision configuration
 		// above. The same trade-off applies in retryAppend's engine-
@@ -375,16 +387,15 @@ func (pst *portStateTracker) handleAlreadyExposed(port nat.Port, bindings []nat.
 	}
 	// Do not reconcile a leftover loopback rule here. From this branch
 	// the rule's origin is ambiguous: it may be a cross-session leftover
-	// that shadows the engine (the I1 scenario, which would call for
-	// Delete), OR it may be a deliberately retained rule from this
-	// session's Remove failure on Unexpose, where retireDisappeared
-	// kept it so traffic still reaches the possibly-bound proxy
-	// (TestRemoveFailureRetainsRuleForReappearance). Deleting in this
-	// branch would strand the same-session-reappearance case; keeping
-	// it leaves the rare cross-session shadow that requires guestagent
-	// crash + WSL2 distro still up. The I1 reconciliation in exposeNew's
-	// if-managed branch covers the common cross-session case (engine
-	// chain visible to the probe).
+	// that shadows the engine (calling for Delete), OR it may be a
+	// deliberately retained rule from this session's Remove failure on
+	// Unexpose, where retireDisappeared kept it so traffic still reaches
+	// the possibly-bound proxy (TestRemoveFailureRetainsRuleForReappearance).
+	// Deleting in this branch would strand the same-session-reappearance
+	// case; keeping it leaves the rare cross-session shadow that requires
+	// guestagent crash + WSL2 distro still up. The leftover-rule
+	// reconciliation in exposeNew's if-managed branch covers the common
+	// cross-session case (engine chain visible to the probe).
 	log.Debugf("/proc/net scanner port %s already exposed elsewhere, delegating", port)
 	pst.added[port] = portState{bindings: bindings, delegated: true}
 	delete(pst.addErrorLogged, port)

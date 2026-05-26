@@ -36,7 +36,7 @@
     "test:unit": "yarn test:unit:jest && yarn test:unit:guestagent && yarn test:unit:nerdctl-stub && yarn test:unit:wsl-helper && yarn test:unit:rdctl",
     "test:unit:jest": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:unit:watch": "yarn test:unit -- --watch",
-    "test:unit:guestagent": "cd ./src/go/guestagent/ && go test ./... && node -e \"process.platform !== 'linux' && console.warn('Note: pkg/procnet tests are Linux-only and were skipped on ' + process.platform + '. CI runs them on Ubuntu.')\"",
+    "test:unit:guestagent": "node -e \"process.platform !== 'linux' && console.warn('pkg/procnet is Linux-only; CI runs it on Ubuntu.')\" && cd ./src/go/guestagent/ && go test ./...",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
     "test:unit:rdctl": "cd ./src/go/rdctl/ && go test ./...",
     "test:unit:wsl-helper": "cd ./src/go/wsl-helper/ && go generate ./... && go test ./...",

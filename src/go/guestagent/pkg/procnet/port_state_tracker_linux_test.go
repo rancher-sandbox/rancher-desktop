@@ -237,7 +237,7 @@ func TestEngineDelegationSkipsTrackerAndAppend(t *testing.T) {
 		"engine-managed port must not get a procnet PREROUTING DNAT")
 }
 
-// TestResumeOwnershipInstallsAppend is the I1 regression test.
+// TestResumeOwnershipInstallsAppend pins the resume-ownership path.
 // Scenario: tracker.Add fails on wsl-proxy.Send (partial failure
 // leaves portStorage populated). The next tick's tracker.Add returns
 // "proxy already running"; the synthetic ID is still in storage, so
@@ -269,16 +269,17 @@ func TestResumeOwnershipInstallsAppend(t *testing.T) {
 
 	require.Len(t, fakeT.addCalls, 2, "second tick exposure attempt expected")
 	require.Equal(t, 1, countApplyByAction(fakeIPT.applyCalls, Append),
-		"I1: resume-ownership branch must install the iptables Append")
+		"resume-ownership branch must install the iptables Append")
 	require.Equal(t, "8080", fakeIPT.applyCalls[len(fakeIPT.applyCalls)-1].hostPort)
 }
 
-// TestAppendRetryReleasesOwnershipWhenEngineChainAppears is the I2
-// regression test. Scenario: tracker.Add succeeds, iptables Append
-// fails transiently (xtables-lock contention); the next tick finds the
-// engine chain has installed its authoritative rule. The retry path
-// must NOT reissue the PREROUTING DNAT (that recreates the original
-// shadow-DNAT bug); it must release ownership to the engine.
+// TestAppendRetryReleasesOwnershipWhenEngineChainAppears pins the
+// engine-takeover path during append retry. Scenario: tracker.Add
+// succeeds, iptables Append fails transiently (xtables-lock contention);
+// the next tick finds the engine chain has installed its authoritative
+// rule. The retry path must NOT reissue the PREROUTING DNAT (that
+// recreates the original shadow-DNAT bug); it must release ownership
+// to the engine.
 func TestAppendRetryReleasesOwnershipWhenEngineChainAppears(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
@@ -301,16 +302,16 @@ func TestAppendRetryReleasesOwnershipWhenEngineChainAppears(t *testing.T) {
 	pst.Tick(pm) // 3: retry path
 
 	require.Equal(t, 1, countApplyByAction(fakeIPT.applyCalls, Append),
-		"I2: append retry must not install the rule when the engine chain has taken over")
+		"append retry must not install the rule when the engine chain has taken over")
 	require.Len(t, fakeT.removeCalls, 1,
-		"I2: append retry must release the tracker entry when the engine chain has taken over")
+		"append retry must release the tracker entry when the engine chain has taken over")
 }
 
-// TestCleanupReleasesAddedOnDeleteFailure is the I3 regression test
-// (cleanup-side iptables Delete failure). Scenario: a port is added,
-// the listener disappears, tracker.Remove succeeds, but iptables
-// Delete fails. The local marker must drop anyway so the listener can
-// be re-added when it reappears.
+// TestCleanupReleasesAddedOnDeleteFailure covers the cleanup-side
+// iptables Delete failure. Scenario: a port is added, the listener
+// disappears, tracker.Remove succeeds, but iptables Delete fails. The
+// local marker must drop anyway so the listener can be re-added when
+// it reappears.
 func TestCleanupReleasesAddedOnDeleteFailure(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
@@ -332,14 +333,14 @@ func TestCleanupReleasesAddedOnDeleteFailure(t *testing.T) {
 	pst.Tick(pm) // 5: stability gate passes, re-add
 
 	require.Len(t, fakeT.addCalls, 2,
-		"I3: reappearance after Delete failure must trigger a fresh tracker.Add")
+		"reappearance after Delete failure must trigger a fresh tracker.Add")
 }
 
-// TestCleanupReleasesAddedOnRemoveFailure is the I3 regression test
-// (cleanup-side tracker.Remove failure). APITracker.Remove wipes
-// portStorage via a leading defer even when it returns an error, so a
-// retry is a silent no-op. The local marker must drop anyway, or the
-// listener can never be re-added when it reappears.
+// TestCleanupReleasesAddedOnRemoveFailure covers the cleanup-side
+// tracker.Remove failure. APITracker.Remove wipes portStorage via a
+// leading defer even when it returns an error, so a retry is a silent
+// no-op. The local marker must drop anyway, or the listener can never
+// be re-added when it reappears.
 func TestCleanupReleasesAddedOnRemoveFailure(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
@@ -361,15 +362,15 @@ func TestCleanupReleasesAddedOnRemoveFailure(t *testing.T) {
 	pst.Tick(pm) // 5: stability gate passes, re-add
 
 	require.Len(t, fakeT.addCalls, 2,
-		"I3: reappearance after tracker.Remove failure must trigger a fresh tracker.Add")
+		"reappearance after tracker.Remove failure must trigger a fresh tracker.Add")
 }
 
 // TestAddErrorLoggedSuppressesLogSpam confirms the first failed
 // tracker.Add for a port is logged loudly and subsequent failures are
-// suppressed (Round 2 S4 resolution); a successful add clears the
-// suppression so a later regression cycle gets a fresh loud first
-// error. We verify the bookkeeping through the addErrorLogged field
-// rather than scraping log output.
+// suppressed; a successful add clears the suppression so a later
+// regression cycle gets a fresh loud first error. We verify the
+// bookkeeping through the addErrorLogged field rather than scraping
+// log output.
 func TestAddErrorLoggedSuppressesLogSpam(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
@@ -616,7 +617,7 @@ func TestDelegatedPortCleanupSkipsTrackerAndIptables(t *testing.T) {
 	require.NoError(t, err)
 
 	pst.Tick(pm) // 1: defer
-	pst.Tick(pm) // 2: delegated (I1 reconciliation runs Delete; idempotent no-op when no leftover)
+	pst.Tick(pm) // 2: delegated (leftover-rule reconciliation runs Delete; idempotent no-op when no leftover)
 	require.True(t, pst.added[pPort].delegated)
 	applyCallsBeforeCleanup := len(fakeIPT.applyCalls)
 
@@ -677,13 +678,14 @@ func TestMixedBindingsOnlyLoopbackGetsRules(t *testing.T) {
 	require.Equal(t, "8080", fakeIPT.applyCalls[0].hostPort)
 }
 
-// TestAppendRetryEngineTakeoverDeletesCommittedRule is the I2 regression
-// test. Scenario: tracker.Add succeeds, the iptables Append returns an
-// error but still commits the rule (iptables committed, exited
-// non-zero), so appendFailed=true with a rule actually installed. The
-// next tick finds the engine chain has taken over. The retry path must
-// Delete the committed procnet rule -- leaving it would shadow the
-// engine's now-authoritative chain, the exact bug this package fixes.
+// TestAppendRetryEngineTakeoverDeletesCommittedRule covers the
+// committed-rule cleanup on engine takeover. Scenario: tracker.Add
+// succeeds, the iptables Append returns an error but still commits
+// the rule (iptables committed, exited non-zero), so appendFailed=true
+// with a rule actually installed. The next tick finds the engine chain
+// has taken over. The retry path must Delete the committed procnet
+// rule -- leaving it would shadow the engine's now-authoritative chain,
+// the exact bug this package fixes.
 func TestAppendRetryEngineTakeoverDeletesCommittedRule(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
@@ -705,11 +707,11 @@ func TestAppendRetryEngineTakeoverDeletesCommittedRule(t *testing.T) {
 	pst.Tick(pm) // 3: retry path → engine takeover
 
 	require.Len(t, fakeT.removeCalls, 1,
-		"I2: engine takeover must release the tracker entry")
+		"engine takeover must release the tracker entry")
 	require.Equal(t, 1, countApplyByAction(fakeIPT.applyCalls, Delete),
-		"I2: engine takeover must Delete the committed procnet rule")
+		"engine takeover must Delete the committed procnet rule")
 	require.False(t, fakeIPT.rules[iptKey("tcp", "8080")],
-		"I2: the shadowing procnet rule must be gone after engine takeover")
+		"the shadowing procnet rule must be gone after engine takeover")
 }
 
 // TestAppendRetryEngineTakeoverRetriesFailedDelete confirms that when
@@ -755,13 +757,14 @@ func TestAppendRetryEngineTakeoverRetriesFailedDelete(t *testing.T) {
 		"the retried Delete must remove the shadowing procnet rule")
 }
 
-// TestRemoveFailureRetainsRuleForReappearance is the I1 regression test.
-// Scenario: an owned port's listener disappears and tracker.Remove
-// fails -- the host-switch proxy may still be bound. The loopback rule
-// must be retained, not deleted: when the listener reappears,
-// tracker.Add returns "proxy already running" from the stale proxy and
-// (storage having been cleared) the port is delegated with no fresh
-// Append, so only the retained rule keeps it reachable from the host.
+// TestRemoveFailureRetainsRuleForReappearance pins the rule-retention
+// path on Remove failure. Scenario: an owned port's listener disappears
+// and tracker.Remove fails -- the host-switch proxy may still be bound.
+// The loopback rule must be retained, not deleted: when the listener
+// reappears, tracker.Add returns "proxy already running" from the stale
+// proxy and (storage having been cleared) the port is delegated with no
+// fresh Append, so only the retained rule keeps it reachable from the
+// host.
 func TestRemoveFailureRetainsRuleForReappearance(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
@@ -779,9 +782,9 @@ func TestRemoveFailureRetainsRuleForReappearance(t *testing.T) {
 	pst.Tick(nat.PortMap{}) // 3: cleanup; Remove fails → rule retained
 	require.Len(t, fakeT.removeCalls, 1)
 	require.Equal(t, 0, countApplyByAction(fakeIPT.applyCalls, Delete),
-		"I1: a failed Remove must not delete the loopback rule")
+		"a failed Remove must not delete the loopback rule")
 	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")],
-		"I1: the loopback rule must survive a failed Remove")
+		"the loopback rule must survive a failed Remove")
 
 	// Listener reappears; tracker.Add returns "proxy already running"
 	// from the stale proxy, with storage empty (cleared by Remove).
@@ -793,11 +796,11 @@ func TestRemoveFailureRetainsRuleForReappearance(t *testing.T) {
 	pst.Tick(pm) // 5: tracker.Add → "proxy already running", Get==0 → delegate
 
 	require.True(t, pst.added[pPort].delegated,
-		"I1: reappearing port with a stale proxy must delegate")
+		"reappearing port with a stale proxy must delegate")
 	require.Equal(t, 1, countApplyByAction(fakeIPT.applyCalls, Append),
-		"I1: the reappearing port gets no fresh Append")
+		"the reappearing port gets no fresh Append")
 	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")],
-		"I1: the retained rule keeps the reappearing port reachable")
+		"the retained rule keeps the reappearing port reachable")
 }
 
 // TestRemoveFailureClassificationDrivesRuleCleanup confirms retireDisappeared
@@ -831,13 +834,13 @@ func TestRemoveFailureClassificationDrivesRuleCleanup(t *testing.T) {
 	t.Run("wsl-proxy-only failure deletes the rule", func(t *testing.T) {
 		survived := addAndDisappear(t, fmt.Errorf("%w: simulated", tracker.ErrWSLProxy))
 		require.False(t, survived,
-			"S1: a wsl-proxy-only Remove failure must delete the orphaned loopback rule")
+			"a wsl-proxy-only Remove failure must delete the orphaned loopback rule")
 	})
 
 	t.Run("unexpose failure retains the rule", func(t *testing.T) {
 		survived := addAndDisappear(t, fmt.Errorf("%w: simulated", forwarder.ErrUnexposeAPI))
 		require.True(t, survived,
-			"S1: an unexpose failure may leave the proxy bound, so the rule must stay")
+			"an unexpose failure may leave the proxy bound, so the rule must stay")
 	})
 
 	t.Run("combined failure retains the rule", func(t *testing.T) {
@@ -845,24 +848,25 @@ func TestRemoveFailureClassificationDrivesRuleCleanup(t *testing.T) {
 			fmt.Errorf("%w: simulated", forwarder.ErrUnexposeAPI),
 			fmt.Errorf("%w: simulated", tracker.ErrWSLProxy)))
 		require.True(t, survived,
-			"S1: a combined failure means an Unexpose may not have landed, so keep the rule")
+			"a combined failure means an Unexpose may not have landed, so keep the rule")
 	})
 
 	t.Run("unclassified failure retains the rule", func(t *testing.T) {
 		survived := addAndDisappear(t, errors.New("unclassified remove error"))
 		require.True(t, survived,
-			"S1: an unclassified Remove error must keep the rule (conservative default)")
+			"an unclassified Remove error must keep the rule (conservative default)")
 	})
 }
 
-// TestEngineDelegationReleasesPriorPartialAdd is the I3 regression test.
-// Scenario: tracker.Add returns a wsl-proxy.Send error with portStorage
-// populated (the partial-failure shape); the port stays out of pst.added.
-// Before the next tick, the engine chain appears. exposeNew runs again
-// and the `if managed` branch must release the synthetic procnet
-// ownership before delegating; otherwise the gvisor-tap-vsock proxy
-// stays bound under the synthetic ID forever, blocking the engine's
-// later Add with "proxy already running".
+// TestEngineDelegationReleasesPriorPartialAdd pins the partial-Add
+// release on engine delegation. Scenario: tracker.Add returns a
+// wsl-proxy.Send error with portStorage populated (the partial-failure
+// shape); the port stays out of pst.added. Before the next tick, the
+// engine chain appears. exposeNew runs again and the `if managed`
+// branch must release the synthetic procnet ownership before delegating;
+// otherwise the gvisor-tap-vsock proxy stays bound under the synthetic
+// ID forever, blocking the engine's later Add with "proxy already
+// running".
 func TestEngineDelegationReleasesPriorPartialAdd(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
@@ -891,11 +895,11 @@ func TestEngineDelegationReleasesPriorPartialAdd(t *testing.T) {
 	pst.Tick(pm) // 3: exposeNew re-runs; engine probe true; must release synthetic ownership
 
 	require.True(t, pst.added[port].delegated,
-		"I3: port must end up delegated after engine takeover")
+		"port must end up delegated after engine takeover")
 	require.Contains(t, fakeT.removeCalls, syntheticID,
-		"I3: engine-delegation branch must release procnet's prior partial-Add ownership via tracker.Remove")
+		"engine-delegation branch must release procnet's prior partial-Add ownership via tracker.Remove")
 	require.Nil(t, fakeT.storage[syntheticID],
-		"I3: synthetic portStorage entry must be cleared after release")
+		"synthetic portStorage entry must be cleared after release")
 }
 
 // TestEngineDelegationAcceptsLeakWhenRemoveFails locks the documented
@@ -946,16 +950,16 @@ func TestEngineDelegationAcceptsLeakWhenRemoveFails(t *testing.T) {
 		"port must still be marked delegated despite Remove failure -- the documented trade-off")
 }
 
-// TestRemoveReportedProxyDestroyed is the I2/S3 regression test for the
-// shared error-classification predicate. retireDisappeared,
-// retryAppend's engine-takeover, and exposeNew's engine-delegation
-// branches all decide whether a tracker.Remove error indicates the
-// host-switch proxy is gone (safe to drop the rule or mark delegated)
-// or may still be bound (the rare leak retireDisappeared's default
-// branch already accepts). The three sites share this helper to keep
-// the classification in one place; if the predicate ever drifts (e.g.,
-// a future change drops the ErrUnexposeAPI side of the conjunction),
-// the surface bug returns silently across all three call sites.
+// TestRemoveReportedProxyDestroyed pins the shared error-classification
+// predicate. retireDisappeared, retryAppend's engine-takeover, and
+// exposeNew's engine-delegation branches all decide whether a
+// tracker.Remove error indicates the host-switch proxy is gone (safe
+// to drop the rule or mark delegated) or may still be bound (the rare
+// leak retireDisappeared's default branch already accepts). The three
+// sites share this helper to keep the classification in one place; if
+// the predicate ever drifts (e.g., a future change drops the
+// ErrUnexposeAPI side of the conjunction), the surface bug returns
+// silently across all three call sites.
 func TestRemoveReportedProxyDestroyed(t *testing.T) {
 	tests := []struct {
 		name string
@@ -993,16 +997,17 @@ func TestRemoveReportedProxyDestroyed(t *testing.T) {
 	}
 }
 
-// TestEngineDelegationReconcilesLeftoverProcnetRule is the I1 regression
-// test. Scenario: a procnet PREROUTING DNAT survives in the WSL2 distro
-// from a prior guestagent session (iptables state persists across
-// guestagent restarts; only a WSL2 distro shutdown clears it). The
-// engine then republishes the same host port in the current session;
-// exposeNew sees the engine chain, takes the delegation branch, and
-// must Delete the leftover procnet rule before marking the port
-// delegated. Without the Delete, the leftover rule terminates
-// PREROUTING on iptables-nft and shadows CNI-HOSTPORT-DNAT/DOCKER --
-// the exact bug this PR was created to fix.
+// TestEngineDelegationReconcilesLeftoverProcnetRule pins the
+// leftover-rule reconciliation on engine delegation. Scenario: a
+// procnet PREROUTING DNAT survives in the WSL2 distro from a prior
+// guestagent session (iptables state persists across guestagent
+// restarts; only a WSL2 distro shutdown clears it). The engine then
+// republishes the same host port in the current session; exposeNew
+// sees the engine chain, takes the delegation branch, and must Delete
+// the leftover procnet rule before marking the port delegated. Without
+// the Delete, the leftover rule terminates PREROUTING on iptables-nft
+// and shadows CNI-HOSTPORT-DNAT/DOCKER -- the exact bug this PR was
+// created to fix.
 //
 // The acknowledged in-session leak (a Delete failure that has no
 // retry, scanner_linux.go) feeds the same gap whenever the engine
@@ -1025,9 +1030,9 @@ func TestEngineDelegationReconcilesLeftoverProcnetRule(t *testing.T) {
 	require.True(t, pst.added[port].delegated,
 		"engine-managed port must end up delegated")
 	require.Equal(t, 1, countApplyByAction(fakeIPT.applyCalls, Delete),
-		"I1: engine-delegation must Delete the leftover procnet rule before marking delegated")
+		"engine-delegation must Delete the leftover procnet rule before marking delegated")
 	require.False(t, fakeIPT.rules[iptKey("tcp", "8080")],
-		"I1: the leftover procnet rule must be cleared so it stops shadowing CNI-HOSTPORT-DNAT")
+		"the leftover procnet rule must be cleared so it stops shadowing CNI-HOSTPORT-DNAT")
 }
 
 // TestEngineDelegationDeferOnLeftoverDeleteFailure confirms that when
