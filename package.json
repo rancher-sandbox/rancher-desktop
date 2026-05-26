@@ -158,7 +158,7 @@
     "ts-jest": "29.4.9",
     "ts-loader": "^9.5.7",
     "tsconfig-paths": "4.2.0",
-    "tsx": "4.22.2",
+    "tsx": "4.22.3",
     "typescript": "6.0.3",
     "webpack": "5.100.2"
   },
