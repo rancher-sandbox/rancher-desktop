@@ -21,6 +21,13 @@ from host-switch reaches the in-namespace 127.0.0.1 listener. A
 two-scan stability gate filters out the transient reservation socket
 nerdctl's OCI createRuntime hook opens before CNI installs its
 iptables rules.
+
+IPv6 limitation: the scanner reads /proc/net/{tcp,udp} only, not the
+tcp6/udp6 variants. A --network=host container that listens
+exclusively on [::1]:port is invisible to the scanner and is not
+reachable from Windows. Containers that listen on both 127.0.0.1
+and [::1] (the common dual-stack pattern) remain reachable through
+the IPv4 listener.
 */
 package procnet
 
@@ -51,6 +58,9 @@ type loopbackController interface {
 	Close() error
 }
 
+// ProcNetScanner polls /proc/net/{tcp,udp} and reconciles the
+// observed listener set against the API tracker and a userspace
+// loopback forwarder. See the package comment for the design.
 type ProcNetScanner struct {
 	ctx          context.Context
 	tracker      tracker.Tracker
@@ -60,21 +70,36 @@ type ProcNetScanner struct {
 
 	published nat.PortMap
 	pending   nat.PortMap
+
+	// addErrorLogged throttles publish-failure logs to one Error line
+	// per port; subsequent failures for the same port log at Debug
+	// until the port either publishes successfully or leaves both
+	// pending and published. Without this, every tick (~3s) emits two
+	// Error lines per stuck port when wsl-proxy or host-switch is
+	// down, drowning the log.
+	addErrorLogged map[nat.Port]bool
 }
 
+// NewProcNetScanner constructs a /proc/net scanner that publishes
+// loopback listeners through tracker t and bridges traffic from
+// bindIP — the namespace's tap interface IP — into 127.0.0.1 via a
+// userspace forwarder. scanInterval controls the poll cadence; the
+// two-scan stability gate adds one additional cadence of delay
+// before a new port is published.
 func NewProcNetScanner(ctx context.Context, t tracker.Tracker, bindIP net.IP, scanInterval time.Duration) (*ProcNetScanner, error) {
 	return newScanner(ctx, t, newLoopbackForwarder(bindIP), bindIP, scanInterval), nil
 }
 
 func newScanner(ctx context.Context, t tracker.Tracker, f loopbackController, bindIP net.IP, scanInterval time.Duration) *ProcNetScanner {
 	return &ProcNetScanner{
-		ctx:          ctx,
-		tracker:      t,
-		forwarder:    f,
-		bindIP:       bindIP,
-		scanInterval: scanInterval,
-		published:    make(nat.PortMap),
-		pending:      make(nat.PortMap),
+		ctx:            ctx,
+		tracker:        t,
+		forwarder:      f,
+		bindIP:         bindIP,
+		scanInterval:   scanInterval,
+		published:      make(nat.PortMap),
+		pending:        make(nat.PortMap),
+		addErrorLogged: make(map[nat.Port]bool),
 	}
 }
 
@@ -108,9 +133,13 @@ func (p *ProcNetScanner) ForwardPorts() error {
 // effect immediately: a vanished listener is unambiguous.
 func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 	for port, bindings := range p.published {
-		if _, ok := scanned[port]; ok {
+		if newBindings, ok := scanned[port]; ok && bindingsEqual(bindings, newBindings) {
 			continue
 		}
+		// Either the port vanished or its bind addresses changed
+		// (container restart with a different bind). Unpublish so the
+		// next tick can re-publish against the current bindings; this
+		// preserves the two-scan gate semantics for the new shape.
 		p.unpublish(port, bindings)
 		delete(p.published, port)
 	}
@@ -133,6 +162,20 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 		}
 		p.pending[port] = bindings
 	}
+
+	// Drop log-throttle state for ports that have left both maps.
+	// Without this sweep, a transient port that fails to publish and
+	// then vanishes leaves a dangling entry, so the map grows
+	// without bound under listener churn.
+	for port := range p.addErrorLogged {
+		if _, ok := p.pending[port]; ok {
+			continue
+		}
+		if _, ok := p.published[port]; ok {
+			continue
+		}
+		delete(p.addErrorLogged, port)
+	}
 }
 
 // publish reports a new listener to the API tracker and opens a
@@ -143,13 +186,12 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) error {
 	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
 	if err := p.tracker.Add(id, nat.PortMap{port: bindings}); err != nil {
-		log.Errorf("/proc/net scanner failed to add %s: %s", port, err)
+		p.logAddFailure(port, fmt.Sprintf("failed to add: %s", err))
 		if removeErr := p.tracker.Remove(id); removeErr != nil {
-			log.Errorf("/proc/net scanner rollback after tracker.Add failure for %s: %s", port, removeErr)
+			p.logAddFailure(port, fmt.Sprintf("rollback after tracker.Add failure: %s", removeErr))
 		}
 		return err
 	}
-	log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
 
 	for _, b := range bindings {
 		if b.HostIP != loopbackIP {
@@ -166,22 +208,44 @@ func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) erro
 			continue
 		}
 		if err := p.forwarder.Add(p.ctx, port.Proto(), uint16(portNum)); err != nil {
-			log.Errorf("/proc/net scanner: loopback forwarder %s/%s: %s", port.Proto(), b.HostPort, err)
+			p.logAddFailure(port, fmt.Sprintf("loopback forwarder %s/%s: %s", port.Proto(), b.HostPort, err))
 			if removeErr := p.tracker.Remove(id); removeErr != nil {
-				log.Errorf("/proc/net scanner rollback after forwarder.Add failure for %s: %s", port, removeErr)
+				p.logAddFailure(port, fmt.Sprintf("rollback after forwarder.Add failure: %s", removeErr))
 			}
 			return err
 		}
 	}
+
+	// Only mark success — and only log the success Info line — once
+	// the whole publish has run. Clearing addErrorLogged or logging
+	// "added port" between tracker.Add and forwarder.Add lets a
+	// persistent forwarder failure re-Error every tick because the
+	// flag would reset on each tick's tracker.Add.
+	delete(p.addErrorLogged, port)
+	log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
 	return nil
+}
+
+// logAddFailure emits the first publish-failure message for port at
+// Error level and subsequent messages at Debug. addErrorLogged
+// resets when publish succeeds or when the sweep at the end of Tick
+// observes the port has left both pending and published.
+func (p *ProcNetScanner) logAddFailure(port nat.Port, msg string) {
+	if p.addErrorLogged[port] {
+		log.Debugf("/proc/net scanner %s: %s", port, msg)
+		return
+	}
+	log.Errorf("/proc/net scanner %s: %s", port, msg)
+	p.addErrorLogged[port] = true
 }
 
 func (p *ProcNetScanner) unpublish(port nat.Port, bindings []nat.PortBinding) {
 	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
 	if err := p.tracker.Remove(id); err != nil {
 		log.Errorf("/proc/net scanner failed to remove %s: %s", port, err)
+	} else {
+		log.Infof("/proc/net scanner removed port: %s -> %+v", port, bindings)
 	}
-	log.Infof("/proc/net scanner removed port: %s -> %+v", port, bindings)
 
 	for _, b := range bindings {
 		if b.HostIP != loopbackIP {
@@ -213,6 +277,15 @@ func (p *ProcNetScanner) scanListeners() (nat.PortMap, error) {
 // socket on bindIP for every loopback port it proxies; leaving those
 // entries in the snapshot keeps the proto/port key alive after the
 // upstream listener exits and blocks unpublish.
+//
+// Trade-off: a container that binds explicitly to bindIP (the
+// namespace's tap interface IP) is filtered out alongside the
+// forwarder's own listeners and never reaches publish. No container
+// engine we ship does this -- host-network containers bind to
+// 127.0.0.1 or 0.0.0.0, and bridge-network containers do not see
+// bindIP -- so the gap is acceptable. A tighter filter would require
+// procnettcp to expose inode-level ownership so the forwarder's
+// sockets can be identified without overlap.
 func (p *ProcNetScanner) entriesToPortMap(entries []procnettcp.Entry) nat.PortMap {
 	out := make(nat.PortMap)
 	for _, entry := range entries {
@@ -264,4 +337,25 @@ func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
 		HostPort: port,
 	})
 	return nil
+}
+
+// bindingsEqual reports whether two binding lists hold the same set
+// of (HostIP, HostPort) pairs. Order does not matter, but duplicates
+// must match in multiplicity so a list with two identical entries
+// does not compare equal to one with a single entry.
+func bindingsEqual(a, b []nat.PortBinding) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	counts := make(map[nat.PortBinding]int, len(a))
+	for _, x := range a {
+		counts[x]++
+	}
+	for _, x := range b {
+		counts[x]--
+		if counts[x] < 0 {
+			return false
+		}
+	}
+	return true
 }

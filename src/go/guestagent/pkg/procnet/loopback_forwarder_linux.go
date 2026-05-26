@@ -64,6 +64,14 @@ func key(proto string, port uint16) string {
 // Add opens a userspace forwarder for proto/port. Repeated Adds for
 // the same key are idempotent. The caller must call Remove when the
 // upstream listener disappears.
+//
+// EADDRINUSE on the bind step propagates as a plain listen error. The
+// scanner's publish path rolls back the tracker entry and retries
+// each tick; the per-port log-once flag bounds the noise on a
+// persistent collision. The realistic trigger is a host-network
+// container that holds both 127.0.0.1:port and 0.0.0.0:port; the
+// wildcard claim blocks the bindIP bind. Such ports stay reachable
+// from Windows through the wildcard listener via eth0.
 func (f *loopbackForwarder) Add(ctx context.Context, proto string, port uint16) error {
 	k := key(proto, port)
 	f.mu.Lock()
@@ -90,6 +98,11 @@ func (f *loopbackForwarder) Add(ctx context.Context, proto string, port uint16) 
 		}
 		target := net.JoinHostPort("127.0.0.1", strconv.Itoa(int(port)))
 		// Each flow's idle timeout is forwarder.UDPConnTrackTimeout (90s).
+		// The dial closure runs for every new client flow, including
+		// flows that arrive long after Add returns. ctx must therefore
+		// be a forwarder-lifetime context (in production, the
+		// scanner's lifetime context); a request-scoped or per-tick
+		// ctx would silently break new-flow dialing once cancelled.
 		proxy, err := forwarder.NewUDPProxy(pc, func() (net.Conn, error) {
 			return f.dialer.DialContext(ctx, "udp", target)
 		})
@@ -124,6 +137,11 @@ func (f *loopbackForwarder) Remove(proto string, port uint16) error {
 	return nil
 }
 
+// Close shuts every registered TCP listener and UDP proxy. In-flight
+// pipeTCP goroutines for accepted connections continue until the
+// peer disconnects or their half-close drain deadline (30s) fires;
+// Close does not wait for them. This is intentional for
+// process-exit shutdown — the goroutines die with the process.
 func (f *loopbackForwarder) Close() error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -203,7 +221,13 @@ func (f *loopbackForwarder) pipeTCP(ctx context.Context, in net.Conn, port uint1
 	go copyDir(in, out)
 	<-done
 	drainDeadline := time.Now().Add(halfCloseDrainTimeout)
+	// Bound both reads (peer goes silent) and writes (peer's recv
+	// buffer fills) on whichever direction is still copying. A
+	// read-only deadline leaves a write stuck in io.Copy unbounded
+	// when the remaining peer applies TCP backpressure.
 	_ = in.SetReadDeadline(drainDeadline)
 	_ = out.SetReadDeadline(drainDeadline)
+	_ = in.SetWriteDeadline(drainDeadline)
+	_ = out.SetWriteDeadline(drainDeadline)
 	<-done
 }
