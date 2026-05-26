@@ -289,13 +289,7 @@ func (pst *portStateTracker) exposeNew(port nat.Port, bindings []nat.PortBinding
 		// syntheticIDFor(port), so an engine cannot Remove our entry
 		// out from under us between the two calls.
 		if len(pst.tracker.Get(syntheticID)) > 0 {
-			if err := pst.tracker.Remove(syntheticID); err != nil {
-				if removeReportedProxyDestroyed(err) {
-					log.Errorf("/proc/net scanner released prior partial-Add of %s before engine delegation (wsl-proxy notification failed): %s", port, err)
-				} else {
-					log.Errorf("/proc/net scanner failed to release prior partial-Add of %s before engine delegation; host-switch unexpose may have left the proxy bound until RD restart: %s", port, err)
-				}
-			}
+			pst.releaseToEngine(port, "before engine delegation")
 		}
 		// Reconcile any leftover procnet loopback rule before delegating.
 		// Two scenarios produce a stale rule that the delegation path
@@ -424,23 +418,17 @@ func (pst *portStateTracker) retryAppend(port nat.Port, state portState) {
 			log.Debugf("/proc/net scanner retry of iptables Delete for %s after engine takeover still failing: %s", port, err)
 			return
 		}
-		if err := pst.tracker.Remove(syntheticIDFor(port)); err != nil {
-			// APITracker.Remove clears portStorage via a leading defer,
-			// so a next-tick retry would read an empty portMap, skip
-			// the Unexpose loop, and return nil -- hiding the failure
-			// rather than recovering. Accept the rare leak when
-			// host-switch unexpose fails: a stranded gvisor proxy
-			// under the synthetic ID blocks the engine's later Add
-			// with "proxy already running" until RD restart, and on
-			// the Local-collision configurations described in
-			// exposeNew's engine-delegation comment, Windows-side
-			// traffic for that host port drops until RD restart.
-			if removeReportedProxyDestroyed(err) {
-				log.Errorf("/proc/net scanner released ownership of %s after engine took over (wsl-proxy notification failed): %s", port, err)
-			} else {
-				log.Errorf("/proc/net scanner failed to release ownership of %s after engine took over; host-switch unexpose may have left the proxy bound until RD restart: %s", port, err)
-			}
-		}
+		// APITracker.Remove clears portStorage via a leading defer, so
+		// a next-tick retry would read an empty portMap, skip the
+		// Unexpose loop, and return nil -- hiding the failure rather
+		// than recovering. Accept the rare leak when host-switch
+		// unexpose fails: a stranded gvisor proxy under the synthetic
+		// ID blocks the engine's later Add with "proxy already running"
+		// until RD restart, and on the Local-collision configurations
+		// described in exposeNew's engine-delegation comment,
+		// Windows-side traffic for that host port drops until RD
+		// restart.
+		pst.releaseToEngine(port, "after engine took over")
 		pst.added[port] = portState{bindings: state.bindings, delegated: true}
 		log.Infof("/proc/net scanner released ownership of %s to engine-managed chain after append retry", port)
 		return
@@ -563,6 +551,25 @@ func (pst *portStateTracker) applyLoopbackRules(bindings []nat.PortBinding, port
 
 func syntheticIDFor(port nat.Port) string {
 	return utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
+}
+
+// releaseToEngine calls tracker.Remove on the synthetic ID for port and
+// logs any failure with classification. It does not mark the port
+// delegated -- callers do that based on their own state. The phase
+// string describes the call site for log clarity; it must complete
+// "released ownership of <port> <phase>" and "failed to release
+// ownership of <port> <phase>". Used when an engine chain has taken
+// over a port procnet currently owns or has a partial-Add for.
+func (pst *portStateTracker) releaseToEngine(port nat.Port, phase string) {
+	err := pst.tracker.Remove(syntheticIDFor(port))
+	if err == nil {
+		return
+	}
+	if removeReportedProxyDestroyed(err) {
+		log.Errorf("/proc/net scanner released ownership of %s %s (wsl-proxy notification failed): %s", port, phase, err)
+		return
+	}
+	log.Errorf("/proc/net scanner failed to release ownership of %s %s; host-switch unexpose may have left the proxy bound until RD restart: %s", port, phase, err)
 }
 
 // removeReportedProxyDestroyed reports whether a non-nil tracker.Remove
