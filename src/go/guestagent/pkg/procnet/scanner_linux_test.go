@@ -214,6 +214,42 @@ func TestMixedLoopbackAndWildcard(t *testing.T) {
 	}
 }
 
+// TestMixedBindingsSkipForwarderAndKeepTracker pins the rule that
+// a port carrying both a 127.0.0.1 and a 0.0.0.0 binding publishes
+// through the tracker and skips forwarder.Add. The in-namespace
+// wildcard listener already accepts bindIP:port, so a forwarder
+// bind there would collide with EADDRINUSE; the tracker entry
+// keeps Windows-side traffic reachable.
+//
+// fwd.addErr would force a rollback if forwarder.Add fired; the
+// test asserts it does not.
+func TestMixedBindingsSkipForwarderAndKeepTracker(t *testing.T) {
+	tr := &fakeTracker{}
+	fwd := &fakeForwarder{addErr: fmt.Errorf("synthetic forwarder failure")}
+	s := newScanner(context.Background(), tr, fwd, nil, time.Second)
+	port := mustPort(t, "tcp", 8009)
+	scan := nat.PortMap{port: []nat.PortBinding{
+		{HostIP: "127.0.0.1", HostPort: "8009"},
+		{HostIP: "0.0.0.0", HostPort: "8009"},
+	}}
+
+	s.Tick(scan)
+	s.Tick(scan)
+
+	if len(tr.added) != 1 {
+		t.Fatalf("tracker.Add = %v, want one call", tr.added)
+	}
+	if len(tr.removed) != 0 {
+		t.Fatalf("tracker.Remove fired despite mixed-binding short-circuit: %v", tr.removed)
+	}
+	if len(fwd.added) != 0 {
+		t.Fatalf("forwarder.Add fired for mixed bindings: %v", fwd.added)
+	}
+	if _, ok := s.published[port]; !ok {
+		t.Fatalf("port %s not recorded as published", port)
+	}
+}
+
 func equalStringSlices(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

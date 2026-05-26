@@ -25,9 +25,11 @@ iptables rules.
 IPv6 limitation: the scanner reads /proc/net/{tcp,udp} only, not the
 tcp6/udp6 variants. A --network=host container that listens
 exclusively on [::1]:port is invisible to the scanner and is not
-reachable from Windows. Containers that listen on both 127.0.0.1
-and [::1] (the common dual-stack pattern) remain reachable through
-the IPv4 listener.
+reachable from Windows. Containers that bind dual-stack
+(e.g. [::]:port with IPV6_V6ONLY=0, the Go and Python default) are
+also invisible because the socket appears only in /proc/net/tcp6.
+Only listeners that bind 127.0.0.1, 0.0.0.0, or both v4 and v6
+separately are reachable from Windows.
 */
 package procnet
 
@@ -47,7 +49,10 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
 
-const loopbackIP = "127.0.0.1"
+const (
+	loopbackIP = "127.0.0.1"
+	wildcardIP = "0.0.0.0"
+)
 
 // loopbackController is what the scanner calls to manage userspace
 // listeners for 127.0.0.1 ports. The real implementation opens listeners
@@ -69,7 +74,7 @@ type ProcNetScanner struct {
 	scanInterval time.Duration
 
 	published nat.PortMap
-	pending   nat.PortMap
+	pending   map[nat.Port]struct{}
 
 	// addErrorLogged throttles publish-failure logs to one Error line
 	// per port; subsequent failures for the same port log at Debug
@@ -81,9 +86,12 @@ type ProcNetScanner struct {
 }
 
 // NewProcNetScanner constructs a /proc/net scanner that publishes
-// loopback listeners through tracker t and bridges traffic from
-// bindIP — the namespace's tap interface IP — into 127.0.0.1 via a
-// userspace forwarder. scanInterval controls the poll cadence; the
+// the observed listeners through tracker t. For each loopback
+// (127.0.0.1) binding it also opens a userspace forwarder on
+// bindIP — the namespace's tap interface IP — that pipes traffic
+// into 127.0.0.1. Wildcard (0.0.0.0) bindings rely on the
+// engine-namespace listener to accept bindIP:port directly and
+// skip the forwarder. scanInterval controls the poll cadence; the
 // two-scan stability gate adds one additional cadence of delay
 // before a new port is published.
 func NewProcNetScanner(ctx context.Context, t tracker.Tracker, bindIP net.IP, scanInterval time.Duration) (*ProcNetScanner, error) {
@@ -98,7 +106,7 @@ func newScanner(ctx context.Context, t tracker.Tracker, f loopbackController, bi
 		bindIP:         bindIP,
 		scanInterval:   scanInterval,
 		published:      make(nat.PortMap),
-		pending:        make(nat.PortMap),
+		pending:        make(map[nat.Port]struct{}),
 		addErrorLogged: make(map[nat.Port]bool),
 	}
 }
@@ -155,12 +163,12 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 		p.published[port] = bindings
 	}
 
-	p.pending = make(nat.PortMap)
-	for port, bindings := range scanned {
+	p.pending = make(map[nat.Port]struct{})
+	for port := range scanned {
 		if _, ok := p.published[port]; ok {
 			continue
 		}
-		p.pending[port] = bindings
+		p.pending[port] = struct{}{}
 	}
 
 	// Drop log-throttle state for ports that have left both maps.
@@ -193,26 +201,32 @@ func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) erro
 		return err
 	}
 
-	for _, b := range bindings {
-		if b.HostIP != loopbackIP {
-			continue
-		}
-		portNum, err := strconv.ParseUint(b.HostPort, 10, 16)
-		if err != nil {
-			// b.HostPort is strconv.Itoa of a uint16 (see
-			// addEntryToPortMap), so ParseUint always succeeds. If that
-			// stops being true, the caller leaks a tracker entry without
-			// a matching forwarder; mirror the forwarder.Add rollback
-			// above.
-			log.Errorf("/proc/net scanner: bad port %q: %s", b.HostPort, err)
-			continue
-		}
-		if err := p.forwarder.Add(p.ctx, port.Proto(), uint16(portNum)); err != nil {
-			p.logAddFailure(port, fmt.Sprintf("loopback forwarder %s/%s: %s", port.Proto(), b.HostPort, err))
-			if removeErr := p.tracker.Remove(id); removeErr != nil {
-				p.logAddFailure(port, fmt.Sprintf("rollback after forwarder.Add failure: %s", removeErr))
+	// A wildcard binding on the same port accepts traffic to bindIP:port
+	// directly, and the forwarder's bind would collide with it. Skip the
+	// forwarder; the tracker entry alone keeps the port reachable from
+	// Windows.
+	if !hasWildcardBinding(bindings) {
+		for _, b := range bindings {
+			if b.HostIP != loopbackIP {
+				continue
 			}
-			return err
+			portNum, err := strconv.ParseUint(b.HostPort, 10, 16)
+			if err != nil {
+				// b.HostPort is strconv.Itoa of a uint16 (see
+				// addEntryToPortMap), so ParseUint always succeeds. If that
+				// stops being true, the caller leaks a tracker entry without
+				// a matching forwarder; mirror the forwarder.Add rollback
+				// above.
+				log.Errorf("/proc/net scanner: bad port %q: %s", b.HostPort, err)
+				continue
+			}
+			if err := p.forwarder.Add(p.ctx, port.Proto(), uint16(portNum)); err != nil {
+				p.logAddFailure(port, fmt.Sprintf("loopback forwarder %s/%s: %s", port.Proto(), b.HostPort, err))
+				if removeErr := p.tracker.Remove(id); removeErr != nil {
+					p.logAddFailure(port, fmt.Sprintf("rollback after forwarder.Add failure: %s", removeErr))
+				}
+				return err
+			}
 		}
 	}
 
@@ -337,6 +351,20 @@ func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
 		HostPort: port,
 	})
 	return nil
+}
+
+// hasWildcardBinding reports whether bindings holds a 0.0.0.0 entry.
+// A wildcard listener inside the engine namespace already accepts
+// traffic on every IP in that namespace, including bindIP, so opening
+// a forwarder on bindIP:port would just duplicate the wildcard's
+// claim and fail with EADDRINUSE.
+func hasWildcardBinding(bindings []nat.PortBinding) bool {
+	for _, b := range bindings {
+		if b.HostIP == wildcardIP {
+			return true
+		}
+	}
+	return false
 }
 
 // bindingsEqual reports whether two binding lists hold the same set

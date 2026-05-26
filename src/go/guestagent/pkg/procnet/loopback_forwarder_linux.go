@@ -65,13 +65,15 @@ func key(proto string, port uint16) string {
 // the same key are idempotent. The caller must call Remove when the
 // upstream listener disappears.
 //
-// EADDRINUSE on the bind step propagates as a plain listen error. The
-// scanner's publish path rolls back the tracker entry and retries
+// EADDRINUSE on the bind step propagates as a plain listen error.
+// The scanner's publish path rolls back the tracker entry and retries
 // each tick; the per-port log-once flag bounds the noise on a
-// persistent collision. The realistic trigger is a host-network
-// container that holds both 127.0.0.1:port and 0.0.0.0:port; the
-// wildcard claim blocks the bindIP bind. Such ports stay reachable
-// from Windows through the wildcard listener via eth0.
+// persistent collision. The mixed-binding case (a host-network
+// container holding both 127.0.0.1:port and 0.0.0.0:port) no longer
+// reaches this path: the scanner skips Add when the bindings include
+// a wildcard entry, since the wildcard listener already accepts
+// bindIP:port directly. The remaining EADDRINUSE trigger is an
+// unrelated process inside the engine namespace holding bindIP:port.
 func (f *loopbackForwarder) Add(ctx context.Context, proto string, port uint16) error {
 	k := key(proto, port)
 	f.mu.Lock()
@@ -169,6 +171,12 @@ const (
 
 func (f *loopbackForwarder) acceptTCP(ctx context.Context, lis net.Listener, port uint16) {
 	backoff := acceptRetryInitialBackoff
+	// loggedAcceptError throttles per-listener Accept-error logs the
+	// same way logAddFailure throttles publish-failure logs in the
+	// scanner. Sustained FD pressure (EMFILE) saturates the loop at
+	// the 5 s cap; without the throttle the loop emits one Error
+	// every 5 s indefinitely.
+	loggedAcceptError := false
 	for {
 		conn, err := lis.Accept()
 		if err != nil {
@@ -178,7 +186,12 @@ func (f *loopbackForwarder) acceptTCP(ctx context.Context, lis net.Listener, por
 			// Retry with exponential backoff on transient errors (EMFILE
 			// under FD pressure, ENOBUFS). The listener stays registered
 			// in f.tcp; once the pressure clears, Accept succeeds.
-			log.Errorf("loopback forwarder accept tcp/%d: %s (retry in %s)", port, err, backoff)
+			if !loggedAcceptError {
+				log.Errorf("loopback forwarder accept tcp/%d: %s (retry in %s)", port, err, backoff)
+				loggedAcceptError = true
+			} else {
+				log.Debugf("loopback forwarder accept tcp/%d: %s (retry in %s)", port, err, backoff)
+			}
 			select {
 			case <-ctx.Done():
 				return
@@ -191,6 +204,7 @@ func (f *loopbackForwarder) acceptTCP(ctx context.Context, lis net.Listener, por
 			continue
 		}
 		backoff = acceptRetryInitialBackoff
+		loggedAcceptError = false
 		go f.pipeTCP(ctx, conn, port)
 	}
 }
