@@ -177,14 +177,14 @@ func TestMixedLoopbackAndWildcard(t *testing.T) {
 	fwd := &fakeForwarder{}
 	s := newScanner(context.Background(), tr, fwd, time.Second)
 
-	scan := mergeScans(loopbackPortMap(t, 8009), wildcardPortMap(t, 8010))
+	scan := mergeScans(loopbackPortMap(t, 8011), wildcardPortMap(t, 8010))
 	s.Tick(scan)
 	s.Tick(scan)
 
 	if len(tr.added) != 2 {
 		t.Fatalf("expected two tracker.Add calls, got %v", tr.added)
 	}
-	if got, want := fwd.added, []string{"tcp/8009"}; !equalStringSlices(got, want) {
+	if got, want := fwd.added, []string{"tcp/8011"}; !equalStringSlices(got, want) {
 		t.Fatalf("forwarder.Add = %v, want only loopback %v", got, want)
 	}
 }

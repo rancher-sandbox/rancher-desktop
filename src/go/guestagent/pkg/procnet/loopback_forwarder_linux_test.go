@@ -18,12 +18,20 @@ import (
 	"time"
 )
 
+// dial wraps (*net.Dialer).DialContext with a one-shot Timeout so
+// tests stay context-aware (noctx-friendly) without per-test boilerplate.
+func dial(network, addr string, timeout time.Duration) (net.Conn, error) {
+	d := net.Dialer{Timeout: timeout}
+	return d.DialContext(context.Background(), network, addr)
+}
+
 // startUpstream binds a TCP listener on 127.0.0.1:0 that writes `reply`
 // to every accepted connection and closes it. Returns the chosen port
 // and a stop function.
 func startUpstream(t *testing.T, reply string) (uint16, func()) {
 	t.Helper()
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	var lc net.ListenConfig
+	ln, err := lc.Listen(context.Background(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("listen upstream: %v", err)
 	}
@@ -57,7 +65,7 @@ func TestForwarderTCPEndToEnd(t *testing.T) {
 		t.Fatalf("forwarder.Add: %v", err)
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.99:%d", port), 2*time.Second)
+	conn, err := dial("tcp", fmt.Sprintf("127.0.0.99:%d", port), 2*time.Second)
 	if err != nil {
 		t.Skipf("dial via 127.0.0.99 failed (loopback aliases unavailable): %v", err)
 	}
@@ -85,7 +93,7 @@ func TestForwarderRemoveStopsListening(t *testing.T) {
 		t.Fatalf("forwarder.Add: %v", err)
 	}
 	// Sanity: forwarder is listening.
-	probe, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.99:%d", port), 2*time.Second)
+	probe, err := dial("tcp", fmt.Sprintf("127.0.0.99:%d", port), 2*time.Second)
 	if err != nil {
 		t.Skipf("dial via 127.0.0.99 failed: %v", err)
 	}
@@ -96,7 +104,7 @@ func TestForwarderRemoveStopsListening(t *testing.T) {
 	}
 
 	// After Remove the listener is closed; dial should refuse.
-	_, err = net.DialTimeout("tcp", fmt.Sprintf("127.0.0.99:%d", port), 500*time.Millisecond)
+	_, err = dial("tcp", fmt.Sprintf("127.0.0.99:%d", port), 500*time.Millisecond)
 	if err == nil {
 		t.Fatal("dial succeeded after Remove; expected connection refused")
 	}
@@ -125,7 +133,8 @@ func TestForwarderAddIsIdempotent(t *testing.T) {
 // stop function.
 func startUDPEcho(t *testing.T) (uint16, func()) {
 	t.Helper()
-	pc, err := net.ListenPacket("udp", "127.0.0.1:0")
+	var lc net.ListenConfig
+	pc, err := lc.ListenPacket(context.Background(), "udp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("listen upstream udp: %v", err)
 	}
@@ -159,7 +168,7 @@ func TestForwarderUDPEndToEnd(t *testing.T) {
 		t.Fatalf("forwarder.Add: %v", err)
 	}
 
-	conn, err := net.DialTimeout("udp", fmt.Sprintf("127.0.0.99:%d", port), 2*time.Second)
+	conn, err := dial("udp", fmt.Sprintf("127.0.0.99:%d", port), 2*time.Second)
 	if err != nil {
 		t.Skipf("dial via 127.0.0.99 failed: %v", err)
 	}
@@ -202,7 +211,7 @@ func TestForwarderUDPConcurrentFlows(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		want := fmt.Sprintf("payload-%d", i)
 		go func() {
-			conn, err := net.DialTimeout("udp", target, 2*time.Second)
+			conn, err := dial("udp", target, 2*time.Second)
 			if err != nil {
 				results <- result{want: want, err: err}
 				return
