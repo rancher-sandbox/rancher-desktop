@@ -238,7 +238,11 @@ func runAgent(
 	}
 
 	group.Go(func() error {
-		procScanner, err := procnet.NewProcNetScanner(ctx, portTracker, procNetScanInterval)
+		bindIP := net.ParseIP(tapIfaceIP)
+		if bindIP == nil {
+			return fmt.Errorf("invalid tap interface IP %q", tapIfaceIP)
+		}
+		procScanner, err := procnet.NewProcNetScanner(ctx, portTracker, bindIP, procNetScanInterval)
 		if err != nil {
 			return fmt.Errorf("scanning /proc/net/{tcp, udp} failed: %w", err)
 		}

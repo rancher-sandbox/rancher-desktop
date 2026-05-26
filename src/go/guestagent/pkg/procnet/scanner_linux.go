@@ -12,11 +12,15 @@ limitations under the License.
 */
 
 /*
-Package procnet provides functionality to scan and manage network ports based on the system's
-/proc/net/{tcp,udp} entries. It monitors for new and removed ports and handles port forwarding
-via host switch's API. Also, it creates iptables PREROUTING rules, specifically for containers
-using the host network driver. This package is designed to work with the Linux-based WSL
-environment, enabling localnet routing and managing port mappings.
+Package procnet scans /proc/net/{tcp,udp} for listeners the
+container-engine events handler does not publish -- mainly
+--network=host containers binding 127.0.0.1 -- and exposes them to
+host-switch via the API tracker. For loopback listeners it also opens
+a userspace forwarder on the namespace's tap IP so traffic arriving
+from host-switch reaches the in-namespace 127.0.0.1 listener. A
+two-scan stability gate filters out the transient reservation socket
+nerdctl's OCI createRuntime hook opens before CNI installs its
+iptables rules.
 */
 package procnet
 
@@ -24,8 +28,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -38,137 +40,152 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
 
-type action string
+const loopbackIP = "127.0.0.1"
 
-const (
-	Append action = "append"
-	Delete action = "delete"
-)
-
-const routeLocalnet = "/proc/sys/net/ipv4/conf/eth0/route_localnet"
+// loopbackController is what the scanner calls to manage userspace
+// listeners for 127.0.0.1 ports. The real implementation opens listeners
+// on bindIP; unit tests substitute a recording fake.
+type loopbackController interface {
+	Add(ctx context.Context, proto string, port uint16) error
+	Remove(proto string, port uint16) error
+	Close() error
+}
 
 type ProcNetScanner struct {
-	context       context.Context
-	LocalnetRoute bool
-	tracker       tracker.Tracker
-	scanInterval  time.Duration
+	ctx          context.Context
+	tracker      tracker.Tracker
+	forwarder    loopbackController
+	scanInterval time.Duration
+
+	published nat.PortMap
+	pending   nat.PortMap
 }
 
-func NewProcNetScanner(ctx context.Context, t tracker.Tracker, scanInterval time.Duration) (*ProcNetScanner, error) {
+func NewProcNetScanner(ctx context.Context, t tracker.Tracker, bindIP net.IP, scanInterval time.Duration) (*ProcNetScanner, error) {
+	return newScanner(ctx, t, newLoopbackForwarder(bindIP), scanInterval), nil
+}
+
+func newScanner(ctx context.Context, t tracker.Tracker, f loopbackController, scanInterval time.Duration) *ProcNetScanner {
 	return &ProcNetScanner{
-		context:      ctx,
+		ctx:          ctx,
 		tracker:      t,
+		forwarder:    f,
 		scanInterval: scanInterval,
-	}, enableLocalnetRouting()
+		published:    make(nat.PortMap),
+		pending:      make(nat.PortMap),
+	}
 }
 
+// ForwardPorts polls /proc/net every scanInterval and drives Tick with
+// each snapshot.
 func (p *ProcNetScanner) ForwardPorts() error {
 	ticker := time.NewTicker(p.scanInterval)
 	defer ticker.Stop()
-
-	var previousPortMap nat.PortMap
+	defer p.forwarder.Close()
 
 	for {
 		select {
-		case <-p.context.Done():
-			return fmt.Errorf("/proc/net scanner context cancelled: %w", p.context.Err())
+		case <-p.ctx.Done():
+			return fmt.Errorf("/proc/net scanner context cancelled: %w", p.ctx.Err())
 		case <-ticker.C:
-			entries, err := procnettcp.ParseFiles()
+			scanned, err := scanListeners()
 			if err != nil {
-				log.Errorf("failed to parse /proc/net/{tcp, udp} files: %s", err)
+				log.Errorf("failed to scan /proc/net: %s", err)
 				continue
 			}
-			newPortMap := make(nat.PortMap)
-			for _, entry := range entries {
-				if err := addValidProtoEntryToPortMap(entry, newPortMap); err != nil {
-					log.Errorf("failed to create portMapping for entry: %w", err)
-					continue
-				}
-			}
-
-			// Add new ports
-			for port, bindings := range newPortMap {
-				if _, exists := previousPortMap[port]; !exists {
-					log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
-					err := p.tracker.Add(utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())), nat.PortMap{
-						port: bindings,
-					})
-					if err != nil {
-						log.Errorf("/proc/net scanner failed to add port: %s", err)
-						continue
-					}
-					if err = p.execLoopbackIPtablesRule(bindings, port, Append); err != nil {
-						log.Errorf("/proc/net scanner creating loopback iptable rules for portbinding: %v failed: %s", bindings, err)
-					}
-				}
-			}
-
-			// Remove old ports
-			for port, previousBindings := range previousPortMap {
-				if _, exists := newPortMap[port]; !exists {
-					log.Infof("/proc/net scanner removed port: %s -> %+v", port, previousBindings)
-					err := p.tracker.Remove(utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())))
-					if err != nil {
-						log.Errorf("/proc/net scanner failed to remove port: %s", err)
-						continue
-					}
-
-					if err = p.execLoopbackIPtablesRule(previousBindings, port, Delete); err != nil {
-						log.Errorf("/proc/net scanner deleting loopback iptable rules for portbinding: %v failed: %s", previousBindings, err)
-					}
-				}
-			}
-
-			previousPortMap = newPortMap
+			p.Tick(scanned)
 		}
 	}
 }
 
-// execLoopbackIPtablesRule modifies iptables NAT rules to handle loopback traffic for a specified port
-// and protocol. This function is only necessary when the container is using the host network driver
-// (i.e., with --network=host), as in this case the container shares the host's network namespace.
+// Tick reconciles the tracker and userspace forwarder against scanned.
 //
-// When using the host network driver, network traffic bound to 127.0.0.1 needs to be redirected from
-// outside the network namespace to the localhost (127.0.0.1). This function adds or removes DNAT rules
-// that allow traffic to be forwarded to the specified port on localhost, based on the provided 'action'
-// ('append' or 'delete').
-//
-// The function iterates over the provided list of port bindings. For each binding where the HostIP is set
-// to 127.0.0.1, it constructs and executes the corresponding iptables command to either add or delete the
-// appropriate DNAT rule.
-//
-// The iptables rule ensures that incoming traffic from outside the network namespace (i.e., from the
-// host machine) on the specified port and protocol is redirected to the same port on localhost, where the
-// container's service can be accessed.
-//
-// Example iptables rule when 'action' is "append":
-//
-//	iptables -t nat -A PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
-//
-// Example iptables rule when 'action' is "delete":
-//
-//	iptables -t nat -D PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
-func (p *ProcNetScanner) execLoopbackIPtablesRule(bindings []nat.PortBinding, portProto nat.Port, action action) error {
-	for _, binding := range bindings {
-		if binding.HostIP == "127.0.0.1" {
-			// iptables -t nat -D PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
-			//nolint:gosec // None of the arguments are user-supplied.
-			iptablesCmd := exec.CommandContext(p.context,
-				"iptables",
-				"--table", "nat",
-				fmt.Sprintf("--%s", action), "PREROUTING",
-				"--protocol", portProto.Proto(),
-				"--dport", binding.HostPort,
-				"--jump", "DNAT",
-				"--to-destination", fmt.Sprintf("%s:%s", binding.HostIP, binding.HostPort),
-			)
-			if err := iptablesCmd.Run(); err != nil {
-				return err
-			}
-			log.Debugf("running the following iptables rule [%s] for port bindings: %v", iptablesCmd.String(), binding)
+// The two-scan stability gate defers each new port until it appears in
+// two consecutive Ticks (~3 s at the default interval). The gate
+// filters the transient OCI-hook reservation socket. Removals take
+// effect immediately: a vanished listener is unambiguous.
+func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
+	for port, bindings := range p.published {
+		if _, ok := scanned[port]; ok {
+			continue
+		}
+		p.unpublish(port, bindings)
+		delete(p.published, port)
+	}
+
+	for port, bindings := range p.pending {
+		if _, ok := scanned[port]; !ok {
+			continue
+		}
+		p.publish(port, bindings)
+		p.published[port] = bindings
+	}
+
+	p.pending = make(nat.PortMap)
+	for port, bindings := range scanned {
+		if _, ok := p.published[port]; ok {
+			continue
+		}
+		p.pending[port] = bindings
+	}
+}
+
+func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) {
+	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
+	if err := p.tracker.Add(id, nat.PortMap{port: bindings}); err != nil {
+		log.Errorf("/proc/net scanner failed to add %s: %s", port, err)
+		return
+	}
+	log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
+
+	for _, b := range bindings {
+		if b.HostIP != loopbackIP {
+			continue
+		}
+		portNum, err := strconv.ParseUint(b.HostPort, 10, 16)
+		if err != nil {
+			log.Errorf("/proc/net scanner: bad port %q: %s", b.HostPort, err)
+			continue
+		}
+		if err := p.forwarder.Add(p.ctx, port.Proto(), uint16(portNum)); err != nil {
+			log.Errorf("/proc/net scanner: loopback forwarder %s/%s: %s", port.Proto(), b.HostPort, err)
 		}
 	}
-	return nil
+}
+
+func (p *ProcNetScanner) unpublish(port nat.Port, bindings []nat.PortBinding) {
+	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
+	if err := p.tracker.Remove(id); err != nil {
+		log.Errorf("/proc/net scanner failed to remove %s: %s", port, err)
+	}
+	log.Infof("/proc/net scanner removed port: %s -> %+v", port, bindings)
+
+	for _, b := range bindings {
+		if b.HostIP != loopbackIP {
+			continue
+		}
+		portNum, err := strconv.ParseUint(b.HostPort, 10, 16)
+		if err != nil {
+			continue
+		}
+		if err := p.forwarder.Remove(port.Proto(), uint16(portNum)); err != nil {
+			log.Errorf("/proc/net scanner: loopback forwarder remove %s/%s: %s", port.Proto(), b.HostPort, err)
+		}
+	}
+}
+
+func scanListeners() (nat.PortMap, error) {
+	entries, err := procnettcp.ParseFiles()
+	if err != nil {
+		return nil, err
+	}
+	out := make(nat.PortMap)
+	for _, entry := range entries {
+		if err := addValidProtoEntryToPortMap(entry, out); err != nil {
+			log.Errorf("failed to create portMapping for entry: %s", err)
+		}
+	}
+	return out, nil
 }
 
 func addValidProtoEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
@@ -190,18 +207,13 @@ func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
 	portMapKey, err := nat.NewPort(strings.ToLower(entry.Kind), port)
 	if err != nil {
 		return fmt.Errorf("generating portMapKey protocol: %s, port: %d failed: %w",
-			entry.Kind,
-			entry.Port,
-			err)
+			entry.Kind, entry.Port, err)
 	}
 
-	// It's important not to use entry.IP directly here, as any IP
-	// other than 127.0.0.1 (localhost) or 0.0.0.0 may not be accessible
-	// from the host. To ensure consistent behavior, we always set the
-	// HostIP to INADDR_ANY (0.0.0.0) unless the IP is localhost or 0.0.0.0.
-	// The API tracker will then adjust the address as necessary:
-	// - If admin privileges are enabled, the address will remain 0.0.0.0.
-	// - Otherwise, it will be changed to 127.0.0.1 to ensure proper local binding.
+	// Listeners on non-loopback, non-wildcard addresses (e.g. 192.168.x.y)
+	// are not reachable from the Windows host as-is. Coerce to 0.0.0.0 so
+	// the tracker can decide between 0.0.0.0 and 127.0.0.1 based on the
+	// admin-install flag.
 	var hostIP net.IP
 	inAddrAny := net.IPv4(0, 0, 0, 0)
 	if entry.IP.IsLoopback() || entry.IP.Equal(inAddrAny) {
@@ -209,28 +221,9 @@ func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
 	} else {
 		hostIP = inAddrAny
 	}
-	portBinding := nat.PortBinding{
+	portMap[portMapKey] = append(portMap[portMapKey], nat.PortBinding{
 		HostIP:   hostIP.String(),
 		HostPort: port,
-	}
-	portMap[portMapKey] = append(portMap[portMapKey], portBinding)
-	return nil
-}
-
-func enableLocalnetRouting() error {
-	const enable = "1"
-	return writeSysctl(routeLocalnet, enable)
-}
-
-func writeSysctl(path, value string) error {
-	f, err := os.OpenFile(path, os.O_WRONLY, 0)
-	if err != nil {
-		return fmt.Errorf("could not open the sysctl file %s: %w", path, err)
-	}
-	defer f.Close()
-	if _, err := f.WriteString(value); err != nil {
-		return fmt.Errorf("could not write to the sysctl file %s: %w", path, err)
-	}
-	log.Infof("/proc/net scanner enabled %s", routeLocalnet)
+	})
 	return nil
 }
