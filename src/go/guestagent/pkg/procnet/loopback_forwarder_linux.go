@@ -32,6 +32,7 @@ import (
 	"net"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/Masterminds/log-go"
 )
@@ -159,31 +160,72 @@ func (f *loopbackForwarder) pipeTCP(ctx context.Context, in net.Conn, port uint1
 	<-done
 }
 
-// relayUDP is a sketch: one outbound socket per inbound datagram with
-// no idle expiry. Production code mirrors Lima's pkg/portfwd UDP
-// handler (LRU keyed by client address, idle timeout). UDP stays thin
-// here because the #10280 bug is TCP-only; this sketch matches the
-// iptables DNAT path's existing UDP coverage.
+// relayUDP forwards UDP datagrams between the bindIP listener and
+// 127.0.0.1, multiplexing concurrent flows by source address. Each
+// flow holds a dedicated outbound socket; the socket closes after
+// udpIdleTimeout of no upstream reply.
 func (f *loopbackForwarder) relayUDP(ctx context.Context, pc net.PacketConn, port uint16) {
 	target := net.JoinHostPort("127.0.0.1", strconv.Itoa(int(port)))
+
+	var (
+		mu    sync.Mutex
+		flows = make(map[string]net.Conn)
+	)
+	defer func() {
+		mu.Lock()
+		for k, out := range flows {
+			_ = out.Close()
+			delete(flows, k)
+		}
+		mu.Unlock()
+	}()
+
 	buf := make([]byte, 64*1024)
 	for {
 		n, src, err := pc.ReadFrom(buf)
 		if err != nil {
 			return
 		}
-		out, err := f.dialer.DialContext(ctx, "udp", target)
-		if err != nil {
-			log.Debugf("loopback forwarder dial udp/%d: %s", port, err)
-			continue
+		srcKey := src.String()
+
+		mu.Lock()
+		out, ok := flows[srcKey]
+		if !ok {
+			conn, derr := f.dialer.DialContext(ctx, "udp", target)
+			if derr != nil {
+				mu.Unlock()
+				log.Debugf("loopback forwarder dial udp/%d: %s", port, derr)
+				continue
+			}
+			out = conn
+			flows[srcKey] = out
+			go f.readUDPReplies(pc, out, src, srcKey, &mu, flows)
 		}
+		mu.Unlock()
+
 		_, _ = out.Write(buf[:n])
-		// One-shot reply read. Production code would multiplex; see Lima.
-		rbuf := make([]byte, 64*1024)
-		n2, err := out.Read(rbuf)
-		if err == nil {
-			_, _ = pc.WriteTo(rbuf[:n2], src)
+	}
+}
+
+const udpIdleTimeout = 30 * time.Second
+
+// readUDPReplies pumps datagrams from a per-flow outbound socket back
+// to the original client. A SetReadDeadline of udpIdleTimeout per Read
+// closes the flow once the upstream stops replying.
+func (f *loopbackForwarder) readUDPReplies(pc net.PacketConn, out net.Conn, srcAddr net.Addr, srcKey string, mu *sync.Mutex, flows map[string]net.Conn) {
+	rbuf := make([]byte, 64*1024)
+	for {
+		_ = out.SetReadDeadline(time.Now().Add(udpIdleTimeout))
+		n, err := out.Read(rbuf)
+		if err != nil {
+			mu.Lock()
+			if flows[srcKey] == out {
+				delete(flows, srcKey)
+			}
+			mu.Unlock()
+			_ = out.Close()
+			return
 		}
-		out.Close()
+		_, _ = pc.WriteTo(rbuf[:n], srcAddr)
 	}
 }

@@ -119,3 +119,117 @@ func TestForwarderAddIsIdempotent(t *testing.T) {
 		}
 	}
 }
+
+// startUDPEcho binds a UDP listener on 127.0.0.1:0 that echoes every
+// received datagram back to the sender. Returns the chosen port and a
+// stop function.
+func startUDPEcho(t *testing.T) (uint16, func()) {
+	t.Helper()
+	pc, err := net.ListenPacket("udp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen upstream udp: %v", err)
+	}
+	port := uint16(pc.LocalAddr().(*net.UDPAddr).Port)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		buf := make([]byte, 64*1024)
+		for {
+			n, src, err := pc.ReadFrom(buf)
+			if err != nil {
+				return
+			}
+			_, _ = pc.WriteTo(buf[:n], src)
+		}
+	}()
+	return port, func() {
+		_ = pc.Close()
+		<-done
+	}
+}
+
+func TestForwarderUDPEndToEnd(t *testing.T) {
+	port, stop := startUDPEcho(t)
+	defer stop()
+
+	bindIP := net.ParseIP("127.0.0.99")
+	fwd := newLoopbackForwarder(bindIP)
+	defer fwd.Close()
+	if err := fwd.Add(context.Background(), "udp", port); err != nil {
+		t.Fatalf("forwarder.Add: %v", err)
+	}
+
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("127.0.0.99:%d", port), 2*time.Second)
+	if err != nil {
+		t.Skipf("dial via 127.0.0.99 failed: %v", err)
+	}
+	defer conn.Close()
+
+	want := "ping"
+	if _, err := conn.Write([]byte(want)); err != nil {
+		t.Fatalf("write to forwarder: %v", err)
+	}
+	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf)
+	if err != nil {
+		t.Fatalf("read echo: %v", err)
+	}
+	if got := string(buf[:n]); got != want {
+		t.Fatalf("forwarded payload = %q, want %q", got, want)
+	}
+}
+
+func TestForwarderUDPConcurrentFlows(t *testing.T) {
+	port, stop := startUDPEcho(t)
+	defer stop()
+
+	bindIP := net.ParseIP("127.0.0.99")
+	fwd := newLoopbackForwarder(bindIP)
+	defer fwd.Close()
+	if err := fwd.Add(context.Background(), "udp", port); err != nil {
+		t.Fatalf("forwarder.Add: %v", err)
+	}
+
+	target := fmt.Sprintf("127.0.0.99:%d", port)
+
+	type result struct {
+		want string
+		got  string
+		err  error
+	}
+	results := make(chan result, 4)
+	for i := 0; i < 4; i++ {
+		want := fmt.Sprintf("payload-%d", i)
+		go func() {
+			conn, err := net.DialTimeout("udp", target, 2*time.Second)
+			if err != nil {
+				results <- result{want: want, err: err}
+				return
+			}
+			defer conn.Close()
+			if _, err := conn.Write([]byte(want)); err != nil {
+				results <- result{want: want, err: err}
+				return
+			}
+			_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+			buf := make([]byte, 1024)
+			n, rerr := conn.Read(buf)
+			if rerr != nil {
+				results <- result{want: want, err: rerr}
+				return
+			}
+			results <- result{want: want, got: string(buf[:n])}
+		}()
+	}
+
+	for i := 0; i < 4; i++ {
+		r := <-results
+		if r.err != nil {
+			t.Fatalf("client %q: %v", r.want, r.err)
+		}
+		if r.got != r.want {
+			t.Fatalf("got %q, want %q", r.got, r.want)
+		}
+	}
+}
