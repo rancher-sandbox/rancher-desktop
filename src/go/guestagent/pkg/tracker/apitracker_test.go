@@ -463,7 +463,80 @@ func TestRemoveWithError(t *testing.T) {
 	})
 
 	actualPortMapping := apiTracker.Get(containerID)
-	assert.Nil(t, actualPortMapping)
+	require.Len(t, actualPortMapping[protoPort], 1,
+		"failing binding must remain in storage for retry")
+	assert.Equal(t, hostIP2, actualPortMapping[protoPort][0].HostIP)
+}
+
+// TestRemoveRetainsFailedUnexposeInStorage pins the storage-retention
+// path on partial Unexpose failure. Scenario: a containerID has three
+// bindings; the Unexpose call for one binding fails. The entry for the
+// failing binding must remain in portStorage so a later Remove can
+// retry, the successfully-unexposed bindings must drop from storage,
+// and wsl-proxy must be notified only of the successes.
+func TestRemoveRetainsFailedUnexposeInStorage(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("/services/forwarder/unexpose", func(w http.ResponseWriter, r *http.Request) {
+		var req *types.UnexposeRequest
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+		if req.Local == ipPortBuilder(hostIP2, hostPort) {
+			http.Error(w, "Test API error", http.StatusRequestTimeout)
+			return
+		}
+	})
+
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	wslProxy := &testForwarder{}
+	apiTracker := tracker.NewAPITracker(context.Background(), wslProxy, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	portMapping := nat.PortMap{
+		protoPort: []nat.PortBinding{
+			{HostIP: hostIP, HostPort: hostPort},
+			{HostIP: hostIP2, HostPort: hostPort},
+			{HostIP: hostIP3, HostPort: hostPort},
+		},
+	}
+
+	require.NoError(t, apiTracker.Add(containerID, portMapping))
+
+	// Discard wsl-proxy mappings from Add; we only assert on what Remove sends.
+	wslProxy.receivedPortMappings = nil
+
+	err = apiTracker.Remove(containerID)
+	require.Error(t, err, "Remove must surface the unexpose failure")
+	require.ErrorIs(t, err, forwarder.ErrUnexposeAPI)
+
+	remaining := apiTracker.Get(containerID)
+	require.NotNil(t, remaining,
+		"portStorage must retain the entry when any Unexpose fails")
+	require.Len(t, remaining[protoPort], 1,
+		"storage must contain the failing binding only")
+	require.Equal(t, hostIP2, remaining[protoPort][0].HostIP,
+		"the retained binding must be the one whose Unexpose failed")
+
+	require.Len(t, wslProxy.receivedPortMappings, 1,
+		"wsl-proxy must be notified once, for the successful unexposes")
+	require.True(t, wslProxy.receivedPortMappings[0].Remove)
+	var sentBindings []nat.PortBinding
+	for _, bindings := range wslProxy.receivedPortMappings[0].Ports {
+		sentBindings = append(sentBindings, bindings...)
+	}
+	sentIPs := make([]string, 0, len(sentBindings))
+	for _, b := range sentBindings {
+		sentIPs = append(sentIPs, b.HostIP)
+	}
+	assert.ElementsMatch(t, []string{hostIP, hostIP3}, sentIPs,
+		"wsl-proxy must see only the successfully-unexposed bindings")
 }
 
 // TestRemoveWSLProxyFailureIsDistinguishable confirms that when every

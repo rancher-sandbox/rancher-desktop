@@ -179,17 +179,30 @@ func (a *APITracker) Get(containerID string) nat.PortMap {
 	return a.portStorage.get(containerID)
 }
 
-// Remove a single entry from the port storage and calls the
-// /services/forwarder/unexpose endpoint to remove the forwarded port mappings.
+// Remove unexposes the bindings stored under containerID and updates
+// portStorage. Bindings whose Unexpose call succeeds drop from storage;
+// bindings whose Unexpose call fails remain in storage so a later
+// Remove(containerID) can retry them. wsl-proxy is notified of the
+// successful unexposes only -- a later retry that succeeds will send a
+// fresh notification for those bindings.
 func (a *APITracker) Remove(containerID string) error {
 	portMap := a.portStorage.get(containerID)
-	defer a.portStorage.remove(containerID)
+	if len(portMap) == 0 {
+		return nil
+	}
 
 	var unexposeErrs []error
+	unexposed := make(nat.PortMap)
+	remaining := make(nat.PortMap)
 
 	for portProto, portBindings := range portMap {
+		var unexposedBindings []nat.PortBinding
+		var remainingBindings []nat.PortBinding
 		for _, portBinding := range portBindings {
-			// The unexpose API only supports IPv4
+			// The unexpose API only supports IPv4. Non-IPv4 entries
+			// were never exposed via the API, so we drop them from
+			// storage rather than retain them -- a retry would skip
+			// them again with the same isIPv4 result.
 			ipv4, err := isIPv4(portBinding.HostIP)
 			if !ipv4 || err != nil {
 				log.Errorf("did not receive IPv4 for HostIP: %s", portBinding.HostIP)
@@ -206,10 +219,25 @@ func (a *APITracker) Remove(containerID string) error {
 			if err != nil {
 				unexposeErrs = append(unexposeErrs,
 					fmt.Errorf("unexposing %+v failed: %w", portBinding, err))
-
+				remainingBindings = append(remainingBindings, portBinding)
 				continue
 			}
+			unexposedBindings = append(unexposedBindings, portBinding)
 		}
+		if len(unexposedBindings) > 0 {
+			unexposed[portProto] = unexposedBindings
+		}
+		if len(remainingBindings) > 0 {
+			remaining[portProto] = remainingBindings
+		}
+	}
+
+	// Update portStorage: retain only the bindings whose Unexpose
+	// failed; drop the entry entirely if everything succeeded.
+	if len(remaining) > 0 {
+		a.portStorage.add(containerID, remaining)
+	} else {
+		a.portStorage.remove(containerID)
 	}
 
 	// Report the host-switch unexpose failures and the wsl-proxy failure
@@ -223,10 +251,10 @@ func (a *APITracker) Remove(containerID string) error {
 		retErr = fmt.Errorf("%w: %+v", forwarder.ErrUnexposeAPI, unexposeErrs)
 	}
 
-	if len(portMap) != 0 {
+	if len(unexposed) > 0 {
 		portMapping := guestagentTypes.PortMapping{
 			Remove: true,
-			Ports:  portMap,
+			Ports:  unexposed,
 		}
 		log.Debugf("forwarding to wsl-proxy to remove port mapping: %+v", portMapping)
 		if err := a.wslProxyForwarder.Send(portMapping); err != nil {

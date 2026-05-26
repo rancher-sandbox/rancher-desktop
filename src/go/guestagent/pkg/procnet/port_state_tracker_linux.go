@@ -82,13 +82,10 @@ import (
 //	    Delete precedes the Remove so a transient Delete failure leaves
 //	    the port appendFailed with its tracker entry intact, to retry
 //	    next tick, rather than stranded with neither proxy nor rule.
-//	    The Remove error is classified the same way retireDisappeared
-//	    classifies it: a wsl-proxy-only failure leaves the proxy gone
-//	    (mark delegated); any other failure is logged and the port is
-//	    still marked delegated, accepting the rare leak that
-//	    retireDisappeared's default branch already accepts -- a retry
-//	    would not recover because APITracker.Remove clears portStorage
-//	    via a leading defer.
+//	    On Remove failure releaseToEngine records the port in
+//	    strandedProxies; retryStranded drives the recovery on later
+//	    ticks (see "Stranded-proxy recovery" below). The port is marked
+//	    delegated either way -- the engine's chain is now authoritative.
 //	    This trusts the engine to expose the port itself. The engine
 //	    chain is installed during container network setup, before the
 //	    engine's portTracker.Add runs, so its presence does not prove
@@ -105,12 +102,13 @@ import (
 //	  Owned: tracker.Remove. On success -- or a wsl-proxy-only
 //	    failure, where every host-switch Unexpose landed and the proxy
 //	    is gone -- delete the loopback rule. On an unexpose failure the
-//	    proxy may still be bound, so keep the rule -- deleting it would
-//	    strand traffic to the proxy, and a retained rule self-cleans on
-//	    RD restart. Either way drop the local marker: APITracker.Remove
-//	    wipes portStorage via a leading defer, so retrying it on a later
-//	    tick is a silent no-op, and retaining the marker deadlocks
-//	    the Add path if the listener reappears.
+//	    proxy may still be bound, so retain the rule (deleting it would
+//	    strand in-WSL traffic to the proxy that may still be serving)
+//	    and record the port in strandedProxies. retryStranded reissues
+//	    Remove on each tick; once it succeeds the strand drops and the
+//	    retained rule is deleted. Either way drop the local marker:
+//	    retaining it deadlocks the Add path if the listener reappears
+//	    (the alreadyAdded fast path would short-circuit it).
 //
 // Bindings refresh (per tick): when an already-tracked port's binding
 // set changes, reconcileBindings applies the iptables transition. A
@@ -120,6 +118,22 @@ import (
 // Delegated ports refresh state.bindings only -- the engine owns the
 // rule. The non-loopback dimension does not drive iptables; loopback
 // bindings carry the rules.
+//
+// Stranded-proxy recovery: a tracker.Remove that returns a non-
+// proxyDestroyed error leaves the gvisor proxy possibly bound under
+// the synthetic ID. releaseToEngine and retireDisappeared's default
+// branch record the port in strandedProxies. APITracker.Remove
+// retains the failing bindings in portStorage so each retry actually
+// reissues the Unexpose call instead of walking an empty map.
+// retryStranded runs at the end of every Tick: when no listener is
+// observable for a stranded port, it retries Remove and -- on success
+// or a wsl-proxy-only failure -- deletes any retained loopback rule
+// (idempotent for engine-takeover sites that already cleared their
+// rule). While a listener IS observable, retryStranded skips: the
+// proxy that may still be bound is now plausibly serving that
+// listener, and an unbind would tear the working path down.
+// Re-acquiring ownership (exposeNew's non-managed success or
+// handleAlreadyExposed's resume path) clears the strand directly.
 //
 // Engine-chain re-probe: addObserved re-probes the engine chain only
 // when appendFailed=true; owned-success and delegated ports skip
@@ -167,8 +181,8 @@ func (r *realIptablesRunner) ApplyLoopbackRule(proto, hostPort string, act actio
 
 // portStateTracker drives the procnet per-port state machine across
 // scan ticks. State (added, seenLastScan, addErrorLogged,
-// probeErrorLogged) outlives a single Tick call. The struct is not
-// safe for concurrent use; callers must serialize Tick.
+// probeErrorLogged, strandedProxies) outlives a single Tick call. The
+// struct is not safe for concurrent use; callers must serialize Tick.
 type portStateTracker struct {
 	tracker          tracker.Tracker
 	iptables         iptablesRunner
@@ -176,6 +190,14 @@ type portStateTracker struct {
 	seenLastScan     nat.PortMap
 	addErrorLogged   map[nat.Port]bool
 	probeErrorLogged map[nat.Port]bool
+	// strandedProxies tracks ports whose host-switch Unexpose failed.
+	// The gvisor proxy may still be bound under the synthetic ID, and
+	// APITracker.Remove retains the failing bindings in portStorage so
+	// a later tracker.Remove can retry them. Each Tick calls
+	// retryStranded to drive the retry; on success the entry drops and
+	// any retained loopback rule is deleted. The map's value carries
+	// the bindings whose loopback rule may still need a Delete.
+	strandedProxies map[nat.Port][]nat.PortBinding
 }
 
 func newPortStateTracker(t tracker.Tracker, ipt iptablesRunner) *portStateTracker {
@@ -188,15 +210,18 @@ func newPortStateTracker(t tracker.Tracker, ipt iptablesRunner) *portStateTracke
 		added:            make(map[nat.Port]portState),
 		addErrorLogged:   make(map[nat.Port]bool),
 		probeErrorLogged: make(map[nat.Port]bool),
+		strandedProxies:  make(map[nat.Port][]nat.PortBinding),
 	}
 }
 
 // Tick runs one scan iteration: expose newly-observed ports, retire
-// ports whose listeners disappeared, and refresh the stability gate.
+// ports whose listeners disappeared, refresh the stability gate, and
+// retry any stranded-proxy cleanup whose previous Remove failed.
 func (pst *portStateTracker) Tick(newPortMap nat.PortMap) {
 	pst.addObserved(newPortMap)
 	pst.retireDisappeared(newPortMap)
 	pst.cleanupErrorLogged(newPortMap)
+	pst.retryStranded(newPortMap)
 	// newPortMap is rebuilt by the caller on the next iteration, so
 	// this alias is safe; the caller must not mutate newPortMap after
 	// passing it in.
@@ -247,14 +272,12 @@ func (pst *portStateTracker) exposeNew(port nat.Port, bindings []nat.PortBinding
 		// error (see APITracker.Add's partial-failure block); without
 		// this release the gvisor proxy stays bound under the synthetic
 		// ID and blocks the engine's own Add with "proxy already
-		// running" until RD restart. APITracker.Remove clears
-		// portStorage via a leading defer, so we cannot retry: a
-		// wsl-proxy-only failure means the proxy is gone, and any
-		// other failure leaves the leak retireDisappeared's default
-		// branch already accepts. Mark delegated either way; the
-		// engine's container-start handler is expected to bind its own
-		// proxy under the container ID, and the chain appearing is the
-		// engine's signal that setup is underway.
+		// running" until RD restart. On a non-proxyDestroyed Remove
+		// failure releaseToEngine records the strand and retryStranded
+		// drives the recovery on later ticks. Mark delegated either
+		// way; the engine's container-start handler is expected to
+		// bind its own proxy under the container ID, and the chain
+		// appearing is the engine's signal that setup is underway.
 		//
 		// Known trade-off: when procnet's and the engine's host-switch
 		// Local strings collide, the engine's events handler
@@ -263,29 +286,22 @@ func (pst *portStateTracker) exposeNew(port nat.Port, bindings []nat.PortBinding
 		// from gvisor against our binding, logged once, and returned
 		// -- without retrying. The Remove here then tears down the
 		// only host-switch proxy, and Windows-side traffic drops until
-		// RD restart. The collision triggers in two configurations:
-		// any HostIP=127.0.0.1 publish (procnet binds 127.0.0.1 for
+		// the engine's next portTracker.Add or RD restart. The
+		// collision triggers in two configurations: any
+		// HostIP=127.0.0.1 publish (procnet binds 127.0.0.1 for
 		// loopback listeners; the engine's Expose also uses 127.0.0.1
 		// for that publish form), and -- in non-admin install -- any
 		// publish at all, since APITracker.determineHostIP rewrites
-		// every HostIP to 127.0.0.1 when isAdmin is false. The trade-
-		// off is intentional: leaving the synthetic entry in place
-		// would strand the gvisor proxy under the synthetic ID, with
-		// the engine's later Add forever failing with "proxy already
-		// running", so this regression rides along with the existing
-		// rare-leak path retireDisappeared's default branch already
-		// accepts. The trigger still requires
-		// stability-gate bypass under heavy load plus a transient
-		// wsl-proxy.Send failure, and the collision configuration
-		// above. The same trade-off applies in retryAppend's engine-
-		// takeover branch and in retireDisappeared's default branch.
+		// every HostIP to 127.0.0.1 when isAdmin is false. Trigger
+		// requires stability-gate bypass under heavy load plus the
+		// collision configuration above; rare enough to accept.
 		//
 		// The Get+Remove pair is non-atomic but safe: engines key
 		// portStorage on container.ID and procnet keys on
 		// syntheticIDFor(port), so an engine cannot Remove our entry
 		// out from under us between the two calls.
 		if len(pst.tracker.Get(syntheticID)) > 0 {
-			pst.releaseToEngine(port, "before engine delegation")
+			pst.releaseToEngine(port, bindings, "before engine delegation")
 		}
 		// Reconcile any leftover procnet loopback rule before delegating.
 		// Two scenarios produce a stale rule that the delegation path
@@ -343,6 +359,9 @@ func (pst *portStateTracker) exposeNew(port nat.Port, bindings []nat.PortBinding
 		delegated:    false,
 		appendFailed: appendErr != nil,
 	}
+	// Re-acquiring ownership supersedes any prior strand; the live
+	// proxy now serves the active listener.
+	delete(pst.strandedProxies, port)
 }
 
 // handleAlreadyExposed disambiguates the two shapes of
@@ -372,6 +391,8 @@ func (pst *portStateTracker) handleAlreadyExposed(port nat.Port, bindings []nat.
 			appendFailed: appendErr != nil,
 		}
 		delete(pst.addErrorLogged, port)
+		// Resuming ownership supersedes any prior strand.
+		delete(pst.strandedProxies, port)
 		return
 	}
 	// Do not reconcile a leftover loopback rule here. From this branch
@@ -449,7 +470,7 @@ func (pst *portStateTracker) installLateLoopback(port nat.Port, newBindings []na
 		return
 	}
 	if managed {
-		pst.releaseToEngine(port, "on late loopback install")
+		pst.releaseToEngine(port, newBindings, "on late loopback install")
 		pst.added[port] = portState{bindings: newBindings, delegated: true}
 		log.Infof("/proc/net scanner released ownership of %s to engine-managed chain on late loopback install", port)
 		return
@@ -489,17 +510,13 @@ func (pst *portStateTracker) retryAppend(port nat.Port, state portState) {
 			log.Debugf("/proc/net scanner retry of iptables Delete for %s after engine takeover still failing: %s", port, err)
 			return
 		}
-		// APITracker.Remove clears portStorage via a leading defer, so
-		// a next-tick retry would read an empty portMap, skip the
-		// Unexpose loop, and return nil -- hiding the failure rather
-		// than recovering. Accept the rare leak when host-switch
-		// unexpose fails: a stranded gvisor proxy under the synthetic
-		// ID blocks the engine's later Add with "proxy already running"
-		// until RD restart, and on the Local-collision configurations
-		// described in exposeNew's engine-delegation comment,
-		// Windows-side traffic for that host port drops until RD
-		// restart.
-		pst.releaseToEngine(port, "after engine took over")
+		// On a non-proxyDestroyed Remove failure releaseToEngine
+		// records the port in strandedProxies; retryStranded reissues
+		// Remove on later ticks until the proxy unbinds. The port is
+		// marked delegated either way -- the engine's chain is the
+		// authoritative routing surface and the strand carries the
+		// proxy-cleanup obligation independently of pst.added.
+		pst.releaseToEngine(port, state.bindings, "after engine took over")
 		pst.added[port] = portState{bindings: state.bindings, delegated: true}
 		log.Infof("/proc/net scanner released ownership of %s to engine-managed chain after append retry", port)
 		return
@@ -547,15 +564,15 @@ func (pst *portStateTracker) retireDisappeared(newPortMap nat.PortMap) {
 			log.Errorf("/proc/net scanner failed to remove port (wsl-proxy notification failed; loopback rule deleted): %s", removeErr)
 		default:
 			// The host-switch unexpose did not land, or the error is
-			// unclassified, so the proxy may still be bound. Keep the
-			// loopback rule so traffic still reaches the proxy; deleting
-			// it would strand the port. A leaked rule self-cleans on RD
-			// restart. Same trade-off as exposeNew's engine-delegation
-			// path: a stranded gvisor proxy under the synthetic ID can
-			// block a later same-host-port engine Add with "proxy
-			// already running" on the Local-collision configurations
-			// described in that comment.
-			log.Errorf("/proc/net scanner failed to remove port (host-switch unexpose may have left proxy bound; loopback rule retained): %s", removeErr)
+			// unclassified, so the proxy may still be bound. Mark the
+			// port stranded; APITracker.Remove retains the failing
+			// bindings in portStorage, and retryStranded will retry
+			// the Unexpose on each tick. Keep the loopback rule until
+			// the strand recovers (deleting it now would strand
+			// in-WSL traffic to the proxy that may still be bound);
+			// retryStranded deletes the rule once the Unexpose lands.
+			log.Errorf("/proc/net scanner failed to remove port (host-switch unexpose may have left proxy bound; retrying): %s", removeErr)
+			pst.strandedProxies[port] = state.bindings
 			continue
 		}
 		if err := pst.applyLoopbackRules(state.bindings, port, Delete); err != nil {
@@ -636,12 +653,17 @@ func hasLoopbackBinding(bindings []nat.PortBinding) bool {
 
 // releaseToEngine calls tracker.Remove on the synthetic ID for port and
 // logs any failure with classification. It does not mark the port
-// delegated -- callers do that based on their own state. The phase
-// string describes the call site for log clarity; it must complete
-// "released ownership of <port> <phase>" and "failed to release
-// ownership of <port> <phase>". Used when an engine chain has taken
-// over a port procnet currently owns or has a partial-Add for.
-func (pst *portStateTracker) releaseToEngine(port nat.Port, phase string) {
+// delegated -- callers do that based on their own state. On a non-
+// proxyDestroyed failure the gvisor proxy may still be bound under the
+// synthetic ID; releaseToEngine records the port in strandedProxies so
+// retryStranded keeps retrying until the Remove lands. The bindings
+// passed in are used by retryStranded to delete any retained loopback
+// rule once the strand recovers. The phase string describes the call
+// site for log clarity; it must complete "released ownership of <port>
+// <phase>" and "failed to release ownership of <port> <phase>". Used
+// when an engine chain has taken over a port procnet currently owns or
+// has a partial-Add for.
+func (pst *portStateTracker) releaseToEngine(port nat.Port, bindings []nat.PortBinding, phase string) {
 	err := pst.tracker.Remove(syntheticIDFor(port))
 	if err == nil {
 		return
@@ -650,7 +672,45 @@ func (pst *portStateTracker) releaseToEngine(port nat.Port, phase string) {
 		log.Errorf("/proc/net scanner released ownership of %s %s (wsl-proxy notification failed): %s", port, phase, err)
 		return
 	}
-	log.Errorf("/proc/net scanner failed to release ownership of %s %s; host-switch unexpose may have left the proxy bound until RD restart: %s", port, phase, err)
+	log.Errorf("/proc/net scanner failed to release ownership of %s %s; host-switch unexpose may have left the proxy bound -- retrying: %s", port, phase, err)
+	pst.strandedProxies[port] = bindings
+}
+
+// retryStranded retries tracker.Remove for each port whose previous
+// Remove failed with a non-proxyDestroyed error. On success (or a
+// wsl-proxy-only failure where every Unexpose actually landed) the
+// entry drops from strandedProxies and applyLoopbackRules(Delete) runs
+// against the stored bindings. applyLoopbackRules probes for the rule
+// first, so the Delete is a no-op for engine-takeover sites that
+// already cleared their rule before the Remove. APITracker.Remove
+// retains the failing bindings in portStorage so this retry actually
+// reissues the Unexpose call instead of walking an empty map.
+//
+// Ports whose listener has reappeared in newPortMap are skipped: the
+// proxy that may still be bound is now plausibly serving that listener,
+// and an unbind here would tear down a working path. The strand stays
+// in the map for a later gap. exposeNew and handleAlreadyExposed drop
+// the strand once procnet re-acquires ownership of the port.
+func (pst *portStateTracker) retryStranded(newPortMap nat.PortMap) {
+	for port, bindings := range pst.strandedProxies {
+		if _, listenerBack := newPortMap[port]; listenerBack {
+			continue
+		}
+		err := pst.tracker.Remove(syntheticIDFor(port))
+		if err != nil && !removeReportedProxyDestroyed(err) {
+			log.Debugf("/proc/net scanner stranded-proxy retry for %s still failing: %s", port, err)
+			continue
+		}
+		delete(pst.strandedProxies, port)
+		if err != nil {
+			log.Errorf("/proc/net scanner recovered stranded proxy for %s (wsl-proxy notification failed): %s", port, err)
+		} else {
+			log.Infof("/proc/net scanner recovered stranded proxy for %s", port)
+		}
+		if ruleErr := pst.applyLoopbackRules(bindings, port, Delete); ruleErr != nil {
+			log.Errorf("/proc/net scanner deleting retained loopback rule for recovered port %s failed: %s", port, ruleErr)
+		}
+	}
 }
 
 // removeReportedProxyDestroyed reports whether a non-nil tracker.Remove

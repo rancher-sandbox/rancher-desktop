@@ -34,9 +34,10 @@ type fakeTracker struct {
 	addBehavior []addBehavior
 	addCalls    []addCall
 	removeCalls []string
-	// removeErr, when set, is returned by every Remove call. The
-	// storage entry is still cleared, mirroring APITracker.Remove's
-	// leading `defer a.portStorage.remove`.
+	// removeErr, when set, is returned by every Remove call. Storage
+	// retention mirrors APITracker.Remove: cleared on a successful or
+	// wsl-proxy-only Remove (proxy is gone), retained on a host-switch
+	// unexpose failure so a retry can drive the recovery.
 	removeErr error
 }
 
@@ -77,7 +78,12 @@ func (f *fakeTracker) Add(containerID string, portMap nat.PortMap) error {
 
 func (f *fakeTracker) Remove(containerID string) error {
 	f.removeCalls = append(f.removeCalls, containerID)
-	delete(f.storage, containerID)
+	// Mirror APITracker.Remove: clear storage on success or a
+	// wsl-proxy-only failure (proxy is gone); retain storage on a
+	// host-switch unexpose failure so a retry can recover.
+	if f.removeErr == nil || removeReportedProxyDestroyed(f.removeErr) {
+		delete(f.storage, containerID)
+	}
 	return f.removeErr
 }
 
@@ -337,32 +343,51 @@ func TestCleanupReleasesAddedOnDeleteFailure(t *testing.T) {
 }
 
 // TestCleanupReleasesAddedOnRemoveFailure covers the cleanup-side
-// tracker.Remove failure. APITracker.Remove wipes portStorage via a
-// leading defer even when it returns an error, so a retry is a silent
-// no-op. The local marker must drop anyway, or the listener can never
-// be re-added when it reappears.
+// tracker.Remove failure. The local marker must drop so the listener
+// can be re-added when it reappears (without the drop, the
+// alreadyAdded fast path would short-circuit re-acquisition). The
+// strand mechanism keeps trying to unbind the leaked proxy via
+// retryStranded.
 func TestCleanupReleasesAddedOnRemoveFailure(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
 	pst := newPortStateTracker(fakeT, fakeIPT)
 	pm := makePortMap(t)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
 
 	pst.Tick(pm) // 1: defer
 	pst.Tick(pm) // 2: added
 	require.Len(t, fakeT.addCalls, 1)
 
-	// Listener disappears; tracker.Remove fails.
+	// Listener disappears; tracker.Remove fails on both the
+	// retireDisappeared call and the same-tick retryStranded retry.
 	fakeT.removeErr = errors.New("unexpose api error: simulated")
-	pst.Tick(nat.PortMap{}) // 3: cleanup; Remove fails
-	require.Len(t, fakeT.removeCalls, 1)
+	pst.Tick(nat.PortMap{}) // 3: cleanup; Remove fails; strand set
+	require.Len(t, fakeT.removeCalls, 2,
+		"retireDisappeared + retryStranded each issue one Remove in the same tick")
+	_, stillTracked := pst.added[port]
+	require.False(t, stillTracked, "pst.added must drop the entry")
+	require.Contains(t, pst.strandedProxies, port,
+		"failed Remove must record the port in strandedProxies for retry")
 
-	// Remove recovers; listener reappears.
-	fakeT.removeErr = nil
-	pst.Tick(pm) // 4: reappearance, defer
-	pst.Tick(pm) // 5: stability gate passes, re-add
+	// Listener reappears with Remove still failing; retryStranded must
+	// skip while a listener is observable to avoid unbinding a proxy
+	// that may now be serving the new listener.
+	pst.Tick(pm) // 4: reappearance, defer; retryStranded skips
+	require.Len(t, fakeT.removeCalls, 2,
+		"retryStranded must NOT retry while the listener is observable")
+	require.Contains(t, pst.strandedProxies, port,
+		"strand must persist across the deferral tick")
+
+	// Stability gate passes; tracker.Add succeeds (default behavior);
+	// re-acquisition clears the strand.
+	pst.Tick(pm) // 5: re-add
 
 	require.Len(t, fakeT.addCalls, 2,
 		"reappearance after tracker.Remove failure must trigger a fresh tracker.Add")
+	require.NotContains(t, pst.strandedProxies, port,
+		"re-acquiring ownership must clear the strand")
 }
 
 // TestAddErrorLoggedSuppressesLogSpam confirms the first failed
@@ -951,13 +976,15 @@ func TestAppendRetryEngineTakeoverRetriesFailedDelete(t *testing.T) {
 }
 
 // TestRemoveFailureRetainsRuleForReappearance pins the rule-retention
-// path on Remove failure. Scenario: an owned port's listener disappears
-// and tracker.Remove fails -- the host-switch proxy may still be bound.
-// The loopback rule must be retained, not deleted: when the listener
-// reappears, tracker.Add returns "proxy already running" from the stale
-// proxy and (storage having been cleared) the port is delegated with no
-// fresh Append, so only the retained rule keeps it reachable from the
-// host.
+// path during a strand + reappearance sequence. Scenario: an owned
+// port's listener disappears and tracker.Remove fails. The loopback
+// rule must stay installed so traffic from the still-bound proxy
+// continues to reach a listener that reappears. APITracker.Remove
+// retains the failing binding in portStorage, so when the listener
+// reappears tracker.Add returns ErrPortAlreadyExposed and
+// handleAlreadyExposed resumes ownership (Get>0) -- not delegation.
+// retryStranded skips while a listener is observable, so the strand
+// stays in the map across the deferral tick and clears on the resume.
 func TestRemoveFailureRetainsRuleForReappearance(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
@@ -969,31 +996,35 @@ func TestRemoveFailureRetainsRuleForReappearance(t *testing.T) {
 	pst.Tick(pm) // 1: defer
 	pst.Tick(pm) // 2: added; loopback rule installed
 	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")])
+	appendsAfterTick2 := countApplyByAction(fakeIPT.applyCalls, Append)
 
 	// Listener disappears; tracker.Remove fails (unexpose API error).
 	fakeT.removeErr = errors.New("unexpose api error: simulated")
-	pst.Tick(nat.PortMap{}) // 3: cleanup; Remove fails → rule retained
-	require.Len(t, fakeT.removeCalls, 1)
+	pst.Tick(nat.PortMap{}) // 3: cleanup; Remove fails on both retireDisappeared and the same-tick retryStranded
 	require.Equal(t, 0, countApplyByAction(fakeIPT.applyCalls, Delete),
 		"a failed Remove must not delete the loopback rule")
 	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")],
 		"the loopback rule must survive a failed Remove")
+	require.Contains(t, pst.strandedProxies, pPort,
+		"failed Remove must record the port in strandedProxies")
 
-	// Listener reappears; tracker.Add returns "proxy already running"
-	// from the stale proxy, with storage empty (cleared by Remove).
+	// Listener reappears; with portStorage retained, tracker.Add
+	// returns ErrPortAlreadyExposed and procnet resumes ownership.
 	fakeT.removeErr = nil
 	fakeT.addBehavior = []addBehavior{
 		{err: tracker.ErrPortAlreadyExposed, seedStorage: false},
 	}
-	pst.Tick(pm) // 4: reappearance, defer
-	pst.Tick(pm) // 5: tracker.Add → "proxy already running", Get==0 → delegate
+	pst.Tick(pm) // 4: reappearance, defer; retryStranded skips (listener observable)
+	pst.Tick(pm) // 5: tracker.Add → ErrPortAlreadyExposed, Get>0 → resume
 
-	require.True(t, pst.added[pPort].delegated,
-		"reappearing port with a stale proxy must delegate")
-	require.Equal(t, 1, countApplyByAction(fakeIPT.applyCalls, Append),
-		"the reappearing port gets no fresh Append")
+	require.False(t, pst.added[pPort].delegated,
+		"reappearing port with retained portStorage must resume ownership, not delegate")
+	require.GreaterOrEqual(t, countApplyByAction(fakeIPT.applyCalls, Append), appendsAfterTick2+1,
+		"the resume path runs a fresh Append (idempotent in production)")
 	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")],
 		"the retained rule keeps the reappearing port reachable")
+	require.NotContains(t, pst.strandedProxies, pPort,
+		"resume must clear the strand")
 }
 
 // TestRemoveFailureClassificationDrivesRuleCleanup confirms retireDisappeared
@@ -1020,7 +1051,11 @@ func TestRemoveFailureClassificationDrivesRuleCleanup(t *testing.T) {
 
 		fakeT.removeErr = removeErr
 		pst.Tick(nat.PortMap{}) // 3: listener gone
-		require.Len(t, fakeT.removeCalls, 1)
+		// removeCalls count varies by error classification:
+		// proxyDestroyed errors take one Remove; default-branch errors
+		// strand the port and the same-tick retryStranded reissues a
+		// Remove, so they take two. The test is about rule retention,
+		// not call counts -- skip that assertion.
 		return fakeIPT.rules[iptKey("tcp", "8080")]
 	}
 
@@ -1095,33 +1130,21 @@ func TestEngineDelegationReleasesPriorPartialAdd(t *testing.T) {
 		"synthetic portStorage entry must be cleared after release")
 }
 
-// TestEngineDelegationAcceptsLeakWhenRemoveFails locks the documented
-// trade-off in exposeNew's engine-delegation branch: when the
-// partial-Add's host-switch unexpose fails (Remove returns an
-// ErrUnexposeAPI-shaped error), the gvisor proxy may still be bound
-// under the synthetic ID. The branch logs at Error and marks the port
-// delegated anyway because APITracker.Remove clears portStorage via a
-// leading defer, so a next-tick retry would see an empty portMap, skip
-// the Unexpose loop, and silently return nil -- hiding the failure
-// rather than recovering. The same trade-off applies in retryAppend's
-// engine-takeover branch and in retireDisappeared's default case.
-//
-// For a HostIP=127.0.0.1 publish this trade-off has a known cost: the
-// engine's events handler may have already attempted its own Add,
-// gotten "proxy already running" from gvisor against our 127.0.0.1
-// binding, and logged once without retrying. The engine then has no
-// proxy; procnet's Remove failed; nothing rebinds. Windows-side
-// traffic drops until RD restart. Triggers require the 127.0.0.1-
-// publish form plus stability-gate bypass plus an unexpose transient
-// -- documented in the if-managed branch comment.
-func TestEngineDelegationAcceptsLeakWhenRemoveFails(t *testing.T) {
+// TestEngineDelegationStrandsAndRecovers covers the engine-delegation
+// branch when the partial-Add release Remove fails with an unexpose-
+// shaped error. The port is marked delegated, the strand is recorded,
+// and retryStranded keeps reissuing tracker.Remove until the proxy
+// unbinds. Without the strand mechanism the gvisor proxy would stay
+// bound under the synthetic ID until RD restart (the engine's events
+// handler does not retry its own Add once it sees ErrPortAlreadyExposed,
+// so no other component would drive the cleanup).
+func TestEngineDelegationStrandsAndRecovers(t *testing.T) {
 	fakeT := newFakeTracker()
 	fakeIPT := newFakeIptables()
 	fakeT.addBehavior = []addBehavior{
 		{err: fmt.Errorf("%w: simulated", tracker.ErrWSLProxy), seedStorage: true},
 	}
-	// The Remove on the next tick fails with an unexpose-shaped error,
-	// signalling that the host-switch proxy may still be bound.
+	// The Remove on tick 3 fails with an unexpose-shaped error.
 	fakeT.removeErr = fmt.Errorf("%w: unexpose api failed: simulated", forwarder.ErrUnexposeAPI)
 	pst := newPortStateTracker(fakeT, fakeIPT)
 	pm := makePortMap(t)
@@ -1135,12 +1158,123 @@ func TestEngineDelegationAcceptsLeakWhenRemoveFails(t *testing.T) {
 
 	fakeIPT.engineManaged[iptKey("tcp", "8080")] = true
 
-	pst.Tick(pm) // 3: engine chain present; Remove called; Remove fails
+	pst.Tick(pm) // 3: engine chain present; Remove called; Remove fails; strand set
 
 	require.Contains(t, fakeT.removeCalls, syntheticID,
 		"engine delegation must call Remove even though it will fail")
 	require.True(t, pst.added[port].delegated,
-		"port must still be marked delegated despite Remove failure -- the documented trade-off")
+		"port must be marked delegated despite Remove failure")
+	require.Contains(t, pst.strandedProxies, port,
+		"engine-delegation Remove failure must record the port in strandedProxies")
+
+	// Unexpose recovers; listener has gone (the engine took over so
+	// this port is no longer observable via /proc/net). retryStranded
+	// reissues the Remove and clears the strand.
+	fakeT.removeErr = nil
+	pst.Tick(nat.PortMap{}) // 4: retireDisappeared drops the delegated marker; retryStranded recovers
+
+	require.NotContains(t, pst.strandedProxies, port,
+		"retryStranded must clear the strand once Remove succeeds")
+	require.NotContains(t, pst.added, port,
+		"the delegated port drops from pst.added when its listener disappears")
+}
+
+// TestAppendRetryEngineTakeoverStrandsOnRemoveFailure covers the
+// retryAppend engine-takeover path when Remove fails with an unexpose-
+// shaped error. The port is marked delegated and recorded in
+// strandedProxies so retryStranded drives the proxy unbind on later
+// ticks. The loopback rule was already Deleted before the Remove, so
+// the strand carries those bindings purely for retryStranded's
+// idempotent rule-Delete probe (a no-op here).
+func TestAppendRetryEngineTakeoverStrandsOnRemoveFailure(t *testing.T) {
+	fakeT := newFakeTracker()
+	fakeIPT := newFakeIptables()
+	// Append commits but errors → appendFailed=true with rule installed.
+	fakeIPT.applyErrors[applyKey("tcp", "8080", Append)] = errors.New("iptables exited non-zero")
+	fakeIPT.commitOnError[applyKey("tcp", "8080", Append)] = true
+	// The Remove issued by retryAppend's engine-takeover fails.
+	fakeT.removeErr = fmt.Errorf("%w: unexpose api failed: simulated", forwarder.ErrUnexposeAPI)
+	pst := newPortStateTracker(fakeT, fakeIPT)
+	pm := makePortMap(t)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
+
+	pst.Tick(pm) // 1: defer
+	pst.Tick(pm) // 2: tracker.Add ok, Append errors but commits → appendFailed
+	require.True(t, fakeIPT.rules[iptKey("tcp", "8080")])
+
+	// Engine chain lands before tick 3.
+	fakeIPT.engineManaged[iptKey("tcp", "8080")] = true
+
+	pst.Tick(pm) // 3: retry path → engine takeover → Delete then Remove (fails) → strand
+
+	require.True(t, pst.added[port].delegated,
+		"engine-takeover marks the port delegated")
+	require.Contains(t, pst.strandedProxies, port,
+		"engine-takeover Remove failure must record the port in strandedProxies")
+	require.False(t, fakeIPT.rules[iptKey("tcp", "8080")],
+		"the committed procnet rule must be Deleted before the Remove attempt")
+
+	// Listener disappears; Remove recovers; retryStranded drains.
+	fakeT.removeErr = nil
+	pst.Tick(nat.PortMap{}) // 4: retryStranded recovers
+
+	require.NotContains(t, pst.strandedProxies, port,
+		"retryStranded must clear the strand on recovery")
+}
+
+// TestCleanDelegationDoesNotStrand confirms that a port delegated on
+// its first action (engine chain visible at exposeNew) never enters
+// strandedProxies. The engine owns the proxy; procnet has nothing to
+// release.
+func TestCleanDelegationDoesNotStrand(t *testing.T) {
+	fakeT := newFakeTracker()
+	fakeIPT := newFakeIptables()
+	fakeIPT.engineManaged[iptKey("tcp", "8080")] = true
+	pst := newPortStateTracker(fakeT, fakeIPT)
+	pm := makePortMap(t)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
+
+	pst.Tick(pm)            // 1: defer
+	pst.Tick(pm)            // 2: engine probe true → delegated; no tracker.Add
+	pst.Tick(nat.PortMap{}) // 3: listener disappears
+
+	require.NotContains(t, pst.strandedProxies, port,
+		"cleanly delegated ports must never enter strandedProxies")
+	require.Empty(t, fakeT.removeCalls,
+		"cleanly delegated ports must not call tracker.Remove on cleanup")
+}
+
+// TestStrandSkipsRetryWhileListenerObservable confirms retryStranded
+// holds the strand entry without retrying Remove while a listener is
+// observable in /proc/net. The proxy that may still be bound is now
+// plausibly serving that listener, and an unbind here would tear down
+// a working path.
+func TestStrandSkipsRetryWhileListenerObservable(t *testing.T) {
+	fakeT := newFakeTracker()
+	fakeIPT := newFakeIptables()
+	pst := newPortStateTracker(fakeT, fakeIPT)
+	pm := makePortMap(t)
+	port, err := nat.NewPort("tcp", "8080")
+	require.NoError(t, err)
+
+	pst.Tick(pm) // 1: defer
+	pst.Tick(pm) // 2: added
+
+	// Listener disappears; Remove fails; strand recorded.
+	fakeT.removeErr = errors.New("unexpose api error: simulated")
+	pst.Tick(nat.PortMap{}) // 3: cleanup; strand set; retryStranded retries (still fails)
+	removeCallsAfterStrand := len(fakeT.removeCalls)
+	require.Contains(t, pst.strandedProxies, port)
+
+	// Listener reappears; retryStranded must skip while it is observable.
+	pst.Tick(pm) // 4: defer
+
+	require.Equal(t, removeCallsAfterStrand, len(fakeT.removeCalls),
+		"retryStranded must NOT issue Remove while the listener is observable")
+	require.Contains(t, pst.strandedProxies, port,
+		"the strand must persist across the deferral tick")
 }
 
 // TestRemoveReportedProxyDestroyed pins the shared error-classification
