@@ -46,7 +46,6 @@ export class ContainersPage {
 
   async viewContainerInfo(containerId: string) {
     await this.clickContainerAction(containerId, 'info');
-    await this.page.getByTestId('tab-logs').click();
   }
 
   async stopContainer(containerId: string) {

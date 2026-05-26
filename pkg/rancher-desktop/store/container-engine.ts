@@ -10,6 +10,43 @@ type ValidContainerEngine = Exclude<ContainerEngine, ContainerEngine.NONE>;
 type SubscriberType = 'containers' | 'volumes';
 type ErrorSource = 'containers' | 'volumes' | 'namespaces';
 
+export interface ContainerMount {
+  Type:        string;
+  Source:      string;
+  Destination: string;
+  RW:          boolean;
+  Mode:        string;
+}
+
+export interface ContainerInspectData {
+  Id:      string;
+  Name:    string;
+  Created: string;
+  State: {
+    Status:     string;
+    StartedAt:  string;
+    FinishedAt: string;
+  };
+  Config: {
+    Image:      string;
+    Env:        string[] | null;
+    Cmd:        string[] | null;
+    Entrypoint: string[] | null;
+    Labels:     Record<string, string> | null;
+  };
+  HostConfig: {
+    CapAdd:  string[] | null;
+    CapDrop: string[] | null;
+  };
+  Mounts:           ContainerMount[];
+  NetworkSettings?: {
+    IPAddress: string;
+    Ports:     Record<string, ({ HostIp: string; HostPort: string }[]) | null>;
+    Networks:  Record<string, { IPAddress: string }>;
+  };
+  Args: string[];
+}
+
 /**
  * Shared extension API container list result parts
  */
@@ -179,29 +216,31 @@ function subscriberConstructor(backend: ValidContainerEngine, type: SubscriberTy
 
 export interface ContainersState {
   /** The backend in use; this may not match the committed preferences. */
-  backend:    ContainerEngine;
+  backend:     ContainerEngine;
   /** The type of object to monitor. */
-  type:       SubscriberType;
-  client:     RDXClient | null;
-  namespaces: string[] | null;
-  namespace:  string | undefined;
-  subscriber: Subscriber | null;
-  containers: Record<string, Container> | null;
-  volumes:    Record<string, Volume> | null;
+  type:        SubscriberType;
+  client:      RDXClient | null;
+  namespaces:  string[] | null;
+  namespace:   string | undefined;
+  subscriber:  Subscriber | null;
+  containers:  Record<string, Container> | null;
+  volumes:     Record<string, Volume> | null;
+  inspectData: Record<string, ContainerInspectData>;
   /** The last error encountered, plus which fetch caused it. */
-  error:      { source: ErrorSource, error: Error } | null;
+  error:       { source: ErrorSource, error: Error } | null;
 }
 
 export const state: () => ContainersState = () => ({
-  backend:    ContainerEngine.NONE,
-  type:       'containers',
-  client:     null,
-  namespaces: null,
-  namespace:  undefined,
-  subscriber: null,
-  containers: null,
-  volumes:    null,
-  error:      null,
+  backend:     ContainerEngine.NONE,
+  type:        'containers',
+  client:      null,
+  namespaces:  null,
+  namespace:   undefined,
+  subscriber:  null,
+  containers:  null,
+  volumes:     null,
+  inspectData: {},
+  error:       null,
 });
 
 type BulkParams = Pick<ContainersState, 'backend' | 'type' | 'client' | 'namespace'>;
@@ -223,6 +262,9 @@ export const mutations = {
   SET_ERROR(state, error) {
     state.error = error;
   },
+  SET_INSPECT_DATA(state, inspectData) {
+    state.inspectData = inspectData;
+  },
   SET_PARAMS(state, params: BulkParams) {
     let clearData = false;
     switch (true) {
@@ -242,6 +284,7 @@ export const mutations = {
       state.subscriber = null;
       state.containers = null;
       state.volumes = null;
+      state.inspectData = {};
     }
   },
 } satisfies Partial<MutationsType<ContainersState>> & MutationTree<ContainersState>;
@@ -343,12 +386,37 @@ export const actions = {
           delete containers[id];
         }
       }
+      // Remove stale inspect data for containers that no longer exist
+      const inspectData = { ...state.inspectData };
+      for (const id of Object.keys(inspectData)) {
+        if (!ids.has(id)) {
+          delete inspectData[id];
+        }
+      }
+      commit('SET_INSPECT_DATA', inspectData);
       commit('SET_CONTAINERS', containers);
       if (state.error?.source === 'containers') {
         commit('SET_ERROR', null);
       }
     } catch (error: any) {
       commit('SET_ERROR', { source: 'containers', error });
+    }
+  },
+  async fetchContainerInspect({ commit, state }, { containerId, namespace }: { containerId: string, namespace?: string }) {
+    const { client } = state;
+
+    if (!client) {
+      throw new Error('Container client is not available');
+    }
+    const args = [
+      ...(namespace ? [`--namespace=${ namespace }`] : []),
+      containerId,
+    ];
+    const result = await client.docker.cli.exec('inspect', args);
+    const parsed = result.parseJsonObject() as ContainerInspectData[];
+
+    if (parsed[0]) {
+      commit('SET_INSPECT_DATA', { ...state.inspectData, [containerId]: parsed[0] });
     }
   },
   async fetchVolumes({ commit, getters, state }) {
