@@ -14,7 +14,7 @@ import {
   AfterPackContext, Arch, build, CliOptions, Configuration, LinuxTargetSpecificOptions,
 } from 'electron-builder';
 import _ from 'lodash';
-import plist from 'plist';
+import * as plist from 'plist';
 import yaml from 'yaml';
 
 import buildUtils from './lib/build-utils';
