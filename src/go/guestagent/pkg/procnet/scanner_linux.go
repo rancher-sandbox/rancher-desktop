@@ -55,6 +55,7 @@ type ProcNetScanner struct {
 	ctx          context.Context
 	tracker      tracker.Tracker
 	forwarder    loopbackController
+	bindIP       net.IP
 	scanInterval time.Duration
 
 	published nat.PortMap
@@ -62,14 +63,15 @@ type ProcNetScanner struct {
 }
 
 func NewProcNetScanner(ctx context.Context, t tracker.Tracker, bindIP net.IP, scanInterval time.Duration) (*ProcNetScanner, error) {
-	return newScanner(ctx, t, newLoopbackForwarder(bindIP), scanInterval), nil
+	return newScanner(ctx, t, newLoopbackForwarder(bindIP), bindIP, scanInterval), nil
 }
 
-func newScanner(ctx context.Context, t tracker.Tracker, f loopbackController, scanInterval time.Duration) *ProcNetScanner {
+func newScanner(ctx context.Context, t tracker.Tracker, f loopbackController, bindIP net.IP, scanInterval time.Duration) *ProcNetScanner {
 	return &ProcNetScanner{
 		ctx:          ctx,
 		tracker:      t,
 		forwarder:    f,
+		bindIP:       bindIP,
 		scanInterval: scanInterval,
 		published:    make(nat.PortMap),
 		pending:      make(nat.PortMap),
@@ -88,7 +90,7 @@ func (p *ProcNetScanner) ForwardPorts() error {
 		case <-p.ctx.Done():
 			return fmt.Errorf("/proc/net scanner context cancelled: %w", p.ctx.Err())
 		case <-ticker.C:
-			scanned, err := scanListeners()
+			scanned, err := p.scanListeners()
 			if err != nil {
 				log.Errorf("failed to scan /proc/net: %s", err)
 				continue
@@ -113,11 +115,14 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 		delete(p.published, port)
 	}
 
-	for port, bindings := range p.pending {
-		if _, ok := scanned[port]; !ok {
+	for port := range p.pending {
+		bindings, ok := scanned[port]
+		if !ok {
 			continue
 		}
-		p.publish(port, bindings)
+		if err := p.publish(port, bindings); err != nil {
+			continue
+		}
 		p.published[port] = bindings
 	}
 
@@ -130,11 +135,19 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 	}
 }
 
-func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) {
+// publish reports a new listener to the API tracker and opens a
+// userspace forwarder for each loopback binding. It returns an error
+// if either step fails after rolling back the tracker entry, so the
+// caller can leave the port in pending for next-tick retry instead
+// of recording it as published.
+func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) error {
 	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
 	if err := p.tracker.Add(id, nat.PortMap{port: bindings}); err != nil {
 		log.Errorf("/proc/net scanner failed to add %s: %s", port, err)
-		return
+		if removeErr := p.tracker.Remove(id); removeErr != nil {
+			log.Errorf("/proc/net scanner rollback after tracker.Add failure for %s: %s", port, removeErr)
+		}
+		return err
 	}
 	log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
 
@@ -144,13 +157,23 @@ func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) {
 		}
 		portNum, err := strconv.ParseUint(b.HostPort, 10, 16)
 		if err != nil {
+			// b.HostPort is strconv.Itoa of a uint16 (see
+			// addEntryToPortMap), so ParseUint always succeeds. If that
+			// stops being true, the caller leaks a tracker entry without
+			// a matching forwarder; mirror the forwarder.Add rollback
+			// above.
 			log.Errorf("/proc/net scanner: bad port %q: %s", b.HostPort, err)
 			continue
 		}
 		if err := p.forwarder.Add(p.ctx, port.Proto(), uint16(portNum)); err != nil {
 			log.Errorf("/proc/net scanner: loopback forwarder %s/%s: %s", port.Proto(), b.HostPort, err)
+			if removeErr := p.tracker.Remove(id); removeErr != nil {
+				log.Errorf("/proc/net scanner rollback after forwarder.Add failure for %s: %s", port, removeErr)
+			}
+			return err
 		}
 	}
+	return nil
 }
 
 func (p *ProcNetScanner) unpublish(port nat.Port, bindings []nat.PortBinding) {
@@ -174,18 +197,33 @@ func (p *ProcNetScanner) unpublish(port nat.Port, bindings []nat.PortBinding) {
 	}
 }
 
-func scanListeners() (nat.PortMap, error) {
+// scanListeners parses /proc/net/{tcp,udp} into a snapshot suitable
+// for Tick. See entriesToPortMap for the filter that drops the
+// forwarder's own sockets.
+func (p *ProcNetScanner) scanListeners() (nat.PortMap, error) {
 	entries, err := procnettcp.ParseFiles()
 	if err != nil {
 		return nil, err
 	}
+	return p.entriesToPortMap(entries), nil
+}
+
+// entriesToPortMap converts procnet entries into a port map, dropping
+// any entry whose IP matches bindIP. The forwarder opens its own
+// socket on bindIP for every loopback port it proxies; leaving those
+// entries in the snapshot keeps the proto/port key alive after the
+// upstream listener exits and blocks unpublish.
+func (p *ProcNetScanner) entriesToPortMap(entries []procnettcp.Entry) nat.PortMap {
 	out := make(nat.PortMap)
 	for _, entry := range entries {
+		if entry.IP.Equal(p.bindIP) {
+			continue
+		}
 		if err := addValidProtoEntryToPortMap(entry, out); err != nil {
 			log.Errorf("failed to create portMapping for entry: %s", err)
 		}
 	}
-	return out, nil
+	return out
 }
 
 func addValidProtoEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {

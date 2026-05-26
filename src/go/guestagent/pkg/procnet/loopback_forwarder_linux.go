@@ -20,7 +20,9 @@ You may obtain a copy of the License at
 // Userspace forwarding removes the engine-chain probing surface that
 // #10280 added.
 //
-// Mirrors Lima's pkg/portfwd/listener.go.
+// TCP mirrors Lima's pkg/portfwd/listener.go. UDP delegates to
+// gvisor-tap-vsock's forwarder.UDPProxy, the same code Lima uses for
+// its UDP path in pkg/portfwd/client.go.
 
 package procnet
 
@@ -35,6 +37,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
+	"github.com/containers/gvisor-tap-vsock/pkg/services/forwarder"
 )
 
 type loopbackForwarder struct {
@@ -43,14 +46,14 @@ type loopbackForwarder struct {
 
 	mu  sync.Mutex
 	tcp map[string]net.Listener
-	udp map[string]net.PacketConn
+	udp map[string]*forwarder.UDPProxy
 }
 
 func newLoopbackForwarder(bindIP net.IP) *loopbackForwarder {
 	return &loopbackForwarder{
 		bindIP: bindIP,
 		tcp:    make(map[string]net.Listener),
-		udp:    make(map[string]net.PacketConn),
+		udp:    make(map[string]*forwarder.UDPProxy),
 	}
 }
 
@@ -85,8 +88,17 @@ func (f *loopbackForwarder) Add(ctx context.Context, proto string, port uint16) 
 		if err != nil {
 			return fmt.Errorf("listen %s: %w", k, err)
 		}
-		f.udp[k] = pc
-		go f.relayUDP(ctx, pc, port)
+		target := net.JoinHostPort("127.0.0.1", strconv.Itoa(int(port)))
+		// Each flow's idle timeout is forwarder.UDPConnTrackTimeout (90s).
+		proxy, err := forwarder.NewUDPProxy(pc, func() (net.Conn, error) {
+			return f.dialer.DialContext(ctx, "udp", target)
+		})
+		if err != nil {
+			_ = pc.Close()
+			return fmt.Errorf("udp proxy %s: %w", k, err)
+		}
+		f.udp[k] = proxy
+		go proxy.Run()
 	default:
 		return fmt.Errorf("loopback forwarder: unsupported protocol %q", proto)
 	}
@@ -104,9 +116,9 @@ func (f *loopbackForwarder) Remove(proto string, port uint16) error {
 			return lis.Close()
 		}
 	case "udp":
-		if pc, ok := f.udp[k]; ok {
+		if proxy, ok := f.udp[k]; ok {
 			delete(f.udp, k)
-			return pc.Close()
+			return proxy.Close()
 		}
 	}
 	return nil
@@ -122,8 +134,8 @@ func (f *loopbackForwarder) Close() error {
 		}
 		delete(f.tcp, k)
 	}
-	for k, p := range f.udp {
-		if err := p.Close(); err != nil {
+	for k, proxy := range f.udp {
+		if err := proxy.Close(); err != nil {
 			errs = append(errs, err)
 		}
 		delete(f.udp, k)
@@ -131,16 +143,36 @@ func (f *loopbackForwarder) Close() error {
 	return errors.Join(errs...)
 }
 
+const (
+	acceptRetryInitialBackoff = 100 * time.Millisecond
+	acceptRetryMaxBackoff     = 5 * time.Second
+	halfCloseDrainTimeout     = 30 * time.Second
+)
+
 func (f *loopbackForwarder) acceptTCP(ctx context.Context, lis net.Listener, port uint16) {
+	backoff := acceptRetryInitialBackoff
 	for {
 		conn, err := lis.Accept()
 		if err != nil {
 			if errors.Is(err, net.ErrClosed) {
 				return
 			}
-			log.Errorf("loopback forwarder accept tcp/%d: %s", port, err)
-			return
+			// Retry with exponential backoff on transient errors (EMFILE
+			// under FD pressure, ENOBUFS). The listener stays registered
+			// in f.tcp; once the pressure clears, Accept succeeds.
+			log.Errorf("loopback forwarder accept tcp/%d: %s (retry in %s)", port, err, backoff)
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(backoff):
+			}
+			backoff *= 2
+			if backoff > acceptRetryMaxBackoff {
+				backoff = acceptRetryMaxBackoff
+			}
+			continue
 		}
+		backoff = acceptRetryInitialBackoff
 		go f.pipeTCP(ctx, conn, port)
 	}
 }
@@ -154,78 +186,24 @@ func (f *loopbackForwarder) pipeTCP(ctx context.Context, in net.Conn, port uint1
 		return
 	}
 	defer out.Close()
+	// Half-close per direction so a client that signals end-of-request
+	// via CloseWrite still receives the upstream's response. After the
+	// first copy finishes, a drain deadline on both reads caps the wait
+	// for the other direction, so a wedged peer cannot leak this
+	// goroutine.
 	done := make(chan struct{}, 2)
-	go func() { _, _ = io.Copy(out, in); done <- struct{}{} }()
-	go func() { _, _ = io.Copy(in, out); done <- struct{}{} }()
+	copyDir := func(dst, src net.Conn) {
+		_, _ = io.Copy(dst, src)
+		if tcp, ok := dst.(*net.TCPConn); ok {
+			_ = tcp.CloseWrite()
+		}
+		done <- struct{}{}
+	}
+	go copyDir(out, in)
+	go copyDir(in, out)
 	<-done
-}
-
-// relayUDP forwards UDP datagrams between the bindIP listener and
-// 127.0.0.1, multiplexing concurrent flows by source address. Each
-// flow holds a dedicated outbound socket; the socket closes after
-// udpIdleTimeout of no upstream reply.
-func (f *loopbackForwarder) relayUDP(ctx context.Context, pc net.PacketConn, port uint16) {
-	target := net.JoinHostPort("127.0.0.1", strconv.Itoa(int(port)))
-
-	var (
-		mu    sync.Mutex
-		flows = make(map[string]net.Conn)
-	)
-	defer func() {
-		mu.Lock()
-		for k, out := range flows {
-			_ = out.Close()
-			delete(flows, k)
-		}
-		mu.Unlock()
-	}()
-
-	buf := make([]byte, 64*1024)
-	for {
-		n, src, err := pc.ReadFrom(buf)
-		if err != nil {
-			return
-		}
-		srcKey := src.String()
-
-		mu.Lock()
-		out, ok := flows[srcKey]
-		if !ok {
-			conn, dialErr := f.dialer.DialContext(ctx, "udp", target)
-			if dialErr != nil {
-				mu.Unlock()
-				log.Debugf("loopback forwarder dial udp/%d: %s", port, dialErr)
-				continue
-			}
-			out = conn
-			flows[srcKey] = out
-			go f.readUDPReplies(pc, out, src, srcKey, &mu, flows)
-		}
-		mu.Unlock()
-
-		_, _ = out.Write(buf[:n])
-	}
-}
-
-const udpIdleTimeout = 30 * time.Second
-
-// readUDPReplies pumps datagrams from a per-flow outbound socket back
-// to the original client. A SetReadDeadline of udpIdleTimeout per Read
-// closes the flow once the upstream stops replying.
-func (f *loopbackForwarder) readUDPReplies(pc net.PacketConn, out net.Conn, srcAddr net.Addr, srcKey string, mu *sync.Mutex, flows map[string]net.Conn) {
-	replyBuf := make([]byte, 64*1024)
-	for {
-		_ = out.SetReadDeadline(time.Now().Add(udpIdleTimeout))
-		n, err := out.Read(replyBuf)
-		if err != nil {
-			mu.Lock()
-			if flows[srcKey] == out {
-				delete(flows, srcKey)
-			}
-			mu.Unlock()
-			_ = out.Close()
-			return
-		}
-		_, _ = pc.WriteTo(replyBuf[:n], srcAddr)
-	}
+	drainDeadline := time.Now().Add(halfCloseDrainTimeout)
+	_ = in.SetReadDeadline(drainDeadline)
+	_ = out.SetReadDeadline(drainDeadline)
+	<-done
 }
