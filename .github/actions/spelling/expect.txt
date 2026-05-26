@@ -349,7 +349,6 @@ linuxkit
 Linuxy
 loadbalancer
 loblaw
-localnet
 logdna
 loglines
 logz
@@ -482,8 +481,8 @@ podmonitor
 podsecuritypolicytemplate
 POLLIN
 POptions
-portbinding
 portforward
+portfwd
 portmap
 portmapping
 portproxy

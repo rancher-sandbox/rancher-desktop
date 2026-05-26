@@ -214,9 +214,9 @@ func TestForwarderUDPConcurrentFlows(t *testing.T) {
 			}
 			_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
 			buf := make([]byte, 1024)
-			n, rerr := conn.Read(buf)
-			if rerr != nil {
-				results <- result{want: want, err: rerr}
+			n, err := conn.Read(buf)
+			if err != nil {
+				results <- result{want: want, err: err}
 				return
 			}
 			results <- result{want: want, got: string(buf[:n])}

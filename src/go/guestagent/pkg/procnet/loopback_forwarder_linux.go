@@ -191,10 +191,10 @@ func (f *loopbackForwarder) relayUDP(ctx context.Context, pc net.PacketConn, por
 		mu.Lock()
 		out, ok := flows[srcKey]
 		if !ok {
-			conn, derr := f.dialer.DialContext(ctx, "udp", target)
-			if derr != nil {
+			conn, dialErr := f.dialer.DialContext(ctx, "udp", target)
+			if dialErr != nil {
 				mu.Unlock()
-				log.Debugf("loopback forwarder dial udp/%d: %s", port, derr)
+				log.Debugf("loopback forwarder dial udp/%d: %s", port, dialErr)
 				continue
 			}
 			out = conn
@@ -213,10 +213,10 @@ const udpIdleTimeout = 30 * time.Second
 // to the original client. A SetReadDeadline of udpIdleTimeout per Read
 // closes the flow once the upstream stops replying.
 func (f *loopbackForwarder) readUDPReplies(pc net.PacketConn, out net.Conn, srcAddr net.Addr, srcKey string, mu *sync.Mutex, flows map[string]net.Conn) {
-	rbuf := make([]byte, 64*1024)
+	replyBuf := make([]byte, 64*1024)
 	for {
 		_ = out.SetReadDeadline(time.Now().Add(udpIdleTimeout))
-		n, err := out.Read(rbuf)
+		n, err := out.Read(replyBuf)
 		if err != nil {
 			mu.Lock()
 			if flows[srcKey] == out {
@@ -226,6 +226,6 @@ func (f *loopbackForwarder) readUDPReplies(pc net.PacketConn, out net.Conn, srcA
 			_ = out.Close()
 			return
 		}
-		_, _ = pc.WriteTo(rbuf[:n], srcAddr)
+		_, _ = pc.WriteTo(replyBuf[:n], srcAddr)
 	}
 }
