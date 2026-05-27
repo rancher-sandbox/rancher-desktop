@@ -2752,13 +2752,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kurkle/color@npm:^0.3.0":
-  version: 0.3.4
-  resolution: "@kurkle/color@npm:0.3.4"
-  checksum: 10c0/0e9fd55c614b005c5f0c4c755bca19ec0293bc7513b4ea3ec1725234f9c2fa81afbc78156baf555c8b9cb0d305619253c3f5bca016067daeebb3d00ebb4ea683
-  languageName: node
-  linkType: hard
-
 "@kubernetes/client-node@npm:1.4.0":
   version: 1.4.0
   resolution: "@kubernetes/client-node@npm:1.4.0"
@@ -2780,6 +2773,13 @@ __metadata:
     tar-fs: "npm:^3.0.9"
     ws: "npm:^8.18.2"
   checksum: 10c0/060bd78ee976c3af65319c2d0881adc25981d295d5ff585dad31b68dcf91c9b85f8f2c6ce6a43771cf6276a2fd3146421304f75467060183f5cf5e87bae7ff17
+  languageName: node
+  linkType: hard
+
+"@kurkle/color@npm:^0.3.0":
+  version: 0.3.4
+  resolution: "@kurkle/color@npm:0.3.4"
+  checksum: 10c0/0e9fd55c614b005c5f0c4c755bca19ec0293bc7513b4ea3ec1725234f9c2fa81afbc78156baf555c8b9cb0d305619253c3f5bca016067daeebb3d00ebb4ea683
   languageName: node
   linkType: hard
 
@@ -14630,6 +14630,7 @@ __metadata:
     babel-core: "npm:7.0.0-bridge.0"
     babel-jest: "npm:30.4.1"
     babel-loader: "npm:10.1.1"
+    chart.js: "npm:^4.4.9"
     cookie-universal: "npm:2.2.2"
     cross-env: "npm:10.1.0"
     cross-spawn: "npm:7.0.6"
@@ -14683,6 +14684,7 @@ __metadata:
     typescript: "npm:6.0.3"
     vue: "npm:3.5.34"
     vue-3-slider-component: "npm:1.0.2"
+    vue-chartjs: "npm:^5.3.2"
     vue-router: "npm:5.0.7"
     vue-select: "npm:3.20.4"
     vuex: "npm:4.1.0"
