@@ -220,11 +220,14 @@ func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) erro
 			if err != nil {
 				// b.HostPort is strconv.Itoa of a uint16 (see
 				// addEntryToPortMap), so ParseUint always succeeds. If that
-				// stops being true, the caller leaks a tracker entry without
-				// a matching forwarder; mirror the forwarder.Add rollback
-				// above.
-				log.Errorf("/proc/net scanner: bad port %q: %s", b.HostPort, err)
-				continue
+				// invariant breaks, roll the tracker entry back and return
+				// the error so the next Tick re-pends the port instead of
+				// recording it as published without a forwarder.
+				p.logAddFailure(port, fmt.Sprintf("bad port %q: %s", b.HostPort, err))
+				if removeErr := p.tracker.Remove(id); removeErr != nil {
+					p.logAddFailure(port, fmt.Sprintf("rollback after bad port: %s", removeErr))
+				}
+				return fmt.Errorf("/proc/net scanner: bad port %q: %w", b.HostPort, err)
 			}
 			if err := p.forwarder.Add(p.ctx, port.Proto(), uint16(portNum)); err != nil {
 				p.logAddFailure(port, fmt.Sprintf("loopback forwarder %s/%s: %s", port.Proto(), b.HostPort, err))
@@ -265,6 +268,13 @@ func (p *ProcNetScanner) unpublish(port nat.Port, bindings []nat.PortBinding) {
 		log.Errorf("/proc/net scanner failed to remove %s: %s", port, err)
 	} else {
 		log.Infof("/proc/net scanner removed port: %s -> %+v", port, bindings)
+	}
+
+	// Mirror publish's wildcard short-circuit: publish skipped the
+	// forwarder when bindings included a wildcard, so unpublish has
+	// nothing to remove.
+	if hasWildcardBinding(bindings) {
+		return
 	}
 
 	for _, b := range bindings {

@@ -222,7 +222,9 @@ func TestMixedLoopbackAndWildcard(t *testing.T) {
 // keeps Windows-side traffic reachable.
 //
 // fwd.addErr would force a rollback if forwarder.Add fired; the
-// test asserts it does not.
+// test asserts it does not. On removal, unpublish must mirror the
+// short-circuit: publish skipped opening a forwarder for these
+// bindings, so unpublish has nothing to release.
 func TestMixedBindingsSkipForwarderAndKeepTracker(t *testing.T) {
 	tr := &fakeTracker{}
 	fwd := &fakeForwarder{addErr: fmt.Errorf("synthetic forwarder failure")}
@@ -247,6 +249,13 @@ func TestMixedBindingsSkipForwarderAndKeepTracker(t *testing.T) {
 	}
 	if _, ok := s.published[port]; !ok {
 		t.Fatalf("port %s not recorded as published", port)
+	}
+
+	// Port vanishes: unpublish must skip forwarder.Remove for the
+	// loopback binding, matching publish's short-circuit.
+	s.Tick(nat.PortMap{})
+	if len(fwd.removed) != 0 {
+		t.Fatalf("forwarder.Remove fired during mixed-binding unpublish: %v", fwd.removed)
 	}
 }
 
