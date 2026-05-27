@@ -115,6 +115,11 @@ func runAgent(
 	adminInstall bool,
 	k8sAPIPort, tapIfaceIP string,
 ) error {
+	bindIP := net.ParseIP(tapIfaceIP)
+	if bindIP == nil {
+		return fmt.Errorf("invalid tap interface IP %q", tapIfaceIP)
+	}
+
 	groupCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	group, ctx := errgroup.WithContext(groupCtx)
@@ -238,10 +243,6 @@ func runAgent(
 	}
 
 	group.Go(func() error {
-		bindIP := net.ParseIP(tapIfaceIP)
-		if bindIP == nil {
-			return fmt.Errorf("invalid tap interface IP %q", tapIfaceIP)
-		}
 		procScanner, err := procnet.NewProcNetScanner(ctx, portTracker, bindIP, procNetScanInterval)
 		if err != nil {
 			return fmt.Errorf("scanning /proc/net/{tcp, udp} failed: %w", err)

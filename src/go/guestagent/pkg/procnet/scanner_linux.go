@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 /*
-Package procnet scans /proc/net/{tcp,udp} for listeners the
+Package procnet scans /proc/net for IPv4 TCP and UDP listeners the
 container-engine events handler does not publish -- mainly
 --network=host containers binding 127.0.0.1 -- and exposes them to
 host-switch via the API tracker. For loopback listeners it also opens
@@ -22,8 +22,10 @@ two-scan stability gate filters out the transient reservation socket
 nerdctl's OCI createRuntime hook opens before CNI installs its
 iptables rules.
 
-IPv6 limitation: the scanner reads /proc/net/{tcp,udp} only, not the
-tcp6/udp6 variants. A --network=host container that listens
+IPv6 limitation: procnettcp.ParseFiles returns entries from
+/proc/net/{tcp,tcp6,udp,udp6}, but addValidProtoEntryToPortMap
+dispatches only on the TCP and UDP Kinds and silently drops the
+TCP6 and UDP6 entries. A --network=host container that listens
 exclusively on [::1]:port is invisible to the scanner and is not
 reachable from Windows. Containers that bind dual-stack
 (e.g. [::]:port with IPV6_V6ONLY=0, the Go and Python default) are
@@ -63,9 +65,10 @@ type loopbackController interface {
 	Close() error
 }
 
-// ProcNetScanner polls /proc/net/{tcp,udp} and reconciles the
-// observed listener set against the API tracker and a userspace
-// loopback forwarder. See the package comment for the design.
+// ProcNetScanner polls /proc/net for IPv4 TCP and UDP listeners
+// and reconciles the observed set against the API tracker and a
+// userspace loopback forwarder. See the package comment for the
+// design, including the IPv6 limitation.
 type ProcNetScanner struct {
 	ctx          context.Context
 	tracker      tracker.Tracker
@@ -206,6 +209,9 @@ func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) erro
 	// forwarder; the tracker entry alone keeps the port reachable from
 	// Windows.
 	if !hasWildcardBinding(bindings) {
+		// Every binding under a given nat.Port carries the same HostPort
+		// (addEntryToPortMap derives both from entry.Port), so forwarder.Add
+		// sees one key and rollback unwinds at most one listener.
 		for _, b := range bindings {
 			if b.HostIP != loopbackIP {
 				continue
@@ -275,8 +281,9 @@ func (p *ProcNetScanner) unpublish(port nat.Port, bindings []nat.PortBinding) {
 	}
 }
 
-// scanListeners parses /proc/net/{tcp,udp} into a snapshot suitable
-// for Tick. See entriesToPortMap for the filter that drops the
+// scanListeners parses /proc/net/{tcp,tcp6,udp,udp6} via
+// procnettcp.ParseFiles. See addValidProtoEntryToPortMap for the
+// IPv6 drop and entriesToPortMap for the filter that drops the
 // forwarder's own sockets.
 func (p *ProcNetScanner) scanListeners() (nat.PortMap, error) {
 	entries, err := procnettcp.ParseFiles()

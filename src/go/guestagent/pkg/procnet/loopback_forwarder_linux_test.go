@@ -128,6 +128,48 @@ func TestForwarderAddIsIdempotent(t *testing.T) {
 	}
 }
 
+// Hold bindIP:port from outside the forwarder so the forwarder's
+// own Listen returns EADDRINUSE on Add.
+func TestForwarderAddFailsWhenPortInUse(t *testing.T) {
+	bindIP := net.ParseIP("127.0.0.99")
+	cases := []struct {
+		proto string
+		grab  func(*testing.T) (uint16, func())
+	}{
+		{"tcp", func(t *testing.T) (uint16, func()) {
+			t.Helper()
+			var lc net.ListenConfig
+			ln, err := lc.Listen(context.Background(), "tcp", "127.0.0.99:0")
+			if err != nil {
+				t.Skipf("listen via 127.0.0.99 failed (loopback aliases unavailable): %v", err)
+			}
+			return uint16(ln.Addr().(*net.TCPAddr).Port), func() { _ = ln.Close() }
+		}},
+		{"udp", func(t *testing.T) (uint16, func()) {
+			t.Helper()
+			var lc net.ListenConfig
+			pc, err := lc.ListenPacket(context.Background(), "udp", "127.0.0.99:0")
+			if err != nil {
+				t.Skipf("listen via 127.0.0.99 failed: %v", err)
+			}
+			return uint16(pc.LocalAddr().(*net.UDPAddr).Port), func() { _ = pc.Close() }
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.proto, func(t *testing.T) {
+			port, stop := tc.grab(t)
+			defer stop()
+
+			fwd := newLoopbackForwarder(bindIP)
+			defer fwd.Close()
+
+			if err := fwd.Add(context.Background(), tc.proto, port); err == nil {
+				t.Fatalf("forwarder.Add succeeded on busy port; expected EADDRINUSE")
+			}
+		})
+	}
+}
+
 // startUDPEcho binds a UDP listener on 127.0.0.1:0 that echoes every
 // received datagram back to the sender. Returns the chosen port and a
 // stop function.

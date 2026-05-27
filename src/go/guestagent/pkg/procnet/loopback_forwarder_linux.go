@@ -40,6 +40,11 @@ import (
 	"github.com/containers/gvisor-tap-vsock/pkg/services/forwarder"
 )
 
+const (
+	protoTCP = "tcp"
+	protoUDP = "udp"
+)
+
 type loopbackForwarder struct {
 	bindIP net.IP
 	dialer net.Dialer
@@ -80,21 +85,21 @@ func (f *loopbackForwarder) Add(ctx context.Context, proto string, port uint16) 
 	defer f.mu.Unlock()
 
 	switch proto {
-	case "tcp":
+	case protoTCP:
 		if _, ok := f.tcp[k]; ok {
 			return nil
 		}
-		lis, err := net.ListenTCP("tcp", &net.TCPAddr{IP: f.bindIP, Port: int(port)})
+		lis, err := net.ListenTCP(protoTCP, &net.TCPAddr{IP: f.bindIP, Port: int(port)})
 		if err != nil {
 			return fmt.Errorf("listen %s: %w", k, err)
 		}
 		f.tcp[k] = lis
 		go f.acceptTCP(ctx, lis, port)
-	case "udp":
+	case protoUDP:
 		if _, ok := f.udp[k]; ok {
 			return nil
 		}
-		pc, err := net.ListenUDP("udp", &net.UDPAddr{IP: f.bindIP, Port: int(port)})
+		pc, err := net.ListenUDP(protoUDP, &net.UDPAddr{IP: f.bindIP, Port: int(port)})
 		if err != nil {
 			return fmt.Errorf("listen %s: %w", k, err)
 		}
@@ -106,7 +111,7 @@ func (f *loopbackForwarder) Add(ctx context.Context, proto string, port uint16) 
 		// scanner's lifetime context); a request-scoped or per-tick
 		// ctx would silently break new-flow dialing once cancelled.
 		proxy, err := forwarder.NewUDPProxy(pc, func() (net.Conn, error) {
-			return f.dialer.DialContext(ctx, "udp", target)
+			return f.dialer.DialContext(ctx, protoUDP, target)
 		})
 		if err != nil {
 			_ = pc.Close()
@@ -125,12 +130,12 @@ func (f *loopbackForwarder) Remove(proto string, port uint16) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	switch proto {
-	case "tcp":
+	case protoTCP:
 		if lis, ok := f.tcp[k]; ok {
 			delete(f.tcp, k)
 			return lis.Close()
 		}
-	case "udp":
+	case protoUDP:
 		if proxy, ok := f.udp[k]; ok {
 			delete(f.udp, k)
 			return proxy.Close()
@@ -212,7 +217,7 @@ func (f *loopbackForwarder) acceptTCP(ctx context.Context, lis net.Listener, por
 func (f *loopbackForwarder) pipeTCP(ctx context.Context, in net.Conn, port uint16) {
 	defer in.Close()
 	addr := net.JoinHostPort("127.0.0.1", strconv.Itoa(int(port)))
-	out, err := f.dialer.DialContext(ctx, "tcp", addr)
+	out, err := f.dialer.DialContext(ctx, protoTCP, addr)
 	if err != nil {
 		log.Debugf("loopback forwarder dial tcp/%d: %s", port, err)
 		return
