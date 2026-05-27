@@ -20,7 +20,11 @@ check_uname() {
     # Adding -i option to work around a bug with the Linux docker CLI in WSL
     # https://github.com/rancher-sandbox/rancher-desktop/issues/3239
     # BUG BUG BUG
-    run ctrctl run -i --platform "$platform" "$IMAGE_BUSYBOX" uname -m
+    # Use --separate-stderr because nerdctl leaks a spurious
+    # `forward signal child exited error=context canceled` line on stderr
+    # after the container exits (upstream signal-forwarder race in
+    # pkg/signalutil/signals.go — SIGCHLD is not filtered).
+    run --separate-stderr ctrctl run -i --platform "$platform" "$IMAGE_BUSYBOX" uname -m
     if is_true "${assert_success:-true}"; then
         assert_success
         assert_output "$cpu"
@@ -51,7 +55,9 @@ check_uname() {
 @test 'deploy s390x container does not work' {
     assert_success=false check_uname s390x s390x
     assert_failure
-    assert_output --partial "exec /bin/uname: exec format error"
+    # With run --separate-stderr (see check_uname), the runtime's
+    # "exec format error" message lands on $stderr, not $output.
+    output=$stderr assert_output --partial "exec /bin/uname: exec format error"
 }
 
 @test 'install s390x emulator' {
