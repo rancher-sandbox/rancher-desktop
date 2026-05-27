@@ -9,7 +9,7 @@ import Electron from 'electron';
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
-import type { IpcRendererEvents } from '@pkg/typings/electron-ipc';
+import { makeSendToFrame } from '@pkg/main/ipcUtils';
 import Logging from '@pkg/utils/logging';
 
 const console = Logging.containerStats;
@@ -37,36 +37,33 @@ export class ContainerStatsHandler {
   }
 
   stopAll() {
-    for (const session of this.sessions.values()) {
+    for (const [containerId, session] of this.sessions) {
+      try {
+        session.sender.send('container-stats/stopped', containerId);
+      } catch {}
       clearInterval(session.timer);
     }
     this.sessions.clear();
   }
 
   /**
-   * Run a container CLI command with a timeout.  Returns stdout on success or
-   * null on error / timeout.
+   * Run a container CLI command, aborting via the provided signal.
+   * Returns stdout on success or null on error / abort.
    */
-  private async runWithTimeout(args: string[], namespace: string | undefined): Promise<string | null> {
-    const timeout = new Promise<null>((resolve) => {
-      setTimeout(() => resolve(null), FETCH_TIMEOUT_MS);
-    });
+  private async runWithTimeout(args: string[], namespace: string | undefined, signal: AbortSignal): Promise<string | null> {
+    try {
+      const result = await this.client.runClient(args, 'pipe', { namespace, signal });
 
-    const run = (async() => {
-      try {
-        const result = await this.client.runClient(args, 'pipe', { namespace });
-
-        return result.stdout;
-      } catch {
-        return null;
-      }
-    })();
-
-    return Promise.race([run, timeout]);
+      return result.stdout;
+    } catch {
+      return null;
+    }
   }
 
   protected initHandlers() {
     ipcMainProxy.on('container-stats/start', (event, containerId, intervalSeconds, namespace) => {
+      const sendToFrame = makeSendToFrame(event.sender, console);
+
       // Stop any existing session for this container.
       const existing = this.sessions.get(containerId);
 
@@ -74,28 +71,33 @@ export class ContainerStatsHandler {
         clearInterval(existing.timer);
       }
 
-      const sendToFrame = <ch extends keyof IpcRendererEvents>(channel: ch, ...args: Parameters<IpcRendererEvents[ch]>) => {
-        try {
-          event.sender.send(channel, ...args);
-        } catch (ex) {
-          console.debug(`Failed to send ${ channel } to frame:`, ex);
-        }
-      };
+      let inFlight = false;
 
       const poll = async() => {
-        const [statsRaw, topRaw] = await Promise.all([
-          this.runWithTimeout(
-            ['stats', '--no-stream', '--format', '{{json .}}', containerId],
-            namespace,
-          ),
-          this.runWithTimeout(['top', containerId], namespace),
-        ]);
+        if (inFlight) return;
+        inFlight = true;
+        const abort = new AbortController();
+        const timeoutId = setTimeout(() => abort.abort(), FETCH_TIMEOUT_MS);
 
-        if (statsRaw?.trim()) {
-          sendToFrame('container-stats/data', containerId, statsRaw.trim());
-        }
-        if (topRaw?.trim()) {
-          sendToFrame('container-stats/processes', containerId, topRaw.trim());
+        try {
+          const [statsRaw, topRaw] = await Promise.all([
+            this.runWithTimeout(
+              ['stats', '--no-stream', '--format', '{{json .}}', containerId],
+              namespace,
+              abort.signal,
+            ),
+            this.runWithTimeout(['top', containerId], namespace, abort.signal),
+          ]);
+
+          if (statsRaw?.trim()) {
+            sendToFrame('container-stats/data', containerId, statsRaw.trim());
+          }
+          if (topRaw?.trim()) {
+            sendToFrame('container-stats/processes', containerId, topRaw.trim());
+          }
+        } finally {
+          clearTimeout(timeoutId);
+          inFlight = false;
         }
       };
 
@@ -106,6 +108,16 @@ export class ContainerStatsHandler {
       };
 
       this.sessions.set(containerId, session);
+
+      // Clean up if the renderer is destroyed before it sends container-stats/stop.
+      event.sender.once('destroyed', () => {
+        const s = this.sessions.get(containerId);
+
+        if (!s) return;
+        if (s.sender !== event.sender) return;
+        clearInterval(s.timer);
+        this.sessions.delete(containerId);
+      });
 
       // Fetch immediately so the first data point appears without waiting for the interval.
       poll().catch(console.error);

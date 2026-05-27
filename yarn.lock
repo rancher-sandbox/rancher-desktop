@@ -7293,7 +7293,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chart.js@npm:^4.4.9":
+"chart.js@npm:4.5.1":
   version: 4.5.1
   resolution: "chart.js@npm:4.5.1"
   dependencies:
@@ -14630,7 +14630,7 @@ __metadata:
     babel-core: "npm:7.0.0-bridge.0"
     babel-jest: "npm:30.4.1"
     babel-loader: "npm:10.1.1"
-    chart.js: "npm:^4.4.9"
+    chart.js: "npm:4.5.1"
     cookie-universal: "npm:2.2.2"
     cross-env: "npm:10.1.0"
     cross-spawn: "npm:7.0.6"
@@ -14684,7 +14684,7 @@ __metadata:
     typescript: "npm:6.0.3"
     vue: "npm:3.5.34"
     vue-3-slider-component: "npm:1.0.2"
-    vue-chartjs: "npm:^5.3.2"
+    vue-chartjs: "npm:5.3.3"
     vue-router: "npm:5.0.7"
     vue-select: "npm:3.20.4"
     vuex: "npm:4.1.0"
@@ -17105,7 +17105,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-chartjs@npm:^5.3.2":
+"vue-chartjs@npm:5.3.3":
   version: 5.3.3
   resolution: "vue-chartjs@npm:5.3.3"
   peerDependencies:

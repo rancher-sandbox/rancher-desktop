@@ -230,6 +230,8 @@ export interface IpcRendererEvents {
   'container-stats/data':      (containerId: string, statsJson: string) => void;
   /** Raw text output from `docker top` */
   'container-stats/processes': (containerId: string, topOutput: string) => void;
+  /** Session was terminated by the main process (e.g. engine change). */
+  'container-stats/stopped':   (containerId: string) => void;
   // #endregion
 
   // #region dialog

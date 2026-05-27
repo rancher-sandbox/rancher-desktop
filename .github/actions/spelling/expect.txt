@@ -92,6 +92,7 @@ cecinestpasuncategory
 ceph
 certutil
 cgroupfs
+chartjs
 checkpath
 chirico
 cidata

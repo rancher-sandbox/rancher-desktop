@@ -34,5 +34,7 @@ export class ContainerStatsPage {
     await expect(this.memoryChart).toBeVisible({ timeout });
     await expect(this.networkChart).toBeVisible({ timeout });
     await expect(this.ioChart).toBeVisible({ timeout });
+    // Wait for at least one poll cycle to complete (process table row proves data arrived).
+    await expect(this.processTable.locator('tbody tr').first()).toBeVisible({ timeout });
   }
 }

@@ -605,12 +605,14 @@ test.describe.serial('Container Stats Tab', () => {
   });
 
   test('process table shows at least one row', async() => {
-    const statsPage = new ContainerStatsPage(page);
+    const statsPage = await navigateToStatsTab(runningContainerId);
     await expect(statsPage.processTable.locator('tbody tr').first()).toBeVisible({ timeout: 15_000 });
   });
 
   test('refresh rate select has the correct options', async() => {
-    const statsPage = new ContainerStatsPage(page);
+    const statsPage = await navigateToStatsTab(runningContainerId);
+
+    await expect(statsPage.refreshSelect).toBeVisible({ timeout: 15_000 });
     const options = await statsPage.refreshSelect.locator('option').allTextContents();
 
     expect(options).toEqual(['1 s', '5 s', '10 s', '20 s', '30 s', '1 min']);

@@ -10,6 +10,16 @@
       Stats are only available for running containers.
     </banner>
 
+    <banner
+      v-else-if="!isMoby"
+      class="content-state"
+      color="info"
+      data-testid="stats-unsupported-engine"
+    >
+      <span class="icon icon-info-circle icon-lg" />
+      Stats are currently only available for the Docker (Moby) engine.
+    </banner>
+
     <template v-else>
       <div class="stats-toolbar">
         <label class="refresh-label">
@@ -66,7 +76,7 @@
           data-testid="stats-network-chart"
         >
           <h3 class="chart-title">
-            Network I/O
+            Network I/O (bytes/s)
           </h3>
           <div class="chart-wrapper">
             <Line
@@ -81,7 +91,7 @@
           data-testid="stats-io-chart"
         >
           <h3 class="chart-title">
-            Block I/O
+            Block I/O (bytes/s)
           </h3>
           <div class="chart-wrapper">
             <Line
@@ -156,7 +166,9 @@ import {
 } from 'chart.js';
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { Line } from 'vue-chartjs';
+import { useStore } from 'vuex';
 
+import { ContainerEngine } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -169,6 +181,9 @@ const props = defineProps<{
   namespace?:          string;
 }>();
 
+const store = useStore();
+const isMoby = computed(() => store.getters['container-engine/backend'] === ContainerEngine.MOBY);
+
 const MAX_POINTS = 60;
 const DEFAULT_REFRESH = 1;
 
@@ -178,10 +193,11 @@ const refreshSeconds = ref(DEFAULT_REFRESH);
 const labels = ref<string[]>([]);
 const cpuData = ref<number[]>([]);
 const memData = ref<number[]>([]);
+const memLimitData = ref<number[]>([]);
 const netRxData = ref<number[]>([]);
 const netTxData = ref<number[]>([]);
-const blockRData = ref<number[]>([]);
-const blockWData = ref<number[]>([]);
+const blockReadData = ref<number[]>([]);
+const blockWriteData = ref<number[]>([]);
 
 // Previous cumulative totals for NetIO / BlockIO delta calculation
 let prevNetRx = -1;
@@ -222,22 +238,65 @@ function parseBytes(s: string): number {
 }
 
 function parsePair(s: string): [number, number] {
-  const [a, b] = s.split('/').map(p => parseBytes(p.trim()));
+  const sep = s.indexOf('/');
 
-  return [a ?? 0, b ?? 0];
+  if (sep === -1) return [parseBytes(s.trim()), 0];
+
+  return [parseBytes(s.slice(0, sep).trim()), parseBytes(s.slice(sep + 1).trim())];
 }
 
 // ── Chart colour helpers ───────────────────────────────────────────────────
 
-function dataset(label: string, data: number[], color: string) {
+const textColor = ref('');
+const gridColor = ref('');
+const chartPalette = ref({
+  cpu:    '#4e9af1',
+  mem:    '#f1a14e',
+  memLim: '#4e9af1',
+  netRx:  '#4ef185',
+  netTx:  '#f14e4e',
+  blockR: '#9b4ef1',
+  blockW: '#f1e84e',
+});
+
+function readCssColor(probe: HTMLElement, varName: string, fallback: string): string {
+  probe.style.color = `var(${ varName }, ${ fallback })`;
+  return getComputedStyle(probe).color || fallback;
+}
+
+function readColors() {
+  const probe = document.createElement('div');
+
+  probe.style.display = 'none';
+  document.body.appendChild(probe);
+
+  probe.style.backgroundColor = 'var(--border)';
+  textColor.value = readCssColor(probe, '--body-text', '#333');
+  gridColor.value = getComputedStyle(probe).backgroundColor;
+
+  chartPalette.value = {
+    cpu:    readCssColor(probe, '--primary', '#4e9af1'),
+    mem:    readCssColor(probe, '--warning', '#f1a14e'),
+    memLim: readCssColor(probe, '--primary', '#4e9af1'),
+    netRx:  readCssColor(probe, '--success', '#4ef185'),
+    netTx:  readCssColor(probe, '--error', '#f14e4e'),
+    blockR: readCssColor(probe, '--info', '#9b4ef1'),
+    blockW: readCssColor(probe, '--warning-text', '#f1e84e'),
+  };
+
+  document.body.removeChild(probe);
+}
+
+function dataset(label: string, data: number[], color: string, dashed = false) {
   return {
     label,
     data:            [...data],
     borderColor:     color,
-    backgroundColor: color + '33',
-    borderWidth:     2,
+    backgroundColor: dashed ? 'transparent' : color + '33',
+    borderWidth:     dashed ? 1 : 2,
+    borderDash:      dashed ? [4, 4] : [],
     pointRadius:     0,
-    fill:            true,
+    fill:            !dashed,
     tension:         0.3,
   };
 }
@@ -246,51 +305,32 @@ function dataset(label: string, data: number[], color: string) {
 
 const cpuChartData = computed(() => ({
   labels:   [...labels.value],
-  datasets: [dataset('CPU %', cpuData.value, '#4e9af1')],
+  datasets: [dataset('CPU %', cpuData.value, chartPalette.value.cpu)],
 }));
 
 const memChartData = computed(() => ({
   labels:   [...labels.value],
-  datasets: [dataset('Memory', memData.value, '#f1a14e')],
+  datasets: [
+    dataset('Used', memData.value, chartPalette.value.mem),
+    dataset('Limit', memLimitData.value, chartPalette.value.memLim, true),
+  ],
 }));
 
 const netChartData = computed(() => ({
   labels:   [...labels.value],
   datasets: [
-    dataset('RX', netRxData.value, '#4ef185'),
-    dataset('TX', netTxData.value, '#f14e4e'),
+    dataset('RX', netRxData.value, chartPalette.value.netRx),
+    dataset('TX', netTxData.value, chartPalette.value.netTx),
   ],
 }));
 
 const ioChartData = computed(() => ({
   labels:   [...labels.value],
   datasets: [
-    dataset('Read', blockRData.value, '#9b4ef1'),
-    dataset('Write', blockWData.value, '#f1e84e'),
+    dataset('Read', blockReadData.value, chartPalette.value.blockR),
+    dataset('Write', blockWriteData.value, chartPalette.value.blockW),
   ],
 }));
-
-// ── Chart colours (resolved from CSS custom properties) ────────────────────
-
-const textColor = ref('');
-const gridColor = ref('');
-
-function readColors() {
-  // Canvas cannot resolve CSS custom properties (var(--…)).  Attach a
-  // temporary element to the live DOM so the browser resolves the custom
-  // properties to concrete rgb() values we can hand directly to Chart.js.
-  const probe = document.createElement('div');
-
-  probe.style.display = 'none';
-  probe.style.color = 'var(--body-text)';
-  probe.style.backgroundColor = 'var(--border)';
-  document.body.appendChild(probe);
-  const computed = getComputedStyle(probe);
-
-  textColor.value = computed.color;
-  gridColor.value = computed.backgroundColor;
-  document.body.removeChild(probe);
-}
 
 // ── Chart options ──────────────────────────────────────────────────────────
 
@@ -316,7 +356,7 @@ const memOptions = computed(() => ({
     ...baseOptions.value.plugins,
     tooltip: {
       callbacks: {
-        label: (ctx: any) => ` ${ formatBytes(ctx.raw) }`,
+        label: (ctx: any) => ` ${ ctx.dataset.label }: ${ formatBytes(ctx.raw) }`,
       },
     },
   },
@@ -338,7 +378,7 @@ const bytesOptions = computed(() => ({
     ...baseOptions.value.plugins,
     tooltip: {
       callbacks: {
-        label: (ctx: any) => ` ${ ctx.dataset.label }: ${ formatBytes(ctx.raw) }`,
+        label: (ctx: any) => ` ${ ctx.dataset.label }: ${ formatBytes(ctx.raw) }/s`,
       },
     },
   },
@@ -373,28 +413,33 @@ function handleStatsData(_event: any, id: string, statsJson: string) {
   if (id !== props.containerId) return;
 
   try {
-    // docker stats may return multiple JSON objects if the container name
-    // appears more than once; take the first valid line.
     const line = statsJson.split('\n').find(l => l.trim().startsWith('{'));
 
-    if (!line) return;
+    if (!line) {
+      console.debug('container-stats/data: no JSON in output:', statsJson.slice(0, 200));
+      return;
+    }
     const s = JSON.parse(line);
 
     const now = new Date().toLocaleTimeString();
 
     push(labels.value, now);
     push(cpuData.value, parsePercent(s.CPUPerc ?? '0%'));
-    push(memData.value, parseBytes((s.MemUsage ?? '0B / 0B').split('/')[0].trim()));
+
+    const [memUsed, memLimit] = parsePair(s.MemUsage ?? '0B / 0B');
+
+    push(memData.value, memUsed);
+    push(memLimitData.value, memLimit);
 
     const [rx, tx] = parsePair(s.NetIO ?? '0B / 0B');
     const [blockR, blockW] = parsePair(s.BlockIO ?? '0B / 0B');
 
-    // Push deltas; skip the very first sample (no previous value to diff against).
+    // Push per-second rates; skip the very first sample (no previous value to diff against).
     if (prevNetRx >= 0) {
-      push(netRxData.value, Math.max(0, rx - prevNetRx));
-      push(netTxData.value, Math.max(0, tx - prevNetTx));
-      push(blockRData.value, Math.max(0, blockR - prevBlockR));
-      push(blockWData.value, Math.max(0, blockW - prevBlockW));
+      push(netRxData.value, Math.max(0, rx - prevNetRx) / refreshSeconds.value);
+      push(netTxData.value, Math.max(0, tx - prevNetTx) / refreshSeconds.value);
+      push(blockReadData.value, Math.max(0, blockR - prevBlockR) / refreshSeconds.value);
+      push(blockWriteData.value, Math.max(0, blockW - prevBlockW) / refreshSeconds.value);
     }
     prevNetRx = rx;
     prevNetTx = tx;
@@ -410,23 +455,44 @@ function handleProcesses(_event: any, id: string, topOutput: string) {
 
   const lines = topOutput.split('\n').filter(Boolean);
 
-  if (lines.length < 1) return;
+  if (lines.length < 2) return;
 
-  // First line is the header row; split on 2+ spaces so multi-word column
-  // names (e.g. "START TIME") stay together.
-  const headers = lines[0].trim().split(/\s{2,}/);
-  const rows = lines.slice(1).map((line) => {
-    const parts = line.trim().split(/\s+/);
-    const fixed = parts.slice(0, headers.length - 1);
+  const headerLine = lines[0];
 
-    // Rejoin trailing tokens into the last column (CMD / COMMAND).
-    fixed.push(parts.slice(headers.length - 1).join(' '));
+  // Build column start positions.  Words separated by a single space belong to
+  // the same column (e.g. "START TIME"); 2+ spaces mark a new column boundary.
+  const colStarts: number[] = [];
+  let prevEnd = -2;
 
-    return fixed;
+  for (const m of headerLine.matchAll(/\S+/g)) {
+    if (m.index - prevEnd > 1) {
+      colStarts.push(m.index);
+    }
+    prevEnd = m.index + m[0].length;
+  }
+
+  const headers = colStarts.map((start, i) => {
+    const end = colStarts[i + 1] ?? headerLine.length;
+
+    return headerLine.slice(start, end).trim();
   });
+
+  const rows = lines.slice(1).map(line =>
+    colStarts.map((start, i) => {
+      const end = i < colStarts.length - 1 ? colStarts[i + 1] : undefined;
+
+      return (end !== undefined ? line.slice(start, end) : line.slice(start)).trim();
+    }),
+  );
 
   processHeaders.value = headers;
   processes.value = rows;
+}
+
+function handleStopped(_event: any, id: string) {
+  if (id !== props.containerId) return;
+  stopPolling();
+  resetBuffers();
 }
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -435,10 +501,11 @@ function resetBuffers() {
   labels.value = [];
   cpuData.value = [];
   memData.value = [];
+  memLimitData.value = [];
   netRxData.value = [];
   netTxData.value = [];
-  blockRData.value = [];
-  blockWData.value = [];
+  blockReadData.value = [];
+  blockWriteData.value = [];
   processHeaders.value = [];
   prevNetRx = -1;
   prevNetTx = -1;
@@ -448,7 +515,7 @@ function resetBuffers() {
 }
 
 function startPolling() {
-  if (!props.isContainerRunning || !props.containerId) return;
+  if (!props.isContainerRunning || !props.containerId || !isMoby.value) return;
   ipcRenderer.send('container-stats/start', props.containerId, refreshSeconds.value, props.namespace);
 }
 
@@ -460,6 +527,8 @@ function stopPolling() {
 
 function restartPolling() {
   stopPolling();
+  // Reset prev* so the first delta after a rate change is not a spike.
+  prevNetRx = prevNetTx = prevBlockR = prevBlockW = -1;
   startPolling();
 }
 
@@ -471,6 +540,7 @@ onMounted(() => {
 
   ipcRenderer.on('container-stats/data', handleStatsData);
   ipcRenderer.on('container-stats/processes', handleProcesses);
+  ipcRenderer.on('container-stats/stopped', handleStopped);
   startPolling();
 });
 
@@ -479,6 +549,7 @@ onBeforeUnmount(() => {
   stopPolling();
   ipcRenderer.removeListener('container-stats/data', handleStatsData);
   ipcRenderer.removeListener('container-stats/processes', handleProcesses);
+  ipcRenderer.removeListener('container-stats/stopped', handleStopped);
 });
 
 watch(() => props.containerId, () => {
@@ -488,8 +559,9 @@ watch(() => props.containerId, () => {
 });
 
 watch(() => props.isContainerRunning, (running) => {
+  resetBuffers();
   if (running) {
-    restartPolling();
+    startPolling();
   } else {
     stopPolling();
   }

@@ -12,6 +12,7 @@ import Electron from 'electron';
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import type { WritableReadableProcess } from '@pkg/backend/containerClient/types';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
+import { makeSendToFrame } from '@pkg/main/ipcUtils';
 import type { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import Logging from '@pkg/utils/logging';
 
@@ -69,13 +70,7 @@ export class ContainerExecHandler {
 
   protected initHandlers() {
     ipcMainProxy.on('container-exec/start', async(event, containerId, namespace) => {
-      const sendToFrame = <ch extends keyof IpcRendererEvents>(channel: ch, ...args: Parameters<IpcRendererEvents[ch]>) => {
-        try {
-          event.sender.send(channel, ...args);
-        } catch (ex) {
-          console.debug(`Failed to send ${ channel } to frame:`, ex);
-        }
-      };
+      const sendToFrame = makeSendToFrame(event.sender, console);
 
       // Reconnect path: an existing session for this container is alive.
       const session = this.sessions.get(containerId);
