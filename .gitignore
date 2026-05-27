@@ -13,7 +13,6 @@
 /resources/linux/*
 !/resources/linux/rancher-desktop.desktop
 /resources/preload.js*
-/resources/rancher-dashboard/
 /resources/rdx-proxy.tar
 /resources/spin-operator*
 /resources/win32/

@@ -6,6 +6,7 @@ import { Plugin } from 'vuex';
 import { ActionTree, MutationsType } from './ts-helpers';
 
 import { CURRENT_SETTINGS_VERSION } from '@pkg/config/settings';
+import { RootState } from '@pkg/entry/store';
 import type { DiagnosticsResult, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import ipcRenderer from '@pkg/utils/ipcRenderer';
 
@@ -165,7 +166,7 @@ export const actions = {
   },
 } satisfies ActionTree<DiagnosticsState, any, typeof mutations>;
 
-export const plugins: Plugin<DiagnosticsState>[] = [
+export const plugins: Plugin<RootState>[] = [
   // Vuex plugin used to refresh diagnostics on command from the backend.
   function(store) {
     ipcRenderer.on('diagnostics/update', () => {

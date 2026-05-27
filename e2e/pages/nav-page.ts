@@ -32,12 +32,14 @@ export class NavPage {
   readonly page:              Page;
   readonly progressBar:       Locator;
   readonly mainTitle:         Locator;
+  readonly dashboardButton:   Locator;
   readonly preferencesButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.mainTitle = page.locator('[data-test="mainTitle"]');
     this.progressBar = page.locator('.progress');
+    this.dashboardButton = page.getByTestId('dashboard-button');
     this.preferencesButton = page.getByTestId('preferences-button');
   }
 

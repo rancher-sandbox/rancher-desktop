@@ -103,7 +103,6 @@ const vmDependencies = [
 // Dependencies that are specific to hosts.
 const hostDependencies = [
   new tools.Steve(),
-  new tools.RancherDashboard(),
   new Electron(),
   new MobyOpenAPISpec(),
 ];

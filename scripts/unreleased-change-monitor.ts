@@ -20,7 +20,6 @@ const dependencies: GitHubDependency[] = [
   new WSLDistro(),
   new tools.DockerCLI(),
   new tools.Steve(),
-  new tools.RancherDashboard(),
   new AlpineLimaISO(),
 ];
 

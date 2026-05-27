@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron';
 
 import { windowMapping, restoreWindow } from '.';
 
-const dashboardURL = 'http://127.0.0.1:6120/c/local/explorer';
+import { Steve } from '@pkg/backend/steve';
 
 const getDashboardWindow = () => ('dashboard' in windowMapping) ? BrowserWindow.fromId(windowMapping['dashboard']) : null;
 
@@ -13,6 +13,12 @@ export function openDashboard() {
     return window;
   }
 
+  const { port } = Steve.getInstance();
+
+  if (!port) {
+    return;
+  }
+
   window = new BrowserWindow({
     title:  'Rancher Dashboard',
     width:  800,
@@ -20,7 +26,7 @@ export function openDashboard() {
     show:   false,
   });
 
-  window.loadURL(dashboardURL);
+  window.loadURL(`http://127.0.0.1:${ port }/c/local/explorer`);
 
   windowMapping['dashboard'] = window.id;
 

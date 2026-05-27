@@ -3,6 +3,7 @@
  * An E2E test is required to have access to the web page context.
  */
 
+import http from 'http';
 import os from 'os';
 import path from 'path';
 
@@ -281,19 +282,34 @@ test.describe.serial('Extensions', () => {
       });
 
       test('bypass CORS', async() => {
-        // This is the dashboard URL; it does not have CORS set up so it would
-        // normally fail to fetch due to CORS reasons.  However, this test case
-        // checks that our CORS bypass is working.
-        const url = 'http://127.0.0.1:6120/c/local/explorer/node';
-        const script = `
-          (async () => {
-            const result = await fetch('${ url }');
-            return Object.fromEntries(result.headers.entries());
-          })()
-        `;
-        const result = await evalInView(script);
+        const server = http.createServer((req, res) => {
+          res.writeHead(200, {
+            // We set CORS headers to _reject_ the request, to
+            // check that the extension bypasses CORS.
+            'Access-Control-Allow-Origin': 'http://something.invalid/',
+            'Content-Type':                'text/plain',
+          });
+          res.end('Hello');
+        });
+        try {
+          await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+          const address = server.address();
+          if (typeof address === 'string' || !address) {
+            throw new Error(`Unexpected address type: ${ JSON.stringify(address) }`);
+          }
+          const url = `http://${ address.address }:${ address.port }/`;
 
-        expect(result).toHaveProperty('content-type');
+          const script = `
+            (async () => {
+              const result = await fetch('${ url }');
+              return Object.fromEntries(result.headers.entries());
+            })()
+          `;
+          const result = await evalInView(script);
+          expect(result).toHaveProperty('content-type');
+        } finally {
+          await new Promise<Error | void>(resolve => server.close(resolve));
+        }
       });
     });
 
@@ -423,13 +439,26 @@ test.describe.serial('Extensions', () => {
         });
       });
       test('can fetch from external sources', async() => {
-        const url = 'http://127.0.0.1:6120/c/local/explorer/node'; // dashboard
-
-        await retry(async() => {
-          const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
-
-          await expect(result).resolves.toContain('<title>Rancher</title>');
+        const contents = 'Hello from E2E tests';
+        const server = http.createServer((req, res) => {
+          // This server does not include CORS headers; it would fail without
+          // CORS bypass.
+          res.writeHead(200, { 'Content-Type': 'text/plain' });
+          res.end(contents);
         });
+        await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+        try {
+          const port = (server.address() as any).port;
+          const url = `http://127.0.0.1:${ port }/`;
+
+          await retry(async() => {
+            const result = evalInView(`ddClient.extension.vm.service.get("${ url }")`);
+
+            await expect(result).resolves.toContain(contents);
+          });
+        } finally {
+          await new Promise<Error | void>(resolve => server.close(resolve));
+        }
       });
       test.describe('can post values', () => {
         test('with string body', async() => {

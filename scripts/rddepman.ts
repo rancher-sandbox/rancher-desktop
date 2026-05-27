@@ -19,6 +19,8 @@ import {
 const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
 const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-desktop';
+/** If set, update the manifest without creating pull requests, for testing the workflow. */
+const SKIP_PULL_REQUESTS = !!process.env.RD_DEPMAN_LOCAL_CHANGES;
 
 interface VersionComparison {
   dependency:     VersionedDependency;
@@ -245,6 +247,14 @@ async function checkDependencies(): Promise<void> {
 
   if (!process.env.CI) {
     // When not running in CI, don't try to make pull requests.
+
+    if (SKIP_PULL_REQUESTS) {
+      console.log('Forcing local changes without pull requests');
+      for (const { dependency, latestVersion } of updatesAvailable) {
+        const newChecksums = await dependency.getChecksums(latestVersion);
+        await dependency.updateManifest(latestVersion, newChecksums);
+      }
+    }
     if (updatesAvailable.length) {
       console.log(`Not running in CI, skipping creation of ${ updatesAvailable.length } pull requests.`);
     }

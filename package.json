@@ -71,7 +71,6 @@
     "express": "5.2.1",
     "floating-vue": "5.2.2",
     "fs-extra": "11.3.5",
-    "http-proxy-middleware": "4.0.0",
     "intl-messageformat": "11.2.6",
     "jquery": "4.0.0",
     "jsonpath-plus": "10.4.0",

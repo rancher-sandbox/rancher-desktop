@@ -64,7 +64,6 @@ export interface DependencyVersions {
   'golangci-lint':                 string;
   trivy:                           string;
   steve:                           string;
-  rancherDashboard:                string;
   dockerProvidedCredentialHelpers: string;
   ECRCredentialHelper:             string;
   mobyOpenAPISpec:                 MobyOpenAPISpecVersion;
