@@ -112,9 +112,17 @@ deploy_rancher() {
         --version "$rancher_chart_version" \
         --namespace cattle-system \
         --set hostname="$host" \
-        --wait \
-        --timeout=10m \
+        --set replicas=1 \
         --create-namespace
+
+    # Don't use `helm --wait`: the chart's Deployment relies on the default
+    # `progressDeadlineSeconds` (10m), which is shorter than the initial
+    # rancher image pull on slow networks. Wait on `Available` directly,
+    # since that condition is driven by pod Ready state and is unaffected
+    # by ProgressDeadlineExceeded.
+    kubectl wait --namespace cattle-system \
+        --for=condition=Available --timeout=30m \
+        deployment/rancher
 }
 
 verify_rancher() {
