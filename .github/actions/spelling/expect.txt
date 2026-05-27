@@ -604,6 +604,7 @@ showduplicates
 showmuted
 shuf
 sigch
+signalutil
 signtool
 singleparsesection
 sio
