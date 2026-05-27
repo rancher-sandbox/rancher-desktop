@@ -174,7 +174,7 @@ func (f *loopbackForwarder) acceptTCP(ctx context.Context, lis net.Listener, por
 	// loggedAcceptError throttles per-listener Accept-error logs the
 	// same way logAddFailure throttles publish-failure logs in the
 	// scanner. Sustained FD pressure (EMFILE) saturates the loop at
-	// the 5 s cap; without the throttle the loop emits one Error
+	// the 5 s cap; without the throttle, the loop emits one Error
 	// every 5 s indefinitely.
 	loggedAcceptError := false
 	for {
