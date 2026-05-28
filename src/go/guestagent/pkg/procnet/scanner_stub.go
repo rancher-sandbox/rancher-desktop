@@ -18,6 +18,7 @@ package procnet
 import (
 	"context"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
@@ -25,7 +26,7 @@ import (
 
 type ProcNetScanner struct{}
 
-func NewProcNetScanner(context.Context, tracker.Tracker, time.Duration) (*ProcNetScanner, error) {
+func NewProcNetScanner(context.Context, tracker.Tracker, net.IP, time.Duration) (*ProcNetScanner, error) {
 	panic("only implemented for Linux")
 }
 

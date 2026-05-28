@@ -12,11 +12,26 @@ limitations under the License.
 */
 
 /*
-Package procnet provides functionality to scan and manage network ports based on the system's
-/proc/net/{tcp,udp} entries. It monitors for new and removed ports and handles port forwarding
-via host switch's API. Also, it creates iptables PREROUTING rules, specifically for containers
-using the host network driver. This package is designed to work with the Linux-based WSL
-environment, enabling localnet routing and managing port mappings.
+Package procnet scans /proc/net for IPv4 TCP and UDP listeners the
+container-engine events handler does not publish -- mainly
+--network=host containers binding 127.0.0.1 -- and exposes them to
+host-switch via the API tracker. For loopback listeners it also opens
+a userspace forwarder on the namespace's tap IP so traffic arriving
+from host-switch reaches the in-namespace 127.0.0.1 listener. A
+two-scan stability gate filters out the transient reservation socket
+nerdctl's OCI createRuntime hook opens before CNI installs its
+iptables rules.
+
+IPv6 limitation: procnettcp.ParseFiles returns entries from
+/proc/net/{tcp,tcp6,udp,udp6}, but addValidProtoEntryToPortMap
+dispatches only on the TCP and UDP Kinds and silently drops the
+TCP6 and UDP6 entries. A --network=host container that listens
+exclusively on [::1]:port is invisible to the scanner and is not
+reachable from Windows. Containers that bind dual-stack
+(e.g. [::]:port with IPV6_V6ONLY=0, the Go and Python default) are
+also invisible because the socket appears only in /proc/net/tcp6.
+Only listeners that bind 127.0.0.1, 0.0.0.0, or both v4 and v6
+separately are reachable from Windows.
 */
 package procnet
 
@@ -24,8 +39,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -38,137 +51,283 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
 )
 
-type action string
-
 const (
-	Append action = "append"
-	Delete action = "delete"
+	loopbackIP = "127.0.0.1"
+	wildcardIP = "0.0.0.0"
 )
 
-const routeLocalnet = "/proc/sys/net/ipv4/conf/eth0/route_localnet"
+// loopbackController is what the scanner calls to manage userspace
+// listeners for 127.0.0.1 ports. The real implementation opens listeners
+// on bindIP; unit tests substitute a recording fake.
+type loopbackController interface {
+	Add(ctx context.Context, proto string, port uint16) error
+	Remove(proto string, port uint16) error
+	Close() error
+}
 
+// ProcNetScanner polls /proc/net for IPv4 TCP and UDP listeners
+// and reconciles the observed set against the API tracker and a
+// userspace loopback forwarder. See the package comment for the
+// design, including the IPv6 limitation.
 type ProcNetScanner struct {
-	context       context.Context
-	LocalnetRoute bool
-	tracker       tracker.Tracker
-	scanInterval  time.Duration
+	ctx          context.Context
+	tracker      tracker.Tracker
+	forwarder    loopbackController
+	bindIP       net.IP
+	scanInterval time.Duration
+
+	published nat.PortMap
+	pending   map[nat.Port]struct{}
+
+	// addErrorLogged throttles publish-failure logs to one Error line
+	// per port; subsequent failures for the same port log at Debug
+	// until the port either publishes successfully or leaves both
+	// pending and published. Without this, every tick (~3s) emits two
+	// Error lines per stuck port when wsl-proxy or host-switch is
+	// down, drowning the log.
+	addErrorLogged map[nat.Port]bool
 }
 
-func NewProcNetScanner(ctx context.Context, t tracker.Tracker, scanInterval time.Duration) (*ProcNetScanner, error) {
+// NewProcNetScanner constructs a /proc/net scanner that publishes
+// the observed listeners through tracker t. For each loopback
+// (127.0.0.1) binding it also opens a userspace forwarder on
+// bindIP — the namespace's tap interface IP — that pipes traffic
+// into 127.0.0.1. Wildcard (0.0.0.0) bindings rely on the
+// engine-namespace listener to accept bindIP:port directly and
+// skip the forwarder. scanInterval controls the poll cadence; the
+// two-scan stability gate adds one additional cadence of delay
+// before a new port is published.
+func NewProcNetScanner(ctx context.Context, t tracker.Tracker, bindIP net.IP, scanInterval time.Duration) (*ProcNetScanner, error) {
+	return newScanner(ctx, t, newLoopbackForwarder(bindIP), bindIP, scanInterval), nil
+}
+
+func newScanner(ctx context.Context, t tracker.Tracker, f loopbackController, bindIP net.IP, scanInterval time.Duration) *ProcNetScanner {
 	return &ProcNetScanner{
-		context:      ctx,
-		tracker:      t,
-		scanInterval: scanInterval,
-	}, enableLocalnetRouting()
+		ctx:            ctx,
+		tracker:        t,
+		forwarder:      f,
+		bindIP:         bindIP,
+		scanInterval:   scanInterval,
+		published:      make(nat.PortMap),
+		pending:        make(map[nat.Port]struct{}),
+		addErrorLogged: make(map[nat.Port]bool),
+	}
 }
 
+// ForwardPorts polls /proc/net every scanInterval and drives Tick with
+// each snapshot.
 func (p *ProcNetScanner) ForwardPorts() error {
 	ticker := time.NewTicker(p.scanInterval)
 	defer ticker.Stop()
-
-	var previousPortMap nat.PortMap
+	defer p.forwarder.Close()
 
 	for {
 		select {
-		case <-p.context.Done():
-			return fmt.Errorf("/proc/net scanner context cancelled: %w", p.context.Err())
+		case <-p.ctx.Done():
+			return fmt.Errorf("/proc/net scanner context cancelled: %w", p.ctx.Err())
 		case <-ticker.C:
-			entries, err := procnettcp.ParseFiles()
+			scanned, err := p.scanListeners()
 			if err != nil {
-				log.Errorf("failed to parse /proc/net/{tcp, udp} files: %s", err)
+				log.Errorf("failed to scan /proc/net: %s", err)
 				continue
 			}
-			newPortMap := make(nat.PortMap)
-			for _, entry := range entries {
-				if err := addValidProtoEntryToPortMap(entry, newPortMap); err != nil {
-					log.Errorf("failed to create portMapping for entry: %w", err)
-					continue
-				}
-			}
-
-			// Add new ports
-			for port, bindings := range newPortMap {
-				if _, exists := previousPortMap[port]; !exists {
-					log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
-					err := p.tracker.Add(utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())), nat.PortMap{
-						port: bindings,
-					})
-					if err != nil {
-						log.Errorf("/proc/net scanner failed to add port: %s", err)
-						continue
-					}
-					if err = p.execLoopbackIPtablesRule(bindings, port, Append); err != nil {
-						log.Errorf("/proc/net scanner creating loopback iptable rules for portbinding: %v failed: %s", bindings, err)
-					}
-				}
-			}
-
-			// Remove old ports
-			for port, previousBindings := range previousPortMap {
-				if _, exists := newPortMap[port]; !exists {
-					log.Infof("/proc/net scanner removed port: %s -> %+v", port, previousBindings)
-					err := p.tracker.Remove(utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port())))
-					if err != nil {
-						log.Errorf("/proc/net scanner failed to remove port: %s", err)
-						continue
-					}
-
-					if err = p.execLoopbackIPtablesRule(previousBindings, port, Delete); err != nil {
-						log.Errorf("/proc/net scanner deleting loopback iptable rules for portbinding: %v failed: %s", previousBindings, err)
-					}
-				}
-			}
-
-			previousPortMap = newPortMap
+			p.Tick(scanned)
 		}
 	}
 }
 
-// execLoopbackIPtablesRule modifies iptables NAT rules to handle loopback traffic for a specified port
-// and protocol. This function is only necessary when the container is using the host network driver
-// (i.e., with --network=host), as in this case the container shares the host's network namespace.
+// Tick reconciles the tracker and userspace forwarder against scanned.
 //
-// When using the host network driver, network traffic bound to 127.0.0.1 needs to be redirected from
-// outside the network namespace to the localhost (127.0.0.1). This function adds or removes DNAT rules
-// that allow traffic to be forwarded to the specified port on localhost, based on the provided 'action'
-// ('append' or 'delete').
-//
-// The function iterates over the provided list of port bindings. For each binding where the HostIP is set
-// to 127.0.0.1, it constructs and executes the corresponding iptables command to either add or delete the
-// appropriate DNAT rule.
-//
-// The iptables rule ensures that incoming traffic from outside the network namespace (i.e., from the
-// host machine) on the specified port and protocol is redirected to the same port on localhost, where the
-// container's service can be accessed.
-//
-// Example iptables rule when 'action' is "append":
-//
-//	iptables -t nat -A PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
-//
-// Example iptables rule when 'action' is "delete":
-//
-//	iptables -t nat -D PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
-func (p *ProcNetScanner) execLoopbackIPtablesRule(bindings []nat.PortBinding, portProto nat.Port, action action) error {
-	for _, binding := range bindings {
-		if binding.HostIP == "127.0.0.1" {
-			// iptables -t nat -D PREROUTING -p tcp --dport 8009 -j DNAT --to-destination 127.0.0.1:8009
-			//nolint:gosec // None of the arguments are user-supplied.
-			iptablesCmd := exec.CommandContext(p.context,
-				"iptables",
-				"--table", "nat",
-				fmt.Sprintf("--%s", action), "PREROUTING",
-				"--protocol", portProto.Proto(),
-				"--dport", binding.HostPort,
-				"--jump", "DNAT",
-				"--to-destination", fmt.Sprintf("%s:%s", binding.HostIP, binding.HostPort),
-			)
-			if err := iptablesCmd.Run(); err != nil {
+// The two-scan stability gate defers each new port until it appears in
+// two consecutive Ticks (~3 s at the default interval). The gate
+// filters the transient OCI-hook reservation socket. Removals take
+// effect immediately: a vanished listener is unambiguous.
+func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
+	for port, bindings := range p.published {
+		if newBindings, ok := scanned[port]; ok && bindingsEqual(bindings, newBindings) {
+			continue
+		}
+		// Either the port vanished or its bind addresses changed
+		// (container restart with a different bind). Unpublish so the
+		// next tick can re-publish against the current bindings; this
+		// preserves the two-scan gate semantics for the new shape.
+		p.unpublish(port, bindings)
+		delete(p.published, port)
+	}
+
+	for port := range p.pending {
+		bindings, ok := scanned[port]
+		if !ok {
+			continue
+		}
+		if err := p.publish(port, bindings); err != nil {
+			continue
+		}
+		p.published[port] = bindings
+	}
+
+	p.pending = make(map[nat.Port]struct{})
+	for port := range scanned {
+		if _, ok := p.published[port]; ok {
+			continue
+		}
+		p.pending[port] = struct{}{}
+	}
+
+	// Drop log-throttle state for ports that have left both maps.
+	// Without this sweep, a transient port that fails to publish and
+	// then vanishes leaves a dangling entry, so the map grows
+	// without bound under listener churn.
+	for port := range p.addErrorLogged {
+		if _, ok := p.pending[port]; ok {
+			continue
+		}
+		if _, ok := p.published[port]; ok {
+			continue
+		}
+		delete(p.addErrorLogged, port)
+	}
+}
+
+// publish reports a new listener to the API tracker and opens a
+// userspace forwarder for each loopback binding. It returns an error
+// if either step fails after rolling back the tracker entry, so the
+// caller can leave the port in pending for next-tick retry instead
+// of recording it as published.
+func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) error {
+	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
+	if err := p.tracker.Add(id, nat.PortMap{port: bindings}); err != nil {
+		p.logAddFailure(port, fmt.Sprintf("failed to add: %s", err))
+		if removeErr := p.tracker.Remove(id); removeErr != nil {
+			p.logAddFailure(port, fmt.Sprintf("rollback after tracker.Add failure: %s", removeErr))
+		}
+		return err
+	}
+
+	// A wildcard binding on the same port accepts traffic to bindIP:port
+	// directly, and the forwarder's bind would collide with it. Skip the
+	// forwarder; the tracker entry alone keeps the port reachable from
+	// Windows.
+	if !hasWildcardBinding(bindings) {
+		// Every binding under a given nat.Port carries the same HostPort
+		// (addEntryToPortMap derives both from entry.Port), so forwarder.Add
+		// sees one key and rollback unwinds at most one listener.
+		for _, b := range bindings {
+			if b.HostIP != loopbackIP {
+				continue
+			}
+			portNum, err := strconv.ParseUint(b.HostPort, 10, 16)
+			if err != nil {
+				// b.HostPort is strconv.Itoa of a uint16 (see
+				// addEntryToPortMap), so ParseUint always succeeds. If that
+				// invariant breaks, roll the tracker entry back and return
+				// the error so the next Tick re-pends the port instead of
+				// recording it as published without a forwarder.
+				p.logAddFailure(port, fmt.Sprintf("bad port %q: %s", b.HostPort, err))
+				if removeErr := p.tracker.Remove(id); removeErr != nil {
+					p.logAddFailure(port, fmt.Sprintf("rollback after bad port: %s", removeErr))
+				}
+				return fmt.Errorf("/proc/net scanner: bad port %q: %w", b.HostPort, err)
+			}
+			if err := p.forwarder.Add(p.ctx, port.Proto(), uint16(portNum)); err != nil {
+				p.logAddFailure(port, fmt.Sprintf("loopback forwarder %s/%s: %s", port.Proto(), b.HostPort, err))
+				if removeErr := p.tracker.Remove(id); removeErr != nil {
+					p.logAddFailure(port, fmt.Sprintf("rollback after forwarder.Add failure: %s", removeErr))
+				}
 				return err
 			}
-			log.Debugf("running the following iptables rule [%s] for port bindings: %v", iptablesCmd.String(), binding)
 		}
 	}
+
+	// Only mark success — and only log the success Info line — once
+	// the whole publish has run. Clearing addErrorLogged or logging
+	// "added port" between tracker.Add and forwarder.Add lets a
+	// persistent forwarder failure re-Error every tick because the
+	// flag would reset on each tick's tracker.Add.
+	delete(p.addErrorLogged, port)
+	log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
 	return nil
+}
+
+// logAddFailure emits the first publish-failure message for port at
+// Error level and subsequent messages at Debug. addErrorLogged
+// resets when publish succeeds or when the sweep at the end of Tick
+// observes the port has left both pending and published.
+func (p *ProcNetScanner) logAddFailure(port nat.Port, msg string) {
+	if p.addErrorLogged[port] {
+		log.Debugf("/proc/net scanner %s: %s", port, msg)
+		return
+	}
+	log.Errorf("/proc/net scanner %s: %s", port, msg)
+	p.addErrorLogged[port] = true
+}
+
+func (p *ProcNetScanner) unpublish(port nat.Port, bindings []nat.PortBinding) {
+	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
+	if err := p.tracker.Remove(id); err != nil {
+		log.Errorf("/proc/net scanner failed to remove %s: %s", port, err)
+	} else {
+		log.Infof("/proc/net scanner removed port: %s -> %+v", port, bindings)
+	}
+
+	// Mirror publish's wildcard short-circuit: publish skipped the
+	// forwarder when bindings included a wildcard, so unpublish has
+	// nothing to remove.
+	if hasWildcardBinding(bindings) {
+		return
+	}
+
+	for _, b := range bindings {
+		if b.HostIP != loopbackIP {
+			continue
+		}
+		portNum, err := strconv.ParseUint(b.HostPort, 10, 16)
+		if err != nil {
+			continue
+		}
+		if err := p.forwarder.Remove(port.Proto(), uint16(portNum)); err != nil {
+			log.Errorf("/proc/net scanner: loopback forwarder remove %s/%s: %s", port.Proto(), b.HostPort, err)
+		}
+	}
+}
+
+// scanListeners parses /proc/net/{tcp,tcp6,udp,udp6} via
+// procnettcp.ParseFiles. See addValidProtoEntryToPortMap for the
+// IPv6 drop and entriesToPortMap for the filter that drops the
+// forwarder's own sockets.
+func (p *ProcNetScanner) scanListeners() (nat.PortMap, error) {
+	entries, err := procnettcp.ParseFiles()
+	if err != nil {
+		return nil, err
+	}
+	return p.entriesToPortMap(entries), nil
+}
+
+// entriesToPortMap converts procnet entries into a port map, dropping
+// any entry whose IP matches bindIP. The forwarder opens its own
+// socket on bindIP for every loopback port it proxies; leaving those
+// entries in the snapshot keeps the proto/port key alive after the
+// upstream listener exits and blocks unpublish.
+//
+// Trade-off: a container that binds explicitly to bindIP (the
+// namespace's tap interface IP) is filtered out alongside the
+// forwarder's own listeners and never reaches publish. No container
+// engine we ship does this -- host-network containers bind to
+// 127.0.0.1 or 0.0.0.0, and bridge-network containers do not see
+// bindIP -- so the gap is acceptable. A tighter filter would require
+// procnettcp to expose inode-level ownership so the forwarder's
+// sockets can be identified without overlap.
+func (p *ProcNetScanner) entriesToPortMap(entries []procnettcp.Entry) nat.PortMap {
+	out := make(nat.PortMap)
+	for _, entry := range entries {
+		if entry.IP.Equal(p.bindIP) {
+			continue
+		}
+		if err := addValidProtoEntryToPortMap(entry, out); err != nil {
+			log.Errorf("failed to create portMapping for entry: %s", err)
+		}
+	}
+	return out
 }
 
 func addValidProtoEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
@@ -190,18 +349,13 @@ func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
 	portMapKey, err := nat.NewPort(strings.ToLower(entry.Kind), port)
 	if err != nil {
 		return fmt.Errorf("generating portMapKey protocol: %s, port: %d failed: %w",
-			entry.Kind,
-			entry.Port,
-			err)
+			entry.Kind, entry.Port, err)
 	}
 
-	// It's important not to use entry.IP directly here, as any IP
-	// other than 127.0.0.1 (localhost) or 0.0.0.0 may not be accessible
-	// from the host. To ensure consistent behavior, we always set the
-	// HostIP to INADDR_ANY (0.0.0.0) unless the IP is localhost or 0.0.0.0.
-	// The API tracker will then adjust the address as necessary:
-	// - If admin privileges are enabled, the address will remain 0.0.0.0.
-	// - Otherwise, it will be changed to 127.0.0.1 to ensure proper local binding.
+	// Listeners on non-loopback, non-wildcard addresses (e.g. 192.168.x.y)
+	// are not reachable from the Windows host as-is. Coerce to 0.0.0.0 so
+	// the tracker can decide between 0.0.0.0 and 127.0.0.1 based on the
+	// admin-install flag.
 	var hostIP net.IP
 	inAddrAny := net.IPv4(0, 0, 0, 0)
 	if entry.IP.IsLoopback() || entry.IP.Equal(inAddrAny) {
@@ -209,28 +363,44 @@ func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
 	} else {
 		hostIP = inAddrAny
 	}
-	portBinding := nat.PortBinding{
+	portMap[portMapKey] = append(portMap[portMapKey], nat.PortBinding{
 		HostIP:   hostIP.String(),
 		HostPort: port,
-	}
-	portMap[portMapKey] = append(portMap[portMapKey], portBinding)
+	})
 	return nil
 }
 
-func enableLocalnetRouting() error {
-	const enable = "1"
-	return writeSysctl(routeLocalnet, enable)
+// hasWildcardBinding reports whether bindings holds a 0.0.0.0 entry.
+// A wildcard listener inside the engine namespace already accepts
+// traffic on every IP in that namespace, including bindIP, so opening
+// a forwarder on bindIP:port would just duplicate the wildcard's
+// claim and fail with EADDRINUSE.
+func hasWildcardBinding(bindings []nat.PortBinding) bool {
+	for _, b := range bindings {
+		if b.HostIP == wildcardIP {
+			return true
+		}
+	}
+	return false
 }
 
-func writeSysctl(path, value string) error {
-	f, err := os.OpenFile(path, os.O_WRONLY, 0)
-	if err != nil {
-		return fmt.Errorf("could not open the sysctl file %s: %w", path, err)
+// bindingsEqual reports whether two binding lists hold the same set
+// of (HostIP, HostPort) pairs. Order does not matter, but duplicates
+// must match in multiplicity so a list with two identical entries
+// does not compare equal to one with a single entry.
+func bindingsEqual(a, b []nat.PortBinding) bool {
+	if len(a) != len(b) {
+		return false
 	}
-	defer f.Close()
-	if _, err := f.WriteString(value); err != nil {
-		return fmt.Errorf("could not write to the sysctl file %s: %w", path, err)
+	counts := make(map[nat.PortBinding]int, len(a))
+	for _, x := range a {
+		counts[x]++
 	}
-	log.Infof("/proc/net scanner enabled %s", routeLocalnet)
-	return nil
+	for _, x := range b {
+		counts[x]--
+		if counts[x] < 0 {
+			return false
+		}
+	}
+	return true
 }

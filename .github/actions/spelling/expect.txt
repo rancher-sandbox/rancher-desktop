@@ -350,7 +350,6 @@ linuxkit
 Linuxy
 loadbalancer
 loblaw
-localnet
 logdna
 loglines
 logz
@@ -416,6 +415,7 @@ NLMSG
 nlmsghdr
 noarch
 nocopy
+noctx
 nologin
 nologo
 nomount
@@ -483,8 +483,8 @@ podmonitor
 podsecuritypolicytemplate
 POLLIN
 POptions
-portbinding
 portforward
+portfwd
 portmap
 portmapping
 portproxy
