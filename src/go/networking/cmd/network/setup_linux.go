@@ -43,6 +43,7 @@ import (
 
 var options struct {
 	debug            bool
+	tracePackets     bool
 	vmSwitchPath     string
 	unshareArg       string
 	vmSwitchLogFile  string
@@ -204,6 +205,7 @@ func main() {
 
 func initializeFlags() {
 	flag.BoolVar(&options.debug, "debug", false, "enable additional debugging")
+	flag.BoolVar(&options.tracePackets, "trace-packets", false, "forward per-packet tracing to the vm-switch process")
 	flag.StringVar(&options.namespaceService, "namespace-service", defaultNamespaceService, "systemd service which creates the network namespace")
 	flag.StringVar(&options.tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
 	flag.StringVar(&options.subnet, "subnet", config.DefaultSubnet,
@@ -263,6 +265,9 @@ func configureVMSwitch(
 	}
 	if options.debug {
 		args = append(args, "-debug")
+	}
+	if options.tracePackets {
+		args = append(args, "-trace-packets")
 	}
 
 	//nolint:gosec // Arguments are ultimately controlled by our configs.

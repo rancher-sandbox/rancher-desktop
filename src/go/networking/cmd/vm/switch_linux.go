@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -55,8 +56,17 @@ const (
 	maxMTU           = 4000
 )
 
+var (
+	// traceFlag is the startup value of the -trace-packets flag.
+	traceFlag bool
+	// tracePackets gates per-packet logging. It is initialized from traceFlag
+	// and can be toggled at runtime by sending SIGUSR1 to this process.
+	tracePackets atomic.Bool
+)
+
 func main() {
 	flag.BoolVar(&debug, "debug", false, "enable debug flag")
+	flag.BoolVar(&traceFlag, "trace-packets", false, "log a decode of every packet (very verbose); can also be toggled at runtime via SIGUSR1")
 	flag.StringVar(&tapIface, "tap-interface", defaultTapDevice, "tap interface name, eg. eth0, eth1")
 	flag.IntVar(&vsockFD, "vsock-fd", defaultVsockFD, "file descriptor for vsock connection")
 	flag.StringVar(&dhcpScript, "dhcp-script", "", "script to run on DHCP events")
@@ -74,6 +84,27 @@ func main() {
 	if debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
+
+	// Per-packet tracing is intentionally separate from -debug (it is extremely
+	// verbose and can fill the disk). It starts in the state requested by
+	// -trace-packets and can be flipped on/off at runtime, without restarting
+	// the network stack, by sending SIGUSR1.
+	//
+	// vm-switch runs in the top-level WSL (init) PID namespace, so the signal
+	// must be sent from there, e.g. from the Windows host:
+	//   wsl -d rancher-desktop --exec sh -c 'kill -USR1 $(pgrep vm-switch)'
+	// It is NOT reachable via `rdctl shell`, which enters the Rancher Desktop
+	// network namespace where vm-switch is not visible (pgrep finds nothing).
+	tracePackets.Store(traceFlag)
+	traceSigCh := make(chan os.Signal, 1)
+	signal.Notify(traceSigCh, syscall.SIGUSR1)
+	go func() {
+		for range traceSigCh {
+			enabled := !tracePackets.Load()
+			tracePackets.Store(enabled)
+			logrus.Infof("SIGUSR1 received: per-packet tracing is now %t", enabled)
+		}
+	}()
 
 	// the FD is passed-in as an extra arg from exec.Command
 	// of the parent process. This is for the AF_VSOCK connection that
@@ -225,9 +256,9 @@ func rx(ctx context.Context, conn io.Writer, tap *water.Interface, errCh chan er
 				return
 			}
 
-			if debug {
+			if tracePackets.Load() {
 				packet := gopacket.NewPacket(frame, layers.LayerTypeEthernet, gopacket.Default)
-				logrus.Infof("wrote packet (vm -> host %d): %s", size, packet.String())
+				logrus.Infof("wrote packet (vm -> host %d): %s", n, packet.String())
 			}
 		}
 	}
@@ -273,7 +304,7 @@ func tx(ctx context.Context, conn io.Reader, tap *water.Interface, errCh chan er
 				return
 			}
 
-			if debug {
+			if tracePackets.Load() {
 				packet := gopacket.NewPacket(buf[:size], layers.LayerTypeEthernet, gopacket.Default)
 				logrus.Infof("read packet (host -> vm %d): %s", size, packet.String())
 			}

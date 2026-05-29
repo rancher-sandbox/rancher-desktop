@@ -67,6 +67,8 @@ Additionally, it calls unshare with provided arguments through [---unshare-args]
 
 - **debug**: enable the debug logging
 
+- **trace-packets**: Forward per-packet tracing to the `vm-switch` process (see the `vm-switch` flag below). Off by default; very verbose.
+
 - **tap-interface**: The name of the tap interface that is created by the vm-switch upon startup, e.g., `eth0`, `eth1`. This value is passed to the `vm-switch` process when the `network-setup` attempts to start it. If no value is provided, the default name of `eth0` is used.
 
 - **subnet**: A subnet range with a CIDR suffix that is associated with the tap interface in the network namespace. If it is not defined, it uses `192.168.127.0/24` as the default range. It is important to note that this value needs to match the [subnet](https://github.com/rancher-sandbox/rancher-desktop/blob/6abacdc804d6414f17439a97f22e0c9c87f6249d/cmd/host/switch_windows.go#L54) flag in the `host-switch`.
@@ -90,6 +92,8 @@ The tap device forwards the Ethernet frames over [vsock](https://wiki.qemu.org/F
 ## Supported Flags:
 
 - **debug**: Enable the debug logging
+
+- **trace-packets**: Log a decoded dump of every packet in both directions. **Off by default** and deliberately independent of `-debug`, because it is extremely verbose and writes to `vm-switch.log` on the data-plane hot path. Enable it at startup by launching Rancher Desktop with `RD_VMSWITCH_TRACE=1` in the environment, or toggle it on/off at runtime (without restarting the network stack) by sending `SIGUSR1` to the `vm-switch` process. `vm-switch` runs in the top-level WSL (init) PID namespace, so signal it from there — e.g. `wsl -d rancher-desktop --exec sh -c 'kill -USR1 $(pgrep vm-switch)'` — **not** via `rdctl shell`, which enters the Rancher Desktop network namespace where `vm-switch` is not visible.
 
 - **tap-interface**: Tap interface name to create, eg. eth0, eth1
 
