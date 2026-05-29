@@ -31,7 +31,7 @@ export default async function runCommand(command: string, input?: string): Promi
   const { credsStore } = await getCredentialHelperInfo(command, input ?? '');
 
   try {
-    return runCredHelper(credsStore, command, input);
+    return await runCredHelper(credsStore, command, input);
   } catch (ex: any) {
     ex.helper = credsStore;
     throw ex;
