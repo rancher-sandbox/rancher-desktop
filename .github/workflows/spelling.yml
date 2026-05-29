@@ -122,7 +122,7 @@ jobs:
       # going read through it all anyway.
       if: always() && env.UPLOAD_SARIF_LIMITED != ''
       continue-on-error: true
-      uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4
+      uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4
       with:
         category: check-spelling
         sarif_file: ${{ env.UPLOAD_SARIF_LIMITED }}
