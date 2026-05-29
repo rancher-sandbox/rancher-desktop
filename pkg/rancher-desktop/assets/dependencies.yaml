@@ -41,9 +41,9 @@ alpineLimaISO:
     alpine-lima-rd-3.23.0-x86_64.iso: sha256:e1a6a14e601ccfa19200aecf5daae7c908f9074f3c0bc919bd77d6f60b8b64cf
     alpine-lima-rd-3.23.0-aarch64.iso: sha256:2f71a1f08c3b26a90165a1e73e7a6726f3b142bdd81450781336e7269d81fd80
 WSLDistro:
-  version: "0.96"
+  version: "0.97"
   checksums:
-    distro-0.96.tar: sha256:b1c1728fd75154e62b4bd9ce871afe750c2731e106c40a20a2d899dcf22a9270
+    distro-0.97.tar: sha256:26afed72e25083958c079b56eea4df63904eb054f9a092c1463a2bd6aca2edec
 kuberlr:
   version: 0.6.1
   checksums:
