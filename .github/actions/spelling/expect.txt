@@ -712,6 +712,7 @@ VMGUID
 VMID
 vmnet
 vmsplice
+VMSWITCH
 vmwarevsphere
 vmx
 vnc

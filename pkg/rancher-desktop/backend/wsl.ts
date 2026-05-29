@@ -1083,13 +1083,20 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     this.process?.kill('SIGTERM');
     const env: Record<string, string> = {
       ...process.env,
-      WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS:LOG_DIR/p:RD_DEBUG`,
+      WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS:LOG_DIR/p:RD_DEBUG:RD_VMSWITCH_TRACE`,
       DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
       LOG_DIR:          paths.logs,
     };
 
     if (this.debug) {
       env.RD_DEBUG = '1';
+    }
+    // Per-packet vm-switch tracing is opt-in and deliberately decoupled from
+    // --debug (it is extremely verbose and can fill the disk). Enable it by
+    // setting RD_VMSWITCH_TRACE in the environment; it can also be toggled at
+    // runtime by sending SIGUSR1 to the vm-switch process.
+    if (process.env.RD_VMSWITCH_TRACE) {
+      env.RD_VMSWITCH_TRACE = '1';
     }
     this.process = childProcess.spawn('wsl.exe',
       ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/wsl-init'],
