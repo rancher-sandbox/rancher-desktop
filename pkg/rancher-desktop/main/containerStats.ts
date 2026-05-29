@@ -9,8 +9,8 @@ import Electron from 'electron';
 
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
-import { makeSendToFrame } from '@pkg/main/ipcUtils';
 import Logging from '@pkg/utils/logging';
+import { makeSendToFrame } from '@pkg/window';
 
 const console = Logging.containerStats;
 const ipcMainProxy = getIpcMainProxy(console);
@@ -38,10 +38,10 @@ export class ContainerStatsHandler {
 
   stopAll() {
     for (const [containerId, session] of this.sessions) {
+      clearInterval(session.timer);
       try {
         session.sender.send('container-stats/stopped', containerId);
       } catch {}
-      clearInterval(session.timer);
     }
     this.sessions.clear();
   }
@@ -80,21 +80,28 @@ export class ContainerStatsHandler {
         const timeoutId = setTimeout(() => abort.abort(), FETCH_TIMEOUT_MS);
 
         try {
-          const [statsRaw, topRaw] = await Promise.all([
-            this.runWithTimeout(
-              ['stats', '--no-stream', '--format', '{{json .}}', containerId],
-              namespace,
-              abort.signal,
-            ),
-            this.runWithTimeout(['top', containerId], namespace, abort.signal),
-          ]);
+          // --no-stream exits after one sample so the process cleans up
+          // naturally; streaming would require managing a long-lived process.
+          await Promise.all([
+            (async() => {
+              const statsRaw = await this.runWithTimeout(
+                ['stats', '--no-stream', '--format', '{{json .}}', containerId],
+                namespace,
+                abort.signal,
+              );
 
-          if (statsRaw?.trim()) {
-            sendToFrame('container-stats/data', containerId, statsRaw.trim());
-          }
-          if (topRaw?.trim()) {
-            sendToFrame('container-stats/processes', containerId, topRaw.trim());
-          }
+              if (statsRaw?.trim()) {
+                sendToFrame('container-stats/data', containerId, statsRaw.trim());
+              }
+            })(),
+            (async() => {
+              const topRaw = await this.runWithTimeout(['top', containerId], namespace, abort.signal);
+
+              if (topRaw?.trim()) {
+                sendToFrame('container-stats/processes', containerId, topRaw.trim());
+              }
+            })(),
+          ]);
         } finally {
           clearTimeout(timeoutId);
           inFlight = false;
@@ -111,11 +118,10 @@ export class ContainerStatsHandler {
 
       // Clean up if the renderer is destroyed before it sends container-stats/stop.
       event.sender.once('destroyed', () => {
-        const s = this.sessions.get(containerId);
+        const { sender, timer } = this.sessions.get(containerId) ?? {};
 
-        if (!s) return;
-        if (s.sender !== event.sender) return;
-        clearInterval(s.timer);
+        if (sender !== event.sender) return;
+        clearInterval(timer);
         this.sessions.delete(containerId);
       });
 
@@ -123,13 +129,12 @@ export class ContainerStatsHandler {
       poll().catch(console.error);
     });
 
-    ipcMainProxy.on('container-stats/stop', (_, containerId) => {
-      const session = this.sessions.get(containerId);
+    ipcMainProxy.on('container-stats/stop', (event, containerId) => {
+      const { sender, timer } = this.sessions.get(containerId) ?? {};
 
-      if (session) {
-        clearInterval(session.timer);
-        this.sessions.delete(containerId);
-      }
+      if (sender !== event.sender) return;
+      clearInterval(timer);
+      this.sessions.delete(containerId);
     });
   }
 }

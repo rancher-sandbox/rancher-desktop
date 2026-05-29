@@ -12,9 +12,9 @@ import Electron from 'electron';
 import type { ContainerEngineClient } from '@pkg/backend/containerClient';
 import type { WritableReadableProcess } from '@pkg/backend/containerClient/types';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
-import { makeSendToFrame } from '@pkg/main/ipcUtils';
 import type { IpcRendererEvents } from '@pkg/typings/electron-ipc';
 import Logging from '@pkg/utils/logging';
+import { makeSendToFrame } from '@pkg/window';
 
 const console = Logging.containerExec;
 const ipcMainProxy = getIpcMainProxy(console);

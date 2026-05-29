@@ -19,6 +19,7 @@
         :weight="3"
         @active="activeTab = 'tab-info'"
       />
+      <!-- TODO: hide this tab entirely when not on the Moby engine -->
       <tab
         label="Stats"
         name="tab-stats"
