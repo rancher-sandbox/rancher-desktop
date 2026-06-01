@@ -40,7 +40,10 @@
         </label>
       </div>
 
-      <div class="stats-charts">
+      <div
+        ref="statsChartsEl"
+        class="stats-charts"
+      >
         <div
           class="stat-card"
           data-testid="stats-cpu-chart"
@@ -209,11 +212,10 @@ let prevBlockW = -1;
 const processHeaders = ref<string[]>([]);
 const processes = ref<string[][]>([]);
 
-// ── Parsing helpers ────────────────────────────────────────────────────────
+// Template ref used by readColors() to read CSS custom properties
+const statsChartsEl = ref<HTMLElement | null>(null);
 
-function parsePercent(s: string): number {
-  return parseFloat(s.replace('%', '')) || 0;
-}
+// ── Parsing helpers ────────────────────────────────────────────────────────
 
 const BYTE_UNITS: Record<string, number> = {
   b:   1,
@@ -249,6 +251,7 @@ function parsePair(s: string): [number, number] {
 
 const textColor = ref('');
 const gridColor = ref('');
+// Fallback colours used when the CSS variables below are not available.
 const chartPalette = ref({
   cpu:    '#4e9af1',
   mem:    '#f1a14e',
@@ -259,32 +262,27 @@ const chartPalette = ref({
   blockW: '#f1e84e',
 });
 
-function readCssColor(probe: HTMLElement, varName: string, fallback: string): string {
-  probe.style.color = `var(${ varName }, ${ fallback })`;
-  return getComputedStyle(probe).color || fallback;
+function readCssColor(el: HTMLElement, varName: string, fallback: string): string {
+  return getComputedStyle(el).getPropertyValue(varName).trim() || fallback;
 }
 
 function readColors() {
-  const probe = document.createElement('div');
+  const el = statsChartsEl.value;
 
-  probe.style.display = 'none';
-  document.body.appendChild(probe);
+  if (!el) return;
 
-  probe.style.backgroundColor = 'var(--border)';
-  textColor.value = readCssColor(probe, '--body-text', '#333');
-  gridColor.value = getComputedStyle(probe).backgroundColor;
+  textColor.value = readCssColor(el, '--body-text', '#333');
+  gridColor.value = readCssColor(el, '--border', 'rgba(0,0,0,0.1)');
 
   chartPalette.value = {
-    cpu:    readCssColor(probe, '--primary', '#4e9af1'),
-    mem:    readCssColor(probe, '--warning', '#f1a14e'),
-    memLim: readCssColor(probe, '--primary', '#4e9af1'),
-    netRx:  readCssColor(probe, '--success', '#4ef185'),
-    netTx:  readCssColor(probe, '--error', '#f14e4e'),
-    blockR: readCssColor(probe, '--info', '#9b4ef1'),
-    blockW: readCssColor(probe, '--warning-text', '#f1e84e'),
+    cpu:    readCssColor(el, '--primary', chartPalette.value.cpu),
+    mem:    readCssColor(el, '--warning', chartPalette.value.mem),
+    memLim: readCssColor(el, '--primary', chartPalette.value.memLim),
+    netRx:  readCssColor(el, '--success', chartPalette.value.netRx),
+    netTx:  readCssColor(el, '--error', chartPalette.value.netTx),
+    blockR: readCssColor(el, '--info', chartPalette.value.blockR),
+    blockW: readCssColor(el, '--warning-text', chartPalette.value.blockW),
   };
-
-  document.body.removeChild(probe);
 }
 
 function dataset(label: string, data: number[], color: string, dashed = false) {
@@ -292,7 +290,7 @@ function dataset(label: string, data: number[], color: string, dashed = false) {
     label,
     data:            [...data],
     borderColor:     color,
-    backgroundColor: dashed ? 'transparent' : color + '33',
+    backgroundColor: dashed ? 'transparent' : color + '33', // 33 = 20% alpha in hex
     borderWidth:     dashed ? 1 : 2,
     borderDash:      dashed ? [4, 4] : [],
     pointRadius:     0,
@@ -317,7 +315,7 @@ const memChartData = computed(() => ({
 }));
 
 const netChartData = computed(() => ({
-  labels:   [...labels.value],
+  labels:   labels.value.slice(1),
   datasets: [
     dataset('RX', netRxData.value, chartPalette.value.netRx),
     dataset('TX', netTxData.value, chartPalette.value.netTx),
@@ -325,7 +323,7 @@ const netChartData = computed(() => ({
 }));
 
 const ioChartData = computed(() => ({
-  labels:   [...labels.value],
+  labels:   labels.value.slice(1),
   datasets: [
     dataset('Read', blockReadData.value, chartPalette.value.blockR),
     dataset('Write', blockWriteData.value, chartPalette.value.blockW),
@@ -424,7 +422,7 @@ function handleStatsData(_event: any, id: string, statsJson: string) {
     const now = new Date().toLocaleTimeString();
 
     push(labels.value, now);
-    push(cpuData.value, parsePercent(s.CPUPerc ?? '0%'));
+    push(cpuData.value, parseFloat((s.CPUPerc ?? '0%').replace('%', '')) || 0);
 
     const [memUsed, memLimit] = parsePair(s.MemUsage ?? '0B / 0B');
 
@@ -459,30 +457,14 @@ function handleProcesses(_event: any, id: string, topOutput: string) {
 
   const headerLine = lines[0];
 
-  // Build column start positions.  Words separated by a single space belong to
-  // the same column (e.g. "START TIME"); 2+ spaces mark a new column boundary.
-  const colStarts: number[] = [];
-  let prevEnd = -2;
-
-  for (const m of headerLine.matchAll(/\S+/g)) {
-    if (m.index - prevEnd > 1) {
-      colStarts.push(m.index);
-    }
-    prevEnd = m.index + m[0].length;
-  }
-
-  const headers = colStarts.map((start, i) => {
-    const end = colStarts[i + 1] ?? headerLine.length;
-
-    return headerLine.slice(start, end).trim();
-  });
-
+  // Words separated by a single space belong to the same column (e.g. "START TIME");
+  // 2+ spaces mark a new column boundary.
+  const matches = Array.from(headerLine.matchAll(/(?<=^|\s{2,})(\S|\s(?!\s))+/g));
+  const colStarts = matches.map(m => m.index);
+  const headers = matches.map(m => m[0].trimEnd());
+  const colEnds = colStarts.slice(1);
   const rows = lines.slice(1).map(line =>
-    colStarts.map((start, i) => {
-      const end = i < colStarts.length - 1 ? colStarts[i + 1] : undefined;
-
-      return (end !== undefined ? line.slice(start, end) : line.slice(start)).trim();
-    }),
+    colStarts.map((start, i) => line.slice(start, colEnds[i]).trim()),
   );
 
   processHeaders.value = headers;
@@ -534,8 +516,14 @@ function restartPolling() {
 
 const darkMQ = window.matchMedia('(prefers-color-scheme: dark)');
 
+// readColors() needs statsChartsEl to be mounted; that element is inside v-else
+// and only appears after the async isMoby store value resolves, so onMounted
+// would fire too early. Watch the ref instead and call readColors() on first render.
+watch(statsChartsEl, (el) => {
+  if (el) readColors();
+}, { once: true });
+
 onMounted(() => {
-  readColors();
   darkMQ.addEventListener('change', readColors);
 
   ipcRenderer.on('container-stats/data', handleStatsData);
