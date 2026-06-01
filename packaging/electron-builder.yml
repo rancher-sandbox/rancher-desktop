@@ -40,7 +40,9 @@ dmg:
   background: build/background.png
   window:
     width: 540
-    height: 380
+    # Taller than the artwork so the lasso clears the Finder path bar and
+    # status bar, which shrink the icon view from the bottom when enabled.
+    height: 420
   contents:
   - { x: 140, y: 200, type: file }
   - { x: 400, y: 200, type: link, path: /Applications }
