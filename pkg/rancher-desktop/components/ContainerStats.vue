@@ -419,9 +419,7 @@ function handleStatsData(_event: any, id: string, statsJson: string) {
     }
     const s = JSON.parse(line);
 
-    const now = new Date().toLocaleTimeString();
-
-    push(labels.value, now);
+    push(labels.value, new Date().toLocaleTimeString());
     push(cpuData.value, parseFloat((s.CPUPerc ?? '0%').replace('%', '')) || 0);
 
     const [memUsed, memLimit] = parsePair(s.MemUsage ?? '0B / 0B');
