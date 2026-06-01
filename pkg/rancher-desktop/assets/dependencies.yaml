@@ -95,10 +95,10 @@ golangci-lint:
   version: 2.12.2
   checksums: {}
 trivy:
-  version: 0.70.0
+  version: 0.71.0
   checksums:
-    trivy_0.70.0_Linux-64bit.tar.gz: sha256:8b4376d5d6befe5c24d503f10ff136d9e0c49f9127a4279fd110b727929a5aa9
-    trivy_0.70.0_Linux-ARM64.tar.gz: sha256:2f6bb988b553a1bbac6bdd1ce890f5e412439564e17522b88a4541b4f364fc8d
+    trivy_0.71.0_Linux-64bit.tar.gz: sha256:30a3d22b23f88c233f1658f562fb477cae3b3e8b4761109d515b7698daf85814
+    trivy_0.71.0_Linux-ARM64.tar.gz: sha256:2561be394a3199c911f82fced606cbc05e1cb23eb6ce1da6935540adb76f4252
 steve:
   version: 0.1.0-beta9.2
   checksums:
