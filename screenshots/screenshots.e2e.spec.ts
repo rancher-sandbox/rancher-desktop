@@ -4,12 +4,14 @@ import path from 'path';
 import { test, expect, _electron } from '@playwright/test';
 
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
+import { containerInspectData } from './test-data/container-inspect';
 import { containersList } from './test-data/containers';
 import { imagesList } from './test-data/images';
 import { lockedSettings } from './test-data/preferences';
 import { snapshotsList } from './test-data/snapshots';
 import { volumesList } from './test-data/volumes';
 
+import { ContainerInfoPage } from '@/e2e/pages/container-info-page';
 import { ContainerLogsPage } from '@/e2e/pages/container-logs-page';
 import { NavPage } from '@/e2e/pages/nav-page';
 import { PreferencesPage } from '@/e2e/pages/preferences';
@@ -113,6 +115,70 @@ test.describe.serial('Main App Test', () => {
           const { ddClient } = window as any;
           ddClient.docker.listContainers = ddClient.docker._listContainers;
           delete ddClient.docker._listContainers;
+        });
+      }
+    });
+
+    test('Container Inspect Page', async({ colorScheme }) => {
+      const containersPage = await navPage.navigateTo('Containers');
+
+      await containersPage.waitForTableToLoad();
+      await expect(containersPage.page.getByRole('row')).toHaveCount(expectedContainerCount);
+
+      // Mock the docker inspect call to return our test data
+      await containersPage.page.evaluate((inspectData) => {
+        const { ddClient } = window as any;
+        ddClient.docker.cli._exec = ddClient.docker.cli.exec;
+        ddClient.docker.cli.exec = (command, args, options) => {
+          if (command === 'inspect') {
+            return {
+              parseJsonObject: () => [inspectData],
+            };
+          }
+          return ddClient.docker.cli._exec(command, args, options);
+        };
+      }, containerInspectData);
+
+      try {
+        const containerId = containersList[0].Id;
+
+        await containersPage.waitForContainerToAppear(containerId);
+        await containersPage.viewContainerInfo(containerId);
+
+        await containersPage.page.waitForURL('**/containers/info/**');
+
+        const containerInfoPage = new ContainerInfoPage(containersPage.page);
+
+        // Wait for the inspect data to load (with longer timeout for CI)
+        await containerInfoPage.waitForData(30_000);
+
+        // Wait for specific summary content to ensure the component has fully rendered
+        await expect(containersPage.page.getByTestId('info-row-name').locator('td')).toContainText('webapp-postgres-1');
+        await expect(containersPage.page.getByTestId('info-row-image').locator('td')).toContainText('postgres:15');
+
+        // Wait for sections to be present and stable
+        await expect(containerInfoPage.mountsSection).toBeVisible();
+        await expect(containerInfoPage.envSection).toBeVisible();
+        await expect(containerInfoPage.portsSection).toBeVisible();
+
+        // Open some sections to show their content
+        await containerInfoPage.mountsSection.click();
+        await containerInfoPage.envSection.click();
+        await containerInfoPage.portsSection.click();
+
+        // Wait for section content to be visible
+        await expect(containerInfoPage.mountsSection.getByText('/var/lib/postgresql/data')).toBeVisible();
+        await expect(containerInfoPage.envSection.getByText('POSTGRES_USER')).toBeVisible();
+        await expect(containerInfoPage.portsSection.getByText('5432/tcp')).toBeVisible();
+
+        await screenshot.take('Container-Inspect');
+      } finally {
+        await containersPage.page.evaluate(() => {
+          const { ddClient } = window as any;
+          if (ddClient.docker.cli._exec) {
+            ddClient.docker.cli.exec = ddClient.docker.cli._exec;
+            delete ddClient.docker.cli._exec;
+          }
         });
       }
     });
