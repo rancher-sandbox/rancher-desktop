@@ -24,8 +24,8 @@ github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHk
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
 github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx59Ho=
 github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
-github.com/go-openapi/analysis v0.25.0 h1:EnjAq1yO8wEO9HbPmY8vLPEIkdZuuFhCAKBPvCB7bCs=
-github.com/go-openapi/analysis v0.25.0/go.mod h1:5WFTRE43WLkPG9r9OtlMfqkkvUTYLVVCIxLlEpyF8kE=
+github.com/go-openapi/analysis v0.25.1 h1:We0FXVvCY5XNSb8GrE+k+wsgkUqTJqnkqsVAC9EGdrM=
+github.com/go-openapi/analysis v0.25.1/go.mod h1:/S7h3rOOTHDGoPwyyjTGQpGeLKxWecr8QWSBdE68UgM=
 github.com/go-openapi/codescan v0.34.0 h1:OgnK5YLYFLlSsO6On797Wx01+owSE69Q4Ww2KAuFwJY=
 github.com/go-openapi/codescan v0.34.0/go.mod h1:elA/HAvSRUSXGZuyb8CBIXjLu04N2ZsIBKcUb5tRPPg=
 github.com/go-openapi/errors v0.22.7 h1:JLFBGC0Apwdzw3484MmBqspjPbwa2SHvpDm0u5aGhUA=
@@ -34,8 +34,8 @@ github.com/go-openapi/inflect v0.21.5 h1:M2RCq6PPS3YbIaL7CXosGL3BbzAcmfBAT0nC3Yf
 github.com/go-openapi/inflect v0.21.5/go.mod h1:GypUyi6bU880NYurWaEH2CmH84zFDNd+EhhmzroHmB4=
 github.com/go-openapi/jsonpointer v0.23.1 h1:1HBACs7XIwR2RcmItfdSFlALhGbe6S92p0ry4d1GWg4=
 github.com/go-openapi/jsonpointer v0.23.1/go.mod h1:iWRmZTrGn7XwYhtPt/fvdSFj1OfNBngqRT2UG3BxSqY=
-github.com/go-openapi/jsonreference v0.21.5 h1:6uCGVXU/aNF13AQNggxfysJ+5ZcU4nEAe+pJyVWRdiE=
-github.com/go-openapi/jsonreference v0.21.5/go.mod h1:u25Bw85sX4E2jzFodh1FOKMTZLcfifd1Q+iKKOUxExw=
+github.com/go-openapi/jsonreference v0.21.6 h1:NZ5nGfnaM1n4I43Xjm1e5/M2GjOwQwndQz22uhxwD+Y=
+github.com/go-openapi/jsonreference v0.21.6/go.mod h1:xzbgtQ3ZbWxvET3AxdzCJlJt6vkovbf+IfSPJjD0tUY=
 github.com/go-openapi/loads v0.23.3 h1:g5Xap1JfwKkUnZdn+S0L3SzBDpcTIYzZ5Qaag0YDkKQ=
 github.com/go-openapi/loads v0.23.3/go.mod h1:NOH07zLajXo8y55hom0omlHWDVVvCwBM/S+csCK8LqA=
 github.com/go-openapi/runtime v0.32.2 h1:X9mZz716lFwYZ6bFV1BBnthNdHTy46zKM5Em4D1UISI=
@@ -44,8 +44,8 @@ github.com/go-openapi/runtime/server-middleware v0.32.1 h1:HCtsghA5YuJEJwne3wQj8
 github.com/go-openapi/runtime/server-middleware v0.32.1/go.mod h1:fYPep4GdTwg/XqZUjR40uIM/8C12Ba5M+MrGCiwpTHo=
 github.com/go-openapi/spec v0.22.4 h1:4pxGjipMKu0FzFiu/DPwN3CTBRlVM2yLf/YTWorYfDQ=
 github.com/go-openapi/spec v0.22.4/go.mod h1:WQ6Ai0VPWMZgMT4XySjlRIE6GP1bGQOtEThn3gcWLtQ=
-github.com/go-openapi/strfmt v0.26.2 h1:ysjheCh4i1rmFEo2LanhELDNucNzfWTZhUDKgWWPaFM=
-github.com/go-openapi/strfmt v0.26.2/go.mod h1:fXh1e449cyUn2NYuz+wb3wARBUdMl7qPEZwX00nqivY=
+github.com/go-openapi/strfmt v0.26.3 h1:rzmslHarJgBbf2qfGge+X3htclQfmXqBZMm0Too0HhU=
+github.com/go-openapi/strfmt v0.26.3/go.mod h1:a5nsUw0oRpQzZeOwx8bi6cKbzFZslpbCKt1LEot+KnQ=
 github.com/go-openapi/swag v0.26.0 h1:GVDXCmfvhfu1BxiHo8/FA+BbKmhecHnG3varjON5/RI=
 github.com/go-openapi/swag v0.26.0/go.mod h1:82g3193sZJRbocs7bNCqGfIgq8pkuwVwCfhKIRlEQF0=
 github.com/go-openapi/swag/cmdutils v0.26.0 h1:iowihOcvq7y4egO8cOq0dmfohz6wfeQ63U1EnuhO2TU=
@@ -76,8 +76,8 @@ github.com/go-openapi/testify/enable/yaml/v2 v2.5.1 h1:q9NtHwK4qHF7yZziBPvZyv7zW
 github.com/go-openapi/testify/enable/yaml/v2 v2.5.1/go.mod h1:JW0MXIotCYps/XsgJnG3a8Q7rE5xAiBwoOD5OfaIQBk=
 github.com/go-openapi/testify/v2 v2.5.1 h1:TMdhCaw8fUNraVSf3Omoob1dO/AzBfhtFAPW0an6sBo=
 github.com/go-openapi/testify/v2 v2.5.1/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
-github.com/go-openapi/validate v0.25.2 h1:12NsfLAwGegqbGWr2CnvT65X/Q2USJipmJ9b7xDJZz0=
-github.com/go-openapi/validate v0.25.2/go.mod h1:Pgl1LpPPGFnZ+ys4/hTlDiRYQdI1ocKypgE+8Q8BLfY=
+github.com/go-openapi/validate v0.25.3 h1:4nzAIavcJ7WveHK2+V1UAkZK3kWcjzxZCzjfZAfavKs=
+github.com/go-openapi/validate v0.25.3/go.mod h1:GemfuGMyYpIaBoKpX3z8sLywrmxpzWVOoJ7R0VeAVuk=
 github.com/go-swagger/go-swagger v0.34.0 h1:4frJHy7ApXhDqk2tee5uYLLCpPPCOSL49R6Q+5ZbCaQ=
 github.com/go-swagger/go-swagger v0.34.0/go.mod h1:S9kCHIGUBUjJ0/g90iH8gBuWDA7M9zhRYAPI6j6yX5Y=
 github.com/go-viper/mapstructure/v2 v2.5.0 h1:vM5IJoUAy3d7zRSVtIwQgBj7BiWtMPfmPEgAXnvj1Ro=
