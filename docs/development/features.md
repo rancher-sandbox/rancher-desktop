@@ -120,6 +120,8 @@ Note:
 
 :heavy_check_mark: Container Exploration
 
+:heavy_check_mark: Container Stats (CPU, memory, network, I/O, processes)
+
 :sun_with_face: Configuration settings
 
 :sun_with_face: Start/Stop/Pause Containers

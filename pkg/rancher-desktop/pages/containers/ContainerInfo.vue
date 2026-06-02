@@ -16,8 +16,15 @@
       <tab
         label="Info"
         name="tab-info"
-        :weight="2"
+        :weight="3"
         @active="activeTab = 'tab-info'"
+      />
+      <!-- TODO: hide this tab entirely when not on the Moby engine -->
+      <tab
+        label="Stats"
+        name="tab-stats"
+        :weight="2"
+        @active="activeTab = 'tab-stats'"
       />
       <tab
         label="Logs"
@@ -96,6 +103,12 @@
           :container-id="containerId"
           :namespace="namespace"
         />
+        <container-stats
+          v-if="containerId && activeTab === 'tab-stats'"
+          :container-id="containerId"
+          :is-container-running="isRunning"
+          :namespace="namespace"
+        />
         <container-logs
           v-if="containerId && activeTab === 'tab-logs'"
           ref="containerLogs"
@@ -124,6 +137,7 @@ import { useStore } from 'vuex';
 import ContainerInspect from '@pkg/components/ContainerInspect.vue';
 import ContainerLogs from '@pkg/components/ContainerLogs.vue';
 import ContainerShell from '@pkg/components/ContainerShell.vue';
+import ContainerStats from '@pkg/components/ContainerStats.vue';
 import RdTabbed from '@pkg/components/Tabbed/RdTabbed.vue';
 import Tab from '@pkg/components/Tabbed/Tab.vue';
 import type { Settings } from '@pkg/config/settings';
@@ -143,7 +157,7 @@ const searchInput = ref<HTMLInputElement | null>(null);
 const settings = ref<Settings>();
 const subscribeTimer = ref<ReturnType<typeof setTimeout>>();
 const searchTerm = ref('');
-const activeTab = ref<'tab-info' | 'tab-logs' | 'tab-shell'>('tab-info');
+const activeTab = ref<'tab-info' | 'tab-stats' | 'tab-logs' | 'tab-shell'>('tab-info');
 const shellEverActivated = ref(false);
 
 // Vuex integration
@@ -376,7 +390,8 @@ onBeforeUnmount(() => {
 }
 
 :deep(.container-logs-component),
-:deep(.container-shell-component) {
+:deep(.container-shell-component),
+:deep(.container-stats-component) {
   flex: 1;
   display: flex;
   flex-direction: column;
