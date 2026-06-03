@@ -7,8 +7,8 @@ export const containersList = [{
   Mounts:  [
     {
       Type:        'volume',
-      Name:        'desktop_penpot_postgres_v15',
-      Source:      '/var/lib/docker/volumes/desktop_penpot_postgres_v15/_data',
+      Name:        'webapp_postgres_v15',
+      Source:      '/var/lib/docker/volumes/webapp_postgres_v15/_data',
       Destination: '/var/lib/postgresql/data',
       Driver:      'local',
       Mode:        'z',
@@ -23,7 +23,7 @@ export const containersList = [{
       Type:   'json-file',
       Config: {},
     },
-    NetworkMode:   'desktop_penpot',
+    NetworkMode:   'webapp_network',
     PortBindings:  {},
     RestartPolicy: {
       Name:              'always',
@@ -39,7 +39,7 @@ export const containersList = [{
     Mounts: [
       {
         Type:          'volume',
-        Source:        'desktop_penpot_postgres_v15',
+        Source:        'webapp_postgres_v15',
         Target:        '/var/lib/postgresql/data',
         VolumeOptions: {},
       },
@@ -57,16 +57,16 @@ export const containersList = [{
     'com.docker.compose.project':              'web-compose',
     'com.docker.compose.project.config_files': '/Users/USER/Desktop/docker-compose.yaml',
     'com.docker.compose.project.working_dir':  '/Users/USER/Desktop',
-    'com.docker.compose.service':              'penpot-postgres',
+    'com.docker.compose.service':              'webapp-postgres',
     'com.docker.compose.version':              '2.17.3',
   },
   State: 'running',
   Names: [
-    'desktop-penpot-postgres-1',
+    'desktop-webapp-postgres-1',
   ],
   Created:          null,
   state:            'running',
-  containerName:    'desktop-penpot-postgres-1',
+  containerName:    'desktop-webapp-postgres-1',
   started:          'Up About 22 minutes ago',
   imageName:        'postgres:15',
   availableActions: [
@@ -118,7 +118,7 @@ export const containersList = [{
       Type:   'json-file',
       Config: {},
     },
-    NetworkMode:   'desktop_penpot',
+    NetworkMode:   'webapp_network',
     PortBindings:  {},
     RestartPolicy: {
       Name:              'always',
@@ -144,16 +144,16 @@ export const containersList = [{
     'com.docker.compose.project':              'web-compose',
     'com.docker.compose.project.config_files': '/Users/USER/Desktop/docker-compose.yaml',
     'com.docker.compose.project.working_dir':  '/Users/USER/Desktop',
-    'com.docker.compose.service':              'penpot-redis',
+    'com.docker.compose.service':              'webapp-redis',
     'com.docker.compose.version':              '2.17.3',
   },
   State: 'running',
   Names: [
-    'desktop-penpot-redis-1',
+    'desktop-webapp-redis-1',
   ],
   Created:          null,
   state:            'running',
-  containerName:    'desktop-penpot-redis-1',
+  containerName:    'desktop-webapp-redis-1',
   started:          'Up About 2 hours ago',
   imageName:        'redis:7',
   availableActions: [
@@ -194,7 +194,7 @@ export const containersList = [{
       Type:   'json-file',
       Config: {},
     },
-    NetworkMode:  'desktop_penpot',
+    NetworkMode:  'webapp_network',
     PortBindings: {
       '1080/tcp': [
         {
@@ -239,16 +239,16 @@ export const containersList = [{
     'com.docker.compose.project':              'web-compose',
     'com.docker.compose.project.config_files': '/Users/USER/Desktop/docker-compose.yaml',
     'com.docker.compose.project.working_dir':  '/Users/USER/Desktop',
-    'com.docker.compose.service':              'penpot-mailcatch',
+    'com.docker.compose.service':              'webapp-mailcatch',
     'com.docker.compose.version':              '2.17.3',
   },
   State: 'running',
   Names: [
-    'desktop-penpot-mailcatch-1',
+    'desktop-webapp-mailcatch-1',
   ],
   Created:          null,
   state:            'running',
-  containerName:    'desktop-penpot-mailcatch-1',
+  containerName:    'desktop-webapp-mailcatch-1',
   started:          'Up About a minute',
   imageName:        'sj26/mailcatcher:latest',
   availableActions: [

@@ -1,13 +1,13 @@
 export const volumesList = new Promise((resolve) => {
   resolve([
     {
-      Name:       'desktop_penpot_postgres_v15',
+      Name:       'webapp_postgres_v15',
       Driver:     'local',
-      Mountpoint: '/var/lib/docker/volumes/desktop_penpot_postgres_v15/_data',
+      Mountpoint: '/var/lib/docker/volumes/webapp_postgres_v15/_data',
       CreatedAt:  '2025-01-15T10:30:00Z',
       Labels:     {
         'com.docker.compose.project': 'desktop',
-        'com.docker.compose.service': 'penpot-postgres',
+        'com.docker.compose.service': 'webapp-postgres',
         'com.docker.compose.version': '2.17.3',
       },
       Scope:   'local',
