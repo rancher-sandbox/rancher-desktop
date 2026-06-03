@@ -4,6 +4,7 @@ import path from 'path';
 import { test, expect, _electron } from '@playwright/test';
 
 import { MainWindowScreenshots, PreferencesScreenshots } from './Screenshots';
+import { generateStatsSamples, processTableOutput } from './test-data/container-stats';
 import { containersList } from './test-data/containers';
 import { imagesList } from './test-data/images';
 import { lockedSettings } from './test-data/preferences';
@@ -11,6 +12,7 @@ import { snapshotsList } from './test-data/snapshots';
 import { volumesList } from './test-data/volumes';
 
 import { ContainerLogsPage } from '@/e2e/pages/container-logs-page';
+import { ContainerStatsPage } from '@/e2e/pages/container-stats-page';
 import { NavPage } from '@/e2e/pages/nav-page';
 import { PreferencesPage } from '@/e2e/pages/preferences';
 import { clearUserProfile } from '@/e2e/utils/ProfileUtils';
@@ -174,6 +176,85 @@ test.describe.serial('Main App Test', () => {
           if (ddClient.docker.cli._exec) {
             ddClient.docker.cli.exec = ddClient.docker.cli._exec;
             delete ddClient.docker.cli._exec;
+          }
+        });
+      }
+    });
+
+    test('Container Stats Page', async({ colorScheme }) => {
+      const containersPage = await navPage.navigateTo('Containers');
+
+      await containersPage.waitForTableToLoad();
+      await expect(containersPage.page.getByRole('row')).toHaveCount(11);
+
+      // Set up mocks for container stats IPC events
+      await containersPage.page.evaluate(
+        ({ statsSamples, topOutput }) => {
+          const { ipcRenderer } = window as any;
+
+          // Store original send if it exists
+          ipcRenderer._originalSend = ipcRenderer.send;
+
+          // Mock ipcRenderer.send to intercept container-stats/start
+          ipcRenderer.send = (channel: string, ...args: any[]) => {
+            if (channel === 'container-stats/start') {
+              const [containerId, _intervalSeconds, _namespace] = args;
+
+              // Send multiple stats samples to populate the charts
+              statsSamples.forEach((sample: any, index: number) => {
+                setTimeout(() => {
+                  const statsJson = JSON.stringify(sample);
+
+                  ipcRenderer.emit('container-stats/data', null, containerId, statsJson);
+                }, index * 100);
+              });
+
+              // Send process table data after the first few samples
+              setTimeout(() => {
+                ipcRenderer.emit('container-stats/processes', null, containerId, topOutput);
+              }, 300);
+
+              return;
+            }
+            // Pass through other IPC calls
+            if (ipcRenderer._originalSend) {
+              ipcRenderer._originalSend(channel, ...args);
+            }
+          };
+        },
+        {
+          statsSamples: generateStatsSamples(10),
+          topOutput:    processTableOutput,
+        },
+      );
+
+      try {
+        const containerId = containersList[0].Id;
+
+        await containersPage.waitForContainerToAppear(containerId);
+        await containersPage.viewContainerInfo(containerId);
+
+        await containersPage.page.waitForURL('**/containers/info/**');
+
+        const containerStatsPage = new ContainerStatsPage(containersPage.page);
+
+        await containerStatsPage.clickTab();
+        await containerStatsPage.waitForCharts(30_000);
+
+        // Wait for the charts to render with data
+        await expect(containerStatsPage.cpuChart).toBeVisible();
+        await expect(containerStatsPage.memoryChart).toBeVisible();
+        await expect(containerStatsPage.networkChart).toBeVisible();
+        await expect(containerStatsPage.ioChart).toBeVisible();
+        await expect(containerStatsPage.processTable).toBeVisible();
+
+        await screenshot.take('Container-Stats');
+      } finally {
+        await containersPage.page.evaluate(() => {
+          const { ipcRenderer } = window as any;
+          if (ipcRenderer._originalSend) {
+            ipcRenderer.send = ipcRenderer._originalSend;
+            delete ipcRenderer._originalSend;
           }
         });
       }
