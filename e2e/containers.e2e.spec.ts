@@ -1,6 +1,6 @@
 import { expect, test, ElectronApplication, Page } from '@playwright/test';
 
-import { ContainerInfoPage } from './pages/container-info-page';
+import { ContainerInspectPage } from './pages/container-inspect-page';
 import { ContainerLogsPage } from './pages/container-logs-page';
 import { ContainerShellPage } from './pages/container-shell-page';
 import { ContainersPage } from './pages/containers-page';
@@ -146,7 +146,7 @@ test.describe.serial('Containers Tests', () => {
 
   test('should handle terminal scrolling', async() => {
     const scrollTestContainerName = `test-scroll-container-${ Date.now() }`;
-    let scrollTestContainerId: string;
+    let scrollTestContainerId = '';
 
     try {
       const output = await tool(
@@ -207,7 +207,7 @@ test.describe.serial('Containers Tests', () => {
 
   test('should output logs if container not exited', async() => {
     const longRunningContainerName = `test-not-exited-logs-${ Date.now() }`;
-    let longRunningContainerId: string;
+    let longRunningContainerId = '';
 
     try {
       const output = await tool(
@@ -457,13 +457,13 @@ test.describe.serial('Container Info Tab', () => {
   });
 
   test('Info tab is the default and active tab', async() => {
-    const infoPage = new ContainerInfoPage(page);
+    const infoPage = new ContainerInspectPage(page);
 
     await expect(infoPage.tab).toHaveClass(/\bactive\b/);
   });
 
   test('summary table shows key container fields', async() => {
-    const infoPage = new ContainerInfoPage(page);
+    const infoPage = new ContainerInspectPage(page);
 
     await infoPage.waitForData();
 
@@ -484,7 +484,7 @@ test.describe.serial('Container Info Tab', () => {
   });
 
   test('summary table shows IP address', async() => {
-    const infoPage = new ContainerInfoPage(page);
+    const infoPage = new ContainerInspectPage(page);
 
     // IP row is always rendered; value is either an IP or '—'.
     const ip = await infoPage.getSummaryValue('info-row-ip');
@@ -493,7 +493,7 @@ test.describe.serial('Container Info Tab', () => {
   });
 
   test('ports section is always visible', async() => {
-    const infoPage = new ContainerInfoPage(page);
+    const infoPage = new ContainerInspectPage(page);
 
     // The alpine container has no published ports, but the section must still render.
     await expect(infoPage.portsSection).toBeVisible();
@@ -503,7 +503,7 @@ test.describe.serial('Container Info Tab', () => {
   });
 
   test('mounts section can be expanded', async() => {
-    const infoPage = new ContainerInfoPage(page);
+    const infoPage = new ContainerInspectPage(page);
 
     await infoPage.mountsSection.locator('summary').click();
     // After opening the <details>, the section body should appear.
@@ -511,7 +511,7 @@ test.describe.serial('Container Info Tab', () => {
   });
 
   test('switching to Logs tab and back preserves Info data', async() => {
-    const infoPage = new ContainerInfoPage(page);
+    const infoPage = new ContainerInspectPage(page);
 
     await page.getByTestId('tab-logs').click();
     await infoPage.clickTab();

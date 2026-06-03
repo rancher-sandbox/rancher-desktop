@@ -12,7 +12,6 @@ import { snapshotsList } from './test-data/snapshots';
 import { volumesList } from './test-data/volumes';
 
 import { ContainerInfoPage } from '@/e2e/pages/container-info-page';
-import { ContainerLogsPage } from '@/e2e/pages/container-logs-page';
 import { NavPage } from '@/e2e/pages/nav-page';
 import { PreferencesPage } from '@/e2e/pages/preferences';
 import { clearUserProfile } from '@/e2e/utils/ProfileUtils';
@@ -34,6 +33,15 @@ test.describe.serial('Main App Test', () => {
   let navPage: NavPage;
   let screenshot: MainWindowScreenshots;
   const afterCheckedTimeout = 200;
+
+  const groups = containersList.reduce((set, container) => {
+    const labels: Record<string, string> = container.Labels || {};
+    const group = labels['com.docker.compose.project'] || labels['io.kubernetes.pod.namespace'] + '/' + labels['io.kubernetes.pod.name'];
+    set.add(group);
+
+    return set;
+  }, new Set<string>());
+  const expectedContainerCount = containersList.length + groups.size + 1; // +1 for the header row
 
   test.beforeAll(async({ colorScheme }, testInfo) => {
     createDefaultSettings({
@@ -93,8 +101,7 @@ test.describe.serial('Main App Test', () => {
     test('General Page', async({ colorScheme }) => {
       await screenshot.take('General', navPage);
     });
-
-    test('Containers Page', async() => {
+    test.beforeAll(async() => {
       // Override the containers before the Vuex state is loaded.
       await navPage.page.exposeFunction('listContainersMock', (options?: any) => {
         return Promise.resolve(containersList);
@@ -104,19 +111,18 @@ test.describe.serial('Main App Test', () => {
         ddClient.docker._listContainers = ddClient.docker.listContainers;
         ddClient.docker.listContainers = listContainersMock;
       });
+    });
+    test.afterAll(async() => navPage.page.evaluate(() => {
+      const { ddClient } = window as any;
+      ddClient.docker.listContainers = ddClient.docker._listContainers;
+      delete ddClient.docker._listContainers;
+    }));
 
-      try {
-        const containersPage = await navPage.navigateTo('Containers');
+    test('Containers Page', async() => {
+      const containersPage = await navPage.navigateTo('Containers');
 
-        await expect(containersPage.page.getByRole('row')).toHaveCount(11);
-        await screenshot.take('Containers');
-      } finally {
-        await navPage.page.evaluate(() => {
-          const { ddClient } = window as any;
-          ddClient.docker.listContainers = ddClient.docker._listContainers;
-          delete ddClient.docker._listContainers;
-        });
-      }
+      await expect(containersPage.page.getByRole('row')).toHaveCount(expectedContainerCount);
+      await screenshot.take('Containers');
     });
 
     test('Container Inspect Page', async({ colorScheme }) => {
@@ -148,28 +154,29 @@ test.describe.serial('Main App Test', () => {
         await containersPage.page.waitForURL('**/containers/info/**');
 
         const containerInfoPage = new ContainerInfoPage(containersPage.page);
+        const containerInspectPage = await containerInfoPage.navigateToTab('info');
 
         // Wait for the inspect data to load (with longer timeout for CI)
-        await containerInfoPage.waitForData(30_000);
+        await containerInspectPage.waitForData(30_000);
 
         // Wait for specific summary content to ensure the component has fully rendered
         await expect(containersPage.page.getByTestId('info-row-name').locator('td')).toContainText('webapp-postgres-1');
         await expect(containersPage.page.getByTestId('info-row-image').locator('td')).toContainText('postgres:15');
 
         // Wait for sections to be present and stable
-        await expect(containerInfoPage.mountsSection).toBeVisible();
-        await expect(containerInfoPage.envSection).toBeVisible();
-        await expect(containerInfoPage.portsSection).toBeVisible();
+        await expect(containerInspectPage.mountsSection).toBeVisible();
+        await expect(containerInspectPage.envSection).toBeVisible();
+        await expect(containerInspectPage.portsSection).toBeVisible();
 
         // Open some sections to show their content
-        await containerInfoPage.mountsSection.click();
-        await containerInfoPage.envSection.click();
-        await containerInfoPage.portsSection.click();
+        await containerInspectPage.mountsSection.click();
+        await containerInspectPage.envSection.click();
+        await containerInspectPage.portsSection.click();
 
         // Wait for section content to be visible
-        await expect(containerInfoPage.mountsSection.getByText('/var/lib/postgresql/data')).toBeVisible();
-        await expect(containerInfoPage.envSection.getByText('POSTGRES_USER')).toBeVisible();
-        await expect(containerInfoPage.portsSection.getByText('5432/tcp')).toBeVisible();
+        await expect(containerInspectPage.mountsSection.getByText('/var/lib/postgresql/data')).toBeVisible();
+        await expect(containerInspectPage.envSection.getByText('POSTGRES_USER')).toBeVisible();
+        await expect(containerInspectPage.portsSection.getByText('5432/tcp')).toBeVisible();
 
         await screenshot.take('Container-Inspect');
       } finally {
@@ -187,7 +194,7 @@ test.describe.serial('Main App Test', () => {
       const containersPage = await navPage.navigateTo('Containers');
 
       await containersPage.waitForTableToLoad();
-      await expect(containersPage.page.getByRole('row')).toHaveCount(11);
+      await expect(containersPage.page.getByRole('row')).toHaveCount(expectedContainerCount);
 
       await containersPage.page.evaluate(() => {
         const { ddClient } = window as any;
@@ -226,8 +233,9 @@ test.describe.serial('Main App Test', () => {
         await containersPage.viewContainerInfo(containerId);
 
         await containersPage.page.waitForURL('**/containers/info/**');
+        const containerInfoPage = new ContainerInfoPage(containersPage.page);
+        const containerLogsPage = await containerInfoPage.navigateToTab('logs');
 
-        const containerLogsPage = new ContainerLogsPage(containersPage.page);
         await containerLogsPage.waitForLogsToLoad();
         await expect(containerLogsPage.containerInfo).toBeVisible();
         await expect(containerLogsPage.terminal).toBeVisible();
