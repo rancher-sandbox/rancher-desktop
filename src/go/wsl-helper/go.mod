@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/adrg/xdg v0.5.3
-	github.com/go-openapi/errors v0.22.7
+	github.com/go-openapi/errors v0.22.8
 	github.com/go-openapi/strfmt v0.26.3
 	github.com/go-openapi/swag v0.26.0
 	github.com/go-openapi/swag/jsonutils v0.26.0

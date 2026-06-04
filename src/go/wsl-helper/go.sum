@@ -28,8 +28,8 @@ github.com/go-openapi/analysis v0.25.1 h1:We0FXVvCY5XNSb8GrE+k+wsgkUqTJqnkqsVAC9
 github.com/go-openapi/analysis v0.25.1/go.mod h1:/S7h3rOOTHDGoPwyyjTGQpGeLKxWecr8QWSBdE68UgM=
 github.com/go-openapi/codescan v0.34.0 h1:OgnK5YLYFLlSsO6On797Wx01+owSE69Q4Ww2KAuFwJY=
 github.com/go-openapi/codescan v0.34.0/go.mod h1:elA/HAvSRUSXGZuyb8CBIXjLu04N2ZsIBKcUb5tRPPg=
-github.com/go-openapi/errors v0.22.7 h1:JLFBGC0Apwdzw3484MmBqspjPbwa2SHvpDm0u5aGhUA=
-github.com/go-openapi/errors v0.22.7/go.mod h1://QW6SD9OsWtH6gHllUCddOXDL0tk0ZGNYHwsw4sW3w=
+github.com/go-openapi/errors v0.22.8 h1:oP7sW7TWc3wFFjrzzj0nI83H2qMBkNjNfSd+XRejk/I=
+github.com/go-openapi/errors v0.22.8/go.mod h1:BuUoHcYrU6E7V9gfj1I5wLQqgtIHnup/alXZ8KdgQ0w=
 github.com/go-openapi/inflect v0.21.5 h1:M2RCq6PPS3YbIaL7CXosGL3BbzAcmfBAT0nC3YfesZA=
 github.com/go-openapi/inflect v0.21.5/go.mod h1:GypUyi6bU880NYurWaEH2CmH84zFDNd+EhhmzroHmB4=
 github.com/go-openapi/jsonpointer v0.23.1 h1:1HBACs7XIwR2RcmItfdSFlALhGbe6S92p0ry4d1GWg4=
