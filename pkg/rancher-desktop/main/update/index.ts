@@ -147,6 +147,9 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     updateState.error = undefined;
     updateState.available = false;
     updateState.downloaded = false;
+    // Drop stale progress so a newer offer doesn't show the previous
+    // download's percentage.
+    updateState.progress = undefined;
     setHasQueuedUpdate(false);
   });
   updater.on('update-available', (info) => {

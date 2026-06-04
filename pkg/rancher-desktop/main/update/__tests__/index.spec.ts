@@ -193,6 +193,21 @@ describe('setupUpdate state machine', () => {
     expect(lastState()).toMatchObject({ available: true, downloaded: false, progress });
   });
 
+  it('clears stale download progress when a new check starts', () => {
+    updater.emit('checking-for-update');
+    updater.emit('update-available', makeInfo('v1.22.3'));
+    updater.emit('download-progress', {
+      total: 4, delta: 2, transferred: 2, percent: 50, bytesPerSecond: 2048,
+    });
+
+    expect(lastState().progress).toBeDefined();
+
+    updater.emit('checking-for-update');
+    updater.emit('update-available', makeInfo('v1.22.4'));
+
+    expect(lastState().progress).toBeUndefined();
+  });
+
   it('reports an updater error and clears the downloaded flag', () => {
     const info = makeInfo('v1.22.3');
 
