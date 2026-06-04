@@ -279,22 +279,52 @@ async function doInitialUpdateCheck(doInstall = false): Promise<boolean> {
   if (doInstall && await hasQueuedUpdate() && !process.env.RD_FORCE_UPDATES_ENABLED) {
     console.log('Update is cached; forcing re-check to install.');
 
-    return await new Promise((resolve) => {
-      let hasError = false;
-
-      autoUpdater.once('error', (e) => {
+    const installing = await new Promise<boolean>((resolve) => {
+      // Every terminal event must settle this promise: startup awaits it
+      // before starting the backend, so a check that fails without emitting
+      // update-downloaded (offline, or the release was pulled) would hang the
+      // app forever. Remove the listeners on the way out so a later periodic
+      // check's update-downloaded can't fire a stale quitAndInstall.
+      const finish = (installing: boolean) => {
+        autoUpdater.removeListener('error', onError);
+        autoUpdater.removeListener('update-not-available', onNotAvailable);
+        autoUpdater.removeListener('update-downloaded', onDownloaded);
+        resolve(installing);
+      };
+      const onError = (e: Error) => {
         console.error('Updater got error', e);
-        hasError = true;
-      });
-      autoUpdater.once('update-downloaded', () => {
+        finish(false);
+      };
+      const onNotAvailable = () => {
+        console.log('Cached update is no longer offered; continuing startup.');
+        finish(false);
+      };
+      const onDownloaded = () => {
         console.log('Update download complete; restarting app');
-        setHasQueuedUpdate(true);
+        // The persistent update-downloaded handler already recorded the staged
+        // version and set the queued flag; here we only need to install.
         autoUpdater.quitAndInstall(true, true);
-        console.log(`Install complete, result: ${ !hasError }`);
-        resolve(!hasError);
-      });
-      autoUpdater.checkForUpdates();
+        finish(true);
+      };
+
+      autoUpdater.once('error', onError);
+      autoUpdater.once('update-not-available', onNotAvailable);
+      autoUpdater.once('update-downloaded', onDownloaded);
+      autoUpdater.checkForUpdates().then((result) => {
+        // A falsy result means update checks are disabled, so none of the
+        // events above will fire; settle here rather than wait forever.
+        if (!result) {
+          finish(false);
+        }
+      }).catch(onError);
     });
+
+    if (installing) {
+      return true;
+    }
+    // The cached update could not be installed (offline, the release was
+    // pulled, or checks are disabled); fall through to schedule periodic
+    // checks so the session keeps looking for updates.
   }
 
   triggerUpdateCheck();
