@@ -45,14 +45,14 @@ WSLDistro:
   checksums:
     distro-0.97.tar: sha256:26afed72e25083958c079b56eea4df63904eb054f9a092c1463a2bd6aca2edec
 kuberlr:
-  version: 0.6.1
+  version: 0.7.0
   checksums:
-    kuberlr_0.6.1_linux_amd64.tar.gz: sha256:10874d9097c6c2657a0e06395fc321daa0060f18581a1de6ea6526625e2f124f
-    kuberlr_0.6.1_linux_arm64.tar.gz: sha256:504b4fa17c7aecc91525f76b59d5806351ed17fb19d985564a3dc826e71ac103
-    kuberlr_0.6.1_darwin_amd64.tar.gz: sha256:cf2ba65e2f0bfd13f96187654aab03f7e240d871a222f248078eba94b275bf5e
-    kuberlr_0.6.1_darwin_arm64.tar.gz: sha256:a02f536019efd8096b2145d3d5a7762f2a8f14d7a6abfbac503e35e24293bac9
-    kuberlr_0.6.1_windows_amd64.zip: sha256:553b729efa0ab06405a64a8bb2972d53d8c60112189a01f75cd6ddbe7d0534eb
-    kuberlr_0.6.1_windows_arm64.zip: sha256:0342ba794de2b93b2e0ad6ff3559addfff1b9f77902f5f4bc8a1f4dde3fb4fac
+    kuberlr_0.7.0_linux_amd64.tar.gz: sha256:2f131dbf61d136eafcafa583f7884262972c6cc4059d8c811fc2e46ac7ca6128
+    kuberlr_0.7.0_linux_arm64.tar.gz: sha256:50a94652653cd067587878d45518326430c9a731e642cb05d0d8e4d3813b18be
+    kuberlr_0.7.0_darwin_amd64.tar.gz: sha256:5e3ddf382679ef0cf97e037e225c88fa17d546c75015b6cbb9df0aedb0aa47d4
+    kuberlr_0.7.0_darwin_arm64.tar.gz: sha256:e4ff7747d02e498af552cb4abc63d07adad6ee4ae8f7b9d31b4a9a98072614a4
+    kuberlr_0.7.0_windows_amd64.zip: sha256:8f3928ba651ee25428a5294778b74e477c44babc093e353b07d4f9aa68be8457
+    kuberlr_0.7.0_windows_arm64.zip: sha256:d531ce6b6c48e5654083a57cf4ed2eae620ff9c650b797483f04fd1d3aea4b55
 helm:
   version: 4.2.0
   checksums:
