@@ -67,7 +67,7 @@
     "chart.js": "4.5.1",
     "cookie-universal": "2.2.2",
     "cross-spawn": "7.0.6",
-    "dayjs": "1.11.20",
+    "dayjs": "1.11.21",
     "dompurify": "3.4.7",
     "electron-updater": "6.8.3",
     "express": "5.2.1",
