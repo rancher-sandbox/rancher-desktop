@@ -32,7 +32,9 @@ class FakeUpdater extends EventEmitter {
     return true;
   }
 
-  checkForUpdates = jest.fn(() => Promise.resolve({ updateInfo: { nextUpdateTime: Date.now() + 100_000 } }));
+  checkForUpdates = jest.fn<() => Promise<{ updateInfo: { nextUpdateTime: number } }>>()
+    .mockResolvedValue({ updateInfo: { nextUpdateTime: Date.now() + 100_000 } });
+
   quitAndInstall = jest.fn();
 }
 
@@ -45,12 +47,13 @@ class FakeElectronAppAdapter {
 }
 
 const sentStates: UpdateState[] = [];
-const send = jest.fn((_channel: string, state: UpdateState) => {
-  sentStates.push({ ...state });
+const send = jest.fn((channel: string, state: UpdateState) => {
+  if (channel === 'update-state') {
+    sentStates.push({ ...state });
+  }
 });
 const setHasQueuedUpdate = jest.fn<(isQueued: boolean) => Promise<void>>();
-const hasQueuedUpdate = jest.fn<() => Promise<boolean>>(() => Promise.resolve(false));
-const timersMock = { setTimeout: jest.fn(() => 0), clearTimeout: jest.fn() };
+const hasQueuedUpdate = jest.fn<() => Promise<boolean>>().mockResolvedValue(false);
 const logStub = {
   log: jest.fn(), error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn(), debugE: jest.fn(),
 };
@@ -65,7 +68,12 @@ mockModules({
   '@pkg/window':                             { send },
   '@pkg/main/mainEvents':                    { on: jest.fn() },
   '@pkg/utils/logging':                      { default: new Proxy({}, { get: () => logStub }) },
-  timers:                                    timersMock,
+  // Bridge the timers module to the global setTimeout/clearTimeout so jest's
+  // fake timers (which only patch the globals) control the update scheduler.
+  timers:                                    {
+    setTimeout:   (callback: () => void, ms?: number) => setTimeout(callback, ms),
+    clearTimeout: (handle?: NodeJS.Timeout) => clearTimeout(handle),
+  },
 });
 
 function makeInfo(version: string): LonghornUpdateInfo {
@@ -86,7 +94,7 @@ function lastState(): UpdateState {
 
 /** Let detached promises (checkForUpdates, the install path) settle. */
 function flush(): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, 0));
+  return jest.advanceTimersByTimeAsync(0);
 }
 
 describe('setupUpdate state machine', () => {
@@ -94,6 +102,7 @@ describe('setupUpdate state machine', () => {
   let updater: FakeUpdater;
 
   beforeAll(async() => {
+    jest.useFakeTimers();
     fs.writeFileSync(appUpdateConfigPath, '{}');
     ({ default: setupUpdate } = await import('../index'));
 
@@ -103,6 +112,7 @@ describe('setupUpdate state machine', () => {
   });
 
   afterAll(() => {
+    jest.useRealTimers();
     fs.rmSync(appUpdateConfigPath, { force: true });
   });
 
@@ -116,7 +126,7 @@ describe('setupUpdate state machine', () => {
     updater.quitAndInstall.mockClear();
     hasQueuedUpdate.mockClear();
     setHasQueuedUpdate.mockClear();
-    timersMock.setTimeout.mockClear();
+    jest.clearAllTimers();
   });
 
   it('keeps the staged update installable when a re-check finds the same version', () => {
@@ -130,13 +140,16 @@ describe('setupUpdate state machine', () => {
     updater.emit('update-downloaded', info);
 
     expect(lastState()).toMatchObject({ available: true, downloaded: true });
+    expect(updater.autoDownload).toBe(false);
 
     // A later scheduled check finds the same version still available. The
-    // restart button must remain.
+    // restart button must remain, and the updater must keep the staged
+    // download instead of fetching it again.
     updater.emit('checking-for-update');
     updater.emit('update-available', info);
 
     expect(lastState()).toMatchObject({ available: true, downloaded: true });
+    expect(updater.autoDownload).toBe(false);
   });
 
   it('discards the staged update and downloads a newer version when one appears', () => {
@@ -168,22 +181,6 @@ describe('setupUpdate state machine', () => {
     expect(updater.autoDownload).toBe(false);
   });
 
-  it('does not re-download a version that is already staged', () => {
-    const info = makeInfo('v1.22.3');
-
-    updater.emit('checking-for-update');
-    updater.emit('update-available', info);
-    updater.emit('update-downloaded', info);
-
-    expect(updater.autoDownload).toBe(false);
-
-    updater.emit('checking-for-update');
-    updater.emit('update-available', info);
-
-    expect(updater.autoDownload).toBe(false);
-    expect(lastState()).toMatchObject({ downloaded: true });
-  });
-
   it('forwards download progress to the renderer', () => {
     const progress = {
       total: 4, delta: 2, transferred: 2, percent: 50, bytesPerSecond: 2048,
@@ -205,16 +202,20 @@ describe('setupUpdate state machine', () => {
 
     expect(lastState().downloaded).toBe(true);
 
-    updater.emit('error', new Error('download failed'));
+    const error = new Error('download failed');
+
+    updater.emit('error', error);
 
     expect(lastState().downloaded).toBe(false);
-    expect(lastState().error).toBeInstanceOf(Error);
+    expect(lastState().error).toBe(error);
   });
 
   it('clears a previous error once a later check succeeds', () => {
-    updater.emit('error', new Error('boom'));
+    const error = new Error('boom');
 
-    expect(lastState().error).toBeInstanceOf(Error);
+    updater.emit('error', error);
+
+    expect(lastState().error).toBe(error);
 
     updater.emit('checking-for-update');
     updater.emit('update-available', makeInfo('v1.22.3'));
@@ -242,6 +243,12 @@ describe('setupUpdate state machine', () => {
     // triggerUpdateCheck runs detached; let its rejection and catch settle.
     await flush();
 
-    expect(timersMock.setTimeout).toHaveBeenCalled();
+    // The failed check still armed the retry timer.
+    expect(jest.getTimerCount()).toBeGreaterThan(0);
+
+    // Firing the timer runs the next check, which now succeeds.
+    await jest.runOnlyPendingTimersAsync();
+
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(2);
   });
 });
