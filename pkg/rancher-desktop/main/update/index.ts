@@ -61,6 +61,8 @@ export interface UpdateState {
 const updateState: UpdateState = {
   configured: false, available: false, downloaded: false,
 };
+/** The version of the update that has finished downloading, if any. */
+let stagedVersion: string | undefined;
 
 Electron.ipcMain.on('update-state', () => {
   window.send('update-state', updateState);
@@ -134,13 +136,15 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
   updater.autoDownload = true;
   updater.autoInstallOnAppQuit = false;
   updater.on('error', (error) => {
-    console.debug('update: error:', error);
+    console.error('update: error:', error);
     updateState.error = error;
     updateState.downloaded = false;
     window.send('update-state', updateState);
   });
   updater.on('checking-for-update', () => {
     console.debug('update: checking for update');
+    // Clear any earlier error so a transient failure stops hiding later offers.
+    updateState.error = undefined;
     updateState.available = false;
     updateState.downloaded = false;
     setHasQueuedUpdate(false);
@@ -152,7 +156,18 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     console.debug('update: update available:', info);
     updateState.available = true;
     updateState.info = info;
-    updateState.downloaded = state === State.UPDATE_PENDING;
+    updateState.downloaded = info.version === stagedVersion;
+    if (updateState.downloaded) {
+      setHasQueuedUpdate(true);
+    } else {
+      // A version other than the staged one is available. Forget the staged
+      // version and re-arm autoDownload so the updater fetches the new one;
+      // electron-updater discards the cached file when its checksum no longer
+      // matches. Clearing stagedVersion keeps a later re-offer of the old
+      // version from reporting it as downloaded once its file is gone.
+      stagedVersion = undefined;
+      updater.autoDownload = true;
+    }
     window.send('update-state', updateState);
   });
   updater.on('update-not-available', (info) => {
@@ -163,6 +178,7 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     updateState.available = false;
     updateState.info = info;
     updateState.downloaded = false;
+    stagedVersion = undefined;
     setHasQueuedUpdate(false);
     window.send('update-state', updateState);
   });
@@ -181,11 +197,12 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     if (state === State.DOWNLOADING) {
       state = State.UPDATE_PENDING;
     }
+    stagedVersion = info.version;
     console.debug('update: downloaded:', info);
     updateState.info = info;
     updateState.downloaded = true;
-    // Prevent the updater from downloading the update again; it will clobber
-    // the existing download.
+    // Don't download this same version again on the next check; a newer version
+    // re-arms autoDownload from the update-available handler.
     updater.autoDownload = false;
     setHasQueuedUpdate(true);
     window.send('update-state', updateState);
