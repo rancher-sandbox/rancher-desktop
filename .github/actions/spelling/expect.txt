@@ -315,6 +315,7 @@ jsmith
 JSONOr
 jsontable
 JSONTo
+jsonutils
 julianb
 karl
 Kaspersky
@@ -680,6 +681,7 @@ trivy
 TStr
 TVar
 tvf
+typeutils
 ucmonitor
 udhcpc
 UEFI
