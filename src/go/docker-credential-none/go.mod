@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/docker/cli v29.5.3+incompatible
-	github.com/docker/docker-credential-helpers v0.9.7
+	github.com/docker/docker-credential-helpers v0.9.8
 )
 
 require (
