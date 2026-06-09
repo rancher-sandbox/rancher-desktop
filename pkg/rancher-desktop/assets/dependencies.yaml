@@ -108,16 +108,16 @@ steve:
     steve-linux-arm64.tar.gz: sha256:f976de1c9c63a1732c0e7f0365c228747e669a62ad9a4fa7ae98dc2277919970
     steve-windows-amd64.tar.gz: sha256:a70a9bfecb43abd94350eb8919a5d86425632393c2d04f15b8bafcdf158da39d
 dockerProvidedCredentialHelpers:
-  version: 0.9.7
+  version: 0.9.8
   checksums:
-    docker-credential-secretservice-v0.9.7.linux-amd64: sha256:1d730cb142c20253ee5577532f7f4e3bbe7f06d60c09e955bd1c8af00669a04c
-    docker-credential-pass-v0.9.7.linux-amd64: sha256:60f68883022030cd9b1eb54ea41708e7947997a9c4f574302b51d3b23d0bf3b4
-    docker-credential-secretservice-v0.9.7.linux-arm64: sha256:59d8d4802fb5acaa423ca484136122370051f5aca002464b4c204309960e95d3
-    docker-credential-pass-v0.9.7.linux-arm64: sha256:3afce685d4f4ae2021577fc4a2198087a4bc4f42f4315a58f7f6058756743853
-    docker-credential-osxkeychain-v0.9.7.darwin-amd64: sha256:fa0ac428037bb4fae6c2414e8c4fc594a053cc9d952ee441f3ba25836e451423
-    docker-credential-osxkeychain-v0.9.7.darwin-arm64: sha256:e29e22390ee244efb348d636994708aeeebf076c0a841ed1e64e0c56688a0f3f
-    docker-credential-wincred-v0.9.7.windows-amd64.exe: sha256:684f4faabcd7502586a5234aca54a0f2c7324390f738dc5d9dc970b27bedec88
-    docker-credential-wincred-v0.9.7.windows-arm64.exe: sha256:852a5131849f7f35dfc74845a184193bffde1d29d2913ac54ec6903ab901f92d
+    docker-credential-secretservice-v0.9.8.linux-amd64: sha256:052a0243588b231fde8009f7fe95afc6f536e9d20f6b5896dfd5bc8fd55852f2
+    docker-credential-pass-v0.9.8.linux-amd64: sha256:3ae93407d42dc90bd0393b0a50da3ce95246d3f30c3255225cb6b0401cd74cac
+    docker-credential-secretservice-v0.9.8.linux-arm64: sha256:b9e7b135c9b0cacf8f058d785dbc7188df38d98717dbc2fb1d6c63afb6d67198
+    docker-credential-pass-v0.9.8.linux-arm64: sha256:b75d27a59a1b4e1b1eb1059184d5760a34c54cf730e97cb18832956fead18551
+    docker-credential-osxkeychain-v0.9.8.darwin-amd64: sha256:0575a404c4ead8b5135a2482ece4dd142bde3cbd319433697e212bbea0afb100
+    docker-credential-osxkeychain-v0.9.8.darwin-arm64: sha256:6fae515ffbc74f395af1b51c6f079ddb57895ed9e428e0bea3f6aff64e916b22
+    docker-credential-wincred-v0.9.8.windows-amd64.exe: sha256:fec0aa06335bbefc7f515630c9368afaa1423fa9fa585112f123b6625f72d560
+    docker-credential-wincred-v0.9.8.windows-arm64.exe: sha256:34fc52a556c2703d9b307cd5a9d1ec9cd6f8554d7f50210e3bc4fb93aceca45a
 ECRCredentialHelper:
   version: 0.12.0
   checksums:
