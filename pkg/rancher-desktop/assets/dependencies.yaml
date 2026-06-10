@@ -157,13 +157,13 @@ certManager:
     cert-manager.crds.yaml: sha256:3f5ce03fa880d072ba10c804d43afd4eaa9c7688506e29762c4e1a98ec095b83
     cert-manager-v1.20.1.tgz: sha256:9ce75dbd0f8c46b4c60cc8294a1668607e49122937f9c283fc27d615c00d0733
 spinCLI:
-  version: 4.0.0
+  version: 4.0.1
   checksums:
-    spin-v4.0.0-macos-amd64.tar.gz: sha256:b9040c3d792d183314545366797b0ca90f2a944fdbdfa7344bb31d8935cc99b8
-    spin-v4.0.0-macos-aarch64.tar.gz: sha256:d86152aa0cba1f3de1f17c48f13f53679e0d9aa07dcaeb04ffcdfa08637d0a10
-    spin-v4.0.0-static-linux-amd64.tar.gz: sha256:9b445e0f3a02f89a22f41d5dcdee42c057746f5b10128481f3e6a55e08987bb2
-    spin-v4.0.0-static-linux-aarch64.tar.gz: sha256:f2b4a493878cf58497f40c8d1bb224f5397228fc818297dfaa4417bf1c64506c
-    spin-v4.0.0-windows-amd64.zip: sha256:3004a04231035dc993e5ae89b27c6f8348e4cb5be257919b347fc159ca9a1956
+    spin-v4.0.1-macos-amd64.tar.gz: sha256:2c3efb2c803bbb661e4015308c112e4f526b33ba5f8c9c44c25c2d3f2a52ef30
+    spin-v4.0.1-macos-aarch64.tar.gz: sha256:fe33d10f97eccfb2b1aa58dbbb776230ed0fdc3b4a8d4c805f4e42d4115458ac
+    spin-v4.0.1-static-linux-amd64.tar.gz: sha256:a431286d58122f5b3d50f0c85e241719b87630f87083bdd9e5b7e72b4b97f576
+    spin-v4.0.1-static-linux-aarch64.tar.gz: sha256:4620cad9970d476cb931bcb95270d508d9b92be720c9dc537aae0b07c365a3fd
+    spin-v4.0.1-windows-amd64.zip: sha256:2a79ebbf1fe35446eb9e577729f88aacddb237c0b57b6041e73aa556c48b0d28
 spinKubePlugin:
   version: 0.4.0
   checksums: {}
