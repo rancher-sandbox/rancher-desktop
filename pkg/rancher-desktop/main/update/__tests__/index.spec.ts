@@ -32,7 +32,7 @@ class FakeUpdater extends EventEmitter {
     return true;
   }
 
-  checkForUpdates = jest.fn<() => Promise<{ updateInfo: { nextUpdateTime: number } }>>()
+  checkForUpdates = jest.fn<() => Promise<{ updateInfo: { nextUpdateTime: number } } | null>>()
     .mockResolvedValue({ updateInfo: { nextUpdateTime: Date.now() + 100_000 } });
 
   quitAndInstall = jest.fn();
@@ -193,6 +193,21 @@ describe('setupUpdate state machine', () => {
     expect(lastState()).toMatchObject({ available: true, downloaded: false, progress });
   });
 
+  it('clears stale download progress when a new check starts', () => {
+    updater.emit('checking-for-update');
+    updater.emit('update-available', makeInfo('v1.22.3'));
+    updater.emit('download-progress', {
+      total: 4, delta: 2, transferred: 2, percent: 50, bytesPerSecond: 2048,
+    });
+
+    expect(lastState().progress).toBeDefined();
+
+    updater.emit('checking-for-update');
+    updater.emit('update-available', makeInfo('v1.22.4'));
+
+    expect(lastState().progress).toBeUndefined();
+  });
+
   it('reports an updater error and clears the downloaded flag', () => {
     const info = makeInfo('v1.22.3');
 
@@ -234,6 +249,61 @@ describe('setupUpdate state machine', () => {
 
     await expect(installing).resolves.toBe(true);
     expect(updater.quitAndInstall).toHaveBeenCalledWith(true, true);
+  });
+
+  it('continues startup instead of hanging when the queued-install check fails', async() => {
+    hasQueuedUpdate.mockResolvedValueOnce(true);
+    updater.checkForUpdates.mockRejectedValueOnce(new Error('offline'));
+
+    await expect(setupUpdate(true, true)).resolves.toBe(false);
+    expect(updater.quitAndInstall).not.toHaveBeenCalled();
+
+    // The failed install must still schedule the periodic checks.
+    await flush();
+    expect(jest.getTimerCount()).toBeGreaterThan(0);
+  });
+
+  it('continues startup when the queued update is no longer offered', async() => {
+    hasQueuedUpdate.mockResolvedValueOnce(true);
+
+    const installing = setupUpdate(true, true);
+
+    await flush();
+    updater.emit('update-not-available', makeInfo('v1.22.3'));
+
+    await expect(installing).resolves.toBe(false);
+    expect(updater.quitAndInstall).not.toHaveBeenCalled();
+  });
+
+  it('continues startup when update checks are disabled during the queued install', async() => {
+    hasQueuedUpdate.mockResolvedValueOnce(true);
+    // A falsy check result means updates are disabled: no events fire, so the
+    // install path must settle on the result alone rather than wait forever.
+    updater.checkForUpdates.mockResolvedValueOnce(null);
+
+    await expect(setupUpdate(true, true)).resolves.toBe(false);
+    expect(updater.quitAndInstall).not.toHaveBeenCalled();
+
+    // Falling through still schedules the periodic checks.
+    await flush();
+    expect(jest.getTimerCount()).toBeGreaterThan(0);
+  });
+
+  it('does not install on a later download once the queued install has settled', async() => {
+    hasQueuedUpdate.mockResolvedValueOnce(true);
+
+    const installing = setupUpdate(true, true);
+
+    await flush();
+    updater.emit('update-not-available', makeInfo('v1.22.3'));
+
+    await expect(installing).resolves.toBe(false);
+
+    // The install path removed its one-shot listeners on the way out, so a
+    // later periodic check's download must not fire a stale quitAndInstall.
+    updater.emit('update-downloaded', makeInfo('v1.22.4'));
+
+    expect(updater.quitAndInstall).not.toHaveBeenCalled();
   });
 
   it('schedules the next check even when a check fails', async() => {
