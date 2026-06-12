@@ -13045,9 +13045,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-gyp@npm:12.3.0":
-  version: 12.3.0
-  resolution: "node-gyp@npm:12.3.0"
+"node-gyp@npm:12.4.0":
+  version: 12.4.0
+  resolution: "node-gyp@npm:12.4.0"
   dependencies:
     env-paths: "npm:^2.2.0"
     exponential-backoff: "npm:^3.1.1"
@@ -13061,7 +13061,7 @@ __metadata:
     which: "npm:^6.0.0"
   bin:
     node-gyp: bin/node-gyp.js
-  checksum: 10c0/9d9032b405cbe42f72a105259d9eb679376470c102df4a2dbaa51e07d59bf741dcffb85897087ea9d8318b9cabb824a8978af51508ae142f0239ae1e6a3c2329
+  checksum: 10c0/9acb7c798e124275a6f9c1f7eb64b5abd6196bb885a3945fb44ee0dccf435514e88cdfb0f228ee7ff76ef25107c1f39ff37a067bf92fd00b9aff9234db29ff9e
   languageName: node
   linkType: hard
 
@@ -14705,7 +14705,7 @@ __metadata:
     native-reg: "npm:1.1.1"
     node-addon-api: "npm:8"
     node-forge: "npm:1.4.0"
-    node-gyp: "npm:12.3.0"
+    node-gyp: "npm:12.4.0"
     node-gyp-build: "npm:4.8.4"
     node-loader: "npm:^2.1.0"
     octokit: "npm:5.0.5"
