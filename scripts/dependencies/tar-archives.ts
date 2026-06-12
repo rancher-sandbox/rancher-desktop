@@ -174,7 +174,7 @@ export class WSLDistroImage implements Dependency {
 
     // Finish the archive.
     packer.finalize();
-    await stream.promises.finished(packer as any);
+    await stream.promises.finished(packer);
     console.log('Built WSLDistro image.');
   }
 }

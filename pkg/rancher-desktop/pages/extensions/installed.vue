@@ -71,6 +71,7 @@ export default defineComponent({
         },
       ],
       loading: true,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- gives busy a string index signature for this.busy[id]
       busy:    {} as Record<string, boolean>,
     };
   },
@@ -93,6 +94,7 @@ export default defineComponent({
         moreInfo:    this.extensionLink(extension),
       }));
     },
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- declares getter return types the build's checker infers as any
     ...mapGetters('extensions', ['installedExtensions']) as {
       installedExtensions: () => ExtensionState[],
     },

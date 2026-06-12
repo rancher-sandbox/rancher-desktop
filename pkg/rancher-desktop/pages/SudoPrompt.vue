@@ -76,7 +76,7 @@ export default defineComponent({
   layout:     'dialog',
   data() {
     return {
-      explanations: {} as Partial<Record<SudoReason, string[]>>,
+      explanations: {},
       sized:        false,
       suppress:     false,
       SUDO_REASON_DESCRIPTION,

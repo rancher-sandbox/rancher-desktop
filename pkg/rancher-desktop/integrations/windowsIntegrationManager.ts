@@ -220,6 +220,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       mainEvents.emit('integration-update', await this.listIntegrations());
       // TypeScript is being too smart and thinking we can only be ACTIVE here;
       // but that may be set from concurrent calls to sync().
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- the cast defeats that narrowing
       const currentState: SyncState = this.syncState as any;
 
       switch (currentState.state) {

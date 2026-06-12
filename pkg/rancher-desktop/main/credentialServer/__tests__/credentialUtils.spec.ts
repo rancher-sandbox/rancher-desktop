@@ -53,7 +53,7 @@ describe('runCommand', () => {
         stdio: [expect.anything(), 'pipe', expect.anything()],
       });
 
-      return Promise.resolve({ stdout: expected }) as any;
+      return Promise.resolve({ stdout: expected });
     });
     await expect(runCommand('pika')).resolves.toEqual(expected);
   });
@@ -116,7 +116,7 @@ describe('runCommand', () => {
         expect(args).toEqual([command]);
         expect(options).toMatchObject({ stdio: [expect.any(stream.Readable), expect.anything(), expect.anything()] });
 
-        return Promise.resolve({ stdout: expected }) as any;
+        return Promise.resolve({ stdout: expected });
       });
 
       await expect(runCommand(command, input)).resolves.toEqual(expected);
@@ -142,7 +142,7 @@ describe('list', () => {
       expect(file).toMatch(/^docker-credential-/);
       expect(args).toEqual(['list']);
 
-      return Promise.resolve({ stdout: JSON.stringify(helpers[helper] ?? {}) }) as any;
+      return Promise.resolve({ stdout: JSON.stringify(helpers[helper] ?? {}) });
     });
   });
 

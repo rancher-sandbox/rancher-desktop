@@ -970,7 +970,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       return JSON.parse(stdout) as QEMUImageInfo;
     } catch {
-      return { format: 'unknown' } as QEMUImageInfo;
+      return { format: 'unknown' };
     }
   }
 
@@ -1159,7 +1159,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       // outdated ones, since we're going to need a prompt anyway.
       const tarStream = fs.createWriteStream(tarPath);
       const archive = tar.pack();
-      const archiveFinished = util.promisify(stream.finished)(archive as any);
+      const archiveFinished = util.promisify(stream.finished)(archive);
       const newEntry = util.promisify(archive.entry.bind(archive));
       const baseHeader: Partial<tar.Headers> = {
         mode:  0o755,
@@ -2031,7 +2031,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await this.progressTracker.action('bundling certificates', 50, async function() {
           const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
           const archive = tar.pack();
-          const archiveFinished = util.promisify(stream.finished)(archive as any);
+          const archiveFinished = util.promisify(stream.finished)(archive);
 
           archive.pipe(writeStream);
 

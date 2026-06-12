@@ -16,6 +16,7 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters('preferences', ['getPreferences']),
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- declares getter return types the build's checker infers as any
     ...mapGetters('extensions', ['installedExtensions', 'marketData']) as {
       installedExtensions: () => ExtensionState[],
       marketData:          () => MarketplaceData[],

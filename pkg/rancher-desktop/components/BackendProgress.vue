@@ -36,6 +36,7 @@ export default defineComponent({
   data() {
     return {
       /** Current Kubernetes backend action progress. */
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- declares the description/transitionTime fields read via this.progress
       progress: { current: 1, max: 1 } as {
         /** The current progress, from 0 to max. */
         readonly current:         number;
