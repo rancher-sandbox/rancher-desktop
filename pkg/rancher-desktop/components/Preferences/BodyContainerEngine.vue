@@ -46,7 +46,7 @@ export default defineComponent({
         'transientSettings/commitPreferences',
         {
           ...this.credentials as ServerState,
-          payload: { preferences: { navItem: { currentTabs: { 'Container Engine': tabName } } } } as RecursivePartial<TransientSettings>,
+          payload: { preferences: { navItem: { currentTabs: { 'Container Engine': tabName } } } },
         },
       );
     },

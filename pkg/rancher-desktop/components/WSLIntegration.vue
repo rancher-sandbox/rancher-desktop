@@ -41,7 +41,7 @@ export default defineComponent({
     },
     integrations: {
       type:    Object as PropType<Record<string, boolean | string>>,
-      default: () => ({} as Record<string, boolean | string>),
+      default: () => ({}),
     },
   },
 
@@ -52,6 +52,7 @@ export default defineComponent({
        * A mapping to temporarily disable a selection while work happens
        * asynchronously, to prevent the user from retrying to toggle too quickly.
        */
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- gives busy a string index signature for this.busy[name]
       busy: {} as Record<string, boolean>,
     };
   },

@@ -112,7 +112,7 @@ function checkObject(setting: RecursiveReadonly<any>, schema: schemaNode, path: 
       }
       break;
     }
-    const schemaProps = schema.properties ?? {} as Record<string, schemaNode>;
+    const schemaProps = schema.properties ?? {};
 
     for (const prop in setting) {
       const propSchema = schemaProps[prop] ?? { type: '<missing>' };

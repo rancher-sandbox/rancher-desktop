@@ -38,6 +38,6 @@ interface IpcRenderer {
   ): Promise<ReturnType<IpcMainInvokeEvents[eventName]>>;
 }
 
-export const ipcRenderer: IpcRenderer = ipcRendererImpl as unknown as IpcRenderer;
+export const ipcRenderer: IpcRenderer = ipcRendererImpl;
 
 export default ipcRenderer;

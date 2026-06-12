@@ -43,7 +43,7 @@ export default defineComponent({
         'transientSettings/commitPreferences',
         {
           ...this.credentials as ServerState,
-          payload: { preferences: { navItem: { currentTabs: { WSL: tabName } } } } as RecursivePartial<TransientSettings>,
+          payload: { preferences: { navItem: { currentTabs: { WSL: tabName } } } },
         },
       );
     },

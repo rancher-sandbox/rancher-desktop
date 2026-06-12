@@ -21,5 +21,5 @@ export function withResource<
     }
   };
 
-  return input as U & Disposable;
+  return input;
 }
