@@ -54,14 +54,14 @@ kuberlr:
     kuberlr_0.7.0_windows_amd64.zip: sha256:8f3928ba651ee25428a5294778b74e477c44babc093e353b07d4f9aa68be8457
     kuberlr_0.7.0_windows_arm64.zip: sha256:d531ce6b6c48e5654083a57cf4ed2eae620ff9c650b797483f04fd1d3aea4b55
 helm:
-  version: 4.2.0
+  version: 4.2.1
   checksums:
-    helm-v4.2.0-linux-amd64.tar.gz: sha256:97dbeb971be4ac4b27e3839976d9564c0fb35c6f3b1da89dd1e292d236af4096
-    helm-v4.2.0-linux-arm64.tar.gz: sha256:1f8de130dfbd04de64978e7b852a7a547be1404956a366608276d2520b678670
-    helm-v4.2.0-darwin-amd64.tar.gz: sha256:1376ea697140e4db316736e760d5a47d12afc1524dce704476ef06fd7fdeddc6
-    helm-v4.2.0-darwin-arm64.tar.gz: sha256:f13f959015447b6bc309f9fd506509926543988a39035c088b52522ec95e2acb
-    helm-v4.2.0-windows-amd64.tar.gz: sha256:34bf9659f8f04f3841a60131183b8e2acc44e260db4c93b889ff09718cacca6f
-    helm-v4.2.0-windows-arm64.tar.gz: sha256:41b8c33f7bb5ed094412b50702e70014633383e2cc32efd60239afbfe9fdbc19
+    helm-v4.2.1-linux-amd64.tar.gz: sha256:479dca836e5b45e8bd222400c5591b0e3a647378f03ff96597180db97c17fdae
+    helm-v4.2.1-linux-arm64.tar.gz: sha256:596b9a73d366c1e72ce67d595c22805480e30914593aafbc9f547694e72814db
+    helm-v4.2.1-darwin-amd64.tar.gz: sha256:2a21c9f368d608bcf6eb794ebc06514eb6b529a846b60fe4a43dea7bcce65228
+    helm-v4.2.1-darwin-arm64.tar.gz: sha256:896472d2ec0740c60f64a9df0fc30d478beee38a1a2a6ed91aa6e6ee177c1575
+    helm-v4.2.1-windows-amd64.tar.gz: sha256:36b603d5c4f4af526035631ead3adba5535250ad85f2b052960f7f874bdafa68
+    helm-v4.2.1-windows-arm64.tar.gz: sha256:1d5b0c8b0c84016bb9c5b9ddfc00c613539506fed2f3a5710caabb9e94e14ba7
 dockerCLI:
   version: 29.5.3
   checksums:
