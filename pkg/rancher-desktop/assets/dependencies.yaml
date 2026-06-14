@@ -129,10 +129,10 @@ ECRCredentialHelper:
     windows-arm64/docker-credential-ecr-login.exe: sha256:42bbcac22405c1a98ae211555918dc37f8e0e9c458a93f4026cf102aa1011256
 mobyOpenAPISpec:
   version:
-    apiVersion: "1.54"
-    commit: 5c80a6e8264b09b309ccaf48ac08eef68ec4ccb6
+    apiVersion: "1.55"
+    commit: 826b3f64b8d35457b68b847e5af8283d51e04c4d
   checksums:
-    v1.54.yaml: sha256:bf64312d8f900bf35a2319a5d617505ba56d662e92a5a67cb62da7653c55f388
+    v1.55.yaml: sha256:10617b2a7c57362f083d69ad24c0545b878d22dee447f300622dc9830fe9a82c
 wix:
   version: v3.14.1
   checksums:
