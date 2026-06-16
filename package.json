@@ -80,7 +80,7 @@
     "marked": "18.0.5",
     "native-reg": "1.1.1",
     "node-forge": "1.4.0",
-    "proxy-agent": "^8.0.0",
+    "proxy-agent": "^8.0.2",
     "rancher-icons": "rancher/icons#v2.0.21",
     "semver": "7.8.2",
     "tar-stream": "3.2.0",
