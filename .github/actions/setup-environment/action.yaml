@@ -82,7 +82,7 @@ runs:
         case $id in
           suse|opensuse)
             ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install \
-              fuse gawk git GraphicsMagick gtk3-tools jq mozilla-nss \
+              fuse /usr/bin/awk git GraphicsMagick gtk3-tools jq mozilla-nss \
               noto-sans-fonts password-store sudo xvfb-run xauth which
             if [[ ${GITHUB_JOB:-unknown} =~ appimage ]]; then
               ${{ steps.sudo.outputs.sudo }} zypper --non-interactive install \
