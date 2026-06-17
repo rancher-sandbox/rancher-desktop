@@ -40,7 +40,7 @@ local_setup() {
     # directory name; only the one we just created exists at this point.
     run ls -1 "$PATH_SNAPSHOTS"
     assert_success
-    refute_output ""
+    assert_output # the snapshot directory must exist
     local snapshot_dir="$PATH_SNAPSHOTS/${lines[0]}"
 
     assert_exists "$snapshot_dir/disk"

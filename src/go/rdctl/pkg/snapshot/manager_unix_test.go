@@ -178,7 +178,11 @@ func TestManagerUnix(t *testing.T) {
 		// Rewrite the snapshot to use Lima's legacy disk filenames, as a
 		// snapshot created by an older version of Rancher Desktop would.
 		snapshotDir := manager.SnapshotDirectory(snapshot)
-		for current, legacy := range map[string]string{"disk": "diffdisk", "iso": "basedisk"} {
+		nameMapping := map[string]string{
+			"disk": "diffdisk",
+			"iso":  "basedisk",
+		}
+		for current, legacy := range nameMapping {
 			if err := os.Rename(filepath.Join(snapshotDir, current), filepath.Join(snapshotDir, legacy)); err != nil {
 				t.Fatalf("failed to rename %q to %q in snapshot: %s", current, legacy, err)
 			}
