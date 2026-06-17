@@ -527,9 +527,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       await this.lima('stop', MACHINE_NAME);
     }
 
-    const diskPath = path.join(paths.lima, MACHINE_NAME, 'basedisk');
+    const imagePath = await this.instanceDiskPath('iso', 'basedisk');
 
-    await fs.promises.copyFile(this.baseDiskImage, diskPath);
+    await fs.promises.copyFile(this.baseDiskImage, imagePath);
     // The config file will be updated in updateConfig() instead; no need to do it here.
     console.log(`Base image successfully updated.`);
   }
@@ -961,6 +961,25 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         return undefined;
       }
     })();
+  }
+
+  /**
+   * Resolve a Lima instance disk file, preferring the legacy filename when it
+   * still exists. Lima renamed basedisk→iso and diffdisk→disk and migrates
+   * existing instances on start; this runs before that migration, so a
+   * just-upgraded instance still has only the legacy name.
+   */
+  protected async instanceDiskPath(current: string, legacy: string): Promise<string> {
+    const instanceDir = path.join(paths.lima, MACHINE_NAME);
+    const legacyPath = path.join(instanceDir, legacy);
+
+    try {
+      await fs.promises.access(legacyPath);
+
+      return legacyPath;
+    } catch {
+      return path.join(instanceDir, current);
+    }
   }
 
   protected async imageInfo(fileName: string): Promise<QEMUImageInfo> {
@@ -1858,15 +1877,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
         // Virtualization Framework only supports RAW disks
         if (vmStatus && config.virtualMachine.type === VMType.VZ) {
-          const diffdisk = path.join(paths.lima, MACHINE_NAME, 'diffdisk');
-          const { format } = await this.imageInfo(diffdisk);
+          const disk = await this.instanceDiskPath('disk', 'diffdisk');
+          const { format } = await this.imageInfo(disk);
 
           if (format === ImageFormat.QCOW2) {
             if (isVMAlreadyRunning) {
               await this.lima('stop', MACHINE_NAME);
               isVMAlreadyRunning = false;
             }
-            await this.convertToRaw(diffdisk);
+            await this.convertToRaw(disk);
           }
         }
         // Start the VM; if it's already running, this does nothing.
