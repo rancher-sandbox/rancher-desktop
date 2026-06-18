@@ -98,10 +98,14 @@ export interface LimaMount {
  * Lima configuration
  */
 export interface LimaConfiguration {
-  vmType?:  'qemu' | 'vz';
-  rosetta?: {
-    enabled?: boolean;
-    binfmt?:  boolean;
+  vmType?: 'qemu' | 'vz';
+  vmOpts?: {
+    vz?: {
+      rosetta?: {
+        enabled?: boolean;
+        binfmt?:  boolean;
+      },
+    },
   },
   arch?:  'x86_64' | 'aarch64';
   images: {
@@ -621,9 +625,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     // it, and it would be less safe to modify baseConfig.
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       vmType:  this.cfg?.virtualMachine.type,
-      rosetta: {
-        enabled: this.cfg?.virtualMachine.useRosetta,
-        binfmt:  this.cfg?.virtualMachine.useRosetta,
+      vmOpts: {
+        vz: {
+          rosetta: {
+            enabled: this.cfg?.virtualMachine.useRosetta,
+            binfmt:  this.cfg?.virtualMachine.useRosetta,
+          },
+        },
       },
       images: [{
         location: this.baseDiskImage,
@@ -659,6 +667,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     // The top-level cpuType field is deprecated in favour of vmOpts.qemu.cpuType.
     // Drop it so an upgraded VM's lima.yaml doesn't keep triggering lima's deprecation warning.
     delete (config as unknown as Record<string, unknown>).cpuType;
+    // Same for rosetta settings
+    delete (config as unknown as Record<string, unknown>).rosetta;
 
     if (os.platform() === 'darwin') {
       if (allowRoot) {
