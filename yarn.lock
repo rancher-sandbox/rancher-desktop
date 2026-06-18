@@ -4185,12 +4185,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:22.19.20":
-  version: 22.19.20
-  resolution: "@types/node@npm:22.19.20"
+"@types/node@npm:22.19.21":
+  version: 22.19.21
+  resolution: "@types/node@npm:22.19.21"
   dependencies:
     undici-types: "npm:~6.21.0"
-  checksum: 10c0/933d4466f1a498dd7c8e173af7265a53e9d410cab4a827ccc348414d5065a9a40ba7a7c994a71b3ee651188111db3b43573b830dc30a61a7489f3e6efc537bf7
+  checksum: 10c0/9a18a5fabaf75a55d63796d6086029c4f9fdd1c026a26d629804f5cc99b3302c749be321df29d7a7141dc227501ed645b5f9d01095d926f5d2c0e2230fcd3f59
   languageName: node
   linkType: hard
 
@@ -14797,7 +14797,7 @@ __metadata:
     "@types/jest": "npm:30.0.0"
     "@types/lodash": "npm:4.17.24"
     "@types/mustache": "npm:4.2.6"
-    "@types/node": "npm:22.19.20"
+    "@types/node": "npm:22.19.21"
     "@types/node-forge": "npm:1.3.14"
     "@types/plist": "npm:3.0.5"
     "@types/ps-tree": "npm:1.1.6"
