@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/Masterminds/log-go v1.0.0
-	github.com/containerd/containerd v1.7.32
+	github.com/containerd/containerd v1.7.33
 	github.com/containerd/containerd/api v1.11.1
 	github.com/containernetworking/plugins v1.9.1
 	github.com/containers/gvisor-tap-vsock v0.8.9
