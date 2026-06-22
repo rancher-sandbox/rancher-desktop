@@ -110,6 +110,7 @@
         <tr
           class="group-row"
           :aria-expanded="!collapsed[group.ref]"
+          :data-testid="`container-group-${ group.ref }`"
         >
           <td :colspan="headers.length + 1">
             <div class="group-tab">
@@ -131,6 +132,7 @@
                 <button
                   v-tooltip="{ content: t('containers.manage.group.stopTooltip', { name: group.ref }), placement: 'top' }"
                   class="btn btn-sm role-tertiary btn-icon"
+                  data-testid="container-group-stop"
                   :disabled="!hasRunningContainers(group)"
                   @click.stop="stopGroup(group)"
                 >
@@ -139,6 +141,7 @@
                 <button
                   v-tooltip="{ content: t('containers.manage.group.deleteTooltip', { name: group.ref }), placement: 'top' }"
                   class="btn btn-sm role-tertiary btn-icon"
+                  data-testid="container-group-delete"
                   @click.stop="deleteGroup(group)"
                 >
                   <span class="icon icon-delete icon-lg" />
