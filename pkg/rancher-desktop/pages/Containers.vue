@@ -124,6 +124,26 @@
               />
               {{ group.ref }}
               <span v-if="!!collapsed[group.ref]"> ({{ group.rows.length }})</span>
+              <span
+                v-if="isComposeProjectGroup(group)"
+                class="group-actions"
+              >
+                <button
+                  v-tooltip="{ content: t('containers.manage.group.stopTooltip', { name: group.ref }), placement: 'top' }"
+                  class="btn btn-sm role-tertiary btn-icon"
+                  :disabled="!hasRunningContainers(group)"
+                  @click.stop="stopGroup(group)"
+                >
+                  <span class="icon icon-stop icon-lg" />
+                </button>
+                <button
+                  v-tooltip="{ content: t('containers.manage.group.deleteTooltip', { name: group.ref }), placement: 'top' }"
+                  class="btn btn-sm role-tertiary btn-icon"
+                  @click.stop="deleteGroup(group)"
+                >
+                  <span class="icon icon-delete icon-lg" />
+                </button>
+              </span>
             </div>
           </td>
         </tr>
@@ -429,8 +449,9 @@ export default defineComponent({
      * Execute a command against some containers
      * @param command {string} The command to run
      * @param _ids {Container | Container[]} The containers to affect
+     * @param extraArgs {string[]} Extra CLI flags to insert before the container ids
      */
-    async execCommand(command, _ids) {
+    async execCommand(command, _ids, extraArgs = []) {
       try {
         const ids = Array.isArray(_ids) ? _ids.map(c => c.id) : [_ids.id];
         const options = { cwd: '/' };
@@ -440,7 +461,7 @@ export default defineComponent({
           options.namespace = this.namespace;
         }
 
-        const { stderr, stdout } = await window.ddClient.docker.cli.exec(command, [...ids], options);
+        const { stderr, stdout } = await window.ddClient.docker.cli.exec(command, [...extraArgs, ...ids], options);
 
         if (stderr) {
           throw new Error(stderr);
@@ -531,6 +552,43 @@ export default defineComponent({
       this.collapsed[group] = !this.collapsed[group];
     },
 
+    /** @param group {{ ref: string, rows: RowItem[] }} */
+    isComposeProjectGroup(group) {
+      return !!group.rows?.[0]?.labels?.['com.docker.compose.project'];
+    },
+    /** @param group {{ ref: string, rows: RowItem[] }} */
+    hasRunningContainers(group) {
+      return group.rows.some(c => this.isRunning(c));
+    },
+    /** @param group {{ ref: string, rows: RowItem[] }} */
+    stopGroup(group) {
+      const running = group.rows.filter(c => this.isRunning(c));
+
+      if (running.length) {
+        this.execCommand('stop', running);
+      }
+    },
+    /** @param group {{ ref: string, rows: RowItem[] }} */
+    async deleteGroup(group) {
+      const options = {
+        message:   this.t('containers.manage.group.deleteConfirm.message', { name: group.ref }),
+        detail:    group.rows.map(c => c.containerName).join('\n'),
+        type:      'question',
+        buttons:   ['Yes', 'No'],
+        defaultId: 1,
+        cancelId:  1,
+        title:     this.t('containers.manage.group.deleteConfirm.title'),
+      };
+
+      const result = await ipcRenderer.invoke('show-message-box', options);
+
+      if (result.response === 1) {
+        return;
+      }
+
+      this.execCommand('rm', group.rows, ['-f']);
+    },
+
     clearError() {
       this.execError = null;
       switch (this.error?.source) {
@@ -559,9 +617,24 @@ export default defineComponent({
 
   .group-row {
     .group-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-weight: bold;
-      .icon {
+      > .icon {
         cursor: pointer;
+      }
+    }
+    .group-actions {
+      display: flex;
+      gap: 4px;
+      font-weight: normal;
+
+      .btn-icon {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
       }
     }
     &[aria-expanded="false"] {
