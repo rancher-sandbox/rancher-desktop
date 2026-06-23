@@ -555,27 +555,37 @@ export default defineComponent({
       this.collapsed[group] = !this.collapsed[group];
     },
 
-    /** @param group {{ ref: string, rows: RowItem[] }} */
+    /**
+     * SortableTable wraps each row in displayRows() as { row, key, ... };
+     * unwrap back to the actual container RowItems.
+     * @param group {{ ref: string, rows: { row: RowItem }[] }}
+     * @returns {RowItem[]}
+     */
+    groupContainers(group) {
+      return group.rows.map(r => r.row);
+    },
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
     isComposeProjectGroup(group) {
-      return !!group.rows?.[0]?.labels?.['com.docker.compose.project'];
+      return !!this.groupContainers(group)[0]?.labels?.['com.docker.compose.project'];
     },
-    /** @param group {{ ref: string, rows: RowItem[] }} */
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
     hasRunningContainers(group) {
-      return group.rows.some(c => this.isRunning(c));
+      return this.groupContainers(group).some(c => this.isRunning(c));
     },
-    /** @param group {{ ref: string, rows: RowItem[] }} */
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
     stopGroup(group) {
-      const running = group.rows.filter(c => this.isRunning(c));
+      const running = this.groupContainers(group).filter(c => this.isRunning(c));
 
       if (running.length) {
         this.execCommand('stop', running);
       }
     },
-    /** @param group {{ ref: string, rows: RowItem[] }} */
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
     async deleteGroup(group) {
+      const containers = this.groupContainers(group);
       const options = {
         message:   this.t('containers.manage.group.deleteConfirm.message', { name: group.ref }),
-        detail:    group.rows.map(c => c.containerName).join('\n'),
+        detail:    containers.map(c => c.containerName).join('\n'),
         type:      'question',
         buttons:   ['Yes', 'No'],
         defaultId: 1,
@@ -589,7 +599,7 @@ export default defineComponent({
         return;
       }
 
-      this.execCommand('rm', group.rows, ['-f']);
+      this.execCommand('rm', containers, ['-f']);
     },
 
     clearError() {
