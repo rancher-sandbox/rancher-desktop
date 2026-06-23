@@ -131,20 +131,20 @@
               >
                 <button
                   v-tooltip="{ content: t('containers.manage.group.stopTooltip', { name: group.ref }, true), placement: 'top' }"
-                  class="btn btn-sm role-tertiary btn-icon"
+                  class="btn btn-xs role-primary"
                   data-testid="container-group-stop"
                   :disabled="!hasRunningContainers(group)"
                   @click.stop="stopGroup(group)"
                 >
-                  <span class="icon icon-stop icon-lg" />
+                  Stop
                 </button>
                 <button
                   v-tooltip="{ content: t('containers.manage.group.deleteTooltip', { name: group.ref }, true), placement: 'top' }"
-                  class="btn btn-sm role-tertiary btn-icon"
+                  class="btn btn-xs role-primary"
                   data-testid="container-group-delete"
                   @click.stop="deleteGroup(group)"
                 >
-                  <span class="icon icon-delete icon-lg" />
+                  {{ t('images.manager.table.action.delete', {}, true) }}
                 </button>
               </span>
             </div>
@@ -642,13 +642,6 @@ export default defineComponent({
       display: flex;
       gap: 4px;
       font-weight: normal;
-
-      .btn-icon {
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-      }
     }
     &[aria-expanded="false"] {
       :deep(~ .main-row) {
