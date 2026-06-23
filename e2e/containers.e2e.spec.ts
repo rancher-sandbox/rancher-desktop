@@ -704,7 +704,7 @@ test.describe.serial('Container Compose Group Actions', () => {
   test('group delete button removes all containers in the project after confirmation', async() => {
     // The delete action shows a native confirmation dialog; auto-accept it.
     await electronApp.evaluate(({ dialog }) => {
-      dialog.showMessageBox = (() => Promise.resolve({ response: 0, checkboxChecked: false })) as typeof dialog.showMessageBox;
+      dialog.showMessageBox = () => Promise.resolve({ response: 0, checkboxChecked: false });
     });
 
     const navPage = new NavPage(page);
