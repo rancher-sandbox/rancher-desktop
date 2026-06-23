@@ -130,7 +130,7 @@
                 class="group-actions"
               >
                 <button
-                  v-tooltip="{ content: t('containers.manage.group.stopTooltip', { name: group.ref }), placement: 'top' }"
+                  v-tooltip="{ content: t('containers.manage.group.stopTooltip', { name: group.ref }, true), placement: 'top' }"
                   class="btn btn-sm role-tertiary btn-icon"
                   data-testid="container-group-stop"
                   :disabled="!hasRunningContainers(group)"
@@ -139,7 +139,7 @@
                   <span class="icon icon-stop icon-lg" />
                 </button>
                 <button
-                  v-tooltip="{ content: t('containers.manage.group.deleteTooltip', { name: group.ref }), placement: 'top' }"
+                  v-tooltip="{ content: t('containers.manage.group.deleteTooltip', { name: group.ref }, true), placement: 'top' }"
                   class="btn btn-sm role-tertiary btn-icon"
                   data-testid="container-group-delete"
                   @click.stop="deleteGroup(group)"
@@ -584,13 +584,13 @@ export default defineComponent({
     async deleteGroup(group) {
       const containers = this.groupContainers(group);
       const options = {
-        message:   this.t('containers.manage.group.deleteConfirm.message', { name: group.ref }),
+        message:   this.t('containers.manage.group.deleteConfirm.message', { name: group.ref }, true),
         detail:    containers.map(c => c.containerName).join('\n'),
         type:      'question',
         buttons:   ['Yes', 'No'],
         defaultId: 1,
         cancelId:  1,
-        title:     this.t('containers.manage.group.deleteConfirm.title'),
+        title:     this.t('containers.manage.group.deleteConfirm.title', {}, true),
       };
 
       const result = await ipcRenderer.invoke('show-message-box', options);
