@@ -110,7 +110,7 @@
         <tr
           class="group-row"
           :aria-expanded="!collapsed[group.ref]"
-          :data-testid="`container-group-${ group.ref }`"
+          :data-testid="`container-group-${group.ref}`"
         >
           <td :colspan="headers.length + 1">
             <div class="group-tab">
