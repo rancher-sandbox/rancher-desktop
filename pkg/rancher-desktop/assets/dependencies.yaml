@@ -83,14 +83,14 @@ dockerBuildx:
     buildx-v0.35.0.windows-amd64.exe: sha256:8076395009787cd1d30c94edeb5d7ac3945273374fc162c00e9810c3e9325ebe
     buildx-v0.35.0.windows-arm64.exe: sha256:ae03abd184e69ecefd9b751cdd5862db6d4822c2d27861b5b059fe6c1722681a
 dockerCompose:
-  version: 5.1.4
+  version: 5.2.0
   checksums:
-    docker-compose-linux-x86_64: sha256:33b208d7e76639db742fae84b966cc01dacae58ca3fc4dabbc907045aefdf0c4
-    docker-compose-linux-aarch64: sha256:d4fb48b72857810314d3ee77123c89954101844efa4788031221f4c370495946
-    docker-compose-darwin-x86_64: sha256:c6f6915295918b59c2848e8978612691fdbbef05cae8cae3b78b10aec3e3dbc7
-    docker-compose-darwin-aarch64: sha256:4cad7fc67dd089a598a15598ad38d04e6f23bf299846d26b2c572f1f96a7c49f
-    docker-compose-windows-x86_64.exe: sha256:e1a8faff28c7433635201a2222171b727f33ecdb0ed367e54d162d00432f39aa
-    docker-compose-windows-aarch64.exe: sha256:11992bc5de81d7df994bdf58a4eead433f1c287c15965056a3b372ae38888aaf
+    docker-compose-linux-x86_64: sha256:018f9612ecabc5f2d7aaa53d6f5f44453a87611e2d72c8ef84d7b1eca070e719
+    docker-compose-linux-aarch64: sha256:739de570a0adf5eab12830db980f549fb5f44ad6b266e1e43e20f6f9df7cbcca
+    docker-compose-darwin-x86_64: sha256:527066ba67f92ce9e0939c7107d4a41ebb2fa30d67ee786e364168c71ca870fa
+    docker-compose-darwin-aarch64: sha256:2262c26ccef8dd0815bf3d16f0c82537424295abd374b68561f58fcee458fdd7
+    docker-compose-windows-x86_64.exe: sha256:90c81af6cd12227d84665b01e14a89b07920c42d6d04e8f6f391a415f7a8d6a4
+    docker-compose-windows-aarch64.exe: sha256:709692084ee7d5066113cb9dbc2fbc26eda503f52d51b08ffd263f2e0eb56a41
 golangci-lint:
   version: 2.12.2
   checksums: {}
