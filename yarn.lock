@@ -9034,7 +9034,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"enhanced-resolve@npm:^5.0.0, enhanced-resolve@npm:^5.17.1, enhanced-resolve@npm:^5.17.2":
+"enhanced-resolve@npm:^5.0.0":
+  version: 5.24.0
+  resolution: "enhanced-resolve@npm:5.24.0"
+  dependencies:
+    graceful-fs: "npm:^4.2.4"
+    tapable: "npm:^2.3.3"
+  checksum: 10c0/6aa9c1248ef6ba49bf30b89dc8525b24a64caeb45442a4d0f0578d0fbd0456218801944f7b7c03ce1af47706448111890d3bfc82009bd868167abbf8cc7ebcbf
+  languageName: node
+  linkType: hard
+
+"enhanced-resolve@npm:^5.17.1, enhanced-resolve@npm:^5.17.2":
   version: 5.18.2
   resolution: "enhanced-resolve@npm:5.18.2"
   dependencies:
@@ -14924,7 +14934,7 @@ __metadata:
     semver: "npm:7.8.4"
     tar-stream: "npm:3.2.0"
     ts-jest: "npm:29.4.11"
-    ts-loader: "npm:^9.6.0"
+    ts-loader: "npm:^9.6.1"
     tsconfig-paths: "npm:4.2.0"
     tsx: "npm:4.22.4"
     typescript: "npm:6.0.3"
@@ -16424,6 +16434,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tapable@npm:^2.3.3":
+  version: 2.3.3
+  resolution: "tapable@npm:2.3.3"
+  checksum: 10c0/47992e861053f861154e92fb4a98ac4ab47b6463717e60792dd1e8c755da0c4964cd8bb68c308a9066d6da89000b6310457b4d5d985c30de4ccc29066068cc17
+  languageName: node
+  linkType: hard
+
 "tar-fs@npm:^3.0.9":
   version: 3.1.1
   resolution: "tar-fs@npm:3.1.1"
@@ -16836,9 +16853,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-loader@npm:^9.6.0":
-  version: 9.6.0
-  resolution: "ts-loader@npm:9.6.0"
+"ts-loader@npm:^9.6.1":
+  version: 9.6.1
+  resolution: "ts-loader@npm:9.6.1"
   dependencies:
     chalk: "npm:^4.1.0"
     enhanced-resolve: "npm:^5.0.0"
@@ -16852,7 +16869,7 @@ __metadata:
   peerDependenciesMeta:
     loader-utils:
       optional: true
-  checksum: 10c0/dc31a1efbbbfb1758bbba3e374bc04bf629f5211521782ab03c0babe618f92bc44d8f59c215317d236460bd6faa02be8f7e0b71cec693e5ef08340c1e2c486da
+  checksum: 10c0/75c7e474e417a6ac965857491df8a759c3160fba9314ae8cf3e163825385858510f6e6b9b11ebe2987afd0924b6e08867f5abf055386d335ac566e9eaeec5468
   languageName: node
   linkType: hard
 
