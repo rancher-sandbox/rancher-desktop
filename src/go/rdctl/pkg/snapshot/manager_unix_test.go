@@ -27,13 +27,13 @@ func populateFiles(t *testing.T, includeOverrideYaml bool) (*paths.Paths, map[st
 			Path:     filepath.Join(appPaths.Config, "settings.json"),
 			Contents: `{"test": "settings.json"}`,
 		},
-		"basedisk": {
-			Path:     filepath.Join(appPaths.Lima, "0", "basedisk"),
-			Contents: "basedisk contents",
+		"iso": {
+			Path:     filepath.Join(appPaths.Lima, "0", "iso"),
+			Contents: "iso contents",
 		},
-		"diffdisk": {
-			Path:     filepath.Join(appPaths.Lima, "0", "diffdisk"),
-			Contents: "diffdisk contents",
+		"disk": {
+			Path:     filepath.Join(appPaths.Lima, "0", "disk"),
+			Contents: "disk contents",
 		},
 		"user": {
 			Path:     filepath.Join(appPaths.Lima, "_config", "user"),
@@ -91,8 +91,8 @@ func TestManagerUnix(t *testing.T) {
 			snapshotDir := testManager.SnapshotDirectory(snapshot)
 			snapshotFiles := []string{
 				filepath.Join(snapshotDir, "settings.json"),
-				filepath.Join(snapshotDir, "basedisk"),
-				filepath.Join(snapshotDir, "diffdisk"),
+				filepath.Join(snapshotDir, "iso"),
+				filepath.Join(snapshotDir, "disk"),
 				filepath.Join(snapshotDir, "metadata.json"),
 			}
 			if includeOverrideYaml {
@@ -165,6 +165,44 @@ func TestManagerUnix(t *testing.T) {
 		}
 		if _, err := os.Stat(overrideYamlPath); !errors.Is(err, os.ErrNotExist) {
 			t.Errorf("override.yaml appears to not have been removed in restore")
+		}
+	})
+
+	t.Run("Restore should map a legacy basedisk/diffdisk snapshot to disk/iso", func(t *testing.T) {
+		appPaths, testFiles := populateFiles(t, true)
+		manager := newTestManager(appPaths)
+		snapshot, err := manager.Create(context.Background(), "test-snapshot", "")
+		if err != nil {
+			t.Fatalf("failed to create snapshot: %s", err)
+		}
+		// Rewrite the snapshot to use Lima's legacy disk filenames, as a
+		// snapshot created by an older version of Rancher Desktop would.
+		snapshotDir := manager.SnapshotDirectory(snapshot)
+		nameMapping := map[string]string{
+			"disk": "diffdisk",
+			"iso":  "basedisk",
+		}
+		for current, legacy := range nameMapping {
+			if err := os.Rename(filepath.Join(snapshotDir, current), filepath.Join(snapshotDir, legacy)); err != nil {
+				t.Fatalf("failed to rename %q to %q in snapshot: %s", current, legacy, err)
+			}
+		}
+		for testFileName, testFile := range testFiles {
+			if err := os.WriteFile(testFile.Path, []byte(`{"something": "different"}`), 0o644); err != nil {
+				t.Fatalf("failed to modify %s: %s", testFileName, err)
+			}
+		}
+		if err := manager.Restore(context.Background(), snapshot.Name); err != nil {
+			t.Fatalf("failed to restore snapshot: %s", err)
+		}
+		for testFileName, testFile := range testFiles {
+			contents, err := os.ReadFile(testFile.Path)
+			if err != nil {
+				t.Fatalf("failed to read contents of %s: %s", testFileName, err)
+			}
+			if string(contents) != testFile.Contents {
+				t.Errorf("contents of %s appear to have not been restored", testFileName)
+			}
 		}
 	})
 

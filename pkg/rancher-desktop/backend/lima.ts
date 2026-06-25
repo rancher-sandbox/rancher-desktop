@@ -98,10 +98,14 @@ export interface LimaMount {
  * Lima configuration
  */
 export interface LimaConfiguration {
-  vmType?:  'qemu' | 'vz';
-  rosetta?: {
-    enabled?: boolean;
-    binfmt?:  boolean;
+  vmType?: 'qemu' | 'vz';
+  vmOpts?: {
+    vz?: {
+      rosetta?: {
+        enabled?: boolean;
+        binfmt?:  boolean;
+      },
+    },
   },
   arch?:  'x86_64' | 'aarch64';
   images: {
@@ -527,9 +531,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       await this.lima('stop', MACHINE_NAME);
     }
 
-    const diskPath = path.join(paths.lima, MACHINE_NAME, 'basedisk');
+    const imagePath = await this.instanceDiskPath('iso', 'basedisk');
 
-    await fs.promises.copyFile(this.baseDiskImage, diskPath);
+    await fs.promises.copyFile(this.baseDiskImage, imagePath);
     // The config file will be updated in updateConfig() instead; no need to do it here.
     console.log(`Base image successfully updated.`);
   }
@@ -621,9 +625,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     // it, and it would be less safe to modify baseConfig.
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       vmType:  this.cfg?.virtualMachine.type,
-      rosetta: {
-        enabled: this.cfg?.virtualMachine.useRosetta,
-        binfmt:  this.cfg?.virtualMachine.useRosetta,
+      vmOpts: {
+        vz: {
+          rosetta: {
+            enabled: this.cfg?.virtualMachine.useRosetta,
+            binfmt:  this.cfg?.virtualMachine.useRosetta,
+          },
+        },
       },
       images: [{
         location: this.baseDiskImage,
@@ -659,6 +667,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     // The top-level cpuType field is deprecated in favour of vmOpts.qemu.cpuType.
     // Drop it so an upgraded VM's lima.yaml doesn't keep triggering lima's deprecation warning.
     delete (config as unknown as Record<string, unknown>).cpuType;
+    // Same for rosetta settings
+    delete (config as unknown as Record<string, unknown>).rosetta;
 
     if (os.platform() === 'darwin') {
       if (allowRoot) {
@@ -961,6 +971,31 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         return undefined;
       }
     })();
+  }
+
+  /**
+   * Resolve a Lima instance disk file, returning the first of `names` that
+   * exists, or the first name when none do. Lima renamed basedisk→iso and
+   * diffdisk→disk and migrates existing instances on start; passing the new
+   * name first uses it when present and falls back to the legacy name on an
+   * instance Lima has not migrated yet.
+   */
+  protected async instanceDiskPath(...names: string[]): Promise<string> {
+    const instanceDir = path.join(paths.lima, MACHINE_NAME);
+
+    for (const name of names) {
+      const candidate = path.join(instanceDir, name);
+
+      try {
+        await fs.promises.access(candidate);
+
+        return candidate;
+      } catch {
+        // Not this name; try the next one.
+      }
+    }
+
+    return path.join(instanceDir, names[0]);
   }
 
   protected async imageInfo(fileName: string): Promise<QEMUImageInfo> {
@@ -1858,15 +1893,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
         // Virtualization Framework only supports RAW disks
         if (vmStatus && config.virtualMachine.type === VMType.VZ) {
-          const diffdisk = path.join(paths.lima, MACHINE_NAME, 'diffdisk');
-          const { format } = await this.imageInfo(diffdisk);
+          const diskPath = await this.instanceDiskPath('disk', 'diffdisk');
+          const { format } = await this.imageInfo(diskPath);
 
           if (format === ImageFormat.QCOW2) {
             if (isVMAlreadyRunning) {
               await this.lima('stop', MACHINE_NAME);
               isVMAlreadyRunning = false;
             }
-            await this.convertToRaw(diffdisk);
+            await this.convertToRaw(diskPath);
           }
         }
         // Start the VM; if it's already running, this does nothing.
