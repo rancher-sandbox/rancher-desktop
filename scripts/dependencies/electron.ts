@@ -2,9 +2,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { cartesian } from '@/scripts/dependencies/tools';
-import { downloadAndHash, DownloadContext, GlobalDependency, Sha256Checksum, VersionedDependency } from '@/scripts/lib/dependencies';
+import {
+  AssetPlatform,
+  assetChecksum,
+  DependencyAsset,
+  DownloadContext,
+  downloadAndHash,
+  GlobalDependency,
+  GoArch,
+  selectAssets,
+  VersionedDependency,
+} from '@/scripts/lib/dependencies';
 import { download } from '@/scripts/lib/download';
 import { simpleSpawn } from '@/scripts/simple_process';
+
+/** Electron names its archives with Node's platform/arch, not Go's. */
+const GO_PLATFORM: Record<'darwin' | 'linux' | 'win32', AssetPlatform> = { darwin: 'darwin', linux: 'linux', win32: 'windows' };
+const GO_ARCH: Record<'x64' | 'arm64', GoArch> = { x64: 'amd64', arm64: 'arm64' };
 
 /**
  * Download pre-build Electron binaries from the official sources.
@@ -17,6 +31,10 @@ export class Electron extends GlobalDependency(VersionedDependency) {
   private getBaseURL(version: string): string {
     return `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }/`;
   }
+
+  // Electron's assets are pinned to the package.json version, which a
+  // regenerate cannot resolve; rddepman bumps it instead.
+  readonly regenerable = false;
 
   private get version(): Promise<string> {
     return import('electron/package.json').then(({ version }) => version);
@@ -31,7 +49,6 @@ export class Electron extends GlobalDependency(VersionedDependency) {
     // yes, that the checksum is correct.
     const arch = context.isM1 ? 'arm64' : 'x64';
     const version = await this.version;
-    const { checksums: recordedChecksums, version: recordedVersion } = context.dependencies.electron;
     const baseURL = this.getBaseURL(version);
     const archiveName = `electron-v${ version }-${ context.platform }-${ arch }.zip`;
     const url = `${ baseURL }${ archiveName }`;
@@ -53,8 +70,10 @@ export class Electron extends GlobalDependency(VersionedDependency) {
     // If the version in the dependency manifest matches the version installed
     // via `package.json`, check that the recorded checksum matches the upstream
     // checksum; this ensures upstream hasn't been tampered with.
-    if (recordedVersion === version) {
-      const recordedChecksum = recordedChecksums[archiveName]?.replace(/^.*?:/, '');
+    if (context.dependencies[this.name].version === version) {
+      const [recorded] = selectAssets(context, this.name, { platform: context.goPlatform, arch: GO_ARCH[arch] });
+      const recordedChecksum = recorded && assetChecksum(recorded);
+
       if (recordedChecksum !== expectedChecksum) {
         throw new Error(`
           Upstream checksum for Electron archive ${ archiveName }
@@ -70,7 +89,7 @@ export class Electron extends GlobalDependency(VersionedDependency) {
     await fs.promises.writeFile(path.join(path.dirname(outPath), 'path.txt'), executable);
   }
 
-  async getChecksums(requestedVersion: string): Promise<Record<string, Sha256Checksum>> {
+  async getAssets(requestedVersion: string): Promise<DependencyAsset[]> {
     const version = await this.version;
 
     // We only use the version as installed via `package.json`.  The passed-in
@@ -84,17 +103,19 @@ export class Electron extends GlobalDependency(VersionedDependency) {
     }
     const baseURL = this.getBaseURL(version);
     const checksums: Record<string, string> = (await import('electron/checksums.json')).default;
-    const platforms = cartesian(['darwin', 'linux', 'win32'], ['x64', 'arm64'])
-      .map(([platform, arch]) => `${ platform }-${ arch }` as const);
+    const platforms = cartesian(['darwin', 'linux', 'win32'] as const, ['x64', 'arm64'] as const);
 
-    return Object.fromEntries(await Promise.all(platforms.map(async(platform) => {
-      const archiveName = `electron-v${ version }-${ platform }.zip`;
-      const checksum = await downloadAndHash(`${ baseURL }/${ archiveName }`, {
+    return Promise.all(platforms.map(async([platform, arch]) => {
+      const archiveName = `electron-v${ version }-${ platform }-${ arch }.zip`;
+      const url = `${ baseURL }${ archiveName }`;
+      const checksum = await downloadAndHash(url, {
         verify: { algorithm: 'sha256', expected: checksums[archiveName] },
       });
 
-      return [archiveName, checksum];
-    })));
+      return {
+        platform: GO_PLATFORM[platform], arch: GO_ARCH[arch], url, checksum,
+      };
+    }));
   };
 
   async getAvailableVersions(): Promise<string[]> {

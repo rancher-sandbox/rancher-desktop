@@ -28,10 +28,20 @@ interface VersionComparison {
   latestVersion:  Version;
 }
 
-const dependencies: VersionedDependency[] = [
-  ...globalDependencies,
-  ...getExtensions(true),
-];
+/**
+ * A named set of dependencies rddepman manages together.  CI runs rddepman once
+ * per config.  `manifest` holds the dependencies recorded in one
+ * `dependencies.yaml`, whose assets `--regenerate` rewrites; `extras` are other
+ * tracked dependencies (e.g. marketplace extensions) recorded elsewhere.
+ */
+interface DependencyConfig {
+  manifest: VersionedDependency[];
+  extras:   VersionedDependency[];
+}
+
+const configs: Record<string, DependencyConfig> = {
+  host: { manifest: globalDependencies, extras: getExtensions(true) },
+};
 
 /**
  * Run a git command line.  If the first argument is `true`, return the exit
@@ -207,7 +217,7 @@ async function getPulls(name: string): Promise<Awaited<PRSearchFn>['data']['item
   return results;
 }
 
-async function determineUpdatesAvailable(): Promise<VersionComparison[]> {
+async function determineUpdatesAvailable(dependencies: VersionedDependency[]): Promise<VersionComparison[]> {
   const results = await Promise.all(dependencies.map(async dependency => ({
     dependency,
     currentVersion: await dependency.currentVersion,
@@ -229,7 +239,7 @@ async function determineUpdatesAvailable(): Promise<VersionComparison[]> {
   return results.filter(x => x.canUpgrade);
 }
 
-async function checkDependencies(): Promise<void> {
+async function checkDependencies(dependencies: VersionedDependency[]): Promise<void> {
   // exit if there are unstaged changes
   git('update-index', '--refresh');
   if (git(true, 'diff-index', '--quiet', 'HEAD', '--')) {
@@ -243,7 +253,7 @@ async function checkDependencies(): Promise<void> {
     git('switch', '--force-create', 'main', 'origin/main');
   }
 
-  const updatesAvailable = await determineUpdatesAvailable();
+  const updatesAvailable = await determineUpdatesAvailable(dependencies);
 
   if (!process.env.CI) {
     // When not running in CI, don't try to make pull requests.
@@ -251,8 +261,8 @@ async function checkDependencies(): Promise<void> {
     if (SKIP_PULL_REQUESTS) {
       console.log('Forcing local changes without pull requests');
       for (const { dependency, latestVersion } of updatesAvailable) {
-        const newChecksums = await dependency.getChecksums(latestVersion);
-        await dependency.updateManifest(latestVersion, newChecksums);
+        const newAssets = await dependency.getAssets(latestVersion);
+        await dependency.updateManifest(latestVersion, newAssets);
       }
     }
     if (updatesAvailable.length) {
@@ -298,21 +308,72 @@ async function checkDependencies(): Promise<void> {
     const branchName = getBranchName(dependency.name, currentVersion, latestVersion);
     const commitMessage = `Bump ${ dependency.name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 
-    // Compute fresh checksums before branching so that an upstream verification
+    // Resolve assets before branching so that an upstream verification
     // failure aborts the bump before any git state changes.
-    console.log(`Computing checksums for ${ dependency.name } ${ printable(latestVersion) }...`);
-    const newChecksums = await dependency.getChecksums(latestVersion);
+    console.log(`Resolving assets for ${ dependency.name } ${ printable(latestVersion) }...`);
+    const newAssets = await dependency.getAssets(latestVersion);
 
     git('checkout', '-b', branchName, MAIN_BRANCH);
-    git('add', ...await dependency.updateManifest(latestVersion, newChecksums));
+    git('add', ...await dependency.updateManifest(latestVersion, newAssets));
     git('commit', '--signoff', '--message', commitMessage);
     git('push', '--force', `https://${ process.env.GITHUB_TOKEN }@github.com/${ GITHUB_OWNER }/${ GITHUB_REPO }`);
     await createDependencyBumpPR(dependency, currentVersion, latestVersion);
   }
 }
 
+/**
+ * Re-resolves and rewrites the assets for every manifest dependency at its
+ * current version.  Migrates or refreshes a `dependencies.yaml` without a
+ * version bump; needs no GitHub token, only network access to the artifacts.
+ */
+async function regenerateAssets(dependencies: VersionedDependency[]): Promise<void> {
+  // Every write rewrites the whole manifest, so the first regenerated sibling
+  // would drop the assets of a dependency skipped below.
+  for (const dependency of dependencies.filter(d => !d.regenerable)) {
+    if ((await dependency.currentAssets).length === 0) {
+      throw new Error(
+        `${ dependency.name } records no assets, and is bumped rather than regenerated. ` +
+        `Restore its manifest entry before regenerating.`,
+      );
+    }
+  }
+
+  for (const dependency of dependencies) {
+    if (!dependency.regenerable) {
+      console.log(`Skipping ${ dependency.name } (bumped by rddepman, not regenerated).`);
+      continue;
+    }
+    const version = await dependency.currentVersion;
+
+    console.log(`Resolving assets for ${ dependency.name } ${ printable(version) }...`);
+    const assets = await dependency.getAssets(version);
+
+    await dependency.updateManifest(version, assets);
+  }
+}
+
+/** Selects the config (positional argument, default `host`) and mode. */
+function parseArgs(): { config: DependencyConfig, regenerate: boolean } {
+  const args = process.argv.slice(2);
+  const regenerate = args.includes('--regenerate');
+  const name = args.find(arg => !arg.startsWith('--')) ?? 'host';
+  const config = configs[name];
+
+  if (!config) {
+    throw new Error(`Unknown dependency config "${ name }"; expected one of ${ Object.keys(configs).join(', ') }.`);
+  }
+
+  return { config, regenerate };
+}
+
 (async() => {
-  await checkDependencies();
+  const { config, regenerate } = parseArgs();
+
+  if (regenerate) {
+    await regenerateAssets(config.manifest);
+  } else {
+    await checkDependencies([...config.manifest, ...config.extras]);
+  }
 })().catch((e) => {
   console.error(e);
   process.exit(1);
