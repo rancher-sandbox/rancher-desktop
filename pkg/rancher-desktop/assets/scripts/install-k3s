@@ -39,6 +39,9 @@ if [ -f "${IMAGEPATH}.tar" ]; then
 fi
 # Add k3s binary
 ln -s -f "${K3S_DIR}/${K3S}" /usr/local/bin/k3s
+# Lima's guest agent runs `kubectl` to watch Kubernetes services for
+# port forwarding; k3s, a multicall binary, provides kubectl.
+ln -s -f "${K3S_DIR}/${K3S}" /usr/local/bin/kubectl
 # The file system may be readonly (on macOS)
 chmod a+x "${K3S_DIR}/${K3S}" || true
 
