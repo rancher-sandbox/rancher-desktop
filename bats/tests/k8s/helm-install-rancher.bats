@@ -143,9 +143,11 @@ verify_rancher() {
 }
 
 uninstall_rancher() {
-    run helm uninstall rancher --namespace cattle-system --wait
+    # Don't use `helm --wait`. Rancher's uninstall leaves a broken ext.cattle.io
+    # aggregated API that hangs helm's post-delete wait; factory_reset handles cleanup.
+    run helm uninstall rancher --namespace cattle-system
     assert_nothing
-    run helm uninstall cert-manager --namespace cert-manager --wait
+    run helm uninstall cert-manager --namespace cert-manager
     assert_nothing
 }
 
