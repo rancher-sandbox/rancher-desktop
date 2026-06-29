@@ -14907,7 +14907,7 @@ __metadata:
     raw-loader: "npm:4.0.2"
     sass: "npm:1.101.0"
     sass-loader: "npm:17.0.0"
-    semver: "npm:7.8.4"
+    semver: "npm:7.8.5"
     tar-stream: "npm:3.2.0"
     ts-jest: "npm:29.4.11"
     ts-loader: "npm:^9.6.2"
@@ -15589,12 +15589,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.8.4":
-  version: 7.8.4
-  resolution: "semver@npm:7.8.4"
+"semver@npm:7.8.5":
+  version: 7.8.5
+  resolution: "semver@npm:7.8.5"
   bin:
     semver: bin/semver.js
-  checksum: 10c0/81b7c296fd7927b80f67fa516b75fa1017caac8167795320de28e76ccbc6f7f01763c30ecd10d6a0d8fd089708ab0548a5aebb94b0870e99c2a2b4600a46389b
+  checksum: 10c0/b1f3127a5be8125a94f37188b361c212466c292c6910adce3ec106cff5dc211ccaedc4739c11bb70fda59d6fc1f040a9bca289f4e093451521a2372e5231fe0c
   languageName: node
   linkType: hard
 
