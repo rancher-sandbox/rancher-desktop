@@ -154,7 +154,9 @@ uninstall_rancher() {
 @test 'add helm repo' {
     helm repo add jetstack https://charts.jetstack.io
     helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
-    helm repo update
+    # Update only the repos this test adds; the shared global config may hold
+    # unrelated stale repos that would fail a bare `helm repo update`.
+    helm repo update jetstack rancher-latest
 }
 
 foreach_k3s_version \
