@@ -364,6 +364,12 @@ export default class BackendHelper {
     let config = CONTAINERD_CONFIG;
 
     if (configureWASM) {
+      // containerd 2.1+ pulls images via the Transfer Service, which won't unpack
+      // non-host platforms; a wasi/wasm image then has no rootfs snapshot and its
+      // runtime-class container fails to create. Local pull unpacks wasi/wasm.
+      config += '\n[plugins."io.containerd.cri.v1.images"]\n';
+      config += '  use_local_image_pull = true\n';
+
       const shims = await BackendHelper.containerdShims(vmx);
 
       for (const shim in shims) {
