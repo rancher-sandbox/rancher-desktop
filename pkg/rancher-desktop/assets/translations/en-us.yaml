@@ -274,6 +274,7 @@ images:
         button: Build
     table:
       label: All images
+      allImagesDisabledTooltip: The "All images" option is only available when using the k8s.io namespace
       header:
         imageName: Image
         tag: Tag
