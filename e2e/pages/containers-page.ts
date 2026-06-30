@@ -72,4 +72,20 @@ export class ContainersPage {
   async waitForTableToLoad() {
     await this.table.waitFor({ state: 'visible' });
   }
+
+  getGroupRow(groupName: string) {
+    return this.table.locator(`tr.group-row[data-testid="container-group-${ groupName }"]`);
+  }
+
+  async waitForGroupToAppear(groupName: string, timeout = 30_000) {
+    await expect(this.getGroupRow(groupName)).toBeVisible({ timeout });
+  }
+
+  async clickGroupStop(groupName: string) {
+    await this.getGroupRow(groupName).getByTestId('container-group-stop').click();
+  }
+
+  async clickGroupDelete(groupName: string) {
+    await this.getGroupRow(groupName).getByTestId('container-group-delete').click();
+  }
 }

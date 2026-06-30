@@ -625,3 +625,97 @@ test.describe.serial('Container Stats Tab', () => {
     await expect(statsPage.cpuChart).not.toBeVisible();
   });
 });
+
+test.describe.serial('Container Compose Group Actions', () => {
+  let electronApp: ElectronApplication;
+  let composeContainerId1: string;
+  let composeContainerId2: string;
+  const composeProjectName = `test-compose-project-${ Date.now() }`;
+
+  test.beforeAll(async({ colorScheme }, testInfo) => {
+    [electronApp, page] = await startSlowerDesktop(testInfo, {
+      kubernetes:      { enabled: false },
+      containerEngine: { name: ContainerEngine.MOBY, allowedImages: { enabled: false } },
+    });
+
+    const navPage = new NavPage(page);
+    await navPage.progressBecomesReady();
+
+    // Two containers sharing a com.docker.compose.project label, simulating
+    // a compose project without depending on the docker-compose CLI plugin.
+    const output1 = await tool(
+      'docker', 'run', '--detach',
+      '--label', `com.docker.compose.project=${ composeProjectName }`,
+      '--name', `${ composeProjectName }-app`,
+      'alpine', 'sleep', 'infinity',
+    );
+
+    composeContainerId1 = output1.trim();
+
+    const output2 = await tool(
+      'docker', 'run', '--detach',
+      '--label', `com.docker.compose.project=${ composeProjectName }`,
+      '--name', `${ composeProjectName }-db`,
+      'alpine', 'sleep', 'infinity',
+    );
+
+    composeContainerId2 = output2.trim();
+  });
+
+  test.afterAll(async({ colorScheme }, testInfo) => {
+    for (const id of [composeContainerId1, composeContainerId2]) {
+      if (id) {
+        try {
+          await tool('docker', 'rm', '-f', id);
+        } catch {}
+      }
+    }
+    await teardown(electronApp, testInfo);
+  });
+
+  test('compose project group shows stop and delete buttons', async() => {
+    const navPage = new NavPage(page);
+    const containersPage = await navPage.navigateTo('Containers');
+
+    await containersPage.waitForTableToLoad();
+    await containersPage.waitForContainerToAppear(composeContainerId1);
+    await containersPage.waitForContainerToAppear(composeContainerId2);
+    await containersPage.waitForGroupToAppear(composeProjectName);
+
+    const groupRow = containersPage.getGroupRow(composeProjectName);
+
+    await expect(groupRow.getByTestId('container-group-stop')).toBeVisible();
+    await expect(groupRow.getByTestId('container-group-delete')).toBeVisible();
+  });
+
+  test('group stop button stops all running containers in the project', async() => {
+    const navPage = new NavPage(page);
+    const containersPage = await navPage.navigateTo('Containers');
+
+    await containersPage.waitForTableToLoad();
+    await containersPage.waitForGroupToAppear(composeProjectName);
+    await containersPage.clickGroupStop(composeProjectName);
+
+    for (const id of [composeContainerId1, composeContainerId2]) {
+      await expect(containersPage.getContainerRow(id).getByText('exited')).toBeVisible({ timeout: 15_000 });
+    }
+  });
+
+  test('group delete button removes all containers in the project after confirmation', async() => {
+    // The delete action shows a native confirmation dialog; auto-accept it.
+    await electronApp.evaluate(({ dialog }) => {
+      dialog.showMessageBox = () => Promise.resolve({ response: 0, checkboxChecked: false });
+    });
+
+    const navPage = new NavPage(page);
+    const containersPage = await navPage.navigateTo('Containers');
+
+    await containersPage.waitForTableToLoad();
+    await containersPage.waitForGroupToAppear(composeProjectName);
+    await containersPage.clickGroupDelete(composeProjectName);
+
+    for (const id of [composeContainerId1, composeContainerId2]) {
+      await expect(containersPage.getContainerRow(id)).not.toBeVisible({ timeout: 15_000 });
+    }
+  });
+});

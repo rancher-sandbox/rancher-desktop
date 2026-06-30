@@ -110,6 +110,7 @@
         <tr
           class="group-row"
           :aria-expanded="!collapsed[group.ref]"
+          :data-testid="`container-group-${group.ref}`"
         >
           <td :colspan="headers.length + 1">
             <div class="group-tab">
@@ -124,6 +125,28 @@
               />
               {{ group.ref }}
               <span v-if="!!collapsed[group.ref]"> ({{ group.rows.length }})</span>
+              <span
+                v-if="isComposeProjectGroup(group)"
+                class="group-actions"
+              >
+                <button
+                  v-tooltip="{ content: t('containers.manage.group.stopTooltip', { name: group.ref }, true), placement: 'top' }"
+                  class="btn btn-xs role-primary"
+                  data-testid="container-group-stop"
+                  :disabled="!hasRunningContainers(group)"
+                  @click.stop="stopGroup(group)"
+                >
+                  Stop
+                </button>
+                <button
+                  v-tooltip="{ content: t('containers.manage.group.deleteTooltip', { name: group.ref }, true), placement: 'top' }"
+                  class="btn btn-xs role-primary"
+                  data-testid="container-group-delete"
+                  @click.stop="deleteGroup(group)"
+                >
+                  {{ t('images.manager.table.action.delete', {}, true) }}
+                </button>
+              </span>
             </div>
           </td>
         </tr>
@@ -429,8 +452,9 @@ export default defineComponent({
      * Execute a command against some containers
      * @param command {string} The command to run
      * @param _ids {Container | Container[]} The containers to affect
+     * @param extraArgs {string[]} Extra CLI flags to insert before the container ids
      */
-    async execCommand(command, _ids) {
+    async execCommand(command, _ids, extraArgs = []) {
       try {
         const ids = Array.isArray(_ids) ? _ids.map(c => c.id) : [_ids.id];
         const options = { cwd: '/' };
@@ -440,7 +464,7 @@ export default defineComponent({
           options.namespace = this.namespace;
         }
 
-        const { stderr, stdout } = await window.ddClient.docker.cli.exec(command, [...ids], options);
+        const { stderr, stdout } = await window.ddClient.docker.cli.exec(command, [...extraArgs, ...ids], options);
 
         if (stderr) {
           throw new Error(stderr);
@@ -531,6 +555,53 @@ export default defineComponent({
       this.collapsed[group] = !this.collapsed[group];
     },
 
+    /**
+     * SortableTable wraps each row in displayRows() as { row, key, ... };
+     * unwrap back to the actual container RowItems.
+     * @param group {{ ref: string, rows: { row: RowItem }[] }}
+     * @returns {RowItem[]}
+     */
+    groupContainers(group) {
+      return group.rows.map(r => r.row);
+    },
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
+    isComposeProjectGroup(group) {
+      return !!this.groupContainers(group)[0]?.labels?.['com.docker.compose.project'];
+    },
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
+    hasRunningContainers(group) {
+      return this.groupContainers(group).some(c => this.isRunning(c));
+    },
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
+    stopGroup(group) {
+      const running = this.groupContainers(group).filter(c => this.isRunning(c));
+
+      if (running.length) {
+        this.execCommand('stop', running);
+      }
+    },
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
+    async deleteGroup(group) {
+      const containers = this.groupContainers(group);
+      const options = {
+        message:   this.t('containers.manage.group.deleteConfirm.message', { name: group.ref }, true),
+        detail:    containers.map(c => c.containerName).join('\n'),
+        type:      'question',
+        buttons:   ['Yes', 'No'],
+        defaultId: 1,
+        cancelId:  1,
+        title:     this.t('containers.manage.group.deleteConfirm.title', {}, true),
+      };
+
+      const result = await ipcRenderer.invoke('show-message-box', options);
+
+      if (result.response === 1) {
+        return;
+      }
+
+      this.execCommand('rm', containers, ['-f']);
+    },
+
     clearError() {
       this.execError = null;
       switch (this.error?.source) {
@@ -559,10 +630,18 @@ export default defineComponent({
 
   .group-row {
     .group-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-weight: bold;
-      .icon {
+      > .icon {
         cursor: pointer;
       }
+    }
+    .group-actions {
+      display: flex;
+      gap: 4px;
+      font-weight: normal;
     }
     &[aria-expanded="false"] {
       :deep(~ .main-row) {
