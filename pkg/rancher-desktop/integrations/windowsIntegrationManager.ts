@@ -627,7 +627,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       let wslOutput: string;
 
       try {
-        wslOutput = await this.captureCommand({ env: { WSL_UTF8: '1' } }, '--list', '--verbose');
+        wslOutput = await this.captureCommand({ env: { ...process.env, WSL_UTF8: '1' } }, '--list', '--verbose');
       } catch (error: any) {
         console.error(`Error listing distros: ${ error }`);
 
@@ -663,7 +663,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected get runningDistros(): Promise<Set<string>> {
     return (async() => {
       try {
-        const output = await this.captureCommand({ env: { WSL_UTF8: '1' } }, '--list', '--running', '--quiet');
+        const output = await this.captureCommand({ env: { ...process.env, WSL_UTF8: '1' } }, '--list', '--running', '--quiet');
         const names = output
           .split(/\r?\n/g)
           .map(x => x.trim())
