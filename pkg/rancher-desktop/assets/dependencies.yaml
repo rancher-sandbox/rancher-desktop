@@ -142,10 +142,10 @@ moproxy:
   checksums:
     moproxy_0.5.1_linux_x86_64_musl.bin.xz: sha256:c44eb985e60859e56a21a780550b96975431b1334232927b4056f508ab47219b
 spinShim:
-  version: 0.24.0
+  version: 0.25.1
   checksums:
-    containerd-shim-spin-v2-linux-x86_64.tar.gz: sha256:558b4e92fb0b39d3e54d8a172cf83fe3b529d541bbec6ef540550c2c514fe131
-    containerd-shim-spin-v2-linux-aarch64.tar.gz: sha256:9cb14eda7899289d0b8085b8266f77afe27c0ebbd65f745c5291ff28cf538c47
+    containerd-shim-spin-v2-linux-x86_64.tar.gz: sha256:1755fbeb2dec7d026faf8c37031d8a025975f5e194b782da10188206a386d6e4
+    containerd-shim-spin-v2-linux-aarch64.tar.gz: sha256:5ca9c9207a146a182dc9c870eaaad1afbf64e1d9a4781228dbf6e7ef90ff2e1f
 spinOperator:
   version: 0.6.1
   checksums:
@@ -157,13 +157,13 @@ certManager:
     cert-manager.crds.yaml: sha256:8c2aea21520854c8c05f4b39909d0be6e2c1ea71544d5c4e2c4ba4f75a223ccc
     cert-manager-v1.20.3.tgz: sha256:ef5d707f5afbb2c3ce9892f5ff3fca0dec6864db8830a1c454b3d4822c485843
 spinCLI:
-  version: 4.0.0
+  version: 4.0.2
   checksums:
-    spin-v4.0.0-macos-amd64.tar.gz: sha256:b9040c3d792d183314545366797b0ca90f2a944fdbdfa7344bb31d8935cc99b8
-    spin-v4.0.0-macos-aarch64.tar.gz: sha256:d86152aa0cba1f3de1f17c48f13f53679e0d9aa07dcaeb04ffcdfa08637d0a10
-    spin-v4.0.0-static-linux-amd64.tar.gz: sha256:9b445e0f3a02f89a22f41d5dcdee42c057746f5b10128481f3e6a55e08987bb2
-    spin-v4.0.0-static-linux-aarch64.tar.gz: sha256:f2b4a493878cf58497f40c8d1bb224f5397228fc818297dfaa4417bf1c64506c
-    spin-v4.0.0-windows-amd64.zip: sha256:3004a04231035dc993e5ae89b27c6f8348e4cb5be257919b347fc159ca9a1956
+    spin-v4.0.2-macos-amd64.tar.gz: sha256:5ff1e5fef22c7a99bf8dfeacad26229ba51ccb74cdd1742074e96e7a9e8e86bc
+    spin-v4.0.2-macos-aarch64.tar.gz: sha256:d16a438d9261c3f8c1e791b9214760bf039a625a91098e62b64e6c563a20627e
+    spin-v4.0.2-static-linux-amd64.tar.gz: sha256:0adf37a36fb228a12296f9da583513e0962b7e119d909d847d254892986d0839
+    spin-v4.0.2-static-linux-aarch64.tar.gz: sha256:89d1d69e7cd7ceacd5e9705d4dbb6562d800b8430504922df66706a70d17dd6b
+    spin-v4.0.2-windows-amd64.zip: sha256:fbcd6b2817c7ee74a69365559ce0c582647205dd9667f418cf90b0345b1dba18
 spinKubePlugin:
   version: 0.4.0
   checksums: {}
