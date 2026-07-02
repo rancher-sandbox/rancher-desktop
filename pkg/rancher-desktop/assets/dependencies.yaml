@@ -152,10 +152,10 @@ spinOperator:
     spin-operator.crds.yaml: sha256:146fbc3ea2cd9089999c25e38e0aa6779485e788fdd7a2c775287df4360edfc9
     spin-operator-0.6.1.tgz: sha256:640fcbf0da182ab0482228aa33872a06adec1d3849bea234ae8f725d1de60ff5
 certManager:
-  version: 1.20.1
+  version: 1.20.3
   checksums:
-    cert-manager.crds.yaml: sha256:3f5ce03fa880d072ba10c804d43afd4eaa9c7688506e29762c4e1a98ec095b83
-    cert-manager-v1.20.1.tgz: sha256:9ce75dbd0f8c46b4c60cc8294a1668607e49122937f9c283fc27d615c00d0733
+    cert-manager.crds.yaml: sha256:8c2aea21520854c8c05f4b39909d0be6e2c1ea71544d5c4e2c4ba4f75a223ccc
+    cert-manager-v1.20.3.tgz: sha256:ef5d707f5afbb2c3ce9892f5ff3fca0dec6864db8830a1c454b3d4822c485843
 spinCLI:
   version: 4.0.0
   checksums:
