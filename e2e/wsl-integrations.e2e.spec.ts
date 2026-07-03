@@ -73,7 +73,11 @@ test.describe('WSL Integrations', () => {
             '  gamma  Stopped  2',
             '',
           ].join('\n'),
-          utf16le: true,
+        },
+        {
+          args:   ['--list', '--running', '--quiet'],
+          mode:   'repeated',
+          stdout: '',
         },
         ...['alpha', 'beta', 'gamma'].flatMap(distro => [
           ...[['bin', 'docker-compose'], ['internal', 'wsl-helper']].flatMap(tool => ([
