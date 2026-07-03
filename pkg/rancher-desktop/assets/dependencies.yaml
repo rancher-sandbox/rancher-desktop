@@ -142,10 +142,10 @@ moproxy:
   checksums:
     moproxy_0.5.1_linux_x86_64_musl.bin.xz: sha256:c44eb985e60859e56a21a780550b96975431b1334232927b4056f508ab47219b
 spinShim:
-  version: 0.24.0
+  version: 0.25.1
   checksums:
-    containerd-shim-spin-v2-linux-x86_64.tar.gz: sha256:558b4e92fb0b39d3e54d8a172cf83fe3b529d541bbec6ef540550c2c514fe131
-    containerd-shim-spin-v2-linux-aarch64.tar.gz: sha256:9cb14eda7899289d0b8085b8266f77afe27c0ebbd65f745c5291ff28cf538c47
+    containerd-shim-spin-v2-linux-x86_64.tar.gz: sha256:1755fbeb2dec7d026faf8c37031d8a025975f5e194b782da10188206a386d6e4
+    containerd-shim-spin-v2-linux-aarch64.tar.gz: sha256:5ca9c9207a146a182dc9c870eaaad1afbf64e1d9a4781228dbf6e7ef90ff2e1f
 spinOperator:
   version: 0.6.1
   checksums:
