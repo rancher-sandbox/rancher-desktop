@@ -211,11 +211,10 @@ test.describe('WSL Integrations', () => {
     await expect(wslPage.wslIntegrations).toBeVisible();
 
     await expect(wslPage.wslIntegrations).toHaveCount(1, { timeout: 10_000 });
-    const wslIntegrationList = wslPage.tabIntegrations.getByTestId('wsl-integration-list');
 
-    await expect(wslIntegrationList.getByText('alpha')).toBeVisible();
-    await expect(wslIntegrationList.getByText('beta')).toBeVisible();
-    await expect(wslIntegrationList.getByText('gamma')).toBeVisible();
+    await expect(wslPage.wslIntegrations.getByText('alpha')).toBeVisible();
+    await expect(wslPage.wslIntegrations.getByText('beta')).toBeVisible();
+    await expect(wslPage.wslIntegrations.getByText('gamma')).toBeVisible();
   });
 
   /*
