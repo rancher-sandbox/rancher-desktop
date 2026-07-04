@@ -391,6 +391,20 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+// Stretch the Tabbed wrappers to fill the page; without this the terminal's
+// flex height resolves against content and collapses to a single row.
+:deep(.action-tabs) {
+  flex: 1;
+  min-height: 0;
+}
+
+:deep(.tab-container) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 :deep(.container-logs-component),
 :deep(.container-shell-component),
 :deep(.container-stats-component) {

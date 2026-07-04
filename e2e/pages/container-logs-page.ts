@@ -68,4 +68,13 @@ export class ContainerLogsPage {
       return container?.__xtermTerminal?.buffer.active.viewportY ?? 0;
     });
   }
+
+  /** Number of rows the terminal has fitted itself to. */
+  async getTerminalRows(): Promise<number> {
+    return this.page.evaluate(() => {
+      const el = document.querySelector('[data-testid="terminal"]');
+
+      return (el as any)?.__xtermTerminal?.rows ?? 0;
+    });
+  }
 }
