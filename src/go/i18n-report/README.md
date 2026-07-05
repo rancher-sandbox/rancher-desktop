@@ -26,10 +26,10 @@ go build -o src/go/i18n-report/i18n-report ./src/go/i18n-report
   references.
 - `2` — an operational failure: an unreadable file or an invalid flag.
 
-Gate commands (`undefined`) split exit `1` from exit `2`, so CI can tell
-a real finding from a broken invocation. Lister commands (`unused`, `stale`,
-`translate`, `references`, `dynamic`, `untranslated`) exit `0` even when
-they list results.
+Gate commands (`undefined` and `validate`) split exit `1` from exit `2`,
+so CI can tell a real finding from a broken invocation. Lister commands
+(`unused`, `stale`, `translate`, `references`, `dynamic`, `untranslated`)
+exit `0` even when they list results.
 
 ## Annotation conventions
 
@@ -76,7 +76,8 @@ product.networkStatus.checking: Verifying...
 - **`merge --mode=improve`** skips `@override` keys by default.
   Pass `--include-overrides` to overwrite them.
 
-`@override` must appear on leaf keys only.
+`@override` must appear on leaf keys only. The `validate` command
+reports `@override` on parent mapping nodes as an error.
 
 A key can have both annotations:
 
@@ -227,6 +228,22 @@ en-us.yaml:
 i18n-report remove --stale
 ```
 
+### validate
+
+Check structural correctness of translations in a locale file.
+
+```sh
+i18n-report validate --locale=de
+```
+
+Checks include:
+- Placeholder parity (`{name}`, `{count}`) between English and locale
+- ICU MessageFormat structure (plural/select branch names)
+- HTML tag preservation (`<a>`, `<b>`, etc.)
+- `data-*` attribute preservation (runtime handlers depend on these)
+- `@override` placement (leaf keys only)
+- Metadata coherence (every translated key has a metadata entry)
+
 ### meta
 
 Generate or regenerate source-text metadata for a locale. The metadata
@@ -339,6 +356,7 @@ go test ./src/go/i18n-report/...
 | `report_references.go` | `references` subcommand |
 | `report_dynamic.go` | `dynamic` subcommand, finds dynamic key patterns |
 | `report_remove.go` | `remove` subcommand, YAML key removal |
+| `report_validate.go` | `validate` subcommand, placeholder and structure checks |
 | `report_meta.go` | `meta` subcommand, source-string metadata generation |
 
 All files are in `package main`. The tool has one external dependency:
