@@ -39,6 +39,7 @@ var subcommands = map[string]func([]string) error{
 	"untranslated": runUntranslated,
 	"references":   runReferences,
 	"dynamic":      runDynamic,
+	"meta":         runMeta,
 }
 
 func main() {
@@ -80,6 +81,7 @@ Subcommands:
   untranslated  Hardcoded English strings in Vue/TS files (heuristic)
   references    Where each en-us.yaml key is used (file:line)
   dynamic       Template literal patterns that reference keys dynamically
+  meta          Generate source metadata for a locale
 
 Run "i18n-report <subcommand> -h" for subcommand-specific flags.`)
 }

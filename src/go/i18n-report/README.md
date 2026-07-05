@@ -120,6 +120,15 @@ show which en-us.yaml keys they match.
 i18n-report dynamic [--format=json|text]
 ```
 
+### meta
+
+Generate or regenerate source-text metadata for a locale. The metadata
+records the English text at translation time, enabling drift detection.
+
+```sh
+i18n-report meta --locale=de
+```
+
 ## How it works
 
 ### Source scanning
@@ -166,10 +175,11 @@ go test ./src/go/i18n-report/...
 |------|----------|
 | `main.go` | Subcommand dispatch, usage text |
 | `repo.go` | Repository root detection, path helpers |
-| `yaml.go` | YAML flattening |
+| `yaml.go` | YAML flattening, scalar formatting, nested writer |
 | `scan.go` | Source file scanning, key reference detection |
 | `output.go` | Shared text/JSON output formatter |
 | `compute.go` | Shared key-set computations |
+| `metadata.go` | Metadata file I/O, English source-string snapshots |
 | `report_unused.go` | `unused` subcommand |
 | `report_undefined.go` | `undefined` subcommand |
 | `report_stale.go` | `stale` subcommand |
@@ -177,6 +187,7 @@ go test ./src/go/i18n-report/...
 | `report_untranslated.go` | `untranslated` subcommand, heuristic scanner |
 | `report_references.go` | `references` subcommand |
 | `report_dynamic.go` | `dynamic` subcommand, finds dynamic key patterns |
+| `report_meta.go` | `meta` subcommand, source-string metadata generation |
 
 All files are in `package main`. The tool has one external dependency:
 `gopkg.in/yaml.v3`.
