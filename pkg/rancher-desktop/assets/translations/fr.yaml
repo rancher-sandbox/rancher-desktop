@@ -494,6 +494,7 @@ locale:
   en-us: Anglais
   es: Espagnol
   fr: Français
+  pt-br: Portugais (Brésil)
   zh-hans: Chinois (simplifié)
 mainMenu:
   about: À propos de {appName}
