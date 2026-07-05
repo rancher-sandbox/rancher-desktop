@@ -327,6 +327,7 @@ locale.de: German
 locale.en-us: English
 locale.es: Spanish
 locale.fr: French
+locale.ja: Japanese
 locale.pt-br: Portuguese (Brazilian)
 locale.zh-hans: Chinese (Simplified)
 mainMenu.about: About {appName}

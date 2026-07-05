@@ -535,6 +535,8 @@ locale:
   es: 西班牙语
   # @reason locale name for French
   fr: 法语
+  # @reason locale name for Japanese
+  ja: 日语
   # @reason locale name for Brazilian Portuguese
   pt-br: 葡萄牙语（巴西）
   # @reason locale name for Simplified Chinese - using the Chinese name per rules for locale names
