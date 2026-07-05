@@ -599,7 +599,7 @@ components:
               type: string
               # Keep in sync with the translation files and settingsValidator.ts;
               # run `i18n-report check --locale=all` to catch mismatches.
-              enum: [none, de, en-us, zh-hans]
+              enum: [none, de, en-us, fr, zh-hans]
               x-rd-usage: set the UI language
             theme:
               type: string
