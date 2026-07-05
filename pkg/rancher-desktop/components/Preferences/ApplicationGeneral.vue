@@ -21,29 +21,36 @@ export default defineComponent({
   },
   data() {
     return {
-      sudoAllowedTooltip: `
-        If checked, Rancher Desktop will attempt to acquire administrative
-        credentials ("sudo access") when starting for some operations.  This
-        allows for enhanced functionality, including bridged networking and
-        default docker socket support.  Changes will only be applied next time
-        Rancher Desktop starts.
-      `,
       automaticUpdates: true,
       statistics:       false,
     };
   },
   computed: {
     ...mapGetters('preferences', ['isPlatformWindows', 'isPreferenceLocked']),
+    ...mapGetters('i18n', ['availableLocales']),
     isSudoAllowed(): boolean {
       return this.preferences?.application?.adminAccess ?? false;
     },
     canAutoUpdate(): boolean {
       return this.preferences?.application.updater.enabled ?? false;
     },
+    selectedLocale(): string {
+      const locale = this.preferences?.application?.locale;
+
+      return (!locale || locale === 'none') ? 'en-us' : locale;
+    },
+    showLocaleDisclaimer(): boolean {
+      return this.selectedLocale !== 'en-us';
+    },
   },
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    },
+    onLocaleChange(event: Event) {
+      const locale = (event.target as HTMLSelectElement).value;
+
+      this.onChange('application.locale', locale);
     },
   },
 });
@@ -52,13 +59,43 @@ export default defineComponent({
 <template>
   <div class="application-general">
     <rd-fieldset
+      data-test="locale"
+      :legend-text="t('application.locale.legendText')"
+      :is-experimental="true"
+      :is-locked="isPreferenceLocked('application.locale')"
+    >
+      <template #default="{ isLocked }">
+        <select
+          data-test="localeSelect"
+          :value="selectedLocale"
+          :disabled="isLocked"
+          class="locale-select"
+          @change="onLocaleChange"
+        >
+          <option
+            v-for="(label, code) in availableLocales"
+            :key="code"
+            :value="code"
+          >
+            {{ label }}
+          </option>
+        </select>
+        <p
+          v-if="showLocaleDisclaimer"
+          class="locale-disclaimer"
+        >
+          {{ t('application.locale.disclaimer') }}
+        </p>
+      </template>
+    </rd-fieldset>
+    <rd-fieldset
       v-if="!isPlatformWindows"
       data-test="administrativeAccess"
-      legend-text="Administrative Access"
-      :legend-tooltip="sudoAllowedTooltip"
+      :legend-text="t('application.general.adminAccess.legendText')"
+      :legend-tooltip="t('application.general.adminAccess.legendTooltip')"
     >
       <rd-checkbox
-        label="Allow to acquire administrative credentials (sudo access)"
+        :label="t('application.general.adminAccess.label')"
         :value="isSudoAllowed"
         :is-locked="isPreferenceLocked('application.adminAccess')"
         @update:value="onChange('application.adminAccess', $event)"
@@ -66,11 +103,11 @@ export default defineComponent({
     </rd-fieldset>
     <rd-fieldset
       data-test="automaticUpdates"
-      legend-text="Automatic Updates"
+      :legend-text="t('application.general.automaticUpdates.legendText')"
     >
       <rd-checkbox
         data-test="automaticUpdatesCheckbox"
-        label="Check for updates automatically"
+        :label="t('application.general.automaticUpdates.label')"
         :value="canAutoUpdate"
         :is-locked="isPreferenceLocked('application.updater.enabled')"
         @update:value="onChange('application.updater.enabled', $event)"
@@ -78,10 +115,10 @@ export default defineComponent({
     </rd-fieldset>
     <rd-fieldset
       data-test="statistics"
-      legend-text="Statistics"
+      :legend-text="t('application.general.statistics.legendText')"
     >
       <rd-checkbox
-        label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
+        :label="t('application.general.statistics.label')"
         :value="preferences.application.telemetry.enabled"
         :is-locked="isPreferenceLocked('application.telemetry.enabled')"
         @update:value="onChange('application.telemetry.enabled', $event)"
@@ -95,5 +132,22 @@ export default defineComponent({
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .locale-select {
+    width: 100%;
+    max-width: 300px;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    font-size: 1rem;
+  }
+
+  .locale-disclaimer {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--muted);
   }
 </style>
