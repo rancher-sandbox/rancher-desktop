@@ -81,11 +81,22 @@ export class ContainersPage {
     await expect(this.getGroupRow(groupName)).toBeVisible({ timeout });
   }
 
-  async clickGroupStop(groupName: string) {
-    await this.getGroupRow(groupName).getByTestId('container-group-stop').click();
+  getGroupCheckbox(groupName: string) {
+    return this.getGroupRow(groupName).locator('.group-select-checkbox');
   }
 
-  async clickGroupDelete(groupName: string) {
-    await this.getGroupRow(groupName).getByTestId('container-group-delete').click();
+  async selectGroup(groupName: string) {
+    const checkbox = this.getGroupCheckbox(groupName);
+
+    await checkbox.click();
+    await expect(this.getGroupRow(groupName).locator('input[type="checkbox"]')).toBeChecked();
+  }
+
+  async clickBulkStop() {
+    await this.page.getByRole('button', { name: 'Stop' }).first().click();
+  }
+
+  async clickBulkDelete() {
+    await this.page.getByRole('button', { name: 'Delete' }).first().click();
   }
 }

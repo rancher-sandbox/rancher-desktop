@@ -21,6 +21,7 @@
       :loading="containers === null"
       group-by="projectGroup"
       :group-sort="['projectGroup']"
+      @selection="onSelectionChange"
     >
       <template #header-middle>
         <div class="header-middle">
@@ -114,6 +115,14 @@
         >
           <td :colspan="headers.length + 1">
             <div class="group-tab">
+              <Checkbox
+                class="group-select-checkbox"
+                data-testid="container-group-select"
+                :value="isGroupSelected(group)"
+                :indeterminate="isGroupIndeterminate(group)"
+                @update:value="setGroupSelected(group, $event)"
+                @click.stop
+              />
               <i
                 data-title="Toggle Expand"
                 :class="{
@@ -125,28 +134,6 @@
               />
               {{ group.ref }}
               <span v-if="!!collapsed[group.ref]"> ({{ group.rows.length }})</span>
-              <span
-                v-if="isComposeProjectGroup(group)"
-                class="group-actions"
-              >
-                <button
-                  v-tooltip="{ content: t('containers.manage.group.stopTooltip', { name: group.ref }, true), placement: 'top' }"
-                  class="btn btn-xs role-primary"
-                  data-testid="container-group-stop"
-                  :disabled="!hasRunningContainers(group)"
-                  @click.stop="stopGroup(group)"
-                >
-                  Stop
-                </button>
-                <button
-                  v-tooltip="{ content: t('containers.manage.group.deleteTooltip', { name: group.ref }, true), placement: 'top' }"
-                  class="btn btn-xs role-primary"
-                  data-testid="container-group-delete"
-                  @click.stop="deleteGroup(group)"
-                >
-                  {{ t('images.manager.table.action.delete', {}, true) }}
-                </button>
-              </span>
             </div>
           </td>
         </tr>
@@ -156,7 +143,7 @@
 </template>
 
 <script>
-import { BadgeState, Banner } from '@rancher/components';
+import { BadgeState, Banner, Checkbox } from '@rancher/components';
 import dayjs from 'dayjs';
 import { shell } from 'electron';
 import merge from 'lodash/merge';
@@ -194,7 +181,7 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 export default defineComponent({
   name:       'Containers',
   title:      'Containers',
-  components: { SortableTable, BadgeState, Banner },
+  components: { SortableTable, BadgeState, Banner, Checkbox },
   data() {
     return {
       /** @type import('@pkg/config/settings').Settings | undefined */
@@ -203,6 +190,8 @@ export default defineComponent({
       execError:                  null,
       /** @type Record<string, boolean> */
       collapsed:                   {},
+      /** @type RowItem[] */
+      selectedRows:                [],
       /**
        * This timer is used to retry subscribing to events until the backend is
        * ready enough to update the vuex store.
@@ -564,42 +553,35 @@ export default defineComponent({
     groupContainers(group) {
       return group.rows.map(r => r.row);
     },
-    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
-    isComposeProjectGroup(group) {
-      return !!this.groupContainers(group)[0]?.labels?.['com.docker.compose.project'];
+    onSelectionChange(rows) {
+      this.selectedRows = rows;
     },
     /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
-    hasRunningContainers(group) {
-      return this.groupContainers(group).some(c => this.isRunning(c));
-    },
-    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
-    stopGroup(group) {
-      const running = this.groupContainers(group).filter(c => this.isRunning(c));
-
-      if (running.length) {
-        this.execCommand('stop', running);
-      }
-    },
-    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
-    async deleteGroup(group) {
+    isGroupSelected(group) {
       const containers = this.groupContainers(group);
-      const options = {
-        message:   this.t('containers.manage.group.deleteConfirm.message', { name: group.ref }, true),
-        detail:    containers.map(c => c.containerName).join('\n'),
-        type:      'question',
-        buttons:   ['Yes', 'No'],
-        defaultId: 1,
-        cancelId:  1,
-        title:     this.t('containers.manage.group.deleteConfirm.title', {}, true),
-      };
 
-      const result = await ipcRenderer.invoke('show-message-box', options);
+      return containers.length > 0 && containers.every(c => this.selectedRows.includes(c));
+    },
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
+    isGroupIndeterminate(group) {
+      const containers = this.groupContainers(group);
+      const selectedCount = containers.filter(c => this.selectedRows.includes(c)).length;
 
-      if (result.response === 1) {
-        return;
+      return selectedCount > 0 && selectedCount < containers.length;
+    },
+    /**
+     * @param group {{ ref: string, rows: { row: RowItem }[] }}
+     * @param selected {boolean}
+     */
+    setGroupSelected(group, selected) {
+      const containers = this.groupContainers(group);
+      const table = this.$refs.sortableTableRef;
+
+      if (selected) {
+        table.update(containers, []);
+      } else {
+        table.update([], containers);
       }
-
-      this.execCommand('rm', containers, ['-f']);
     },
 
     clearError() {
@@ -637,11 +619,6 @@ export default defineComponent({
       > .icon {
         cursor: pointer;
       }
-    }
-    .group-actions {
-      display: flex;
-      gap: 4px;
-      font-weight: normal;
     }
     &[aria-expanded="false"] {
       :deep(~ .main-row) {

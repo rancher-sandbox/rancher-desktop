@@ -673,7 +673,7 @@ test.describe.serial('Container Compose Group Actions', () => {
     await teardown(electronApp, testInfo);
   });
 
-  test('compose project group shows stop and delete buttons', async() => {
+  test('compose project group shows a select-all checkbox', async() => {
     const navPage = new NavPage(page);
     const containersPage = await navPage.navigateTo('Containers');
 
@@ -682,37 +682,36 @@ test.describe.serial('Container Compose Group Actions', () => {
     await containersPage.waitForContainerToAppear(composeContainerId2);
     await containersPage.waitForGroupToAppear(composeProjectName);
 
-    const groupRow = containersPage.getGroupRow(composeProjectName);
-
-    await expect(groupRow.getByTestId('container-group-stop')).toBeVisible();
-    await expect(groupRow.getByTestId('container-group-delete')).toBeVisible();
+    await expect(containersPage.getGroupCheckbox(composeProjectName)).toBeVisible();
   });
 
-  test('group stop button stops all running containers in the project', async() => {
+  test('group checkbox selects every container in the project for bulk actions', async() => {
     const navPage = new NavPage(page);
     const containersPage = await navPage.navigateTo('Containers');
 
     await containersPage.waitForTableToLoad();
     await containersPage.waitForGroupToAppear(composeProjectName);
-    await containersPage.clickGroupStop(composeProjectName);
+    await containersPage.selectGroup(composeProjectName);
+
+    for (const id of [composeContainerId1, composeContainerId2]) {
+      await expect(containersPage.getContainerRow(id).locator('input[type="checkbox"]')).toBeChecked();
+    }
+
+    await containersPage.clickBulkStop();
 
     for (const id of [composeContainerId1, composeContainerId2]) {
       await expect(containersPage.getContainerRow(id).getByText('exited')).toBeVisible({ timeout: 15_000 });
     }
   });
 
-  test('group delete button removes all containers in the project after confirmation', async() => {
-    // The delete action shows a native confirmation dialog; auto-accept it.
-    await electronApp.evaluate(({ dialog }) => {
-      dialog.showMessageBox = () => Promise.resolve({ response: 0, checkboxChecked: false });
-    });
-
+  test('group checkbox plus the regular delete button removes every container in the project', async() => {
     const navPage = new NavPage(page);
     const containersPage = await navPage.navigateTo('Containers');
 
     await containersPage.waitForTableToLoad();
     await containersPage.waitForGroupToAppear(composeProjectName);
-    await containersPage.clickGroupDelete(composeProjectName);
+    await containersPage.selectGroup(composeProjectName);
+    await containersPage.clickBulkDelete();
 
     for (const id of [composeContainerId1, composeContainerId2]) {
       await expect(containersPage.getContainerRow(id)).not.toBeVisible({ timeout: 15_000 });

@@ -218,12 +218,6 @@ containers:
         ports: Port(s)
         started: Uptime
         actions: Actions
-    group:
-      stopTooltip: 'Stop all containers in "{name}"'
-      deleteTooltip: 'Delete all containers in "{name}"'
-      deleteConfirm:
-        title: Confirm deletion
-        message: 'Stop and delete all containers in "{name}"?'
 
 volumes:
   title: Volumes
