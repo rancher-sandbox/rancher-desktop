@@ -36,6 +36,35 @@ describe('main-process i18n', () => {
   });
 
   it('lists the bundled locales', () => {
-    expect(i18n.availableLocales).toEqual(expect.arrayContaining(['en-us']));
+    expect(i18n.availableLocales).toEqual(expect.arrayContaining(['en-us', 'de']));
+  });
+
+  it('switches locale on settings-update and notifies callbacks', async() => {
+    await i18n.initMainI18n();
+
+    const changed = new Promise<void>((resolve) => {
+      const off = i18n.onLocaleChange(() => {
+        off();
+        resolve();
+      });
+    });
+
+    mainEvents.emit('settings-update', { application: { locale: 'de' } } as any);
+    await changed;
+
+    expect(i18n.t('generic.cancel')).toEqual('Abbrechen');
+
+    // Locale "none" reverts to English.
+    const reverted = new Promise<void>((resolve) => {
+      const off = i18n.onLocaleChange(() => {
+        off();
+        resolve();
+      });
+    });
+
+    mainEvents.emit('settings-update', { application: { locale: 'none' } } as any);
+    await reverted;
+
+    expect(i18n.t('generic.cancel')).toEqual('Cancel');
   });
 });

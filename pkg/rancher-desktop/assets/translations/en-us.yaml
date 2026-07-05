@@ -11,6 +11,7 @@ generic:
   comma: ', '
   loading: Loading&hellip;
 locale:
+  de: German
   en-us: English
 nav:
   userMenu:

@@ -470,7 +470,7 @@ describe('SettingsValidator', () => {
       const [needToUpdate, errors] = subject.validateSettings({
         ...cfg,
         application: { ...cfg.application, locale: 'en-us' },
-      }, { application: { locale: 'none' } });
+      }, { application: { locale: 'de' } });
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: true,
