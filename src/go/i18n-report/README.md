@@ -120,6 +120,22 @@ show which en-us.yaml keys they match.
 i18n-report dynamic [--format=json|text]
 ```
 
+### source
+
+Record the current English source text on each translated key of a locale, or
+`all` locales, as a co-located `# @source` comment. The snapshot lets a later
+drift check tell which translations were made from English that has since
+changed, without a parallel metadata file.
+
+Refreshing an existing `@source` would overwrite the snapshot with the current
+English and erase that record, so when a key has drifted the command refuses
+unless `--force`.
+
+```sh
+i18n-report source --locale=de
+i18n-report source --locale=all
+```
+
 ## How it works
 
 ### Source scanning
@@ -166,10 +182,11 @@ go test ./src/go/i18n-report/...
 |------|----------|
 | `main.go` | Subcommand dispatch, usage text |
 | `repo.go` | Repository root detection, path helpers |
-| `yaml.go` | YAML flattening |
+| `yaml.go` | YAML flattening, scalar formatting, nested writer |
 | `scan.go` | Source file scanning, key reference detection |
 | `output.go` | Shared text/JSON output formatter |
 | `compute.go` | Shared key-set computations |
+| `source.go` | `@source` comment parsing, English snapshot annotation |
 | `report_unused.go` | `unused` subcommand |
 | `report_undefined.go` | `undefined` subcommand |
 | `report_stale.go` | `stale` subcommand |
@@ -177,6 +194,7 @@ go test ./src/go/i18n-report/...
 | `report_untranslated.go` | `untranslated` subcommand, heuristic scanner |
 | `report_references.go` | `references` subcommand |
 | `report_dynamic.go` | `dynamic` subcommand, finds dynamic key patterns |
+| `report_source.go` | `source` subcommand |
 
 All files are in `package main`. The tool has one external dependency:
 `gopkg.in/yaml.v3`.
