@@ -7,7 +7,7 @@
       data-testid="stats-not-running"
     >
       <span class="icon icon-info-circle icon-lg" />
-      Stats are only available for running containers.
+      {{ t('containerStats.notRunning') }}
     </banner>
 
     <banner
@@ -17,25 +17,25 @@
       data-testid="stats-unsupported-engine"
     >
       <span class="icon icon-info-circle icon-lg" />
-      Stats are currently only available for the Docker (Moby) engine.
+      {{ t('containerStats.mobyOnly') }}
     </banner>
 
     <template v-else>
       <div class="stats-toolbar">
         <label class="refresh-label">
-          Refresh
+          {{ t('containerStats.refresh') }}
           <select
             v-model="refreshSeconds"
             class="refresh-select"
             data-testid="stats-refresh-select"
             @change="restartPolling"
           >
-            <option :value="1">1 s</option>
-            <option :value="5">5 s</option>
-            <option :value="10">10 s</option>
-            <option :value="20">20 s</option>
-            <option :value="30">30 s</option>
-            <option :value="60">1 min</option>
+            <option :value="1">{{ t('containerStats.interval.seconds', { seconds: 1 }) }}</option>
+            <option :value="5">{{ t('containerStats.interval.seconds', { seconds: 5 }) }}</option>
+            <option :value="10">{{ t('containerStats.interval.seconds', { seconds: 10 }) }}</option>
+            <option :value="20">{{ t('containerStats.interval.seconds', { seconds: 20 }) }}</option>
+            <option :value="30">{{ t('containerStats.interval.seconds', { seconds: 30 }) }}</option>
+            <option :value="60">{{ t('containerStats.interval.minutes', { minutes: 1 }) }}</option>
           </select>
         </label>
       </div>
@@ -49,7 +49,7 @@
           data-testid="stats-cpu-chart"
         >
           <h3 class="chart-title">
-            CPU %
+            {{ t('containerStats.charts.cpu') }}
           </h3>
           <div class="chart-wrapper">
             <Line
@@ -64,7 +64,7 @@
           data-testid="stats-memory-chart"
         >
           <h3 class="chart-title">
-            Memory
+            {{ t('containerStats.charts.memory') }}
           </h3>
           <div class="chart-wrapper">
             <Line
@@ -79,7 +79,7 @@
           data-testid="stats-network-chart"
         >
           <h3 class="chart-title">
-            Network I/O (bytes/s)
+            {{ t('containerStats.charts.network') }}
           </h3>
           <div class="chart-wrapper">
             <Line
@@ -94,7 +94,7 @@
           data-testid="stats-io-chart"
         >
           <h3 class="chart-title">
-            Block I/O (bytes/s)
+            {{ t('containerStats.charts.blockIO') }}
           </h3>
           <div class="chart-wrapper">
             <Line
@@ -110,7 +110,7 @@
         data-testid="stats-process-table"
       >
         <h3 class="section-title">
-          Processes
+          {{ t('containerStats.processes') }}
         </h3>
         <div
           v-if="processes.length"
@@ -147,7 +147,7 @@
           v-else
           class="no-processes"
         >
-          No processes found.
+          {{ t('containerStats.noProcesses') }}
         </p>
       </div>
     </template>
@@ -185,6 +185,7 @@ const props = defineProps<{
 }>();
 
 const store = useStore();
+const t = (key: string, args?: Record<string, unknown>) => store.getters['i18n/t'](key, args);
 const isMoby = computed(() => store.getters['container-engine/backend'] === ContainerEngine.MOBY);
 
 const MAX_POINTS = 60;
@@ -303,30 +304,30 @@ function dataset(label: string, data: number[], color: string, dashed = false) {
 
 const cpuChartData = computed(() => ({
   labels:   [...labels.value],
-  datasets: [dataset('CPU %', cpuData.value, chartPalette.value.cpu)],
+  datasets: [dataset(t('containerStats.charts.cpu'), cpuData.value, chartPalette.value.cpu)],
 }));
 
 const memChartData = computed(() => ({
   labels:   [...labels.value],
   datasets: [
-    dataset('Used', memData.value, chartPalette.value.mem),
-    dataset('Limit', memLimitData.value, chartPalette.value.memLim, true),
+    dataset(t('containerStats.series.used'), memData.value, chartPalette.value.mem),
+    dataset(t('containerStats.series.limit'), memLimitData.value, chartPalette.value.memLim),
   ],
 }));
 
 const netChartData = computed(() => ({
   labels:   labels.value.slice(1),
   datasets: [
-    dataset('RX', netRxData.value, chartPalette.value.netRx),
-    dataset('TX', netTxData.value, chartPalette.value.netTx),
+    dataset(t('containerStats.series.rx'), netRxData.value, chartPalette.value.netRx),
+    dataset(t('containerStats.series.tx'), netTxData.value, chartPalette.value.netTx),
   ],
 }));
 
 const ioChartData = computed(() => ({
   labels:   labels.value.slice(1),
   datasets: [
-    dataset('Read', blockReadData.value, chartPalette.value.blockR),
-    dataset('Write', blockWriteData.value, chartPalette.value.blockW),
+    dataset(t('containerStats.series.read'), blockReadData.value, chartPalette.value.blockR),
+    dataset(t('containerStats.series.write'), blockWriteData.value, chartPalette.value.blockW),
   ],
 }));
 

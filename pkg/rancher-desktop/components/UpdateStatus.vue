@@ -6,7 +6,7 @@
         v-if="updatePossible"
         v-model:value="updatesEnabled"
         class="updatesEnabled"
-        label="Check for updates automatically"
+        :label="t('updateStatus.checkForUpdates')"
         :is-locked="autoUpdateLocked"
       />
     </div>
@@ -17,7 +17,7 @@
     >
       <template #title>
         <div class="type-title">
-          <h3>Update Available</h3>
+          <h3>{{ t('updateStatus.updateAvailable') }}</h3>
         </div>
       </template>
       <template #body>
@@ -29,14 +29,14 @@
             v-if="updateReady"
             class="update-notification"
           >
-            Restart the application to apply the update.
+            {{ t('updateStatus.restartToApply') }}
           </p>
         </div>
         <details
           v-if="detailsMessage"
           class="release-notes"
         >
-          <summary>Release Notes</summary>
+          <summary>{{ t('updateStatus.releaseNotes') }}</summary>
           <div
             ref="releaseNotes"
             v-html="detailsMessage"
@@ -62,18 +62,16 @@
     >
       <template #title>
         <div class="type-title">
-          <h3>Latest Version Not Supported</h3>
+          <h3>{{ t('updateStatus.unsupported.title') }}</h3>
         </div>
       </template>
       <template #body>
         <p>
-          A newer version of Rancher Desktop is available, but not supported on your system.
+          {{ t('updateStatus.unsupported.message') }}
         </p>
         <br>
-        <p>
-          For more information please see
-          <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.
-        </p>
+        <!-- eslint-disable-next-line vue/no-v-html -->
+        <p v-html="t('updateStatus.unsupported.seeDocumentation')" />
       </template>
       <template #actions>
         <div />
@@ -151,14 +149,16 @@ export default defineComponent({
 
     statusMessage(): string {
       if (this.updateState?.error) {
-        return 'There was an error checking for updates.';
+        return this.t('updateStatus.errorChecking');
       }
       if (!this.updateState?.info) {
         return '';
       }
 
       const { info, progress } = this.updateState;
-      const prefix = `An update to version ${ info.version } is available`;
+      // Punctuation is hardcoded here (period, semicolon). Some locales use
+      // different punctuation; revisit when locale coverage grows.
+      const prefix = this.t('updateStatus.available', { version: info.version });
 
       if (!progress) {
         return `${ prefix }.`;
@@ -172,7 +172,7 @@ export default defineComponent({
         notation:    'compact',
       }).format(progress.bytesPerSecond);
 
-      return `${ prefix }; downloading... (${ percent }%, ${ speed })`;
+      return `${ prefix }; ${ this.t('updateStatus.downloading', { percent: String(percent), speed }) }`;
     },
 
     detailsMessage(): string | undefined {
@@ -191,7 +191,7 @@ export default defineComponent({
     },
 
     applyMessage(): string {
-      return this.applying ? 'Applying update...' : 'Restart Now';
+      return this.applying ? this.t('updateStatus.applyingUpdate') : this.t('updateStatus.restartNow');
     },
 
     unsupportedUpdateAvailable(): boolean {

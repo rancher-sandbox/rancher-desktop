@@ -71,7 +71,7 @@ export default {
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('images.add.title') },
+      { titleKey: 'images.add.title' },
     );
     ipcRenderer.once('settings-read', (_event, settings) => {
       this.enableAllowedImages(settings);

@@ -14,8 +14,18 @@ describe('main-process i18n', () => {
     expect(i18n.t('no.such.key')).toEqual('%no.such.key%');
   });
 
+  it('interpolates arguments', () => {
+    expect(i18n.t('mainMenu.help.about', { appName: 'Rancher Desktop' }))
+      .toEqual('&About Rancher Desktop');
+  });
+
   it('formats ICU plurals', () => {
     expect(i18n.t('sortableTable.paging.generic', { pages: 0 })).toEqual('No Items');
+  });
+
+  it('renders ICU quoted literals as visible quotes', () => {
+    expect(i18n.t('dialog.invalidK8sVersion.message', { version: '1.32' }))
+      .toEqual("Requested Kubernetes version '1.32' is not a supported version.");
   });
 
   it('degrades to the raw pattern when an argument is missing', () => {

@@ -4,7 +4,7 @@
       <span class="volume-name">{{ volumeName }}</span>
       <badge-state
         :color="volumeExists ? 'bg-success' : 'bg-darker'"
-        :label="volumeExists ? 'Available' : 'Not Found'"
+        :label="volumeExists ? t('volumes.files.available') : t('volumes.files.notFound')"
       />
     </div>
 
@@ -117,7 +117,7 @@ interface fileEntry {
 
 export default defineComponent({
   name:       'VolumeFiles',
-  title:      'Volume Files',
+  titleKey:   'volumes.files.title',
   components: {
     BadgeState,
     Banner,
@@ -211,7 +211,7 @@ export default defineComponent({
     }
 
     this.$store.dispatch('page/setHeader', {
-      title:       this.t('volumes.files.title'),
+      titleKey:    'volumes.files.title',
       description: this.volumeName,
     });
 

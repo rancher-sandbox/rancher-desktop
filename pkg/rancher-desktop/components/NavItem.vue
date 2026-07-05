@@ -19,7 +19,7 @@ export default defineComponent({
       <slot name="before" />
     </div>
     <slot name="default">
-      Extensions
+      {{ t('marketplace.title') }}
     </slot>
     <slot name="after" />
   </div>

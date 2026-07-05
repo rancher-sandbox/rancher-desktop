@@ -11,8 +11,8 @@ export default defineComponent({
     this.$store.dispatch(
       'page/setHeader',
       {
-        title:  this.t('snapshots.title'),
-        action: 'SnapshotsButtonCreate',
+        titleKey: 'snapshots.title',
+        action:   'SnapshotsButtonCreate',
       },
     );
   },

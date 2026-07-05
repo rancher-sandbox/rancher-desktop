@@ -1,11 +1,10 @@
 <template>
   <div>
     <h2>
-      Cannot run as Root
+      {{ t('denyRoot.title') }}
     </h2>
     <p>
-      Rancher Desktop cannot be run with root privileges.
-      Please run again as a regular user.
+      {{ t('denyRoot.message') }}
     </p>
     <div class="button-area">
       <button
@@ -13,7 +12,7 @@
         class="role-primary"
         @click="close"
       >
-        OK
+        {{ t('generic.ok') }}
       </button>
     </div>
   </div>

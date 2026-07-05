@@ -23,7 +23,6 @@ export default defineComponent({
       return this.t(
         'extensions.view.emptyState.body',
         { extensionId: `<code>${ this.extensionId }</code>` },
-        true,
       );
     },
   },
@@ -41,7 +40,8 @@ export default defineComponent({
     :heading="emptyStateHeading"
   >
     <template #body>
-      <span v-html="emptyStateBody" />
+      <!-- v-clean-html: the interpolated extension id is not our content -->
+      <span v-clean-html="emptyStateBody" />
     </template>
     <template #primary-action>
       <button

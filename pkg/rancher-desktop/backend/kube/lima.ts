@@ -20,6 +20,7 @@ import * as K8s from '@pkg/backend/k8s';
 import { KubeClient } from '@pkg/backend/kube/client';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine } from '@pkg/config/settings';
+import { t } from '@pkg/main/i18n';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
 import clone from '@pkg/utils/clone';
@@ -87,7 +88,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
 
       console.debug(`Download: desired=${ desiredVersion } persisted=${ persistedVersion }`);
       try {
-        await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+        await this.progressTracker.action(t('progress.checkingK3sImages'), 100, this.k3sHelper.ensureK3sImages(desiredVersion));
 
         return [desiredVersion, isDowngrade(desiredVersion)];
       } catch (ex) {
@@ -103,11 +104,11 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
           // accepted it).
           if (desiredVersion.compare(newVersion) > 0 && !isDowngrade(desiredVersion)) {
             const options: Electron.MessageBoxOptions = {
-              message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose existing Kubernetes workloads. Delete the data?`,
+              message:   t('dialog.confirmMigration.message', { from: desiredVersion.raw, to: newVersion.raw }),
               type:      'question',
-              buttons:   ['Delete Workloads', 'Cancel'],
+              buttons:   [t('dialog.confirmMigration.delete'), t('generic.cancel')],
               defaultId: 1,
-              title:     'Confirming migration',
+              title:     t('dialog.confirmMigration.title'),
               cancelId:  1,
             };
             const result = await showMessageBox(options, true);
@@ -135,7 +136,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
    * Install the Kubernetes files.
    */
   async install(config: BackendSettings, desiredVersion: semver.SemVer, allowSudo: boolean) {
-    await this.progressTracker.action('Installing k3s', 50, async() => {
+    await this.progressTracker.action(t('progress.installingK3s'), 50, async() => {
       const promises: Promise<void>[] = [];
       promises.push(this.writeServiceScript(config, desiredVersion, allowSudo));
 
@@ -172,14 +173,14 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       await this.vm.execCommand({ root: true }, 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
     }
 
-    await this.progressTracker.action('Starting k3s', 100, async() => {
+    await this.progressTracker.action(t('progress.startingK3s'), 100, async() => {
       // Run rc-update as we have dynamic dependencies.
       await this.vm.execCommand({ root: true }, '/sbin/rc-update', '--update');
       await this.vm.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
     });
 
     const aborted = await this.progressTracker.action(
-      'Waiting for Kubernetes API',
+      t('progress.waitingForKubernetesApi'),
       100,
       async() => {
         await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), config.kubernetes.port);
@@ -206,7 +207,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       return;
     }
     await this.progressTracker.action(
-      'Updating kubeconfig',
+      t('progress.updatingKubeconfig'),
       50,
       this.k3sHelper.updateKubeconfig(
         () => this.vm.execCommand({ capture: true, root: true }, 'cat', '/etc/rancher/k3s/k3s.yaml'),
@@ -215,7 +216,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     const client = this.client = kubeClient?.() || new KubeClient();
 
     await this.progressTracker.action(
-      'Waiting for services',
+      t('progress.waitingForServices'),
       50,
       async() => {
         await client.waitForServiceWatcher();
@@ -235,13 +236,13 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     // Remove traefik if necessary.
     if (!this.cfg?.kubernetes?.options.traefik) {
       await this.progressTracker.action(
-        'Removing Traefik',
+        t('progress.removingTraefik'),
         50,
         this.k3sHelper.uninstallHelmChart(client, 'traefik'));
     }
     if (!this.cfg?.experimental?.kubernetes?.options?.spinkube) {
       await this.progressTracker.action(
-        'Removing spinkube operator',
+        t('progress.removingSpinkubeOperator'),
         50,
         Promise.all([
           this.k3sHelper.uninstallHelmChart(client, MANIFEST_CERT_MANAGER),
@@ -249,16 +250,16 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
         ]));
     }
 
-    await this.progressTracker.action('Ensuring compatible kubectl', 50,
+    await this.progressTracker.action(t('progress.ensuringCompatibleKubectl'), 50,
       this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion));
     if (this.cfg?.kubernetes?.options.flannel) {
       await this.progressTracker.action(
-        'Waiting for nodes',
+        t('progress.waitingForNodes'),
         100,
         client.waitForReadyNodes());
     } else {
       await this.progressTracker.action(
-        'Skipping node checks, flannel is disabled',
+        t('progress.skippingNodeChecksFlannel'),
         100,
         async() => {
           await new Promise(resolve => setTimeout(resolve, 5000));
@@ -415,7 +416,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
     }
     if (semver.gt(existingVersion, desiredVersion)) {
       await this.progressTracker.action(
-        'Deleting incompatible Kubernetes state',
+        t('progress.deletingIncompatibleState'),
         100,
         this.k3sHelper.deleteKubeState(this.vm));
     }

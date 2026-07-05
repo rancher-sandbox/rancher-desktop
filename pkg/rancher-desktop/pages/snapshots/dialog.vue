@@ -178,7 +178,7 @@ export default defineComponent({
               <div class="created">
                 <span
                   v-if="snapshot.formattedCreateDate"
-                  v-clean-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
+                  v-clean-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time })"
                   class="value"
                 />
               </div>
