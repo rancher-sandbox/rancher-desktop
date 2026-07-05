@@ -1,8 +1,8 @@
 # i18n-report
 
 A CLI tool for maintaining Rancher Desktop's translation files. It scans
-source code and YAML locale files to find unused keys, stale translations,
-and other i18n issues.
+source code and YAML locale files to find unused keys, missing translations,
+hardcoded English strings, and other i18n issues.
 
 ## Quick start
 
@@ -27,8 +27,9 @@ go build -o src/go/i18n-report/i18n-report ./src/go/i18n-report
 - `2` — an operational failure: an unreadable file or an invalid flag.
 
 Gate commands (`undefined`) split exit `1` from exit `2`, so CI can tell
-a real finding from a broken invocation. Lister commands (`unused`,
-`stale`, `references`, `dynamic`) exit `0` even when they list results.
+a real finding from a broken invocation. Lister commands (`unused`, `stale`,
+`translate`, `references`, `dynamic`, `untranslated`) exit `0` even when
+they list results.
 
 ## Subcommands
 
@@ -59,6 +60,48 @@ obsolete and should be removed.
 ```sh
 i18n-report stale --locale=de [--format=json|text]
 ```
+
+### translate
+
+List keys that need translation, with their English values.
+
+Modes:
+- **`missing`** (default) — keys absent from the locale file
+
+```sh
+i18n-report translate --locale=de [--mode=missing] [--format=json|text]
+```
+
+`--format=json` is the machine-readable form: it preserves multiline
+values, unlike the text format. Use it whenever the output feeds another
+tool.
+
+Split the output into parallel batches with `--batch` and `--batches`:
+
+```sh
+i18n-report translate --locale=de --batch=1 --batches=3 > batch1.txt
+i18n-report translate --locale=de --batch=2 --batches=3 > batch2.txt
+i18n-report translate --locale=de --batch=3 --batches=3 > batch3.txt
+```
+
+Each batch outputs `key=value` lines suitable for feeding to a translator
+or saving to a file.
+
+### untranslated
+
+Scan Vue and TypeScript files for hardcoded English strings that should
+use `t()` calls.
+
+```sh
+i18n-report untranslated [--format=json|text] [--include-descriptions]
+```
+
+The `--include-descriptions` flag extends the scan to `description`
+properties, catching diagnostics strings in `main/diagnostics/*.ts`.
+
+This report uses heuristics and may produce false positives. Known gaps
+include Electron menu labels, `showErrorBox` calls, port forwarding errors,
+and template-literal strings.
 
 ### references
 
@@ -96,6 +139,19 @@ Key references are found by matching several regex patterns:
 
 Full-line comments are ignored; trailing comments on code lines are not.
 
+### Untranslated heuristics
+
+The untranslated scanner checks:
+- Unbound HTML attributes (`label="..."`, `placeholder="..."`, etc.)
+- Text between HTML tags (same line and cross-line)
+- Bound string literal attributes (`:label="'text'"`)
+- Electron dialog properties (`title`, `message`, `detail`)
+- Validation error messages (`errors.push('...')`)
+
+It skips test files, lines already using `t()` or bound attributes, and
+values matching common non-translatable patterns (URLs, CSS classes,
+identifiers).
+
 ## Development
 
 ### Running tests
@@ -117,6 +173,8 @@ go test ./src/go/i18n-report/...
 | `report_unused.go` | `unused` subcommand |
 | `report_undefined.go` | `undefined` subcommand |
 | `report_stale.go` | `stale` subcommand |
+| `report_translate.go` | `translate` subcommand |
+| `report_untranslated.go` | `untranslated` subcommand, heuristic scanner |
 | `report_references.go` | `references` subcommand |
 | `report_dynamic.go` | `dynamic` subcommand, finds dynamic key patterns |
 
