@@ -79,6 +79,67 @@ func writeMetadata(root, locale string, enKeys, localeKeys map[string]string) er
 	return nil
 }
 
+// updateMetadata records the current English source text for the given
+// keys, preserving all other entries. Merge uses this so that keys outside
+// the merge keep their drift markers.
+func updateMetadata(root, locale string, keys []string, enKeys map[string]string) error {
+	meta, err := loadMetadata(root, locale)
+	if err != nil {
+		return err
+	}
+	for _, k := range keys {
+		if enValue, exists := enKeys[k]; exists {
+			meta[k] = enValue
+		}
+	}
+
+	path := metadataPath(root, locale)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("creating meta directory: %w", err)
+	}
+	data, err := serializeMetadata(locale, meta)
+	if err != nil {
+		return err
+	}
+	if err := writeFileAtomic(path, data); err != nil {
+		return fmt.Errorf("writing metadata %s: %w", path, err)
+	}
+	return nil
+}
+
+// removeMetadataKeys removes the given keys from a locale's metadata file.
+// If the metadata file does not exist, this is a no-op.
+func removeMetadataKeys(root, locale string, keys map[string]bool) error {
+	meta, err := loadMetadata(root, locale)
+	if err != nil {
+		return err
+	}
+	if len(meta) == 0 {
+		return nil
+	}
+
+	changed := false
+	for k := range keys {
+		if _, exists := meta[k]; exists {
+			delete(meta, k)
+			changed = true
+		}
+	}
+	if !changed {
+		return nil
+	}
+
+	data, err := serializeMetadata(locale, meta)
+	if err != nil {
+		return err
+	}
+	path := metadataPath(root, locale)
+	if err := writeFileAtomic(path, data); err != nil {
+		return fmt.Errorf("writing metadata %s: %w", path, err)
+	}
+	return nil
+}
+
 // generateMetadata computes and writes metadata for a locale from its
 // current translation file and the English source. Used for bootstrapping
 // existing locales that do not yet have metadata files.

@@ -39,6 +39,62 @@ func TestYamlScalar(t *testing.T) {
 	}
 }
 
+func TestStripYAMLQuotes(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"plain", "plain"},
+		{"'single'", "single"},
+		{`"double"`, "double"},
+		{"'it''s'", "it's"},
+		{`"es\"caped"`, `es"caped`},
+		{`"back\\slash"`, `back\slash`},
+		{"''", ""},
+		{`""`, ""},
+		{"'", "'"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			got := stripYAMLQuotes(tc.input)
+			if got != tc.want {
+				t.Errorf("stripYAMLQuotes(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestIsValidDottedKey(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{"a.b", true},
+		{"foo.bar.baz", true},
+		{"containerEngine.tabs.general", true},
+		{"key-with-dash.sub", true},
+		{"key_with_under.sub", true},
+		{"A.B", true},
+		{"single", false},
+		{"", false},
+		{".leading", false},
+		{"trailing.", false},
+		{"double..dot", false},
+		{"has space.key", false},
+		{"has/slash.key", false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			got := isValidDottedKey(tc.input)
+			if got != tc.want {
+				t.Errorf("isValidDottedKey(%q) = %v, want %v", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestNodeSetAndGetLeaf(t *testing.T) {
 	doc := &yaml.Node{
 		Kind:    yaml.DocumentNode,
@@ -143,7 +199,7 @@ func TestSerializeYAMLNodePreservesRoundTrip(t *testing.T) {
   updating: Updating...
 `
 	tmpFile := t.TempDir() + "/test.yaml"
-	os.WriteFile(tmpFile, []byte(input), 0644)
+	os.WriteFile(tmpFile, []byte(input), 0o644)
 
 	doc, err := loadYAMLDocument(tmpFile)
 	if err != nil {
@@ -219,7 +275,7 @@ func TestValidateOverridePlacement(t *testing.T) {
   checking: Checking...
 `
 	tmpFile := t.TempDir() + "/valid.yaml"
-	os.WriteFile(tmpFile, []byte(validYAML), 0644)
+	os.WriteFile(tmpFile, []byte(validYAML), 0o644)
 	doc, _ := loadYAMLDocument(tmpFile)
 	if errors := validateOverridePlacement(doc); len(errors) > 0 {
 		t.Errorf("expected no errors for valid placement, got %v", errors)
@@ -231,7 +287,7 @@ status:
   checking: Checking...
 `
 	tmpFile2 := t.TempDir() + "/invalid.yaml"
-	os.WriteFile(tmpFile2, []byte(invalidYAML), 0644)
+	os.WriteFile(tmpFile2, []byte(invalidYAML), 0o644)
 	doc2, _ := loadYAMLDocument(tmpFile2)
 	errors := validateOverridePlacement(doc2)
 	if len(errors) != 1 || errors[0] != "status" {
@@ -247,7 +303,7 @@ func TestLoadYAMLWithCommentsOverride(t *testing.T) {
   updating: Updating...
 `
 	tmpFile := t.TempDir() + "/test.yaml"
-	os.WriteFile(tmpFile, []byte(input), 0644)
+	os.WriteFile(tmpFile, []byte(input), 0o644)
 	got, err := loadYAMLWithComments(tmpFile)
 	if err != nil {
 		t.Fatal(err)
@@ -274,7 +330,7 @@ locale:
   name: English
 `
 	tmpFile := t.TempDir() + "/test.yaml"
-	if err := os.WriteFile(tmpFile, []byte(input), 0644); err != nil {
+	if err := os.WriteFile(tmpFile, []byte(input), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	got, err := loadYAMLWithComments(tmpFile)

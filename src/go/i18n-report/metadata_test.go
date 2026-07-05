@@ -5,6 +5,7 @@
 package main
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,7 @@ import (
 func TestWriteAndLoadMetadata(t *testing.T) {
 	dir := t.TempDir()
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
-	os.MkdirAll(transDir, 0755)
+	os.MkdirAll(transDir, 0o755)
 
 	enKeys := map[string]string{
 		"a.b": "Hello",
@@ -67,7 +68,7 @@ func TestWriteAndLoadMetadata(t *testing.T) {
 func TestMetadataDeterministic(t *testing.T) {
 	dir := t.TempDir()
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
-	os.MkdirAll(transDir, 0755)
+	os.MkdirAll(transDir, 0o755)
 
 	enKeys := map[string]string{"z.a": "Z", "a.z": "A", "m.m": "M"}
 	localeKeys := map[string]string{"z.a": "Z2", "a.z": "A2", "m.m": "M2"}
@@ -113,7 +114,7 @@ func TestLoadMetadataNonExistent(t *testing.T) {
 func TestGenerateMetadata(t *testing.T) {
 	dir := t.TempDir()
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
-	os.MkdirAll(transDir, 0755)
+	os.MkdirAll(transDir, 0o755)
 
 	enUS := "status:\n  checking: Checking...\n  done: Done\n"
 	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte(enUS), 0o644)
@@ -143,7 +144,7 @@ func TestGenerateMetadata(t *testing.T) {
 func TestMetadataMultilineRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
-	os.MkdirAll(transDir, 0755)
+	os.MkdirAll(transDir, 0o755)
 
 	enKeys := map[string]string{
 		"simple":    "Hello world",
@@ -169,5 +170,38 @@ func TestMetadataMultilineRoundTrip(t *testing.T) {
 	}
 	if meta["multiline"] != "Line one\n\nLine three" {
 		t.Errorf("multiline: got %q, want %q", meta["multiline"], "Line one\n\nLine three")
+	}
+}
+
+func TestMergeGeneratesMetadata(t *testing.T) {
+	dir := t.TempDir()
+	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
+	os.MkdirAll(transDir, 0o755)
+
+	enUS := "status:\n  checking: Checking...\n  done: Done\n"
+	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte(enUS), 0o644)
+	os.WriteFile(filepath.Join(transDir, "de.yaml"), []byte("status:\n  checking: Wird geprüft…\n"), 0o644)
+
+	inputFile := filepath.Join(dir, "input.txt")
+	os.WriteFile(inputFile, []byte("status.done=Fertig\n"), 0o644)
+
+	err := reportMerge(io.Discard, dir, "de", []string{inputFile}, false, "normal", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	meta, err := loadMetadata(dir, "de")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Only the merged key gains metadata; entries for other keys are left
+	// alone so their drift markers survive. Regenerating everything is the
+	// meta subcommand's job.
+	if len(meta) != 1 {
+		t.Fatalf("expected 1 metadata entry after merge, got %d", len(meta))
+	}
+	if meta["status.done"] != "Done" {
+		t.Errorf("done source mismatch: got %q", meta["status.done"])
 	}
 }

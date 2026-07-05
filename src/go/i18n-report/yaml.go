@@ -146,6 +146,26 @@ func sortedKeys[V any](m map[string]V) []string {
 	return keys
 }
 
+// isValidDottedKey returns true if s looks like a dotted translation key
+// (e.g., "action.refresh", "containerEngine.tabs.general").
+func isValidDottedKey(s string) bool {
+	parts := strings.Split(s, ".")
+	if len(parts) < 2 {
+		return false
+	}
+	for _, part := range parts {
+		if part == "" {
+			return false
+		}
+		for _, c := range part {
+			if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' && c != '-' {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // yamlScalar formats a string as a YAML scalar value, adding quotes
 // when needed for special characters.
 func yamlScalar(s string) string {
@@ -157,6 +177,21 @@ func yamlScalar(s string) string {
 		return "'" + strings.ReplaceAll(s, "'", "''") + "'"
 	}
 	return strings.TrimSuffix(string(data), "\n")
+}
+
+// stripYAMLQuotes removes outer YAML quotes from a value string.
+func stripYAMLQuotes(s string) string {
+	if len(s) >= 2 && s[0] == '\'' && s[len(s)-1] == '\'' {
+		inner := s[1 : len(s)-1]
+		return strings.ReplaceAll(inner, "''", "'")
+	}
+	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
+		inner := s[1 : len(s)-1]
+		inner = strings.ReplaceAll(inner, `\"`, `"`)
+		inner = strings.ReplaceAll(inner, `\\`, `\`)
+		return inner
+	}
+	return s
 }
 
 // loadYAMLDocument loads a YAML file into a yaml.Node document tree.
@@ -286,6 +321,26 @@ func stripOverrideMarker(comment string) string {
 	return strings.Join(kept, "\n")
 }
 
+// validateNoAliases rejects anchors, aliases, and sequences anywhere in the
+// tree; the serializer cannot round-trip them and would corrupt the file.
+func validateNoAliases(node *yaml.Node) error {
+	if node.Kind == yaml.AliasNode {
+		return fmt.Errorf("YAML aliases are not supported in translation files")
+	}
+	if node.Anchor != "" {
+		return fmt.Errorf("YAML anchors are not supported in translation files (anchor %q)", node.Anchor)
+	}
+	if node.Kind == yaml.SequenceNode {
+		return fmt.Errorf("YAML sequences are not supported in translation files")
+	}
+	for _, child := range node.Content {
+		if err := validateNoAliases(child); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // nodeGetLeaf retrieves a leaf's value and HeadComment from the tree.
 // Returns empty strings and false if the key is not found.
 func nodeGetLeaf(root *yaml.Node, dottedKey string) (value, comment string, found bool) {
@@ -337,6 +392,13 @@ func nodeInsertSorted(mapping, keyNode, valNode *yaml.Node) {
 	newContent = append(newContent, keyNode, valNode)
 	newContent = append(newContent, mapping.Content[insertAt:]...)
 	mapping.Content = newContent
+}
+
+// nodeAllLeaves returns all leaf entries from a yaml.Node tree as a flat map.
+func nodeAllLeaves(root *yaml.Node) map[string]mergeEntry {
+	result := make(map[string]mergeEntry)
+	flattenNodeWithComments("", root, result)
+	return result
 }
 
 // serializeYAMLNode writes a yaml.Node tree as YAML text.
