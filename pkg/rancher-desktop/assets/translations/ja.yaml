@@ -490,6 +490,8 @@ locale:
   en-us: 英語
   es: スペイン語
   fr: フランス語
+  # @reason locale name for Italian
+  it: イタリア語
   ja: 日本語
   pt-br: ポルトガル語（ブラジル）
   zh-hans: 中国語（簡体字）
