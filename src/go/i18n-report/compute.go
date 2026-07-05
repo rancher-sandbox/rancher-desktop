@@ -4,7 +4,8 @@
 
 package main
 
-// Shared key-set computations.
+// Shared key-set computations. The listers (stale, missing, translate) all
+// derive their findings from these helpers.
 
 // computeStale returns locale keys that no longer exist in en-us, sorted.
 func computeStale[V any](enKeys map[string]string, localeKeys map[string]V) []string {
@@ -15,4 +16,15 @@ func computeStale[V any](enKeys map[string]string, localeKeys map[string]V) []st
 		}
 	}
 	return stale
+}
+
+// computeMissing returns en-us keys absent from the locale, sorted.
+func computeMissing[V any](enKeys map[string]string, localeKeys map[string]V) []string {
+	var missing []string
+	for _, k := range sortedKeys(enKeys) {
+		if _, found := localeKeys[k]; !found {
+			missing = append(missing, k)
+		}
+	}
+	return missing
 }
