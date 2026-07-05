@@ -50,7 +50,7 @@ type validationError struct {
 }
 
 // validateLocale runs all structural checks on a locale file and returns
-// the errors found.
+// the errors found. Both reportValidate and reportValidateQuiet use this.
 func validateLocale(root, locale string) ([]validationError, error) {
 	enPath := translationsPath(root, "en-us.yaml")
 	localePath := translationsPath(root, locale+".yaml")

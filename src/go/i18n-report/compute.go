@@ -4,8 +4,9 @@
 
 package main
 
-// Shared key-set computations. The listers (stale, missing, translate) all
-// derive their findings from these helpers.
+// Shared key-set computations. The gate commands (check, drift) and the
+// listers (stale, missing, translate) all derive their findings from these
+// helpers, so a gate and its matching lister agree by construction.
 //
 // All comparisons use raw scalar text: loadYAMLFlat and loadMetadata both
 // preserve the source bytes, so drift detection compares like with like.

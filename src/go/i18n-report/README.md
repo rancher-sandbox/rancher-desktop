@@ -22,14 +22,14 @@ go build -o src/go/i18n-report/i18n-report ./src/go/i18n-report
 ## Exit codes
 
 - `0` — success; no problems found.
-- `1` — the command found problems in the data, such as undefined
-  references.
+- `1` — the command found problems in the data: drifted keys, undefined
+  references, or a failed check gate.
 - `2` — an operational failure: an unreadable file or an invalid flag.
 
-Gate commands (`undefined` and `validate`) split exit `1` from exit `2`,
-so CI can tell a real finding from a broken invocation. Lister commands
-(`unused`, `stale`, `translate`, `references`, `dynamic`, `untranslated`)
-exit `0` even when they list results.
+Gate commands (`check`, `undefined`, `drift`, and `validate`) split exit
+`1` from exit `2`, so CI can tell a real finding from a broken invocation.
+Lister commands (`unused`, `stale`, `translate`, `references`, `dynamic`,
+`untranslated`) exit `0` even when they list results.
 
 ## Annotation conventions
 
@@ -244,6 +244,18 @@ Checks include:
 - `@override` placement (leaf keys only)
 - Metadata coherence (every translated key has a metadata entry)
 
+### drift
+
+Detect keys whose English source text changed since last translation.
+Compares current `en-us.yaml` values against stored metadata.
+
+```sh
+i18n-report drift --locale=de
+```
+
+Exits with code 1 when drift is detected, and also when metadata is
+missing or orphaned.
+
 ### meta
 
 Generate or regenerate source-text metadata for a locale. The metadata
@@ -252,6 +264,41 @@ records the English text at translation time, enabling drift detection.
 ```sh
 i18n-report meta --locale=de
 ```
+
+### check
+
+The command CI runs. It has three forms.
+
+Bare `check` runs the locale-independent source gate: keys defined in
+`en-us.yaml` but referenced nowhere (unused), and keys referenced in source
+but missing from `en-us.yaml` (undefined).
+
+```sh
+i18n-report check
+```
+
+`check --locale=<code>` runs the source gate, the registration checks, and
+the per-locale checks: locale file readable, no stale keys, validate passes.
+Checking the source locale (`en-us`) per-locale is an error.
+
+```sh
+i18n-report check --locale=de
+i18n-report check --locale=de --strict
+```
+
+`check --locale=all` covers every translation file on disk.
+
+```sh
+i18n-report check --locale=all
+```
+
+`--strict` adds the completeness checks — no missing keys, no drifted
+keys — for periodic and pre-release runs, while PR CI uses the default
+structural set. Passing `--strict` without `--locale` is an error.
+
+The registration checks verify that the locale enum in `command-api.yaml`,
+`settingsValidator.ts`, its spec, and the `locale.*` display-name keys in
+`en-us.yaml` agree with the translation files on disk.
 
 ## Common workflows
 
@@ -272,6 +319,9 @@ i18n-report translate --locale=de --batch=3 --batches=3 > batch3.txt
 
 # Merge translated output back into the locale file.
 i18n-report merge --locale=de batch1.out batch2.out batch3.out
+
+# Verify the result.
+i18n-report check --locale=de
 ```
 
 ### Retranslate drifted keys
@@ -357,7 +407,9 @@ go test ./src/go/i18n-report/...
 | `report_dynamic.go` | `dynamic` subcommand, finds dynamic key patterns |
 | `report_remove.go` | `remove` subcommand, YAML key removal |
 | `report_validate.go` | `validate` subcommand, placeholder and structure checks |
+| `report_drift.go` | `drift` subcommand, detects stale translations |
 | `report_meta.go` | `meta` subcommand, source-string metadata generation |
+| `report_check.go` | `check` subcommand, registration cross-validation |
 
 All files are in `package main`. The tool has one external dependency:
 `gopkg.in/yaml.v3`.
