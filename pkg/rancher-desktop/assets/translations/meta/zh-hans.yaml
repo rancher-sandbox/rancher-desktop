@@ -325,6 +325,7 @@ labelSelect.pagination.counts: '{count} / {totalCount} items'
 labelSelect.pagination.more: Load More...
 locale.de: German
 locale.en-us: English
+locale.es: Spanish
 locale.fr: French
 locale.zh-hans: Chinese (Simplified)
 mainMenu.about: About {appName}

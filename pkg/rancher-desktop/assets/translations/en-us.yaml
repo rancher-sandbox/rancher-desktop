@@ -13,6 +13,7 @@ generic:
 locale:
   de: German
   en-us: English
+  es: Spanish
   fr: French
   zh-hans: Chinese (Simplified)
 nav:
