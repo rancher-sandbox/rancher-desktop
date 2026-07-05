@@ -510,6 +510,7 @@ labelSelect:
 locale:
   de: Deutsch
   en-us: Englisch
+  zh-hans: Chinesisch (vereinfacht)
 mainMenu:
   about: Über {appName}
   edit:
