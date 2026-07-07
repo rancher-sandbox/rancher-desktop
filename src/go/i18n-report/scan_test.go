@@ -35,6 +35,10 @@ func TestKeyPatterns(t *testing.T) {
 		{"k attr", `      k="generic.loading"`, "generic.loading"},
 		{"bound key attr is an expression", `:label-key="expr"`, ""},
 		{"key-field is not a key attr", `key-field="Name"`, ""},
+		{"key attr leading dot", `label-key=".badkey"`, ""},
+		{"key attr trailing dot", `label-key="badkey."`, ""},
+		{"key attr consecutive dots", `label-key="bad..key"`, ""},
+		{"key attr hyphenated segment", `no-rows-key="mount.reverse-sshfs.noRows"`, "mount.reverse-sshfs.noRows"},
 
 		// vtDirectivePattern: v-t="'...'" Vue directive
 		{"v-t directive", `<span v-t="'sortableTable.noActions'" />`, "sortableTable.noActions"},
@@ -173,7 +177,8 @@ func TestTemplateToKeyRegex(t *testing.T) {
 		{"virtualMachine.type.options.${x}.label", "virtualMachine.type.options.vz.label", true},
 		{"snapshots.dialog.${type}.actions.ok", "snapshots.dialog.delete.actions.ok", true},
 		{"snapshots.dialog.${type}.actions.ok", "snapshots.dialog.restore.actions.ok", true},
-		{"snapshots.dialog.${type}.actions.ok", "snapshots.info.create.success", false}, // different prefix
+		{"snapshots.dialog.${type}.actions.ok", "snapshots.info.create.success", false},                                 // different prefix
+		{"virtualMachine.mount.type.options.${x}.label", "virtualMachine.mount.type.options.reverse-sshfs.label", true}, // hyphenated segment
 	}
 
 	for _, tc := range tests {

@@ -27,9 +27,10 @@ type dynamicKeyRef struct {
 	Ref      keyReference   // source location
 }
 
-// dottedKey matches a translation key of [a-zA-Z0-9_] segments joined by
-// single dots. It rejects leading, trailing, and consecutive dots.
-const dottedKey = `[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*`
+// dottedKey matches a translation key: segments of [a-zA-Z0-9_-] joined
+// by single dots. It rejects leading, trailing, and consecutive dots.
+// Segments allow hyphens because keys such as reverse-sshfs and en-us do.
+const dottedKey = `[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)*`
 
 // Patterns for finding translation key references in source code.
 var (
@@ -45,7 +46,7 @@ var (
 	// the <t> component and any *-key="..." attribute (label-key,
 	// no-rows-key, ...). Bound forms (:label-key="expr") are expressions,
 	// not keys, and are excluded by the leading ^|\s requirement.
-	keyAttrPattern = regexp.MustCompile(`(?:^|\s)(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*-key|k)=['"]([a-zA-Z0-9_.-]+)['"]`)
+	keyAttrPattern = regexp.MustCompile(`(?:^|\s)(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*-key|k)=['"](` + dottedKey + `)['"]`)
 	// v-t="'...'" Vue directive for translation.
 	vtDirectivePattern = regexp.MustCompile(`v-t="'(` + dottedKey + `)'"`)
 	// Direct store getter calls: getters['i18n/t']('key').
@@ -71,13 +72,10 @@ var (
 	interpolationSplit = regexp.MustCompile(`\$\{[^}]+\}`)
 )
 
-// segmentWildcard matches key segments produced by an interpolation.
-// Includes dots to allow multi-segment keys like "nested.category.item".
-const segmentWildcard = `[a-zA-Z0-9_.-]+`
-
 // templateToKeyRegex converts a template literal with ${...} interpolations
 // into a regex that matches translation keys. Static parts become literal
-// matches; each interpolation becomes a wildcard matching one key segment.
+// matches; each interpolation becomes a dottedKey wildcard spanning one or
+// more key segments.
 func templateToKeyRegex(template string) *regexp.Regexp {
 	parts := interpolationSplit.Split(template, -1)
 
@@ -86,7 +84,7 @@ func templateToKeyRegex(template string) *regexp.Regexp {
 	for i, part := range parts {
 		sb.WriteString(regexp.QuoteMeta(part))
 		if i < len(parts)-1 {
-			sb.WriteString(segmentWildcard)
+			sb.WriteString(dottedKey)
 		}
 	}
 	sb.WriteString("$")
