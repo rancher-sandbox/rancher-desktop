@@ -27,12 +27,16 @@ type dynamicKeyRef struct {
 	Ref      keyReference   // source location
 }
 
+// dottedKey matches a translation key of [a-zA-Z0-9_] segments joined by
+// single dots. It rejects leading, trailing, and consecutive dots.
+const dottedKey = `[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*`
+
 // Patterns for finding translation key references in source code.
 var (
 	// t('...'), t("..."), t(`...`), also this.t(...) and $t(...)
-	keyPattern = regexp.MustCompile(`(?:^|[^a-zA-Z])t\(['"\x60]([a-zA-Z0-9_.]+)['"\x60]`)
+	keyPattern = regexp.MustCompile(`(?:^|[^a-zA-Z])t\(['"\x60](` + dottedKey + `)['"\x60]`)
 	// titleKey/descriptionKey/labelKey properties with string literal values.
-	keyPropPattern = regexp.MustCompile(`(?:titleKey|descriptionKey|labelKey):\s*['"]([a-zA-Z0-9_.]+)['"]`)
+	keyPropPattern = regexp.MustCompile(`(?:titleKey|descriptionKey|labelKey):\s*['"](` + dottedKey + `)['"]`)
 	// Lines containing a Key property may use ternaries; extract all dotted keys.
 	keyPropLine = regexp.MustCompile(`(?:titleKey|descriptionKey|labelKey)[:\s=]`)
 	// Dotted key literals in quoted strings.
@@ -41,13 +45,13 @@ var (
 	// the <t> component and any *-key="..." attribute (label-key,
 	// no-rows-key, ...). Bound forms (:label-key="expr") are expressions,
 	// not keys, and are excluded by the leading ^|\s requirement.
-	keyAttrPattern = regexp.MustCompile(`(?:^|\s)(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*-key|k)="([a-zA-Z0-9_.-]+)"`)
+	keyAttrPattern = regexp.MustCompile(`(?:^|\s)(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*-key|k)=['"]([a-zA-Z0-9_.-]+)['"]`)
 	// v-t="'...'" Vue directive for translation.
-	vtDirectivePattern = regexp.MustCompile(`v-t="'([a-zA-Z0-9_.]+)'"`)
+	vtDirectivePattern = regexp.MustCompile(`v-t="'(` + dottedKey + `)'"`)
 	// Direct store getter calls: getters['i18n/t']('key').
-	getterCallPattern = regexp.MustCompile(`\['i18n/t'\]\(\s*['"\x60]([a-zA-Z0-9_.]+)['"\x60]`)
+	getterCallPattern = regexp.MustCompile(`\['i18n/t'\]\(\s*['"\x60](` + dottedKey + `)['"\x60]`)
 	// t( calls with the key literal on the following line.
-	multilineKeyPattern = regexp.MustCompile(`(?:^|[^a-zA-Z])t\(\s*\n\s*['"\x60]([a-zA-Z0-9_.]+)['"\x60]`)
+	multilineKeyPattern = regexp.MustCompile(`(?:^|[^a-zA-Z])t\(\s*\n\s*['"\x60](` + dottedKey + `)['"\x60]`)
 	// Comment lines; keys mentioned in comments are not real references.
 	commentLinePattern = regexp.MustCompile(`^\s*(//|\*|/\*|<!--)`)
 
