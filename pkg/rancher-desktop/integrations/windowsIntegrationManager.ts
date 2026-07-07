@@ -322,7 +322,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       await this.wslExe,
       args,
       {
-        env:         opts.env,
+        env:         { ...process.env, ...opts.env },
         encoding:    opts.encoding ?? 'utf-8',
         stdio:       ['ignore', logStream, logStream],
         windowsHide: true,
@@ -349,7 +349,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       await this.wslExe,
       args,
       {
-        env:         opts.env,
+        env:         { ...process.env, ...opts.env },
         encoding:    opts.encoding ?? 'utf-8',
         stdio:       ['ignore', 'pipe', logStream],
         windowsHide: true,
@@ -569,7 +569,6 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         {
           distro,
           env: {
-            ...process.env,
             KUBECONFIG: kubeconfigPath,
             WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
           },
@@ -610,7 +609,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         await this.execCommand({
           distro,
           env: {
-            ...process.env, ...env, WSLENV: wslenv,
+            ...env, WSLENV: wslenv,
           },
         }, await this.getLinuxToolPath(distro, executable('setup-spin')));
       }
@@ -627,7 +626,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       let wslOutput: string;
 
       try {
-        wslOutput = await this.captureCommand({ env: { ...process.env, WSL_UTF8: '1' } }, '--list', '--verbose');
+        wslOutput = await this.captureCommand({ env: { WSL_UTF8: '1' } }, '--list', '--verbose');
       } catch (error: any) {
         console.error(`Error listing distros: ${ error }`);
 
@@ -663,7 +662,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected get runningDistros(): Promise<Set<string>> {
     return (async() => {
       try {
-        const output = await this.captureCommand({ env: { ...process.env, WSL_UTF8: '1' } }, '--list', '--running', '--quiet');
+        const output = await this.captureCommand({ env: { WSL_UTF8: '1' } }, '--list', '--running', '--quiet');
         const names = output
           .split(/\r?\n/g)
           .map(x => x.trim())
