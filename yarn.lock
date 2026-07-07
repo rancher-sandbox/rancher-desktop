@@ -1757,12 +1757,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/fuses@npm:^2.1.2":
-  version: 2.1.2
-  resolution: "@electron/fuses@npm:2.1.2"
+"@electron/fuses@npm:^2.1.3":
+  version: 2.1.3
+  resolution: "@electron/fuses@npm:2.1.3"
   bin:
     electron-fuses: dist/bin.js
-  checksum: 10c0/a7f1f355a0f94b357032f3edecc735e443431f3faacf25b19d286ab9ca4619e85f29b9471b966d60e9b3c3f1b01ee1c148ba82b93e27551e8d806484acafc0a9
+  checksum: 10c0/8d84bb49d671d568d99b6825abc4b61e12e5093f1bdbe9ed5cfa9f73ac15d571cd342c901e8181191b593a47666586735536eed29f4c85756ffc7c14987c3c13
   languageName: node
   linkType: hard
 
@@ -14501,7 +14501,7 @@ __metadata:
     "@babel/plugin-proposal-private-property-in-object": "npm:7.21.11"
     "@docker/extension-api-client-types": "npm:0.4.2"
     "@electron/asar": "npm:4.2.0"
-    "@electron/fuses": "npm:^2.1.2"
+    "@electron/fuses": "npm:^2.1.3"
     "@electron/notarize": "npm:3.1.1"
     "@eslint/config-helpers": "npm:0.6.0"
     "@eslint/js": "npm:10.0.1"
