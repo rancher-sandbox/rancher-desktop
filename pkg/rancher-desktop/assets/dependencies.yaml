@@ -20,14 +20,14 @@ qemu:
     qemu-9.2.0.rd2-darwin-aarch64.tar.gz: sha256:1e65ce4c9c15da404732b446d434f05b373438d9a9ebf01a6082b3634cb0b3b1
     qemu-9.2.0.rd2-linux-x86_64.tar.gz: sha256:03c39317c9c87118853e4261d0fd082a724ef9617196b2921519a4e4794e9e8d
 electron:
-  version: 42.5.0
+  version: 42.5.1
   checksums:
-    electron-v42.5.0-darwin-x64.zip: sha256:ca4792d47e74a6afce1d39a019f201d1a47fa81fcf4e8bcaac6fe5756f172940
-    electron-v42.5.0-darwin-arm64.zip: sha256:5e392f66b3f6d13caa6d50bbe10fce3d848ca16c5680529357aa26c5da58a1e6
-    electron-v42.5.0-linux-x64.zip: sha256:6705a9d0cc5c8f225d705d6e1c2607b2b5be8667d2befb18cdafe8b7b29b8008
-    electron-v42.5.0-linux-arm64.zip: sha256:0188f1d86efe785e5721cfaa1ae51d6ef68260705c30037d0d271aaaf78af315
-    electron-v42.5.0-win32-x64.zip: sha256:127bbf7a755b438612c076b22baee258a87cd3d07168cc82ea46ffc015936114
-    electron-v42.5.0-win32-arm64.zip: sha256:765370134fdd2dd851bb019d7b7d9379ed7087f288eb8bee4043b42cfd9c33d8
+    electron-v42.5.1-darwin-x64.zip: sha256:608f68cc8c5db54b7b3d853e3672a447bd7ad06d5b2caa9bc0a83d56479374fd
+    electron-v42.5.1-darwin-arm64.zip: sha256:e019b54b8b63dcc851adc871e011c45bf1510854266bb960dcff3781b24b6f96
+    electron-v42.5.1-linux-x64.zip: sha256:3a729b020acb04aefac2c9b4b29c65b37dd7126a14a04d1ef29acb256d3edbd1
+    electron-v42.5.1-linux-arm64.zip: sha256:1575fa5cc64b3bf502d03632a915cdca4934e85d2b14fbf900752e8febfadd5c
+    electron-v42.5.1-win32-x64.zip: sha256:2fb8b988777e00c1e349568d0f796894404d6253900600aea5d19315b977fbca
+    electron-v42.5.1-win32-arm64.zip: sha256:bc91649589eac812cd258c22c03f634308e227a0ee55456bf80051e7ad61bc94
 socketVMNet:
   version: 1.2.2
   checksums:
