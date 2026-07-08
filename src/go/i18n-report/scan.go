@@ -151,6 +151,29 @@ func scanSourceFiles(root string, exts []string) ([]string, error) {
 	return files, err
 }
 
+// scanRepoSourceFiles returns the source files to scan: the recursive
+// pkg/rancher-desktop tree plus root-level files such as background.ts.
+func scanRepoSourceFiles(root string) ([]string, error) {
+	srcDir := filepath.Join(root, "pkg", "rancher-desktop")
+	files, err := scanSourceFiles(srcDir, sourceExtensions)
+	if err != nil {
+		return nil, err
+	}
+
+	extSet := make(map[string]bool, len(sourceExtensions))
+	for _, e := range sourceExtensions {
+		extSet[e] = true
+	}
+	if entries, err := os.ReadDir(root); err == nil {
+		for _, entry := range entries {
+			if !entry.IsDir() && extSet[filepath.Ext(entry.Name())] {
+				files = append(files, filepath.Join(root, entry.Name()))
+			}
+		}
+	}
+	return files, nil
+}
+
 // scanResult holds everything one pass over the source tree produces.
 type scanResult struct {
 	// refs maps keys to all references, including indirect ones (string
@@ -166,24 +189,9 @@ type scanResult struct {
 // scanFiles reads source files and returns literal key references and
 // dynamic patterns. This shared helper avoids scanning the source tree twice.
 func scanFiles(root string, keys map[string]string) (*scanResult, error) {
-	srcDir := filepath.Join(root, "pkg", "rancher-desktop")
-	exts := sourceExtensions
-	files, err := scanSourceFiles(srcDir, exts)
+	files, err := scanRepoSourceFiles(root)
 	if err != nil {
 		return nil, err
-	}
-
-	// Also scan root-level source files (e.g. background.ts).
-	extSet := make(map[string]bool, len(exts))
-	for _, e := range exts {
-		extSet[e] = true
-	}
-	if entries, err := os.ReadDir(root); err == nil {
-		for _, entry := range entries {
-			if !entry.IsDir() && extSet[filepath.Ext(entry.Name())] {
-				files = append(files, filepath.Join(root, entry.Name()))
-			}
-		}
 	}
 
 	result := &scanResult{

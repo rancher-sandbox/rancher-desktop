@@ -71,6 +71,9 @@ func reportUntranslated(w io.Writer, root, format string, includeDescriptions bo
 	}
 
 	if format == formatJSON {
+		if hits == nil {
+			hits = []untranslatedHit{}
+		}
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", "  ")
 		return enc.Encode(hits)
@@ -92,28 +95,14 @@ func reportUntranslated(w io.Writer, root, format string, includeDescriptions bo
 // When includeDescriptions is true, the dialog pattern also matches "description" properties
 // (catches diagnostics strings in main/diagnostics/*.ts).
 //
-// Known gaps: Electron menu labels (main/mainmenu.ts), error dialog calls
-// (showErrorBox in tray.ts, settingsImpl.ts), port forwarding error messages
-// (backend/kube/client.ts), and template-literal strings lack a reliable
-// structural pattern to scan for without drowning in false positives.
+// Known gaps: error dialog calls (showErrorBox in tray.ts, settingsImpl.ts),
+// port forwarding error messages (backend/kube/client.ts), and template-literal
+// strings lack a reliable structural pattern to scan for without drowning in
+// false positives.
 func findUntranslated(root string, includeDescriptions bool) ([]untranslatedHit, error) {
-	srcDir := filepath.Join(root, "pkg", "rancher-desktop")
-	files, err := scanSourceFiles(srcDir, sourceExtensions)
+	files, err := scanRepoSourceFiles(root)
 	if err != nil {
 		return nil, err
-	}
-
-	// Also scan root-level source files (e.g., background.ts).
-	if entries, readErr := os.ReadDir(root); readErr == nil {
-		for _, entry := range entries {
-			if entry.IsDir() {
-				continue
-			}
-			ext := filepath.Ext(entry.Name())
-			if ext == ".ts" || ext == ".js" {
-				files = append(files, filepath.Join(root, entry.Name()))
-			}
-		}
 	}
 
 	var hits []untranslatedHit
@@ -132,7 +121,7 @@ func findUntranslated(root string, includeDescriptions bool) ([]untranslatedHit,
 		}
 		data, err := os.ReadFile(file)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("reading %s: %w", file, err)
 		}
 		relPath, _ := filepath.Rel(root, file)
 		lines := strings.Split(string(data), "\n")

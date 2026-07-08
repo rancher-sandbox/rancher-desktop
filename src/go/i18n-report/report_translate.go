@@ -173,7 +173,7 @@ func reportTranslate(w io.Writer, root, locale, mode, format string, batch, batc
 		modeDrift:   "drifted in",
 	}[mode]
 
-	if len(pairs) == 0 {
+	if len(pairs) == 0 && batches == 0 {
 		fmt.Fprintf(w, "No keys %s %s.\n", modeLabel, locale)
 		return nil
 	}
