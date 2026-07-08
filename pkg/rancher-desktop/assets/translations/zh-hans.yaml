@@ -1,1148 +1,1898 @@
 action:
+  # @source Refresh
   refresh: 刷新
 allowedImages:
+  # @source The image name needs to match one of the patterns defined in the Allowed Images preference tab.
   alert: 镜像名称必须匹配"允许的镜像"偏好设置中定义的某个模式。
+  # @source Enable
   enable: 启用
   errors:
+    # @source Error, item is duplicate.
     duplicate: 错误，条目重复。
+  # @source Allowed Image Patterns
   label: 允许的镜像模式
   patterns:
+    # @source Type the image pattern
     placeholder: 输入镜像模式
 application:
   behavior:
     autoStart:
+      # @source Automatically start at login
       label: 登录时自动启动
+      # @source Startup
       legendText: 启动
     background:
+      # @source Background
       legendText: 后台运行
+      # @source Hide the app window when Rancher Desktop is running in the background. It can be opened via the Notification Icon (if visible) or by running Rancher Desktop from the Applications menu.
+      # @source
       legendTooltip: 当 Rancher Desktop 在后台运行时隐藏应用窗口。可通过通知图标（若可见）或从应用程序菜单启动 Rancher Desktop 来重新打开窗口。
     notificationIcon:
+      # @source Hide Notification Icon
       label: 隐藏通知图标
+      # @source Notification Icon
       legendText: 通知图标
     startInBackground:
+      # @source Start in the background
       label: 在后台启动
     theme:
+      # @source Appearance
       legendText: 外观
       options:
         dark:
           # @reason 主题选项：深色模式描述，说明始终使用深色界面
+          # @source Always use dark mode
           description: 始终使用深色模式
           # @reason 主题选项：深色模式标签，UI标签需简洁
+          # @source Dark
           label: 深色
         light:
           # @reason 主题选项：浅色模式描述，说明始终使用浅色界面
+          # @source Always use light mode
           description: 始终使用浅色模式
           # @reason 主题选项：浅色模式标签，UI标签需简洁
+          # @source Light
           label: 浅色
         system:
           # @reason 主题选项：跟随系统描述，说明跟随操作系统设置
+          # @source Follow the operating system setting
           description: 跟随操作系统设置
           # @reason 主题选项：系统标签，标准计算机术语
+          # @source System
           label: 系统
     windowQuitOnClose:
+      # @source Quit when closing application window
       label: 关闭应用窗口时退出
   general:
     adminAccess:
+      # @source Allow administrative credentials (sudo access)
       label: 允许管理员凭据（sudo 权限）
+      # @source Administrative Access
       legendText: 管理员权限
+      # @source If checked, {appName} will acquire administrative credentials ("sudo access") when starting. This enables bridged networking and default docker socket support. Takes effect on next start.
       legendTooltip: 勾选后，{appName} 将在启动时获取管理员凭据（"sudo 权限"）。此选项可启用桥接网络和默认 Docker 套接字支持。下次启动时生效。
     automaticUpdates:
+      # @source Check for updates automatically
       label: 自动检查更新
+      # @source Automatic Updates
       legendText: 自动更新
     statistics:
+      # @source Allow collection of anonymous statistics to help improve {appName}
       label: 允许收集匿名统计数据以帮助改进 {appName}
+      # @source Statistics
       legendText: 统计
   locale:
+    # @source Community and AI tools provide translations. English is the canonical language. Report translation issues on GitHub.
     disclaimer: 翻译由社区和 AI 工具提供。英语为规范语言。如发现翻译问题，请在 GitHub 上报告。
+    # @source Language
     legendText: 语言
 asyncButton:
   activate:
     # @reason 异步按钮：激活操作，动词"激活"
+    # @source Activate
     action: 激活
     # @reason 异步按钮：激活成功，过去完成状态
+    # @source Activated
     success: 已激活
     # @reason 异步按钮：激活中，进行时状态，保留HTML实体
+    # @source Activating&hellip;
     waiting: 正在激活&hellip;
   apply:
     # @reason 异步按钮：应用操作，动词"应用"
+    # @source Apply
     action: 应用
     # @reason 异步按钮：应用成功，过去完成状态
+    # @source Applied
     success: 已应用
     # @reason 异步按钮：应用中，进行时状态
+    # @source Applying&hellip;
     waiting: 正在应用&hellip;
   continue:
     # @reason 异步按钮：继续操作，动词"继续"
+    # @source Continue
     action: 继续
     # @reason 异步按钮：继续成功，结果是已保存
+    # @source Saved
     success: 已保存
     # @reason 异步按钮：继续等待中，正在保存
+    # @source Saving&hellip;
     waiting: 正在保存&hellip;
   copy:
     # @reason 异步按钮：复制操作，提示点击复制
+    # @source Click to Copy
     action: 点击复制
     # @reason 异步按钮：复制成功，感叹号保留表达即时反馈
+    # @source Copied!
     success: 已复制！
   create:
     # @reason 异步按钮：创建操作，动词"创建"
+    # @source Create
     action: 创建
     # @reason 异步按钮：创建成功，过去完成状态
+    # @source Created
     success: 已创建
     # @reason 异步按钮：创建中，进行时状态
+    # @source Creating&hellip;
     waiting: 正在创建&hellip;
   deactivate:
     # @reason 异步按钮：停用操作，动词"停用"
+    # @source Deactivate
     action: 停用
     # @reason 异步按钮：停用成功，过去完成状态
+    # @source Deactivated
     success: 已停用
     # @reason 异步按钮：停用中，进行时状态
+    # @source Deactivating&hellip;
     waiting: 正在停用&hellip;
   default:
     # @reason 异步按钮：默认操作标签，通用"操作"
+    # @source Action
     action: 操作
     # @reason 异步按钮：默认错误标签，通用"错误"
+    # @source Error
     error: 错误
     # @reason 异步按钮：默认成功标签，通用"成功"
+    # @source Success
     success: 成功
     # @reason 异步按钮：默认等待标签，通用"请稍候"
+    # @source Waiting
     waiting: 请稍候
   delete:
     # @reason 异步按钮：删除操作，动词"删除"
+    # @source Delete
     action: 删除
     # @reason 异步按钮：删除成功，过去完成状态
+    # @source Deleted
     success: 已删除
     # @reason 异步按钮：删除中，进行时状态
+    # @source Deleting&hellip;
     waiting: 正在删除&hellip;
   disable:
     # @reason 异步按钮：禁用操作，动词"禁用"
+    # @source Disable
     action: 禁用
     # @reason 异步按钮：禁用成功，过去完成状态
+    # @source Disabled
     success: 已禁用
     # @reason 异步按钮：禁用中，进行时状态
+    # @source Disabling&hellip;
     waiting: 正在禁用&hellip;
   done:
     # @reason 异步按钮：完成操作，动词"完成"
+    # @source Done
     action: 完成
     # @reason 异步按钮：完成成功，结果是已保存
+    # @source Saved
     success: 已保存
     # @reason 异步按钮：完成等待中，正在保存
+    # @source Saving&hellip;
     waiting: 正在保存&hellip;
   download:
     # @reason 异步按钮：下载操作，动词"下载"
+    # @source Download
     action: 下载
     # @reason 异步按钮：下载成功，英文原文为"Saving"表示正在保存到本地
+    # @source Saving
     success: 正在保存
     # @reason 异步按钮：下载中，进行时状态
+    # @source Downloading&hellip;
     waiting: 正在下载&hellip;
   edit:
     # @reason 异步按钮：编辑/保存操作，此处action对应"保存"语义
+    # @source Save
     action: 保存
     # @reason 异步按钮：编辑成功，过去完成状态
+    # @source Saved
     success: 已保存
     # @reason 异步按钮：编辑保存中，进行时状态
+    # @source Saving&hellip;
     waiting: 正在保存&hellip;
   enable:
     # @reason 异步按钮：启用操作，动词"启用"
+    # @source Enable
     action: 启用
     # @reason 异步按钮：启用成功，过去完成状态
+    # @source Enabled
     success: 已启用
     # @reason 异步按钮：启用中，进行时状态
+    # @source Enabling&hellip;
     waiting: 正在启用&hellip;
   finish:
     # @reason 异步按钮：完成流程操作，动词"完成"
+    # @source Finish
     action: 完成
     # @reason 异步按钮：流程完成成功状态
+    # @source Finished
     success: 已完成
     # @reason 异步按钮：流程完成中，进行时状态
+    # @source Finishing&hellip;
     waiting: 正在完成&hellip;
   import:
     # @reason 异步按钮：导入操作，动词"导入"
+    # @source Import
     action: 导入
     # @reason "Imported" - past tense completion of import action
+    # @source Imported
     success: 已导入
     # @reason "Importing…" - in-progress state with ellipsis HTML entity preserved
+    # @source Importing&hellip;
     waiting: 正在导入&hellip;
   install:
     # @reason "Install" - action button label
+    # @source Install
     action: 安装
     # @reason "Installing" - past tense, shown after install begins (note: source says "Installing" for success state)
+    # @source Installing
     success: 正在安装
     # @reason "Starting…" - in-progress state before install completes
+    # @source Starting&hellip;
     waiting: 正在启动&hellip;
   refresh:
     # @reason empty value preserved as-is per rules
+    # @source
     action: ''
     # @reason icon name stays in English per rules
+    # @source refresh
     actionIcon: refresh
     # @reason empty value preserved
+    # @source
     error: ''
     # @reason icon name stays in English
+    # @source error
     errorIcon: error
     # @reason empty value preserved
+    # @source
     success: ''
     # @reason icon name stays in English
+    # @source checkmark
     successIcon: checkmark
     # @reason empty value preserved
+    # @source
     waiting: ''
     # @reason icon name stays in English
+    # @source refresh
     waitingIcon: refresh
   remove:
     # @reason "Remove" - action button label
+    # @source Remove
     action: 移除
     # @reason "Removed" - past tense completion
+    # @source Removed
     success: 已移除
     # @reason "Removing…" - in-progress state
+    # @source Removing&hellip;
     waiting: 正在移除&hellip;
   restore:
     # @reason "Restore" - action button label
+    # @source Restore
     action: 恢复
     # @reason "Restored" - past tense completion
+    # @source Restored
     success: 已恢复
     # @reason "Restoring…" - in-progress state
+    # @source Restoring&hellip;
     waiting: 正在恢复&hellip;
   snapshot:
     # @reason "Snapshot Now" - action button label
+    # @source Snapshot Now
     action: 立即创建快照
     # @reason "Snapshot Creating" - in-progress success state
+    # @source Creating Snapshot
     success: 正在创建快照
     # @reason "Snapshotting…" - in-progress state
+    # @source Snapshotting&hellip;
     waiting: 正在拍摄快照&hellip;
   uninstall:
     # @reason "Uninstall" - action button label
+    # @source Uninstall
     action: 卸载
     # @reason "Uninstalled" - past tense completion
+    # @source Uninstalled
     success: 已卸载
     # @reason "Uninstalling…" - in-progress state
+    # @source Uninstalling&hellip;
     waiting: 正在卸载&hellip;
   update:
     # @reason "Update" - action button label
+    # @source Update
     action: 更新
     # @reason "Updated" - past tense completion
+    # @source Updated
     success: 已更新
     # @reason "Updating…" - in-progress state
+    # @source Updating&hellip;
     waiting: 正在更新&hellip;
   upgrade:
     # @reason "Upgrade" - action button label, distinct from update (version bump)
+    # @source Upgrade
     action: 升级
     # @reason "Upgrading" - in-progress success state
+    # @source Upgrading
     success: 正在升级
     # @reason "Starting…" - in-progress state before upgrade completes
+    # @source Starting&hellip;
     waiting: 正在启动&hellip;
 containerEngine:
+  # @source Container Engine
   label: 容器引擎
   options:
     containerd:
       # @reason description for containerd engine option; "nerdctl" is a product name, kept in English
+      # @source Namespaces for container images; use with nerdctl.
       description: 容器镜像命名空间；与 nerdctl 配合使用。
       # @reason product name, kept in English per rules
+      # @source containerd
       label: containerd
     moby:
       # @reason description for moby/Docker engine option; "Docker CLI" is a product name
+      # @source Docker API; use with Docker CLI.
       description: Docker API；与 Docker CLI 配合使用。
       # @reason product name, kept in English per rules
+      # @source dockerd (moby)
       label: dockerd (moby)
 containerInfo:
+  # @source Container Info
   fallbackTitle: 容器信息
+  # @source Info
   info: 信息
+  # @source Logs
   logs: 日志
   search:
+    # @source Search in logs
     ariaLabel: 在日志中搜索
+    # @source Clear search
     clearSearch: 清除搜索
+    # @source Next match
     nextMatch: 下一个匹配
+    # @source Search logs...
     placeholder: 搜索日志...
+    # @source Previous match
     previousMatch: 上一个匹配
+  # @source Shell
   shell: Shell
+  # @source Stats
   stats: 统计
 containerInspect:
   capabilities:
+    # @source Added
     added: 已添加
+    # @source Dropped
     dropped: 已移除
   command:
+    # @source Args
     args: 参数
+    # @source Command
     command: 命令
+    # @source Entrypoint
     entrypoint: Entrypoint
   error:
+    # @source Failed to load container details.
     loadFailed: 无法加载容器详情。
+    # @source An unknown error has occurred
     unknown: 发生未知错误
+  # @source Loading container details…
   loading: 正在加载容器详情…
   mounts:
+    # @source Destination
     destination: 目标
+    # @source RO
     readOnly: 只读
+    # @source RW
     readWrite: 读写
+    # @source R/W
     rw: 读/写
+    # @source Source
     source: 源
+    # @source Type
     type: 类型
+  # @source None
   none: 无
   sections:
+    # @source Capabilities
     capabilities: 权能
+    # @source Command & Args
     commandArgs: 命令和参数
+    # @source Environment
     environment: 环境变量
+    # @source Labels
     labels: 标签
+    # @source Mounts
     mounts: 挂载
+    # @source Ports
     ports: 端口
   summary:
+    # @source Created
     created: 创建时间
+    # @source ID
     id: ID
+    # @source Image
     image: 镜像
+    # @source IP Address
     ipAddress: IP 地址
+    # @source Name
     name: 名称
+    # @source Started
     started: 启动时间
 containerStats:
   charts:
+    # @source Block I/O (bytes/s)
     blockIO: 块 I/O（字节/秒）
+    # @source CPU %
     cpu: CPU %
+    # @source Memory
     memory: 内存
+    # @source Network I/O (bytes/s)
     network: 网络 I/O（字节/秒）
   interval:
+    # @source {minutes} min
     minutes: '{minutes} 分钟'
+    # @source {seconds} s
     seconds: '{seconds} 秒'
+  # @source Stats are currently only available for the Docker (Moby) engine.
   mobyOnly: 统计信息目前仅适用于 Docker (Moby) 引擎。
+  # @source No processes found.
   noProcesses: 未找到进程。
+  # @source Stats are only available for running containers.
   notRunning: 统计信息仅适用于正在运行的容器。
+  # @source Processes
   processes: 进程
+  # @source Refresh
   refresh: 刷新
   series:
+    # @source Limit
     limit: 上限
+    # @source Read
     read: 读取
+    # @source RX
     rx: 接收
+    # @source TX
     tx: 发送
+    # @source Used
     used: 已用
+    # @source Write
     write: 写入
 containers:
   manage:
     table:
       action:
+        # @source Info
         info: 信息
+        # @source Restart
         restart: 重启
+        # @source Start
         start: 启动
+        # @source Stop
         stop: 停止
       header:
+        # @source Name
         containerName: 名称
+        # @source Image
         image: 镜像
+        # @source Port(s)
         ports: 端口
+        # @source Uptime
         started: 运行时间
+        # @source State
         state: 状态
   sortableTables:
+    # @source There are no containers to show
     noRows: 没有可显示的容器
+  # @source Containers
   title: 容器
 dashboard:
+  # @source Rancher Dashboard
   windowTitle: Rancher Dashboard
 denyRoot:
+  # @source Rancher Desktop cannot be run with root privileges. Please run again as a regular user.
   message: Rancher Desktop 不能以 root 权限运行。请以普通用户身份重新运行。
+  # @source Cannot run as Root
   title: 无法以 Root 身份运行
 deploymentProfile:
+  # @source Invalid deployment file {path}: no version specified. Add a version field to make it valid (current version is {version}).
   noVersion: 无效的部署文件 {path}：未指定版本。请添加版本字段使其有效（当前版本为 {version}）。
+  # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
   noVersionRegistry: 无效的部署：未在 {path} 指定版本。请添加版本字段使其有效（当前版本为 {version}）。
 diagnostics:
+  # @source {count} failed plus {muted} muted
   failedCount: '{count} 项失败，{muted} 项已静音'
+  # @source Last run:
   lastRun: 上次运行：
+  # @source (No fixes available)
   noFixes: （无可用修复）
   results:
     muted:
+      # @source Try showing muted diagnostics.
       body: 尝试显示已静音的诊断项。
+      # @source No results found
       heading: 未找到结果
+      # @source icon-search
       icon: icon-search
     success:
+      # @source Rancher Desktop appears to be functioning correctly.
       body: Rancher Desktop 运行正常。
+      # @source No problems detected
       heading: 未检测到问题
+      # @source icon-checkmark
       icon: icon-checkmark
+  # @source Show Muted
   showMuted: 显示已静音
   tableHeaders:
+    # @source Mute
     mute: 静音
+    # @source Name
     name: 名称
+  # @source Diagnostics
   title: 诊断
 dialog:
   bridgedNetwork:
+    # @source Shared network isn't available either. Only network access is via port forwarding to the host.
     noNetwork: 共享网络也不可用。只能通过端口转发访问主机网络。
+    # @source Using shared network address {ip}
     sharedFallback: 使用共享网络地址 {ip}
+    # @source Bridged network did not get an IP address.
     title: 桥接网络未获取到 IP 地址。
   confirmMigration:
+    # @source Delete Workloads
     delete: 删除工作负载
+    # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: 从 {from} 降级到 {to} 将丢失现有的 Kubernetes 工作负载。是否删除数据？
+    # @source Confirming migration
     title: 确认迁移
   invalidK8sVersion:
+    # @source Falling back to recommended minimum upgrade version of {version}
     detail: 回退到建议的最低升级版本 {version}
+    # @source Requested Kubernetes version ''{version}'' is not a supported version.
     message: 请求的 Kubernetes 版本 ''{version}'' 不是受支持的版本。
+    # @source Invalid Kubernetes Version
     title: 无效的 Kubernetes 版本
   networkFailure:
+    # @source Please acquire a version in the range {range} and install in ''{path}''
     detail: 请获取 {range} 范围内的版本并安装到 ''{path}''
+    # @source Can't download a compatible version of kubectl in offline-mode
     message: 离线模式下无法下载兼容版本的 kubectl
+    # @source Network failure
     title: 网络故障
 extensions:
+  # @source icon-extension
   icon: icon-extension
   installed:
     emptyState:
+      # @source It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
       body: 您似乎尚未安装任何扩展。浏览扩展目录以开始使用。
       button:
+        # @source Browse Extensions
         text: 浏览扩展
+      # @source No extensions installed
       heading: 未安装扩展
+      # @source icon-extension
       icon: icon-extension
     list:
+      # @source Remove
       uninstall: 移除
+      # @source Upgrade
       upgrade: 升级
   view:
     emptyState:
+      # @source {extensionId} was removed. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.
       body: '{extensionId} 已被移除。请访问扩展目录重新安装该扩展，或浏览其他扩展来增强您的 Rancher Desktop 体验。'
+      # @source Extension removed
       heading: 扩展已移除
 firstRun:
+  # @source Enable Kubernetes
   enableKubernetes: 启用 Kubernetes
   kubernetesVersion:
+    # @source (cached versions only)
     cachedOnly: （仅缓存版本）
+    # @source Kubernetes Version
     legend: Kubernetes 版本
+    # @source Other Versions
     otherVersions: 其他版本
+    # @source Recommended Versions
     recommendedVersions: 推荐版本
+  # @source OK
   ok: 确定
+  # @source Welcome to Rancher Desktop by SUSE
   welcome: 欢迎使用 SUSE Rancher Desktop
 general:
+  # @source Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
   description: Rancher Desktop 通过桌面应用程序提供 Kubernetes 和镜像管理功能。
+  # @source Homepage
   homepage: 主页
+  # @source Issues
   issues: 问题
+  # @source General
   navLabel: 概览
+  # @source Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack
   projectDiscussions: 项目讨论：<a href="https://slack.rancher.io/">Rancher Users</a> Slack 中的 <b>#rancher-desktop</b>
+  # @source Project Links:
   projectLinks: 项目链接：
+  # @source Welcome to Rancher Desktop by SUSE
   title: 欢迎使用 SUSE Rancher Desktop
 generic:
+  # @source  and 
   and: ' 和 '
+  # @source Apply
   apply: 应用
+  # @source Cancel
   cancel: 取消
+  # @source Close
   close: 关闭
+  # @source , 
   comma: 、
+  # @source Forward
   forward: 转发
+  # @source Loading&hellip;
   loading: 正在加载&hellip;
+  # @source Namespace
   namespace: 命名空间
+  # @source OK
   ok: 确定
+  # @source Rerun
   rerun: 重新运行
+  # @source Search
   search: 搜索
 imageEvents:
+  # @source Please select the Dockerfile to use (could have a different name)
   buildMessage: 请选择要使用的 Dockerfile（可能使用了其他名称）
+  # @source Pick the build directory
   buildTitle: 选择构建目录
+  # @source Error trying to delete images {ids}
   deleteBatchError: 尝试删除镜像 {ids} 时出错
+  # @source Error trying to delete image {name} ({id}):
+  # @source
+  # @source  {error}
   deleteError: 尝试删除镜像 {name} ({id}) 时出错：\n\n {error}
+  # @source Error trying to push {name}:
+  # @source
+  # @source  {error}
   pushError: 尝试推送 {name} 时出错：\n\n {error}
+  # @source Error trying to scan {name}:
+  # @source
+  # @source  {error}
   scanError: 尝试扫描 {name} 时出错：\n\n {error}
 images:
   action:
+    # @source Add Image
     add: 添加镜像
   add:
     action:
+      # @source Build
       build: 构建
       pastTense:
         # @reason "Built" - past tense, result of a build action
+        # @source Built
         build: 已构建
         # @reason "Pulled" - past tense, result of a pull action
+        # @source Pulled
         pull: 已拉取
+      # @source Pull
       pull: 拉取
+    # @source Error trying to { action } ''{ image }'' - see console output for more information
     errorText: 尝试 { action } ''{ image }'' 时出错 - 详情请查看控制台输出
+    # @source {action}ing image...
     loadingText: 正在{action}镜像...
+    # @source {action} image
     successText: '{action}镜像'
+    # @source Add Image
     title: 添加镜像
   confirmDelete:
+    # @source Delete
     confirm: 删除
+    # @source Delete {count} {count, plural, one {image} other {images}}?
     multiple: 删除 {count} 个{count, plural, one {镜像} other {镜像}}？
+    # @source Delete image {name}:{tag}?
     single: 删除镜像 {name}:{tag}？
+    # @source Confirming image deletion
     title: 确认删除镜像
   manager:
+    # @source Close Output to Continue
     close: 关闭输出以继续
     input:
       build:
         # @reason "Build" - button label for building an image
+        # @source Build
         button: 构建
         # @reason label for image name input field in build context
+        # @source Name of image to build:
         label: 要构建的镜像名称：
         # @reason placeholder showing example registry path format; technical value kept as-is
+        # @source registry.example.com/namespace/image:tag
         placeholder: registry.example.com/namespace/image:tag
       pull:
         # @reason "Pull" - button label for pulling an image
+        # @source Pull
         button: 拉取
         # @reason label for image name input field in pull context
+        # @source Name of image to pull:
         label: 要拉取的镜像名称：
         # @reason placeholder showing example registry path format; technical value kept as-is
+        # @source registry.example.com/namespace/image
         placeholder: registry.example.com/namespace/image
     table:
       action:
+        # @source Delete
         delete: 删除
+        # @source Push
         push: 推送
+        # @source Scan...
         scan: 扫描...
       header:
+        # @source Image ID
         imageId: 镜像 ID
+        # @source Image
         imageName: 镜像
+        # @source Size
         size: 大小
+        # @source Tag
         tag: 标签
+      # @source All images
       label: 所有镜像
+    # @source Image Output
     title: 镜像输出
   scan:
     details:
+      # @source Description
       description: 描述
+      # @source Primary URL
       primaryUrl: 主要 URL
+      # @source References
       references: 参考
+    # @source Error trying to scan ''{ image }'' - see console output for more information
     errorText: 尝试扫描 ''{ image }'' 时出错 - 详情请查看控制台输出
     labels:
+      # @source CRITICAL
       critical: 严重
+      # @source HIGH
       high: 高
+      # @source Issues Found
       issuesFound: 发现的问题
+      # @source LOW
       low: 低
+      # @source MEDIUM
       medium: 中
+    # @source Scanning ''{ image }''
     loadingText: 正在扫描 ''{ image }''
     results:
       headers:
+        # @source Fixed
         fixed: 已修复
+        # @source Installed
         installed: 已安装
+        # @source Package
         package: 软件包
+        # @source Severity
         severity: 严重程度
+        # @source Vulnerability ID
         vulnerabilityId: 漏洞 ID
+    # @source Scan details for ''{ image }''
     title: '''''{ image }'''' 的扫描详情'
   sortableTables:
+    # @source There are no images to show
     noRows: 没有可显示的镜像
   state:
+    # @source Waiting for image manager to be ready
     imagesUnready: 正在等待镜像管理器就绪
+    # @source Error: Unknown state; please reload.
     unknown: 错误：未知状态，请重新加载。
+  # @source Images
   title: Images
 integrations:
   windows:
+    # @source Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros
     description: 将 Rancher Desktop 的 Kubernetes 配置和 Docker 套接字暴露给 Windows Subsystem for Linux (WSL) 发行版
 kubernetesError:
+  # @source Context:
   context: 上下文：
+  # @source Last command run:
   lastCommand: 上次运行的命令：
+  # @source Some recent <a href="#" data-action="showLogs">logfile</a> lines:
   logLines: 最近的一些<a href="#" data-action="showLogs">日志文件</a>行：
+  # @source {appName} Error
   title: '{appName} 错误'
 kubernetesPrefs:
   kubernetes:
+    # @source Enable Kubernetes
     label: 启用 Kubernetes
+    # @source Kubernetes
     legendText: Kubernetes
   options:
+    # @source Options
     legendText: 选项
+    # @source Install Spin Operator
     spinkube: 安装 Spin Operator
+    # @source Spin operator requires <a href="#" data-navigate="Container Engine,general">WebAssembly</a> to be enabled.
     spinkubeWarning: Spin Operator 需要启用<a href="#" data-navigate="Container Engine,general">WebAssembly</a>。
+    # @source Enable Traefik
     traefik: 启用 Traefik
   port:
+    # @source Kubernetes Port
     legendText: Kubernetes 端口
   version:
+    # @source Kubernetes version
     legendText: Kubernetes 版本
+    # @source Kubernetes version (cached versions only)
     legendTextCached: Kubernetes 版本（仅缓存版本）
+    # @source Other Versions
     otherVersions: 其他版本
+    # @source Recommended Versions
     recommendedVersions: 推荐版本
 labelSelect:
   noOptions:
+    # @source No options
     empty: 无选项
+    # @source No matching options
     noMatch: 没有匹配的选项
   pagination:
+    # @source {count} / {totalCount} items
     counts: '{count} / {totalCount} 项'
+    # @source Load More...
     more: 加载更多...
 locale:
+  # @source German
   de: 德语
   # @reason locale name for English
+  # @source English
   en-us: 英语
   # @reason locale name for Spanish
+  # @source Spanish
   es: 西班牙语
   # @reason locale name for French
+  # @source French
   fr: 法语
   # @reason locale name for Italian
+  # @source Italian
   it: 意大利语
   # @reason locale name for Japanese
+  # @source Japanese
   ja: 日语
   # @reason locale name for Brazilian Portuguese
+  # @source Portuguese (Brazilian)
   pt-br: 葡萄牙语（巴西）
   # @reason locale name for Simplified Chinese - using the Chinese name per rules for locale names
+  # @source Chinese (Simplified)
   zh-hans: 简体中文
 mainMenu:
+  # @source About {appName}
   about: 关于 {appName}
   edit:
+    # @source &Copy
     copy: 复制(&C)
+    # @source Cu&t
     cut: 剪切(&T)
+    # @source De&lete
     delete: 删除(&L)
+    # @source &Edit
     label: 编辑(&E)
+    # @source &Paste
     paste: 粘贴(&P)
+    # @source &Redo
     redo: 重做(&R)
+    # @source Select &All
     selectAll: 全选(&A)
+    # @source &Undo
     undo: 撤销(&U)
   file:
+    # @source Close
     close: 关闭
+    # @source E&xit
     exit: 退出(&X)
+    # @source &File
     label: 文件(&F)
   help:
+    # @source &About {appName}
     about: 关于 {appName}(&A)
+    # @source &Discuss
     discuss: 讨论(&D)
+    # @source File a &Bug
     fileABug: 提交 &Bug
+    # @source Get &Help
     getHelp: 获取帮助(&H)
+    # @source {appName} &Help
     help: '{appName} 帮助(&H)'
+    # @source &Help
     label: 帮助(&H)
+    # @source &Project Page
     projectPage: 项目主页(&P)
+  # @source Hide {appName}
   hide: 隐藏 {appName}
+  # @source Hide Others
   hideOthers: 隐藏其他
+  # @source Preferences
   preferences: 偏好设置
+  # @source Quit {appName}
   quit: 退出 {appName}
+  # @source Services
   services: 服务
+  # @source Show All
   showAll: 显示全部
   view:
+    # @source &Actual Size
     actualSize: 实际大小(&A)
+    # @source &Force Reload
     forceReload: 强制重新加载(&F)
+    # @source &View
     label: 视图(&V)
+    # @source &Reload
     reload: 重新加载(&R)
+    # @source Toggle &Developer Tools
     toggleDevTools: 切换开发者工具(&D)
+    # @source Toggle Full &Screen
     toggleFullScreen: 切换全屏(&S)
+    # @source Zoom &In
     zoomIn: 放大(&I)
+    # @source Zoom &Out
     zoomOut: 缩小(&O)
   window:
+    # @source Bring All to Front
     front: 全部置于最前
+    # @source &Window
     label: 窗口(&W)
+    # @source Minimize
     minimize: 最小化
+    # @source Zoom
     zoom: 缩放
 marketplace:
   installed:
     table:
       header:
+        # @source Description
         description: 描述
+        # @source Name
         name: 名称
+        # @source Vendor
         vendor: 供应商
   labels:
+    # @source Install
     install: 安装
+    # @source Remove
     uninstall: 移除
+    # @source Upgrade
     upgrade: 升级
   loading:
     # @reason "Installing..." - in-progress marketplace install state
+    # @source Installing...
     install: 正在安装...
     # @reason "Removing..." - in-progress marketplace uninstall state
+    # @source Removing...
     uninstall: 正在移除...
     # @reason "Upgrading..." — 升级进行时，状态提示
+    # @source Upgrading...
     upgrade: 升级中...
+  # @source More information
   moreInfo: 更多信息
+  # @source No extension found for the search criteria
   noResults: 未找到符合搜索条件的扩展
   tabs:
+    # @source Catalog
     catalog: 目录
+    # @source Installed
     installed: 已安装
+  # @source Extensions
   title: 扩展
 nav:
   userMenu:
+    # @source Cluster Dashboard
     clusterDashboard: 集群仪表板
+    # @source Preferences
     preferences: 偏好设置
 pathManagement:
+  # @source Configure PATH
   label: 配置 PATH
   options:
     manual:
+      # @source Rancher Desktop does not change your PATH configuration; add <code>$HOME/.rd/bin</code> to your path manually.
       description: Rancher Desktop 不会更改您的 PATH 配置；请手动将 <code>$HOME/.rd/bin</code> 添加到您的 PATH。
+      # @source Manual
       label: 手动
     rcFiles:
+      # @source Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.
       description: Rancher Desktop 会自动编辑您的 shell 配置文件。请重新启动所有已打开的 shell 以使更改生效。
+      # @source Automatic
       label: 自动
+  # @source Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, <code>$HOME/.rd/bin</code> must be in your PATH.
   tooltip: Rancher Desktop 附带 kubectl、nerdctl、helm 和 docker 等工具。要使用这些工具，<code>$HOME/.rd/bin</code> 必须在您的 PATH 中。
 portForwarding:
+  # @source Include Kubernetes services
   includeKubernetesServices: 包含 Kubernetes 服务
   manage:
     table:
       header:
+        # @source Local Port
         listenPort: 本地端口
+        # @source Name
         name: 名称
+        # @source Namespace
         namespace: 命名空间
+        # @source Port
         port: 端口
   sortableTables:
+    # @source There are no port forwarding entries to show
     noRows: 没有可显示的端口转发条目
+  # @source Port Forwarding
   title: 端口转发
 preferences:
   actions:
     banner:
+      # @source There's a problem with the preferences selection.
       error: 偏好设置选择存在问题。
+      # @source Kubernetes will reset after applying changes.
       reset: 应用更改后 Kubernetes 将重置。
+      # @source Kubernetes will restart after applying changes.
       restart: 应用更改后 Kubernetes 将重新启动。
   containerEngine:
     webAssembly:
+      # @source WebAssembly must be enabled for the <a href="#" data-navigate="Kubernetes">Spin Operator</a> to be installed.
       warning: 必须启用 WebAssembly 才能安装 <a href="#" data-navigate="Kubernetes">Spin Operator</a>。
   error:
+    # @source Reload Preferences to try again.
     body: 重新加载偏好设置以重试。
+    # @source Unable to fetch preferences
     heading: 无法获取偏好设置
+    # @source Reload preferences
     reload: 重新加载偏好设置
+  # @source Preferences
   header: 偏好设置
+  # @source or
   incompatiblePrefWarningOr: 或
+  # @source to be unselected.
   incompatibleTypeWarningPostDisabled: 处于未选中状态。
+  # @source to be selected.
   incompatibleTypeWarningPostSelected: 处于选中状态。
+  # @source The option requires
   incompatibleTypeWarningPre: 该选项要求
   locked:
+    # @source Locked due to organization's policy
     tooltip: 已被组织策略锁定
   nav:
+    # @source Application
     application: 应用程序
+    # @source Container Engine
     containerEngine: 容器引擎
+    # @source Kubernetes
     kubernetes: Kubernetes
+    # @source Virtual Machine
     virtualMachine: 虚拟机
+    # @source WSL
     wsl: WSL
   resetDialog:
+    # @source Apply and reset
     apply: 应用并重置
+    # @source These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.
     detail: 这些更改将重置 Kubernetes 集群，这会导致工作负载和容器镜像丢失。
+    # @source Apply preferences and reset Kubernetes?
     message: 应用偏好设置并重置 Kubernetes？
+    # @source Rancher Desktop - Reset Kubernetes
     title: Rancher Desktop - 重置 Kubernetes
   tabs:
+    # @source Allowed Images
     allowedImages: 允许的镜像
+    # @source Behavior
     behavior: 行为
+    # @source Emulation
     emulation: 模拟
+    # @source Environment
     environment: 环境
+    # @source General
     general: 常规
+    # @source Hardware
     hardware: 硬件
+    # @source Integrations
     integrations: 集成
+    # @source Proxy
     proxy: 代理
+    # @source Volumes
     volumes: 卷
 preferencesWindow:
   close:
+    # @source There are preferences with changes that have not been applied. All unsaved preferences will be lost.
     detail: 有未应用的偏好设置更改。所有未保存的偏好设置将丢失。
+    # @source Discard changes
     discardChanges: 放弃更改
+    # @source Close preferences without applying?
     message: 关闭偏好设置而不应用？
+    # @source Rancher Desktop - Close Preferences
     title: Rancher Desktop - 关闭偏好设置
+  # @source Rancher Desktop - Preferences
   title: Rancher Desktop - 偏好设置
 prefs:
+  # @source Experimental
   experimental: 实验性
   # @reason macOS version requirement for arm64; Ventura is proper noun kept as-is
+  # @source This setting requires macOS 13.3 (Ventura) or later.
   onlyFromVentura_arm64: 此设置需要 macOS 13.3（Ventura）或更高版本。
   # @reason macOS version requirement for x64; same pattern
+  # @source This setting requires macOS 13.0 (Ventura) or later.
   onlyFromVentura_x64: 此设置需要 macOS 13.0（Ventura）或更高版本。
   # @reason VZ emulation mode requirement for arm64; VZ and Ventura kept in English
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.3 (Ventura) or later.
   onlyWithVZ_arm64: 此设置需要使用 VZ 仿真模式。VZ 仅在 macOS 13.3（Ventura）或更高版本上可用。
   # @reason VZ emulation mode requirement for x64; same pattern
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.0 (Ventura) or later.
   onlyWithVZ_x64: 此设置需要使用 VZ 仿真模式。VZ 仅在 macOS 13.0（Ventura）或更高版本上可用。
 product:
   containerEngine:
+    # @source CE
     abbreviation: CE
+    # @source Container Engine
     fullName: 容器引擎
+  # @source deactivated
   deactivated: 已停用
+  # @source Kubernetes
   kubernetesVersion: Kubernetes
+  # @source Network status
   networkStatus: 网络状态
   networkStatusValues:
     # @reason network status indicator; ellipsis preserved
+    # @source checking...
     checking: 检查中...
     # @reason network status: no connectivity
+    # @source offline
     offline: 离线
     # @reason network status: connected
+    # @source online
     online: 在线
+  # @source Version
   version: 版本
 progress:
+  # @source Asking for permission to run tasks as administrator
   askingPermission: 正在请求以管理员身份运行任务的权限
+  # @source Bundling certificates
   bundlingCertificates: 正在打包证书
+  # @source Checking k3s images
   checkingK3sImages: 正在检查 k3s 镜像
+  # @source Configuring container engine
   configuringContainerEngine: 正在配置容器引擎
+  # @source Configuring image proxy
   configuringImageProxy: 正在配置镜像代理
+  # @source Configuring logrotate
   configuringLogrotate: 正在配置 logrotate
+  # @source Container engine components
   containerEngineComponents: 容器引擎组件
+  # @source Copying certificates
   copyingCertificates: 正在复制证书
+  # @source Deleting incompatible Kubernetes state
   deletingIncompatibleState: 正在删除不兼容的 Kubernetes 状态
+  # @source Deleting Kubernetes
   deletingKubernetes: 正在删除 Kubernetes
+  # @source Deleting virtual machine
   deletingVirtualMachine: 正在删除虚拟机
+  # @source DNS configuration
   dnsConfiguration: DNS 配置
+  # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: 正在确保 kubectl 兼容
+  # @source Ensuring virtualization is supported
   ensuringVirtualizationSupported: 正在确保支持虚拟化
+  # @source Expecting user permission to continue
   expectingPermission: 等待用户授权以继续
+  # @source Extracting certificates
   extractingCertificates: 正在提取证书
+  # @source Fetching certificates
   fetchingCertificates: 正在获取证书
+  # @source Initializing Rancher Desktop
   initializingRancherDesktop: 正在初始化 Rancher Desktop
+  # @source Initializing WSL data
   initializingWslData: 正在初始化 WSL 数据
+  # @source Installing Buildkit
   installingBuildkit: 正在安装 Buildkit
+  # @source Installing CA certificates
   installingCaCertificates: 正在安装 CA 证书
+  # @source Installing container engine
   installingContainerEngine: 正在安装容器引擎
+  # @source Installing credential helper
   installingCredentialHelper: 正在安装凭据助手
+  # @source Installing the docker-credential helper
   installingDockerCredentialHelper: 正在安装 docker-credential 助手
+  # @source Installing helpers
   installingHelpers: 正在安装辅助工具
+  # @source Installing image scanner
   installingImageScanner: 正在安装镜像扫描器
+  # @source Installing k3s
   installingK3s: 正在安装 k3s
+  # @source Installing Kubernetes
   installingKubernetes: 正在安装 Kubernetes
+  # @source Kubernetes components
   kubernetesComponents: Kubernetes 组件
+  # @source Kubernetes dockerd compatibility
   kubernetesDockerCompatibility: Kubernetes dockerd 兼容性
+  # @source Mounting WSL data
   mountingWslData: 正在挂载 WSL 数据
+  # @source Preparing to start
   preparingToStart: 正在准备启动
+  # @source Proxy Config Setup
   proxyConfigSetup: 代理配置设置
+  # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop 来宾代理
+  # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 正在重新生成配置以适应权限不足的情况
+  # @source Registering WSL distribution
   registeringWslDistribution: 正在注册 WSL 发行版
+  # @source Removing existing certificates
   removingExistingCertificates: 正在移除现有证书
+  # @source Removing spinkube operator
   removingSpinkubeOperator: 正在移除 spinkube operator
+  # @source Removing stale state
   removingStaleState: 正在移除过期状态
+  # @source Removing Traefik
   removingTraefik: 正在移除 Traefik
+  # @source Resetting Kubernetes
   resettingKubernetes: 正在重置 Kubernetes
+  # @source Running provisioning scripts
   runningProvisioningScripts: 正在运行预配脚本
+  # @source Running update-ca-certificates
   runningUpdateCaCertificates: 正在运行 update-ca-certificates
+  # @source Setting docker context
   settingDockerContext: 正在设置 docker context
+  # @source Setting Lima permissions
   settingLimaPermissions: 正在设置 Lima 权限
+  # @source Setting up Docker socket
   settingUpDockerSocket: 正在设置 Docker socket
+  # @source Setting up virtual ethernet
   settingUpVirtualEthernet: 正在设置虚拟以太网
+  # @source Shutting down
   shuttingDown: 正在关闭
+  # @source Skipping node checks, flannel is disabled
   skippingNodeChecksFlannel: 跳过节点检查，flannel 已禁用
+  # @source Starting Backend
   startingBackend: 正在启动后端
+  # @source Starting buildkit
   startingBuildkit: 正在启动 buildkit
+  # @source Starting container engine
   startingContainerEngine: 正在启动容器引擎
+  # @source Starting image proxy
   startingImageProxy: 正在启动镜像代理
+  # @source Starting k3s
   startingK3s: 正在启动 k3s
+  # @source Starting Kubernetes
   startingKubernetes: 正在启动 Kubernetes
+  # @source Starting proxy
   startingProxy: 正在启动代理
+  # @source Starting {service}
   startingService: 正在启动 {service}
+  # @source Starting virtual machine
   startingVirtualMachine: 正在启动虚拟机
+  # @source Starting WSL environment
   startingWslEnvironment: 正在启动 WSL 环境
+  # @source Stopping existing instance
   stoppingExistingInstance: 正在停止现有实例
+  # @source Stopping mock backend
   stoppingMockBackend: 正在停止模拟后端
+  # @source Stopping services
   stoppingServices: 正在停止服务
+  # @source Updating cluster configuration
   updatingClusterConfiguration: 正在更新集群配置
+  # @source Updating /etc/hosts
   updatingEtcHosts: 正在更新 /etc/hosts
+  # @source Updating kubeconfig
   updatingKubeconfig: 正在更新 kubeconfig
+  # @source Updating outdated virtual machine
   updatingOutdatedVm: 正在更新过期的虚拟机
+  # @source Updating WSL data
   updatingWslData: 正在更新 WSL 数据
+  # @source Upgrading WSL distribution
   upgradingWslDistribution: 正在升级 WSL 发行版
+  # @source Waiting for container engine to be ready
   waitingForContainerEngine: 正在等待容器引擎就绪
+  # @source Waiting for Kubernetes API
   waitingForKubernetesApi: 正在等待 Kubernetes API
+  # @source Waiting for nodes
   waitingForNodes: 正在等待节点
+  # @source Waiting for services
   waitingForServices: 正在等待服务
+  # @source Writing K3s configuration
   writingK3sConfiguration: 正在写入 K3s 配置
 snapshots:
   action:
+    # @source Create Snapshot
     create: 创建快照
   card:
     action:
+      # @source Delete
       remove: 删除
+      # @source Restore
       restore: 恢复
+    # @source Created on '<b>'{date}'</b>' at '<b>'{time}'</b>'
     created: 创建于 '<b>'{date}'</b>' '<b>'{time}'</b>'
   create:
     actions:
+      # @source Cancel
       back: 取消
+      # @source Create
       submit: 创建
     description:
+      # @source Description
       label: 描述
+    # @source Rancher Desktop will be temporarily unavailable while creating a new Snapshot
     info: 创建新快照期间 Rancher Desktop 将暂时不可用
     name:
+      # @source Snapshot Name
       label: 快照名称
+    # @source Create a new Snapshot
     title: 创建新快照
   dialog:
     buttons:
+      # @source Close
       error: 关闭
     creating:
       actions:
+        # @source Cancel
         cancel: 取消
+      # @source Creating {snapshot}
       header: 正在创建 {snapshot}
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being created.'<br/>'This may take some time depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart.
       message: 正在创建快照 '<b>'{snapshot}'</b>'，请稍候。'<br/>'此操作可能需要一些时间，具体取决于您的计算机资源。'<br/>'在此期间 Rancher Desktop 将暂时不可用。'<br/><br/>'快照创建完成后，虚拟机将重新启动。
     delete:
       actions:
         # @reason cancel button label in delete confirmation dialog
+        # @source Cancel
         cancel: 取消
         # @reason confirm button for permanent deletion
+        # @source Delete
         ok: 删除
       # @reason dialog header asking for confirmation before permanent deletion
+      # @source Permanently delete snapshot?
       header: 永久删除快照？
       # @reason placeholder text value; keep as "text" per source
+      # @source Deleting a snapshot cannot be undone.
       info: 删除快照后无法撤销。
     generic:
+      # @source Snapshot operation in progress
       header: 快照操作进行中
+      # @source Please wait while the snapshot operation is active.<br/>This may take some time depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart.
       message: 正在执行快照操作，请稍候。<br/>此操作可能需要一些时间，具体取决于您的计算机资源。<br/>在此期间 Rancher Desktop 将暂时不可用。<br/><br/>快照操作完成后，虚拟机将重新启动。
     restore:
       actions:
         # @reason cancel button label in restore confirmation dialog
+        # @source Cancel
         cancel: 取消
         # @reason confirm button to proceed with restore
+        # @source Restore
         ok: 还原
       error:
+        # @source Quit Rancher Desktop
         buttonText: 退出 Rancher Desktop
+        # @source Failed to restore snapshot '<b>'{snapshot}'</b>'.'<br/><br/>'Rancher Desktop has performed a Factory Reset and will now exit. Please try to address the issue that led to this error before restarting Rancher Desktop and attempting to restore the snapshot again.
         description: 快照 '<b>'{snapshot}'</b>' 恢复失败。'<br/><br/>'Rancher Desktop 已执行恢复出厂设置并将立即退出。请在重新启动 Rancher Desktop 并再次尝试恢复快照之前，先解决导致此错误的问题。
+        # @source Error restoring snapshot
         header: 恢复快照时出错
       # @reason dialog header asking for confirmation before restoring snapshot
+      # @source Restore snapshot?
       header: 还原快照？
       # @reason explains consequences of restoring: replaces installation and prefs, closes Preferences window, discards unsaved changes
+      # @source Restoring this snapshot will replace your current installation, including preferences. If the Preferences window is open, it will be automatically closed and any unsaved changes will be discarded.
       info: 还原此快照将替换您当前的安装内容，包括偏好设置。如果"偏好设置"窗口已打开，它将自动关闭，所有未保存的更改将被丢弃。
     restoring:
       actions:
         # @reason cancel button label in the "restoring in progress" dialog
+        # @source Cancel
         cancel: 取消
+      # @source Restoring {snapshot}
       header: 正在恢复 {snapshot}
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being restored. This may take some time depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active.
       message: 正在恢复快照 '<b>'{snapshot}'</b>'，请稍候。此操作可能需要一些时间，具体取决于您的计算机资源。<br/><br/>在此期间 Rancher Desktop 将暂时不可用。完成后，虚拟机将使用快照 {snapshot} 重新启动。
+    # @source Show logs
     showLogs: 显示日志
   empty:
+    # @source Click on Create Snapshot to get started
     body: 点击"创建快照"开始
+    # @source No snapshots found
     heading: 未找到快照
+    # @source icon-search
     icon: icon-search
   info:
     create:
       # @reason notification that snapshot creation was cancelled; {snapshot} is the snapshot name
+      # @source Cancelled creation of {snapshot}
       cancel: 已取消创建 {snapshot}
       # @reason success notification for snapshot creation; HTML bold tags preserved
+      # @source Created '<b>'{snapshot}'</b>'
       success: 已创建 '<b>'{snapshot}'</b>'
     delete:
       # @reason error notification for snapshot deletion; {error} is the error message
+      # @source Delete error: {error}
       error: 删除错误：{error}
       # @reason success notification for snapshot deletion; HTML bold tags preserved
+      # @source Deleted '<b>'{snapshot}'</b>'
       success: 已删除 '<b>'{snapshot}'</b>'
     lock:
       # @reason info message about a stale lock file; rdctl and code tag preserved; rdctl snapshot unlock is a command kept in English
+      # @source A snapshot lock file has been detected for an unusually long time. If you believe this is an error, you can try to remove the lock file by running <code>rdctl snapshot unlock</code>.
       info: 已检测到快照锁定文件持续时间异常。如果您认为这是错误，可以运行 <code>rdctl snapshot unlock</code> 尝试删除该锁定文件。
     restore:
       # @reason notification that snapshot restoration was cancelled; {snapshot} is the snapshot name
+      # @source Cancelled restoration of {snapshot}
       cancel: 已取消还原 {snapshot}
       # @reason success notification for snapshot restoration; HTML bold tags preserved
+      # @source Restored '<b>'{snapshot}'</b>'
       success: 已还原 '<b>'{snapshot}'</b>'
+    # @source  at {time}
     when: ' 于 {time}'
+  # @source Snapshots
   title: 快照
 sortableTable:
   actionAvailability:
+    # @source {actionable} selected
     selected: 已选择 {actionable} 项
+    # @source Available for {actionable} of the {total} selected
     some: 一共有 {total} 项，符合条件的有 {actionable} 项
+  # @source Add
   add: 添加
+  # @source Add Filter
   addFilter: 添加过滤器
   bulkActions:
     collapsed:
+      # @source Actions
       label: 操作
+  # @source Filter for...
   filterFor: 过滤条件...
+  # @source in
   in: 在
+  # @source No actions available
   noActions: 没有可用操作
+  # @source There are no rows which match your search query.
   noData: 没有匹配项
+  # @source There are no rows to show.
   noRows: 没有内容显示
   paging:
     # @reason Chinese has no plural forms; the inner plural keeps ICU structure parity with identical branches
+    # @source {pages, plural,
+    # @source =0 {No Items}
+    # @source =1 {{count} {count, plural, =1 {Item} other {Items}}}
+    # @source other {{from} - {to} of {count} Items}}
     generic: |-
         {pages, plural,
         =0 {无项目}
         =1 {{count}{count, plural, =1 {项} other {项}}}
         other {{count}项中的第{from} - {to}项}}
+  # @source Reset
   resetFilters: 重置
+  # @source Filter
   search: Filter
+  # @source Select a column
   selectCol: 选择列
   tableHeader:
+    # @source Group by
     groupBy: 分组依据
+    # @source This column cannot be filtered by
     noFilter: 此列无法用于过滤
+    # @source Show
     show: 显示
 sudoPrompt:
+  # @source Always run without administrative access
   alwaysRunWithout: 始终在无管理员权限的情况下运行
+  # @source OK
   buttonText: 确定
+  # @source This will modify the following paths:
   explanation: 此操作将修改以下路径：
+  # @source Rancher Desktop requires administrative access ("sudo access") for the following reasons:
   message: Rancher Desktop 需要管理员权限（"sudo 权限"），原因如下：
+  # @source The prompt will be displayed once this window is closed. Cancelling the prompt or disabling administrative access requires you to switch the docker context to rancher-desktop in order to continue using Rancher Desktop.
   messageSecondPart: 此窗口关闭后将显示权限提示。取消提示或禁用管理员权限后，您需要将 docker context 切换到 rancher-desktop 才能继续使用 Rancher Desktop。
   reasons:
     dockerSocket:
       # @reason describes why docker socket sudo permission is needed; "docker" and "docker contexts" kept in English
+      # @source Provides compatibility with tools that use the docker socket without the ability to use docker contexts.
       description: 为不支持 docker contexts 的工具提供与 docker socket 的兼容性。
       # @reason short title for docker socket sudo prompt item
+      # @source Set up default docker socket
       title: 设置默认 docker socket
     networking:
       # @reason describes why networking sudo permission is needed; explains fallback to port forwarding
+      # @source Provides bridged networking so that it is easier to access your containers. If this is not allowed, containers will only be accessible via port forwarding.
       description: 提供桥接网络，以便更轻松地访问容器。如果不允许此操作，容器将只能通过端口转发访问。
       # @reason short title for networking sudo prompt item
+      # @source Configure networking
       title: 配置网络
+  # @source Administrative Access Required
   title: 需要管理员权限
 systemPreferences:
+  # @source # CPUs
   cpus: CPU 数量
+  # @source Memory (GB)
   memory: 内存 (GB)
 telemetryOptIn:
+  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
   fineprint: 发送匿名使用信息、错误报告等，帮助改进 Rancher Desktop。您的数据不会与任何第三方共享，也不会包含您所部署的具体资源或端点信息。
+  # @source Allow collection of anonymous statistics to help us improve Rancher Desktop
   label: 允许收集匿名统计数据，帮助我们改进 Rancher Desktop
 tray:
+  # @source Container engine: {name}
   containerEngine: 容器引擎：{name}
+  # @source Kubernetes Contexts
   kubernetesContexts: Kubernetes 上下文
+  # @source Network status: {status}
   networkStatus: 网络状态：{status}
+  # @source None found
   noneFound: 未找到
+  # @source Open cluster dashboard
   openDashboard: 打开集群仪表板
+  # @source Open main window
   openMainWindow: 打开主窗口
+  # @source Open preferences dialog
   openPreferences: 打开偏好设置
+  # @source Quit Rancher Desktop
   quitRancherDesktop: 退出 Rancher Desktop
   state:
+    # @source Kubernetes is disabled
     disabled: Kubernetes 已禁用
+    # @source Kubernetes has encountered an error
     error: Kubernetes 遇到错误
+    # @source Kubernetes is running
     started: Kubernetes 正在运行
+    # @source Kubernetes is starting
     starting: Kubernetes 正在启动
+    # @source Kubernetes is stopped
     stopped: Kubernetes 已停止
+    # @source Kubernetes is shutting down
     stopping: Kubernetes 正在关闭
+  # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
+  # @source Enable debug mode
   debugMode: 启用调试模式
   general:
     factoryReset:
+      # @source Factory Reset
       buttonText: 恢复出厂设置
+      # @source Factory Reset will remove all Rancher Desktop Configurations.
       description: 恢复出厂设置将移除所有 Rancher Desktop 配置。
       messageBox:
+        # @source Cancel
         cancel: 取消
+        # @source Keep cached Kubernetes images
         checkboxLabel: 保留已缓存的 Kubernetes 镜像
+        # @source <p>Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again.</p><p>Are you sure you want to reset everything?</p>
         detail: <p>恢复出厂设置将移除您的集群和所有 Rancher Desktop 设置，并关闭 Rancher Desktop。如果您打算继续使用 Rancher Desktop，需要手动启动并重新完成初始设置。</p><p>确定要重置所有内容吗？</p>
+        # @source Perform a factory reset?
         message: 执行恢复出厂设置？
+        # @source Factory Reset
         ok: 恢复出厂设置
+        # @source Rancher Desktop - Factory Reset
         title: Rancher Desktop - 恢复出厂设置
+      # @source Factory Reset
       title: 恢复出厂设置
     logs:
+      # @source Show Logs
       buttonText: 显示日志
+      # @source Show Rancher Desktop logs
       description: 显示 Rancher Desktop 日志
+      # @source Logs
       title: 日志
   kubernetes:
     resetKubernetes:
+      # @source Reset Kubernetes
       buttonText: 重置 Kubernetes
+      # @source Resetting Kubernetes will delete all workloads and configuration.
       description: 重置 Kubernetes 将删除所有工作负载和配置。
       messageBox:
+        # @source Cancel
         cancel: 取消
+        # @source Delete container images
         checkboxLabel: 删除容器镜像
+        # @source Reset Kubernetes?
         message: 重置 Kubernetes？
+        # @source Reset
         ok: 重置
+        # @source Rancher Desktop - Reset Kubernetes
         title: Rancher Desktop - 重置 Kubernetes
+      # @source Reset Kubernetes
       title: 重置 Kubernetes
+  # @source Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
   needHelp: 仍有问题？请在 <a href="https://slack.rancher.io/">Rancher Users Slack</a> 的 <b>#rancher-desktop</b> 频道发起讨论，或<a href="https://github.com/rancher-sandbox/rancher-desktop/issues">报告问题</a>。
+  # @source Troubleshooting
   title: 故障排除
 unmetPrerequisites:
+  # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
   action: 请确保满足所有前提条件后重试。Rancher Desktop 将立即关闭。
+  # @source OK
   buttonText: 确定
+  # @source Rancher Desktop cannot start because requirements are missing or not configured:
   message: Rancher Desktop 无法启动，因为缺少必要条件或配置不正确：
+  # @source Rancher Desktop is unable to start
   title: Rancher Desktop 无法启动
 updateStatus:
+  # @source Applying update...
   applyingUpdate: 正在应用更新...
+  # @source An update to version {version} is available
   available: 版本 {version} 的更新可用
+  # @source Check for updates automatically
   checkForUpdates: 自动检查更新
+  # @source downloading... ({percent}%, {speed})
   downloading: 正在下载... ({percent}%, {speed})
+  # @source There was an error checking for updates.
   errorChecking: 检查更新时出错。
+  # @source Release Notes
   releaseNotes: 发行说明
+  # @source Restart Now
   restartNow: 立即重启
+  # @source Restart the application to apply the update.
   restartToApply: 重启应用程序以应用更新。
   unsupported:
+    # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: Rancher Desktop 有新版本可用，但您的系统不支持该版本。
+    # @source For more information please see <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.
     seeDocumentation: 如需了解更多信息，请参阅<a href="https://docs.rancherdesktop.io/getting-started/installation">安装文档</a>。
+    # @source Latest Version Not Supported
     title: 不支持最新版本
+  # @source Update Available
   updateAvailable: 有可用更新
 validation:
+  # @source Cannot decrease "{field}" from {from} to {to}
   cannotDecrease: 无法将"{field}"从 {from} 减小到 {to}
+  # @source Cannot enable WebAssembly with classic storage for moby.
   cannotEnableWasmClassic: 无法在 moby 经典存储模式下启用 WebAssembly。
+  # @source Cannot switch to classic storage for moby when WebAssembly is enabled.
   cannotSwitchClassicWasm: 启用 WebAssembly 时无法切换到 moby 的经典存储模式。
+  # @source Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
   cannotSwitchMobyClassicWasm: 启用 WebAssembly 时无法切换到使用经典存储的 moby 容器引擎。
+  # @source field "{field}" has duplicate entries: "{duplicates}"
   duplicateEntries: 字段"{field}"存在重复条目："{duplicates}"
+  # @source Errors in proposed settings:
   errorsInProposedSettings: 建议的设置中存在错误：
+  # @source field "{field}" is locked
   fieldLocked: 字段"{field}"已锁定
+  # @source {field}: "{pattern}" does not describe an image reference
   invalidImageReference: '{field}："{pattern}"不是有效的镜像引用'
+  # @source {field}: "{value}" is not a valid mapping
   invalidMapping: '{field}："{value}"不是有效的映射'
+  # @source field "{field}" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "{entries}"
   invalidNoproxyEntries: 字段"{field}"包含无效条目（必须为 IP 地址、CIDR 子网或域名）："{entries}"
+  # @source {field}: "{name}" is an invalid name
   invalidName: '{field}："{name}"是无效的名称'
+  # @source {field}: "{value}" is not a valid page name for Preferences Dialog
   invalidPageName: '{field}："{value}"不是偏好设置对话框的有效页面名称'
+  # @source {field}: tab name "{tabName}" is not a valid tab name for "{page}" Preference page
   invalidTabName: '{field}：标签页名称"{tabName}"不是"{page}"偏好设置页面的有效标签页名称'
+  # @source {field}: "{name}" has invalid tag "{tag}"
   invalidTag: '{field}："{name}"的标签"{tag}"无效'
+  # @source Invalid value for "{field}": <{value}>
   invalidValue: '"{field}"的值无效：<{value}>'
+  # @source Invalid value for "{field}": <{value}>; must be one of {validValues}
   invalidValueEnum: '"{field}"的值无效：<{value}>；必须是以下之一：{validValues}'
+  # @source Kubernetes version "{version}" not found.
   kubernetesVersionNotFound: 未找到 Kubernetes 版本"{version}"。
+  # @source {field}: "{name}" has non-string tag "{tag}"
   nonStringTag: '{field}："{name}"的标签"{tag}"不是字符串'
+  # @source Changing field "{field}" via the API isn't supported.
   notSupported: 不支持通过 API 更改字段"{field}"。
+  # @source Error for field ''{field}'': expecting value of type array, got ''{value}''
   profileExpectedArray: 字段 ''{field}'' 出错：期望类型为 array，得到 ''{value}''
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got ''{value}''
   profileExpectedType: 字段 ''{field}'' 出错：期望类型为 {expectedType}，得到 ''{value}''
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got an array {value}
   profileExpectedTypeGotArray: 字段 ''{field}'' 出错：期望类型为 {expectedType}，得到数组 {value}
+  # @source Proposed field "{field}" should be an object, got <{value}>.
   proposedShouldBeObject: 提议的字段"{field}"应为对象，得到 <{value}>。
+  # @source Setting {field} can only be enabled on aarch64 systems.
   requiresArm: 设置 {field} 仅可在 aarch64 系统上启用。
+  # @source Setting {field} can only be changed when virtualMachine.mount.type is "{mountType}".
   requiresNineP: 设置 {field} 仅可在 virtualMachine.mount.type 为"{mountType}"时更改。
+  # @source Setting {field} can only be enabled when virtual-machine.type is "{vmType}".
   requiresVz: 设置 {field} 仅可在 virtual-machine.type 为"{vmType}"时启用。
+  # @source Setting {field} can only be set when experimental.container-engine.web-assembly.enabled is set as well.
   requiresWebAssembly: 设置 {field} 时还需启用 experimental.container-engine.web-assembly.enabled。
+  # @source Setting {field} to "{value}" requires that {otherField} is "{required}".
   settingRequires: 将 {field} 设置为"{value}"需要 {otherField} 为"{required}"。
+  # @source Setting {field} to "{value}" requires that {otherField} is "{option1}" or "{option2}".
   settingRequiresEither: 将 {field} 设置为"{value}"需要 {otherField} 为"{option1}"或"{option2}"。
+  # @source Setting "{field}" should wrap an inner object, but got <{value}>.
   shouldBeObject: 设置"{field}"应包含内部对象，但得到 <{value}>。
+  # @source Setting "{field}" should be a simple value, but got <{value}>.
   shouldBeSimple: 设置"{field}"应为简单值，但得到 <{value}>。
+  # @source One or more fields in this tab contain a form validation error
   tab: 此标签页中有一个或多个字段存在验证错误
+  # @source Setting {field} to "{vmType}" on ARM requires macOS 13.3 (Ventura) or later.
   vzArmMacOs: 在 ARM 上将 {field} 设置为"{vmType}"需要 macOS 13.3 (Ventura) 或更高版本。
+  # @source Setting {field} to "{vmType}" on Intel requires macOS 13.0 (Ventura) or later.
   vzIntelMacOs: 在 Intel 上将 {field} 设置为"{vmType}"需要 macOS 13.0 (Ventura) 或更高版本。
 virtualMachine:
   mount:
     type:
+      # @source Mount Type
       legend: 挂载类型
       options:
         9p:
           # @reason describes 9p mount type using QEMU virtio device; QEMU and virtio-9p-pci are technical identifiers kept as-is
+          # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
           description: 通过 QEMU 的 virtio-9p-pci 设备公开文件系统。
           # @reason label for 9p mount option; technical identifier kept as-is
+          # @source 9p
           label: 9p
           options:
             cacheMode:
+              # @source Cache Mode
               legend: 缓存模式
               options:
                 # @reason technical identifier for cache mode option; kept as-is per rules
+                # @source fscache
                 fscache: fscache
                 # @reason technical identifier for cache mode option; kept as-is per rules
+                # @source loose
                 loose: loose
                 # @reason technical identifier for cache mode option; kept as-is per rules
+                # @source mmap
                 mmap: mmap
                 # @reason technical identifier for cache mode option; kept as-is per rules
+                # @source none
                 none: none
+              # @source Caching policy to be used
               tooltip: 使用的缓存策略
             mSizeInKib:
+              # @source Message Size In KiB
               legend: 消息大小 (KiB)
+              # @source Maximum message size in KiB
               tooltip: 最大消息大小 (KiB)
             protocolVersion:
+              # @source Protocol Version
               legend: 协议版本
               options:
                 # @reason technical identifier for protocol version; kept as-is per rules
+                # @source 9p2000
                 9p2000: 9p2000
                 # @reason technical identifier for protocol version; kept as-is per rules
+                # @source 9p2000.L
                 9p2000L: 9p2000.L
                 # @reason technical identifier for protocol version; kept as-is per rules
+                # @source 9p2000.u
                 9p2000u: 9p2000.u
+              # @source 9P protocol version
               tooltip: 9P 协议版本
             securityModel:
+              # @source Security Model
               legend: 安全模型
               options:
                 # @reason technical identifier for security model option; kept as-is per rules
+                # @source mapped-file
                 mapped-file: mapped-file
                 # @reason technical identifier for security model option; kept as-is per rules
+                # @source mapped-xattr
                 mapped-xattr: mapped-xattr
                 # @reason technical identifier for security model option; kept as-is per rules
+                # @source none
                 none: none
                 # @reason technical identifier for security model option; kept as-is per rules
+                # @source passthrough
                 passthrough: passthrough
+              # @source Security model used for the export path
               tooltip: 用于导出路径的安全模型
         reverse-sshfs:
           # @reason describes reverse-sshfs mount type using an SFTP server; SFTP kept in English
+          # @source Exposes the filesystem by running an SFTP server.
           description: 通过运行 SFTP 服务器公开文件系统。
           # @reason label for reverse-sshfs mount option; technical identifier kept as-is
+          # @source reverse-sshfs
           label: reverse-sshfs
         virtiofs:
           # @reason describes virtiofs mount type using Apple Virtualization framework; "Apple Virtualization" kept in English
+          # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
           description: 通过 Apple Virtualization 框架共享目录设备公开文件系统。
           # @reason label for virtiofs mount option; technical identifier kept as-is
+          # @source virtiofs
           label: virtiofs
   proxy:
+    # @source Address
     address: 地址
+    # @source Proxy address
     addressTitle: 代理地址
+    # @source Authentication information
     authTitle: 身份验证信息
+    # @source Enable the proxy used by rancher-desktop
     label: 启用 rancher-desktop 使用的代理
+    # @source WSL Proxy
     legend: WSL 代理
     noproxy:
       errors:
+        # @source Error, item is duplicate.
         duplicate: 错误，条目重复。
+      # @source Proxy bypass list
       legend: 不使用代理的主机名列表
+      # @source IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy
       placeholder: 不通过代理访问的主机名
+    # @source Password
     password: 密码
+    # @source Port
     port: 端口
+    # @source Username
     username: 用户名
   type:
+    # @source Virtual Machine Type
     legend: 虚拟机类型
     options:
       qemu:
         # @reason describes QEMU emulator option; QEMU kept in English
+        # @source Use the QEMU emulator.
         description: 使用 QEMU 模拟器。
         # @reason label for QEMU VM type option; technical identifier kept in English
+        # @source QEMU
         label: QEMU
       vz:
         # @reason describes Apple Virtualization framework option; "Apple Virtualization" kept in English
+        # @source Use the Apple Virtualization framework.
         description: 使用 Apple Virtualization 框架。
         # @reason label for VZ VM type option; technical identifier kept in English
+        # @source VZ
         label: VZ
   useRosetta:
+    # @source Enable Rosetta support
     label: 启用 Rosetta 支持
+    # @source VZ Option
     legend: VZ 选项
 volumes:
   files:
+    # @source Available
     available: 可用
+    # @source Error checking volume status
     checkError: 检查卷状态时出错
+    # @source Invalid volume name "{name}"
     invalidVolumeName: 无效的卷名称"{name}"
+    # @source Error listing files: {error}
     listError: 列出文件时出错：{error}
+    # @source Loading volume files...
     loading: 正在加载卷文件...
+    # @source This volume is empty
     noFiles: 此卷为空
+    # @source Not Found
     notFound: 未找到
     table:
       header:
+        # @source Modified
         modified: 修改时间
+        # @source Name
         name: 名称
+        # @source Permissions
         permissions: 权限
+        # @source Size
         size: 大小
+    # @source Volume Files
     title: 卷文件
+    # @source Volume "{name}" not found
     volumeNotFound: 未找到卷"{name}"
   manage:
     table:
       header:
+        # @source Created
         created: 创建时间
+        # @source Driver
         driver: 驱动
+        # @source Mount Point
         mountpoint: 挂载点
+        # @source Volume Name
         volumeName: 卷名称
   manager:
     table:
       action:
+        # @source Browse Files
         browse: 浏览文件
+        # @source Delete
         delete: 删除
   sortableTables:
+    # @source There are no volumes to show
     noRows: 没有可显示的卷
+  # @source Volumes
   title: 卷
 webAssembly:
+  # @source Please read the documentation before enabling the experimental WebAssembly feature!
   description: 启用实验性 WebAssembly 功能前请先阅读文档！
+  # @source Enabled
   enabled: 已启用
+  # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)

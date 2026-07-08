@@ -34,7 +34,7 @@ func runValidate(args []string) error {
 
 // Check categories reported by validate.
 const (
-	catMetadata    = "metadata"
+	catSource      = "source"
 	catOverride    = "override"
 	catPlaceholder = "placeholder"
 	catTag         = "tag"
@@ -69,7 +69,7 @@ func validateLocale(root, locale string) ([]validationError, error) {
 		return nil, err
 	}
 
-	meta, err := loadMetadata(root, locale)
+	meta, err := loadSources(root, locale)
 	if err != nil {
 		return nil, err
 	}
@@ -101,25 +101,17 @@ func validateLocale(root, locale string) ([]validationError, error) {
 		}
 	}
 
-	// Check metadata coherence.
+	// Check that every translated key carries a @source snapshot. A @source
+	// cannot be orphaned from its translation, since it lives on the key.
 	for key := range localeKeys {
 		if _, inEn := enKeys[key]; !inEn {
 			continue // stale key, reported by stale check
 		}
-		if _, inMeta := meta[key]; !inMeta {
+		if _, hasSource := meta[key]; !hasSource {
 			errors = append(errors, validationError{
 				Key:     key,
-				Check:   catMetadata,
-				Message: "translated key has no metadata entry",
-			})
-		}
-	}
-	for key := range meta {
-		if _, inLocale := localeKeys[key]; !inLocale {
-			errors = append(errors, validationError{
-				Key:     key,
-				Check:   catMetadata,
-				Message: "metadata entry has no corresponding translation",
+				Check:   catSource,
+				Message: "translated key has no @source",
 			})
 		}
 	}

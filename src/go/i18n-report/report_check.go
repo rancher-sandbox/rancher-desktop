@@ -362,11 +362,12 @@ func reportCheckLocale(w io.Writer, root, locale string, strict bool) error {
 	validateErr := reportValidateQuiet(root, locale)
 	printResult("validate passes", validateErr == nil, errString(validateErr))
 
-	// Load metadata for the drift check below. Metadata coherence is already
-	// covered by the "validate passes" check above (validateLocale checks it).
-	meta, metaErr := loadMetadata(root, locale)
+	// Load @source snapshots for the drift check below. Their coherence is
+	// already covered by the "validate passes" check above (validateLocale
+	// checks it).
+	meta, metaErr := loadSources(root, locale)
 	if metaErr != nil {
-		printResult("metadata readable", false, errString(metaErr))
+		printResult("@source readable", false, errString(metaErr))
 	}
 
 	// Completeness checks.

@@ -186,8 +186,8 @@ status.done=Fertig
 		t.Errorf("existing comment lost: got %q", e.comment)
 	}
 
-	// New comment applied.
-	if e := result["status.done"]; e.comment != "# @reason Standard completion message" {
+	// New comment applied, with @source recorded from the English source.
+	if e := result["status.done"]; e.comment != "# @reason Standard completion message\n# @source Done" {
 		t.Errorf("new comment missing: got %q", e.comment)
 	}
 

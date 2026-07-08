@@ -194,9 +194,26 @@ func reportMerge(w io.Writer, root, locale string, files []string, dryRun bool, 
 		return nil
 	}
 
+	// Record the English source each applied key was translated from, as a
+	// co-located @source comment. Only applied keys are touched; refreshing
+	// @source on keys this merge skipped would erase their drift markers.
+	for _, key := range applied {
+		en, ok := enKeys[key]
+		if !ok {
+			continue
+		}
+		val, comment, found := nodeGetLeaf(treeRoot, key)
+		if !found {
+			continue
+		}
+		if err := nodeSetLeaf(treeRoot, key, val, setSourceComment(comment, en)); err != nil {
+			return fmt.Errorf("recording @source for %s: %w", key, err)
+		}
+	}
+
 	// Serialize before writing, so a serialization failure leaves the file
-	// untouched. The two writes are sequential, so a crash between them can
-	// leave metadata stale for the merged keys.
+	// untouched. @source lives in the same file, so one atomic write keeps a
+	// translation and its snapshot in sync.
 	var buf strings.Builder
 	serializeYAMLNode(&buf, doc)
 	localeData := []byte(buf.String())
@@ -205,11 +222,6 @@ func reportMerge(w io.Writer, root, locale string, files []string, dryRun bool, 
 
 	if err := writeFileAtomic(localePath, localeData); err != nil {
 		return fmt.Errorf("writing %s: %w", localePath, err)
-	}
-	// Update metadata only for the merged keys; regenerating all entries
-	// would erase drift markers for keys outside this merge.
-	if err := updateMetadata(root, locale, applied, enKeys); err != nil {
-		return err
 	}
 
 	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (%d overwritten", added, localePath, overwritten)

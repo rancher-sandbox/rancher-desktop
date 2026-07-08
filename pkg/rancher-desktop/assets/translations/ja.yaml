@@ -1,1087 +1,1837 @@
 action:
+  # @source Refresh
   refresh: 更新
 allowedImages:
+  # @source The image name needs to match one of the patterns defined in the Allowed Images preference tab.
   alert: イメージ名は、「許可されたイメージ」設定タブで定義されたパターンのいずれかと一致する必要があります。
+  # @source Enable
   enable: 有効にする
   errors:
+    # @source Error, item is duplicate.
     duplicate: エラー：項目が重複しています。
+  # @source Allowed Image Patterns
   label: 許可されたイメージのパターン
   patterns:
+    # @source Type the image pattern
     placeholder: イメージパターンを入力
 application:
   behavior:
     autoStart:
+      # @source Automatically start at login
       label: ログイン時に自動的に起動する
+      # @source Startup
       legendText: 起動
     background:
+      # @source Background
       legendText: バックグラウンド
+      # @source Hide the app window when Rancher Desktop is running in the background. It can be opened via the Notification Icon (if visible) or by running Rancher Desktop from the Applications menu.
+      # @source
       legendTooltip: |
           Rancher Desktopがバックグラウンドで実行されているときにアプリウィンドウを非表示にします。通知アイコン（表示されている場合）から開くか、アプリケーションメニューからRancher Desktopを実行して開くことができます。
     notificationIcon:
+      # @source Hide Notification Icon
       label: 通知アイコンを非表示にする
+      # @source Notification Icon
       legendText: 通知アイコン
     startInBackground:
+      # @source Start in the background
       label: バックグラウンドで起動する
     theme:
+      # @source Appearance
       legendText: 外観
       options:
         dark:
+          # @source Always use dark mode
           description: 常にダークモードを使用する
+          # @source Dark
           label: ダーク
         light:
+          # @source Always use light mode
           description: 常にライトモードを使用する
+          # @source Light
           label: ライト
         system:
+          # @source Follow the operating system setting
           description: オペレーティングシステムの設定に従う
+          # @source System
           label: システム
     windowQuitOnClose:
+      # @source Quit when closing application window
       label: アプリケーションウィンドウを閉じたときに終了する
   general:
     adminAccess:
+      # @source Allow administrative credentials (sudo access)
       label: 管理者資格情報（sudoアクセス）を許可する
+      # @source Administrative Access
       legendText: 管理者アクセス
+      # @source If checked, {appName} will acquire administrative credentials ("sudo access") when starting. This enables bridged networking and default docker socket support. Takes effect on next start.
       legendTooltip: チェックすると、{appName}は起動時に管理者資格情報（「sudoアクセス」）を取得します。これにより、ブリッジネットワークとデフォルトのdockerソケットのサポートが有効になります。次回起動時に反映されます。
     automaticUpdates:
+      # @source Check for updates automatically
       label: 自動的に更新を確認する
+      # @source Automatic Updates
       legendText: 自動更新
     statistics:
+      # @source Allow collection of anonymous statistics to help improve {appName}
       label: '{appName}の改善に役立てるため、匿名の統計情報の収集を許可する'
+      # @source Statistics
       legendText: 統計情報
   locale:
+    # @source Community and AI tools provide translations. English is the canonical language. Report translation issues on GitHub.
     disclaimer: 翻訳はコミュニティおよびAIツールによって提供されます。英語が正式な言語です。翻訳の問題はGitHubで報告してください。
+    # @source Language
     legendText: 言語
 asyncButton:
   activate:
+    # @source Activate
     action: アクティブ化
+    # @source Activated
     success: アクティブ化しました
+    # @source Activating&hellip;
     waiting: アクティブ化中&hellip;
   apply:
+    # @source Apply
     action: 適用
+    # @source Applied
     success: 適用しました
+    # @source Applying&hellip;
     waiting: 適用中&hellip;
   continue:
+    # @source Continue
     action: 続行
+    # @source Saved
     success: 保存しました
+    # @source Saving&hellip;
     waiting: 保存中&hellip;
   copy:
+    # @source Click to Copy
     action: クリックしてコピー
+    # @source Copied!
     success: コピーしました！
   create:
+    # @source Create
     action: 作成
+    # @source Created
     success: 作成しました
+    # @source Creating&hellip;
     waiting: 作成中&hellip;
   deactivate:
+    # @source Deactivate
     action: 非アクティブ化
+    # @source Deactivated
     success: 非アクティブ化しました
+    # @source Deactivating&hellip;
     waiting: 非アクティブ化中&hellip;
   default:
+    # @source Action
     action: アクション
+    # @source Error
     error: エラー
+    # @source Success
     success: 成功
+    # @source Waiting
     waiting: 待機中
   delete:
+    # @source Delete
     action: 削除
+    # @source Deleted
     success: 削除しました
+    # @source Deleting&hellip;
     waiting: 削除中&hellip;
   disable:
+    # @source Disable
     action: 無効化
+    # @source Disabled
     success: 無効化しました
+    # @source Disabling&hellip;
     waiting: 無効化中&hellip;
   done:
+    # @source Done
     action: 完了
+    # @source Saved
     success: 保存しました
+    # @source Saving&hellip;
     waiting: 保存中&hellip;
   download:
+    # @source Download
     action: ダウンロード
     # @reason English source uses the progressive form (Saving) for the success state; mirrored it.
+    # @source Saving
     success: 保存中
+    # @source Downloading&hellip;
     waiting: ダウンロード中&hellip;
   edit:
+    # @source Save
     action: 保存
+    # @source Saved
     success: 保存しました
+    # @source Saving&hellip;
     waiting: 保存中&hellip;
   enable:
+    # @source Enable
     action: 有効化
+    # @source Enabled
     success: 有効化しました
+    # @source Enabling&hellip;
     waiting: 有効化中&hellip;
   finish:
+    # @source Finish
     action: 完了
+    # @source Finished
     success: 完了しました
+    # @source Finishing&hellip;
     waiting: 完了処理中&hellip;
   import:
+    # @source Import
     action: インポート
+    # @source Imported
     success: インポートしました
+    # @source Importing&hellip;
     waiting: インポート中&hellip;
   install:
+    # @source Install
     action: インストール
     # @reason English source uses the progressive form (Installing) for the success state; mirrored it.
+    # @source Installing
     success: インストール中
+    # @source Starting&hellip;
     waiting: 開始中&hellip;
   refresh:
+    # @source
     action: ''
     # @reason Icon identifier, not user-visible text.
+    # @source refresh
     actionIcon: refresh
+    # @source
     error: ''
     # @reason Icon identifier, not user-visible text.
+    # @source error
     errorIcon: error
+    # @source
     success: ''
     # @reason Icon identifier, not user-visible text.
+    # @source checkmark
     successIcon: checkmark
+    # @source
     waiting: ''
     # @reason Icon identifier, not user-visible text.
+    # @source refresh
     waitingIcon: refresh
   remove:
     # @reason Both Delete and Remove render naturally as 削除 in Japanese UIs.
+    # @source Remove
     action: 削除
+    # @source Removed
     success: 削除しました
+    # @source Removing&hellip;
     waiting: 削除中&hellip;
   restore:
+    # @source Restore
     action: 復元
+    # @source Restored
     success: 復元しました
+    # @source Restoring&hellip;
     waiting: 復元中&hellip;
   snapshot:
+    # @source Snapshot Now
     action: 今すぐスナップショット作成
+    # @source Creating Snapshot
     success: スナップショットを作成中
+    # @source Snapshotting&hellip;
     waiting: スナップショット作成中&hellip;
   uninstall:
+    # @source Uninstall
     action: アンインストール
+    # @source Uninstalled
     success: アンインストールしました
+    # @source Uninstalling&hellip;
     waiting: アンインストール中&hellip;
   update:
+    # @source Update
     action: 更新
+    # @source Updated
     success: 更新しました
+    # @source Updating&hellip;
     waiting: 更新中&hellip;
   upgrade:
+    # @source Upgrade
     action: アップグレード
     # @reason English source uses the progressive form (Upgrading) for the success state; mirrored it.
+    # @source Upgrading
     success: アップグレード中
+    # @source Starting&hellip;
     waiting: 開始中&hellip;
 containerEngine:
   # @reason Katakana style: Microsoft-style long vowel for -er/-or words (コンテナー、サーバー、ユーザー);
+  # @source Container Engine
   label: コンテナーエンジン
   options:
     containerd:
+      # @source Namespaces for container images; use with nerdctl.
       description: コンテナーイメージの名前空間。nerdctlと組み合わせて使用します。
+      # @source containerd
       label: containerd
     moby:
+      # @source Docker API; use with Docker CLI.
       description: Docker API。Docker CLIと組み合わせて使用します。
+      # @source dockerd (moby)
       label: dockerd (moby)
 containerInfo:
+  # @source Container Info
   fallbackTitle: コンテナー情報
+  # @source Info
   info: 情報
+  # @source Logs
   logs: ログ
   search:
+    # @source Search in logs
     ariaLabel: ログ内を検索
+    # @source Clear search
     clearSearch: 検索をクリア
+    # @source Next match
     nextMatch: 次の一致
+    # @source Search logs...
     placeholder: ログを検索…
+    # @source Previous match
     previousMatch: 前の一致
+  # @source Shell
   shell: シェル
+  # @source Stats
   stats: 統計
 containerInspect:
   capabilities:
+    # @source Added
     added: 追加
     # @reason Established Japanese Linux terminology for dropping capabilities.
+    # @source Dropped
     dropped: ドロップ
   command:
+    # @source Args
     args: 引数
+    # @source Command
     command: コマンド
+    # @source Entrypoint
     entrypoint: エントリーポイント
   error:
+    # @source Failed to load container details.
     loadFailed: コンテナーの詳細を読み込めませんでした。
+    # @source An unknown error has occurred
     unknown: 不明なエラーが発生しました
+  # @source Loading container details…
   loading: コンテナーの詳細を読み込んでいます…
   mounts:
+    # @source Destination
     destination: マウント先
     # @reason Standard read-only abbreviation; kept in English as in common Japanese UIs.
+    # @source RO
     readOnly: RO
     # @reason Standard read-write abbreviation; kept in English as in common Japanese UIs.
+    # @source RW
     readWrite: RW
     # @reason Column-header abbreviation; kept in English as in common Japanese UIs.
+    # @source R/W
     rw: R/W
+    # @source Source
     source: マウント元
+    # @source Type
     type: 種類
+  # @source None
   none: なし
   sections:
     # @reason Established Japanese term for Linux capabilities.
+    # @source Capabilities
     capabilities: ケーパビリティ
+    # @source Command & Args
     commandArgs: コマンドと引数
     # @reason Section lists environment variables, so 環境変数 rather than the literal 環境.
+    # @source Environment
     environment: 環境変数
+    # @source Labels
     labels: ラベル
+    # @source Mounts
     mounts: マウント
+    # @source Ports
     ports: ポート
   summary:
+    # @source Created
     created: 作成日時
+    # @source ID
     id: ID
+    # @source Image
     image: イメージ
+    # @source IP Address
     ipAddress: IPアドレス
+    # @source Name
     name: 名前
+    # @source Started
     started: 開始日時
 containerStats:
   charts:
+    # @source Block I/O (bytes/s)
     blockIO: ブロックI/O（バイト/秒）
+    # @source CPU %
     cpu: CPU %
+    # @source Memory
     memory: メモリ
+    # @source Network I/O (bytes/s)
     network: ネットワークI/O（バイト/秒）
   interval:
+    # @source {minutes} min
     minutes: '{minutes}分'
+    # @source {seconds} s
     seconds: '{seconds}秒'
+  # @source Stats are currently only available for the Docker (Moby) engine.
   mobyOnly: 統計は現在、Docker（Moby）エンジンでのみ利用できます。
+  # @source No processes found.
   noProcesses: プロセスが見つかりません。
+  # @source Stats are only available for running containers.
   notRunning: 統計は実行中のコンテナーでのみ利用できます。
+  # @source Processes
   processes: プロセス
   # @reason Labels the interval dropdown; plain 更新 would read as a refresh button.
+  # @source Refresh
   refresh: 更新間隔
   series:
+    # @source Limit
     limit: 上限
+    # @source Read
     read: 読み取り
     # @reason RX/TX rendered as 受信/送信, the standard Japanese chart-legend terms.
+    # @source RX
     rx: 受信
+    # @source TX
     tx: 送信
+    # @source Used
     used: 使用量
+    # @source Write
     write: 書き込み
 containers:
   manage:
     table:
       action:
+        # @source Info
         info: 情報
+        # @source Restart
         restart: 再起動
+        # @source Start
         start: 開始
+        # @source Stop
         stop: 停止
       header:
+        # @source Name
         containerName: 名前
+        # @source Image
         image: イメージ
+        # @source Port(s)
         ports: ポート
+        # @source Uptime
         started: 稼働時間
+        # @source State
         state: 状態
   sortableTables:
+    # @source There are no containers to show
     noRows: 表示するコンテナーがありません
+  # @source Containers
   title: コンテナー
 dashboard:
   # @reason Product name of the Rancher UI; kept in English.
+  # @source Rancher Dashboard
   windowTitle: Rancher Dashboard
 denyRoot:
+  # @source Rancher Desktop cannot be run with root privileges. Please run again as a regular user.
   message: Rancher Desktopはroot権限では実行できません。通常のユーザーとして再度実行してください。
+  # @source Cannot run as Root
   title: rootとして実行できません
 deploymentProfile:
   # @reason version is the literal field name in the file, kept in English.
+  # @source Invalid deployment file {path}: no version specified. Add a version field to make it valid (current version is {version}).
   noVersion: デプロイメントファイル{path}は無効です：バージョンが指定されていません。有効にするにはversionフィールドを追加してください（現在のバージョンは{version}です）。
+  # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
   noVersionRegistry: デプロイメントが無効です：{path}にバージョンが指定されていません。有効にするにはversionフィールドを追加してください（現在のバージョンは{version}です）。
 diagnostics:
+  # @source {count} failed plus {muted} muted
   failedCount: '{count}件が失敗、さらに{muted}件がミュートされています'
+  # @source Last run:
   lastRun: 最終実行：
+  # @source (No fixes available)
   noFixes: （利用可能な修正はありません）
   results:
     muted:
+      # @source Try showing muted diagnostics.
       body: ミュートされた診断を表示してみてください。
+      # @source No results found
       heading: 結果が見つかりませんでした
       # @reason Icon identifier, not user-visible text.
+      # @source icon-search
       icon: icon-search
     success:
+      # @source Rancher Desktop appears to be functioning correctly.
       body: Rancher Desktopは正常に動作しているようです。
+      # @source No problems detected
       heading: 問題は検出されませんでした
       # @reason Icon identifier, not user-visible text.
+      # @source icon-checkmark
       icon: icon-checkmark
+  # @source Show Muted
   showMuted: ミュート済みを表示
   tableHeaders:
+    # @source Mute
     mute: ミュート
+    # @source Name
     name: 名前
+  # @source Diagnostics
   title: 診断
 dialog:
   bridgedNetwork:
+    # @source Shared network isn't available either. Only network access is via port forwarding to the host.
     noNetwork: 共有ネットワークも利用できません。ネットワークアクセスはホストへのポートフォワーディング経由のみです。
+    # @source Using shared network address {ip}
     sharedFallback: 共有ネットワークアドレス{ip}を使用しています
+    # @source Bridged network did not get an IP address.
     title: ブリッジネットワークがIPアドレスを取得できませんでした。
   confirmMigration:
+    # @source Delete Workloads
     delete: ワークロードを削除
+    # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: '{from}から{to}へダウングレードすると、既存のKubernetesワークロードが失われます。データを削除しますか？'
+    # @source Confirming migration
     title: 移行の確認
   invalidK8sVersion:
+    # @source Falling back to recommended minimum upgrade version of {version}
     detail: 推奨される最小アップグレードバージョン{version}にフォールバックします
     # @reason ICU-escaped quotes ''…'' replaced with Japanese corner brackets 「」.
+    # @source Requested Kubernetes version ''{version}'' is not a supported version.
     message: 要求されたKubernetesバージョン「{version}」はサポートされていません。
+    # @source Invalid Kubernetes Version
     title: 無効なKubernetesバージョン
   networkFailure:
     # @reason ICU-escaped quotes ''…'' replaced with Japanese corner brackets 「」.
+    # @source Please acquire a version in the range {range} and install in ''{path}''
     detail: '{range}の範囲のバージョンを入手し、「{path}」にインストールしてください'
+    # @source Can't download a compatible version of kubectl in offline-mode
     message: オフラインモードでは互換性のあるバージョンのkubectlをダウンロードできません
+    # @source Network failure
     title: ネットワーク障害
 extensions:
   # @reason Icon identifier, not user-visible text.
+  # @source icon-extension
   icon: icon-extension
   installed:
     emptyState:
+      # @source It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
       body: まだ拡張機能がインストールされていないようです。拡張機能カタログを参照して始めてください。
       button:
+        # @source Browse Extensions
         text: 拡張機能を参照
+      # @source No extensions installed
       heading: 拡張機能はインストールされていません
       # @reason Icon identifier, not user-visible text.
+      # @source icon-extension
       icon: icon-extension
     list:
+      # @source Remove
       uninstall: 削除
+      # @source Upgrade
       upgrade: アップグレード
   view:
     emptyState:
+      # @source {extensionId} was removed. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.
       body: '{extensionId}は削除されました。拡張機能カタログにアクセスして再インストールするか、他の拡張機能を探してRancher Desktopの体験を向上させてください。'
+      # @source Extension removed
       heading: 拡張機能が削除されました
 firstRun:
+  # @source Enable Kubernetes
   enableKubernetes: Kubernetesを有効にする
   kubernetesVersion:
+    # @source (cached versions only)
     cachedOnly: （キャッシュされたバージョンのみ）
+    # @source Kubernetes Version
     legend: Kubernetesバージョン
+    # @source Other Versions
     otherVersions: その他のバージョン
+    # @source Recommended Versions
     recommendedVersions: 推奨バージョン
+  # @source OK
   ok: OK
   # @reason "Rancher Desktop by SUSE" kept intact as branding.
+  # @source Welcome to Rancher Desktop by SUSE
   welcome: Rancher Desktop by SUSEへようこそ
 general:
+  # @source Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
   description: Rancher Desktopは、デスクトップアプリケーションを通じてKubernetesとイメージ管理を提供します。
+  # @source Homepage
   homepage: ホームページ
   # @reason Link to the GitHub Issues page; the English name is standard for Japanese developers.
+  # @source Issues
   issues: Issues
+  # @source General
   navLabel: 一般
+  # @source Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack
   projectDiscussions: プロジェクトディスカッション：<a href="https://slack.rancher.io/">Rancher Users</a> Slackの<b>#rancher-desktop</b>
+  # @source Project Links:
   projectLinks: プロジェクトリンク：
   # @reason "Rancher Desktop by SUSE" kept intact as branding.
+  # @source Welcome to Rancher Desktop by SUSE
   title: Rancher Desktop by SUSEへようこそ
 generic:
   # @reason Japanese conjunction と takes no surrounding spaces.
+  # @source  and 
   and: と
+  # @source Apply
   apply: 適用
+  # @source Cancel
   cancel: キャンセル
+  # @source Close
   close: 閉じる
   # @reason Fullwidth ideographic comma; Japanese does not use a following space.
+  # @source , 
   comma: 、
   # @reason Assumed to be the port-forwarding action; rendered as 転送.
+  # @source Forward
   forward: 転送
+  # @source Loading&hellip;
   loading: 読み込み中&hellip;
+  # @source Namespace
   namespace: 名前空間
+  # @source OK
   ok: OK
+  # @source Rerun
   rerun: 再実行
+  # @source Search
   search: 検索
 imageEvents:
+  # @source Please select the Dockerfile to use (could have a different name)
   buildMessage: 使用するDockerfileを選択してください（名前が異なる場合もあります）
+  # @source Pick the build directory
   buildTitle: ビルドディレクトリを選択
+  # @source Error trying to delete images {ids}
   deleteBatchError: イメージ{ids}の削除中にエラーが発生しました
+  # @source Error trying to delete image {name} ({id}):
+  # @source
+  # @source  {error}
   deleteError: |-
       イメージ{name}（{id}）の削除中にエラーが発生しました：
 
        {error}
+  # @source Error trying to push {name}:
+  # @source
+  # @source  {error}
   pushError: |-
       {name}のプッシュ中にエラーが発生しました：
 
        {error}
+  # @source Error trying to scan {name}:
+  # @source
+  # @source  {error}
   scanError: |-
       {name}のスキャン中にエラーが発生しました：
 
        {error}
 images:
   action:
+    # @source Add Image
     add: イメージを追加
   add:
     action:
+      # @source Build
       build: ビルド
       pastTense:
+        # @source Built
         build: ビルドしました
         # @reason Japanese conjugates the verb in the sentence templates, so both the base and past-tense action variants are the noun プル.
+        # @source Pulled
         pull: プル
+      # @source Pull
       pull: プル
+    # @source Error trying to { action } ''{ image }'' - see console output for more information
     errorText: '''''{ image }'''' を{ action }しようとしてエラーが発生しました。詳細はコンソール出力を確認してください。'
     # @reason English builds "{action}ing"; Japanese puts the verb last, so the template supplies the しています conjugation around the action noun.
+    # @source {action}ing image...
     loadingText: イメージを{action}しています...
     # @reason Receives the past-tense action variant; the しました conjugation lives in the template, so the variant stays the noun プル.
+    # @source {action} image
     successText: イメージを{action}しました
+    # @source Add Image
     title: イメージの追加
   confirmDelete:
+    # @source Delete
     confirm: 削除
     # @reason Japanese has no grammatical plural, so both branches carry the same counter phrase; dropped the space before the counter 個 as Japanese attaches counters directly to the number.
+    # @source Delete {count} {count, plural, one {image} other {images}}?
     multiple: '{count}{count, plural, one {個のイメージ} other {個のイメージ}}を削除しますか？'
+    # @source Delete image {name}:{tag}?
     single: イメージ {name}:{tag} を削除しますか？
+    # @source Confirming image deletion
     title: イメージ削除の確認
   manager:
+    # @source Close Output to Continue
     close: 出力を閉じて続行
     input:
       build:
+        # @source Build
         button: ビルド
+        # @source Name of image to build:
         label: ビルドするイメージ名：
         # @reason Format example for a registry reference, not UI text; kept as-is.
+        # @source registry.example.com/namespace/image:tag
         placeholder: registry.example.com/namespace/image:tag
       pull:
+        # @source Pull
         button: プル
+        # @source Name of image to pull:
         label: プルするイメージ名：
         # @reason Format example for a registry reference, not UI text; kept as-is.
+        # @source registry.example.com/namespace/image
         placeholder: registry.example.com/namespace/image
     table:
       action:
+        # @source Delete
         delete: 削除
+        # @source Push
         push: プッシュ
+        # @source Scan...
         scan: スキャン...
       header:
+        # @source Image ID
         imageId: イメージ ID
+        # @source Image
         imageName: イメージ
+        # @source Size
         size: サイズ
+        # @source Tag
         tag: タグ
+      # @source All images
       label: すべてのイメージ
+    # @source Image Output
     title: イメージ出力
   scan:
     details:
+      # @source Description
       description: 説明
+      # @source Primary URL
       primaryUrl: プライマリ URL
+      # @source References
       references: 参考情報
+    # @source Error trying to scan ''{ image }'' - see console output for more information
     errorText: '''''{ image }'''' のスキャン中にエラーが発生しました。詳細はコンソール出力を確認してください。'
     labels:
       # @reason Vulnerability severity scale rendered as 致命的/高/中/低, the common Japanese mapping for CRITICAL/HIGH/MEDIUM/LOW in security scanners.
+      # @source CRITICAL
       critical: 致命的
+      # @source HIGH
       high: 高
+      # @source Issues Found
       issuesFound: 検出された問題
+      # @source LOW
       low: 低
+      # @source MEDIUM
       medium: 中
+    # @source Scanning ''{ image }''
     loadingText: '''''{ image }'''' をスキャンしています'
     results:
       headers:
         # @reason Elliptical column header (the column holds the fixed version); mirrors the terse English "Fixed".
+        # @source Fixed
         fixed: 修正済み
         # @reason Elliptical column header (the column holds the installed version); mirrors the terse English "Installed".
+        # @source Installed
         installed: インストール済み
+        # @source Package
         package: パッケージ
+        # @source Severity
         severity: 重大度
+        # @source Vulnerability ID
         vulnerabilityId: 脆弱性 ID
+    # @source Scan details for ''{ image }''
     title: '''''{ image }'''' のスキャン詳細'
   sortableTables:
+    # @source There are no images to show
     noRows: 表示するイメージがありません
   state:
+    # @source Waiting for image manager to be ready
     imagesUnready: イメージマネージャーの準備を待っています
+    # @source Error: Unknown state; please reload.
     unknown: エラー：不明な状態です。再読み込みしてください。
+  # @source Images
   title: イメージ
 integrations:
   windows:
+    # @source Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros
     description: Rancher Desktop の Kubernetes 設定と Docker ソケットを Windows Subsystem for Linux（WSL）のディストリビューションに公開します
 kubernetesError:
+  # @source Context:
   context: コンテキスト：
+  # @source Last command run:
   lastCommand: 最後に実行したコマンド：
+  # @source Some recent <a href="#" data-action="showLogs">logfile</a> lines:
   logLines: 最近の<a href="#" data-action="showLogs">ログファイル</a>の内容（一部）：
+  # @source {appName} Error
   title: '{appName} エラー'
 kubernetesPrefs:
   kubernetes:
+    # @source Enable Kubernetes
     label: Kubernetes を有効にする
+    # @source Kubernetes
     legendText: Kubernetes
   options:
+    # @source Options
     legendText: オプション
+    # @source Install Spin Operator
     spinkube: Spin Operator をインストールする
+    # @source Spin operator requires <a href="#" data-navigate="Container Engine,general">WebAssembly</a> to be enabled.
     spinkubeWarning: Spin Operator を使用するには、<a href="#" data-navigate="Container Engine,general">WebAssembly</a> を有効にする必要があります。
+    # @source Enable Traefik
     traefik: Traefik を有効にする
   port:
+    # @source Kubernetes Port
     legendText: Kubernetes ポート
   version:
+    # @source Kubernetes version
     legendText: Kubernetes バージョン
+    # @source Kubernetes version (cached versions only)
     legendTextCached: Kubernetes バージョン（キャッシュ済みのバージョンのみ）
+    # @source Other Versions
     otherVersions: その他のバージョン
+    # @source Recommended Versions
     recommendedVersions: 推奨バージョン
 labelSelect:
   noOptions:
+    # @source No options
     empty: 選択肢がありません
+    # @source No matching options
     noMatch: 一致する選択肢がありません
   pagination:
+    # @source {count} / {totalCount} items
     counts: '{count} / {totalCount} 件'
+    # @source Load More...
     more: さらに読み込む...
 locale:
+  # @source German
   de: ドイツ語
+  # @source English
   en-us: 英語
+  # @source Spanish
   es: スペイン語
+  # @source French
   fr: フランス語
   # @reason locale name for Italian
+  # @source Italian
   it: イタリア語
+  # @source Japanese
   ja: 日本語
+  # @source Portuguese (Brazilian)
   pt-br: ポルトガル語（ブラジル）
+  # @source Chinese (Simplified)
   zh-hans: 中国語（簡体字）
 mainMenu:
+  # @source About {appName}
   about: '{appName} について'
   edit:
+    # @source &Copy
     copy: コピー(&C)
+    # @source Cu&t
     cut: 切り取り(&T)
+    # @source De&lete
     delete: 削除(&L)
+    # @source &Edit
     label: 編集(&E)
+    # @source &Paste
     paste: 貼り付け(&P)
+    # @source &Redo
     redo: やり直し(&R)
+    # @source Select &All
     selectAll: すべて選択(&A)
+    # @source &Undo
     undo: 元に戻す(&U)
   file:
+    # @source Close
     close: 閉じる
+    # @source E&xit
     exit: 終了(&X)
+    # @source &File
     label: ファイル(&F)
   help:
+    # @source &About {appName}
     about: '{appName} について(&A)'
+    # @source &Discuss
     discuss: ディスカッション(&D)
+    # @source File a &Bug
     fileABug: バグを報告(&B)
+    # @source Get &Help
     getHelp: ヘルプを表示(&H)
+    # @source {appName} &Help
     help: '{appName} ヘルプ(&H)'
+    # @source &Help
     label: ヘルプ(&H)
+    # @source &Project Page
     projectPage: プロジェクトページ(&P)
+  # @source Hide {appName}
   hide: '{appName} を非表示'
   # @reason macOS application-menu convention (Apple standard wording).
+  # @source Hide Others
   hideOthers: ほかを非表示
   # @reason macOS convention: Preferences in the app menu is 環境設定; used consistently for all Preferences strings.
+  # @source Preferences
   preferences: 環境設定
+  # @source Quit {appName}
   quit: '{appName} を終了'
+  # @source Services
   services: サービス
+  # @source Show All
   showAll: すべてを表示
   view:
+    # @source &Actual Size
     actualSize: 実際のサイズ(&A)
+    # @source &Force Reload
     forceReload: 強制的に再読み込み(&F)
+    # @source &View
     label: 表示(&V)
+    # @source &Reload
     reload: 再読み込み(&R)
+    # @source Toggle &Developer Tools
     toggleDevTools: 開発者ツールの切り替え(&D)
+    # @source Toggle Full &Screen
     toggleFullScreen: 全画面表示の切り替え(&S)
+    # @source Zoom &In
     zoomIn: 拡大(&I)
+    # @source Zoom &Out
     zoomOut: 縮小(&O)
   window:
     # @reason macOS Window-menu convention (Apple standard wording for Bring All to Front).
+    # @source Bring All to Front
     front: すべてを手前に移動
+    # @source &Window
     label: ウィンドウ(&W)
     # @reason Chose the cross-platform 最小化 over Apple's macOS-only しまう, since the menu strings are shared across platforms.
+    # @source Minimize
     minimize: 最小化
     # @reason Window-menu Zoom (resize the window), not text zoom; 拡大/縮小 is the macOS standard wording.
+    # @source Zoom
     zoom: 拡大/縮小
 marketplace:
   installed:
     table:
       header:
+        # @source Description
         description: 説明
+        # @source Name
         name: 名前
+        # @source Vendor
         vendor: ベンダー
   labels:
+    # @source Install
     install: インストール
+    # @source Remove
     uninstall: 削除
+    # @source Upgrade
     upgrade: アップグレード
   loading:
+    # @source Installing...
     install: インストール中...
+    # @source Removing...
     uninstall: 削除中...
+    # @source Upgrading...
     upgrade: アップグレード中...
+  # @source More information
   moreInfo: 詳細情報
+  # @source No extension found for the search criteria
   noResults: 検索条件に一致する拡張機能が見つかりません
   tabs:
+    # @source Catalog
     catalog: カタログ
+    # @source Installed
     installed: インストール済み
+  # @source Extensions
   title: 拡張機能
 nav:
   userMenu:
+    # @source Cluster Dashboard
     clusterDashboard: クラスターダッシュボード
+    # @source Preferences
     preferences: 環境設定
 pathManagement:
+  # @source Configure PATH
   label: PATH の設定
   options:
     manual:
+      # @source Rancher Desktop does not change your PATH configuration; add <code>$HOME/.rd/bin</code> to your path manually.
       description: Rancher Desktop は PATH 設定を変更しません。<code>$HOME/.rd/bin</code> を手動で PATH に追加してください。
+      # @source Manual
       label: 手動
     rcFiles:
+      # @source Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.
       description: Rancher Desktop がシェルのプロファイルを編集します。変更を反映するには、開いているシェルを再起動してください。
+      # @source Automatic
       label: 自動
+  # @source Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, <code>$HOME/.rd/bin</code> must be in your PATH.
   tooltip: Rancher Desktop には kubectl、nerdctl、helm、docker などのツールが同梱されています。これらのツールを使用するには、<code>$HOME/.rd/bin</code> が PATH に含まれている必要があります。
 portForwarding:
+  # @source Include Kubernetes services
   includeKubernetesServices: Kubernetes サービスを含める
   manage:
     table:
       header:
+        # @source Local Port
         listenPort: ローカルポート
+        # @source Name
         name: 名前
         # @reason Katakana ネームスペース matches the Rancher Dashboard Japanese UI; 名前空間 is also common but less usual in Rancher products.
+        # @source Namespace
         namespace: ネームスペース
+        # @source Port
         port: ポート
   sortableTables:
+    # @source There are no port forwarding entries to show
     noRows: 表示するポートフォワーディングのエントリがありません
+  # @source Port Forwarding
   title: ポートフォワーディング
 preferences:
   actions:
     banner:
+      # @source There's a problem with the preferences selection.
       error: 選択した設定に問題があります。
+      # @source Kubernetes will reset after applying changes.
       reset: 変更を適用すると Kubernetes がリセットされます。
+      # @source Kubernetes will restart after applying changes.
       restart: 変更を適用すると Kubernetes が再起動します。
   containerEngine:
     webAssembly:
+      # @source WebAssembly must be enabled for the <a href="#" data-navigate="Kubernetes">Spin Operator</a> to be installed.
       warning: <a href="#" data-navigate="Kubernetes">Spin Operator</a> をインストールするには、WebAssembly を有効にする必要があります。
   error:
+    # @source Reload Preferences to try again.
     body: 環境設定を再読み込みして、もう一度お試しください。
+    # @source Unable to fetch preferences
     heading: 環境設定を取得できません
+    # @source Reload preferences
     reload: 環境設定を再読み込み
+  # @source Preferences
   header: 環境設定
+  # @source or
   incompatiblePrefWarningOr: または
   # @reason Fragment concatenated as Pre + option name + Post; phrased so このオプションには + name + this suffix forms a grammatical sentence.
+  # @source to be unselected.
   incompatibleTypeWarningPostDisabled: が選択解除されている必要があります。
   # @reason Fragment concatenated as Pre + option name + Post; phrased so このオプションには + name + this suffix forms a grammatical sentence.
+  # @source to be selected.
   incompatibleTypeWarningPostSelected: が選択されている必要があります。
   # @reason Fragment concatenated as Pre + option name + Post; Japanese word order forces the requirement verb into the Post fragments.
+  # @source The option requires
   incompatibleTypeWarningPre: このオプションには
   locked:
+    # @source Locked due to organization's policy
     tooltip: 組織のポリシーによりロックされています
   nav:
+    # @source Application
     application: アプリケーション
+    # @source Container Engine
     containerEngine: コンテナーエンジン
+    # @source Kubernetes
     kubernetes: Kubernetes
+    # @source Virtual Machine
     virtualMachine: 仮想マシン
+    # @source WSL
     wsl: WSL
   resetDialog:
+    # @source Apply and reset
     apply: 適用してリセット
+    # @source These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.
     detail: これらの変更により Kubernetes クラスターがリセットされ、ワークロードとコンテナーイメージが失われます。
+    # @source Apply preferences and reset Kubernetes?
     message: 環境設定を適用して Kubernetes をリセットしますか？
+    # @source Rancher Desktop - Reset Kubernetes
     title: Rancher Desktop - Kubernetes のリセット
   tabs:
     # @reason Compact noun compound for a tab label; 許可されたイメージ would be too long for a tab.
+    # @source Allowed Images
     allowedImages: 許可イメージ
+    # @source Behavior
     behavior: 動作
+    # @source Emulation
     emulation: エミュレーション
+    # @source Environment
     environment: 環境
+    # @source General
     general: 全般
+    # @source Hardware
     hardware: ハードウェア
+    # @source Integrations
     integrations: 統合
+    # @source Proxy
     proxy: プロキシ
+    # @source Volumes
     volumes: ボリューム
 preferencesWindow:
   close:
+    # @source There are preferences with changes that have not been applied. All unsaved preferences will be lost.
     detail: 適用されていない変更があります。保存されていない設定はすべて失われます。
+    # @source Discard changes
     discardChanges: 変更を破棄
+    # @source Close preferences without applying?
     message: 変更を適用せずに環境設定を閉じますか？
+    # @source Rancher Desktop - Close Preferences
     title: Rancher Desktop - 環境設定を閉じる
+  # @source Rancher Desktop - Preferences
   title: Rancher Desktop - 環境設定
 prefs:
+  # @source Experimental
   experimental: 実験的
+  # @source This setting requires macOS 13.3 (Ventura) or later.
   onlyFromVentura_arm64: この設定には macOS 13.3（Ventura）以降が必要です。
+  # @source This setting requires macOS 13.0 (Ventura) or later.
   onlyFromVentura_x64: この設定には macOS 13.0（Ventura）以降が必要です。
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.3 (Ventura) or later.
   onlyWithVZ_arm64: この設定には VZ エミュレーションモードの使用が必要です。VZ は macOS 13.3（Ventura）以降でのみ利用できます。
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.0 (Ventura) or later.
   onlyWithVZ_x64: この設定には VZ エミュレーションモードの使用が必要です。VZ は macOS 13.0（Ventura）以降でのみ利用できます。
 product:
   containerEngine:
     # @reason Abbreviation of Container Engine; Japanese has no natural short form, so the Latin abbreviation stays.
+    # @source CE
     abbreviation: CE
+    # @source Container Engine
     fullName: コンテナーエンジン
+  # @source deactivated
   deactivated: 無効
+  # @source Kubernetes
   kubernetesVersion: Kubernetes
+  # @source Network status
   networkStatus: ネットワーク状態
   networkStatusValues:
+    # @source checking...
     checking: 確認中...
+    # @source offline
     offline: オフライン
+    # @source online
     online: オンライン
+  # @source Version
   version: バージョン
 progress:
+  # @source Asking for permission to run tasks as administrator
   askingPermission: 管理者としてタスクを実行する許可を求めています
+  # @source Bundling certificates
   bundlingCertificates: 証明書をバンドルしています
+  # @source Checking k3s images
   checkingK3sImages: k3s イメージを確認しています
+  # @source Configuring container engine
   configuringContainerEngine: コンテナーエンジンを設定しています
+  # @source Configuring image proxy
   configuringImageProxy: イメージプロキシを設定しています
+  # @source Configuring logrotate
   configuringLogrotate: logrotate を設定しています
+  # @source Container engine components
   containerEngineComponents: コンテナーエンジンコンポーネント
+  # @source Copying certificates
   copyingCertificates: 証明書をコピーしています
+  # @source Deleting incompatible Kubernetes state
   deletingIncompatibleState: 互換性のない Kubernetes の状態を削除しています
+  # @source Deleting Kubernetes
   deletingKubernetes: Kubernetes を削除しています
+  # @source Deleting virtual machine
   deletingVirtualMachine: 仮想マシンを削除しています
+  # @source DNS configuration
   dnsConfiguration: DNS 設定
+  # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: 互換性のある kubectl を準備しています
+  # @source Ensuring virtualization is supported
   ensuringVirtualizationSupported: 仮想化がサポートされていることを確認しています
+  # @source Expecting user permission to continue
   expectingPermission: 続行のためユーザーの許可を待っています
+  # @source Extracting certificates
   extractingCertificates: 証明書を抽出しています
+  # @source Fetching certificates
   fetchingCertificates: 証明書を取得しています
+  # @source Initializing Rancher Desktop
   initializingRancherDesktop: Rancher Desktop を初期化しています
+  # @source Initializing WSL data
   initializingWslData: WSL データを初期化しています
+  # @source Installing Buildkit
   installingBuildkit: Buildkit をインストールしています
+  # @source Installing CA certificates
   installingCaCertificates: CA 証明書をインストールしています
+  # @source Installing container engine
   installingContainerEngine: コンテナーエンジンをインストールしています
   # @reason Docker term "credential helper" rendered in katakana, the usual form in Japanese Docker documentation.
+  # @source Installing credential helper
   installingCredentialHelper: クレデンシャルヘルパーをインストールしています
+  # @source Installing the docker-credential helper
   installingDockerCredentialHelper: docker-credential ヘルパーをインストールしています
+  # @source Installing helpers
   installingHelpers: ヘルパーをインストールしています
+  # @source Installing image scanner
   installingImageScanner: イメージスキャナーをインストールしています
+  # @source Installing k3s
   installingK3s: k3s をインストールしています
+  # @source Installing Kubernetes
   installingKubernetes: Kubernetes をインストールしています
+  # @source Kubernetes components
   kubernetesComponents: Kubernetes コンポーネント
+  # @source Kubernetes dockerd compatibility
   kubernetesDockerCompatibility: Kubernetes と dockerd の互換性
+  # @source Mounting WSL data
   mountingWslData: WSL データをマウントしています
+  # @source Preparing to start
   preparingToStart: 起動の準備をしています
+  # @source Proxy Config Setup
   proxyConfigSetup: プロキシ設定のセットアップ
+  # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop ゲストエージェント
+  # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 権限がないため設定を再生成しています
+  # @source Registering WSL distribution
   registeringWslDistribution: WSL ディストリビューションを登録しています
+  # @source Removing existing certificates
   removingExistingCertificates: 既存の証明書を削除しています
   # @reason "spinkube" kept in lowercase English as in the source; it is a project name.
+  # @source Removing spinkube operator
   removingSpinkubeOperator: spinkube オペレーターを削除しています
+  # @source Removing stale state
   removingStaleState: 古い状態を削除しています
+  # @source Removing Traefik
   removingTraefik: Traefik を削除しています
+  # @source Resetting Kubernetes
   resettingKubernetes: Kubernetes をリセットしています
+  # @source Running provisioning scripts
   runningProvisioningScripts: プロビジョニングスクリプトを実行しています
+  # @source Running update-ca-certificates
   runningUpdateCaCertificates: update-ca-certificates を実行しています
+  # @source Setting docker context
   settingDockerContext: docker コンテキストを設定しています
+  # @source Setting Lima permissions
   settingLimaPermissions: Lima の権限を設定しています
+  # @source Setting up Docker socket
   settingUpDockerSocket: Docker ソケットをセットアップしています
+  # @source Setting up virtual ethernet
   settingUpVirtualEthernet: 仮想イーサネットをセットアップしています
+  # @source Shutting down
   shuttingDown: シャットダウンしています
+  # @source Skipping node checks, flannel is disabled
   skippingNodeChecksFlannel: flannel が無効なため、ノードチェックをスキップしています
+  # @source Starting Backend
   startingBackend: バックエンドを起動しています
+  # @source Starting buildkit
   startingBuildkit: buildkit を起動しています
+  # @source Starting container engine
   startingContainerEngine: コンテナーエンジンを起動しています
+  # @source Starting image proxy
   startingImageProxy: イメージプロキシを起動しています
+  # @source Starting k3s
   startingK3s: k3s を起動しています
+  # @source Starting Kubernetes
   startingKubernetes: Kubernetes を起動しています
+  # @source Starting proxy
   startingProxy: プロキシを起動しています
+  # @source Starting {service}
   startingService: '{service} を起動しています'
+  # @source Starting virtual machine
   startingVirtualMachine: 仮想マシンを起動しています
+  # @source Starting WSL environment
   startingWslEnvironment: WSL 環境を起動しています
+  # @source Stopping existing instance
   stoppingExistingInstance: 既存のインスタンスを停止しています
+  # @source Stopping mock backend
   stoppingMockBackend: モックバックエンドを停止しています
+  # @source Stopping services
   stoppingServices: サービスを停止しています
+  # @source Updating cluster configuration
   updatingClusterConfiguration: クラスター構成を更新しています
+  # @source Updating /etc/hosts
   updatingEtcHosts: /etc/hosts を更新しています
+  # @source Updating kubeconfig
   updatingKubeconfig: kubeconfig を更新しています
+  # @source Updating outdated virtual machine
   updatingOutdatedVm: 古い仮想マシンを更新しています
+  # @source Updating WSL data
   updatingWslData: WSL データを更新しています
+  # @source Upgrading WSL distribution
   upgradingWslDistribution: WSL ディストリビューションをアップグレードしています
+  # @source Waiting for container engine to be ready
   waitingForContainerEngine: コンテナーエンジンの準備ができるのを待機しています
+  # @source Waiting for Kubernetes API
   waitingForKubernetesApi: Kubernetes API を待機しています
+  # @source Waiting for nodes
   waitingForNodes: ノードを待機しています
+  # @source Waiting for services
   waitingForServices: サービスを待機しています
+  # @source Writing K3s configuration
   writingK3sConfiguration: K3s の構成を書き込んでいます
 snapshots:
   action:
+    # @source Create Snapshot
     create: スナップショットの作成
   card:
     action:
+      # @source Delete
       remove: 削除
+      # @source Restore
       restore: 復元
     # @reason Date and time reordered to precede the verb; ICU apostrophe-quoting around the tags preserved verbatim.
+    # @source Created on '<b>'{date}'</b>' at '<b>'{time}'</b>'
     created: '''<b>''{date}''</b>'' ''<b>''{time}''</b>'' に作成'
   create:
     actions:
+      # @source Cancel
       back: キャンセル
+      # @source Create
       submit: 作成
     description:
+      # @source Description
       label: 説明
+    # @source Rancher Desktop will be temporarily unavailable while creating a new Snapshot
     info: 新しいスナップショットの作成中、Rancher Desktop は一時的に使用できなくなります
     name:
+      # @source Snapshot Name
       label: スナップショット名
+    # @source Create a new Snapshot
     title: 新しいスナップショットの作成
   dialog:
     buttons:
+      # @source Close
       error: 閉じる
     creating:
       actions:
+        # @source Cancel
         cancel: キャンセル
+      # @source Creating {snapshot}
       header: '{snapshot} を作成しています'
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being created.'<br/>'This may take some time depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart.
       message: スナップショット '<b>'{snapshot}'</b>' が作成されるまでお待ちください。'<br/>'お使いのマシンのリソースによっては時間がかかることがあります。'<br/>'この操作の間、Rancher Desktop は一時的に使用できなくなります。'<br/><br/>'スナップショットの作成が完了すると、VM が再起動します。
     delete:
       actions:
+        # @source Cancel
         cancel: キャンセル
+        # @source Delete
         ok: 削除
+      # @source Permanently delete snapshot?
       header: スナップショットを完全に削除しますか？
       # @reason Source value is the literal placeholder "text"; kept unchanged.
+      # @source Deleting a snapshot cannot be undone.
       info: スナップショットを削除すると元に戻せません。
     generic:
+      # @source Snapshot operation in progress
       header: スナップショット操作が進行中です
+      # @source Please wait while the snapshot operation is active.<br/>This may take some time depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart.
       message: スナップショット操作が完了するまでお待ちください。<br/>お使いのマシンのリソースによっては時間がかかることがあります。<br/>この操作の間、Rancher Desktop は一時的に使用できなくなります。<br/><br/>スナップショット処理が完了すると、VM が再起動します。
     restore:
       actions:
+        # @source Cancel
         cancel: キャンセル
+        # @source Restore
         ok: 復元
       error:
+        # @source Quit Rancher Desktop
         buttonText: Rancher Desktop を終了
+        # @source Failed to restore snapshot '<b>'{snapshot}'</b>'.'<br/><br/>'Rancher Desktop has performed a Factory Reset and will now exit. Please try to address the issue that led to this error before restarting Rancher Desktop and attempting to restore the snapshot again.
         description: スナップショット '<b>'{snapshot}'</b>' の復元に失敗しました。'<br/><br/>'Rancher Desktop はファクトリーリセットを実行し、これで終了します。Rancher Desktop を再起動してスナップショットの復元を再試行する前に、このエラーの原因となった問題への対処をお試しください。
+        # @source Error restoring snapshot
         header: スナップショットの復元エラー
+      # @source Restore snapshot?
       header: スナップショットを復元しますか？
+      # @source Restoring this snapshot will replace your current installation, including preferences. If the Preferences window is open, it will be automatically closed and any unsaved changes will be discarded.
       info: このスナップショットを復元すると、現在のインストール環境が設定も含めて置き換えられます。設定ウィンドウが開いている場合は自動的に閉じられ、保存されていない変更は破棄されます。
     restoring:
       actions:
+        # @source Cancel
         cancel: キャンセル
+      # @source Restoring {snapshot}
       header: '{snapshot} を復元しています'
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being restored. This may take some time depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active.
       message: スナップショット '<b>'{snapshot}'</b>' が復元されるまでお待ちください。お使いのマシンのリソースによっては時間がかかることがあります。<br/><br/>この操作の間、Rancher Desktop は一時的に使用できなくなります。完了すると、VM はスナップショット {snapshot} が適用された状態で再起動します。
+    # @source Show logs
     showLogs: ログを表示
   empty:
+    # @source Click on Create Snapshot to get started
     body: 開始するには「スナップショットの作成」をクリックしてください
+    # @source No snapshots found
     heading: スナップショットが見つかりません
     # @reason Icon identifier, not user-visible text; kept unchanged.
+    # @source icon-search
     icon: icon-search
   info:
     create:
+      # @source Cancelled creation of {snapshot}
       cancel: '{snapshot} の作成をキャンセルしました'
+      # @source Created '<b>'{snapshot}'</b>'
       success: '''<b>''{snapshot}''</b>'' を作成しました'
     delete:
+      # @source Delete error: {error}
       error: 削除エラー：{error}
+      # @source Deleted '<b>'{snapshot}'</b>'
       success: '''<b>''{snapshot}''</b>'' を削除しました'
     lock:
+      # @source A snapshot lock file has been detected for an unusually long time. If you believe this is an error, you can try to remove the lock file by running <code>rdctl snapshot unlock</code>.
       info: スナップショットのロックファイルが異常に長い時間検出されています。これがエラーだと思われる場合は、<code>rdctl snapshot unlock</code> を実行してロックファイルの削除を試すことができます。
     restore:
+      # @source Cancelled restoration of {snapshot}
       cancel: '{snapshot} の復元をキャンセルしました'
+      # @source Restored '<b>'{snapshot}'</b>'
       success: '''<b>''{snapshot}''</b>'' を復元しました'
     # @reason Appended directly after a snapshot event message; a parenthesized time reads naturally in Japanese where English uses " at {time}".
+    # @source  at {time}
     when: （{time}）
+  # @source Snapshots
   title: スナップショット
 sortableTable:
   actionAvailability:
+    # @source {actionable} selected
     selected: '{actionable} 件を選択中'
+    # @source Available for {actionable} of the {total} selected
     some: 選択した {total} 件のうち {actionable} 件で使用可能
+  # @source Add
   add: 追加
+  # @source Add Filter
   addFilter: フィルターを追加
   bulkActions:
     collapsed:
+      # @source Actions
       label: アクション
+  # @source Filter for...
   filterFor: フィルター条件を入力...
   # @reason Rendered as `"value" in column`; が含まれる列: keeps the fixed value-then-column word order grammatical in Japanese.
+  # @source in
   in: 'が含まれる列:'
+  # @source No actions available
   noActions: 使用可能なアクションはありません
+  # @source There are no rows which match your search query.
   noData: 検索条件に一致する行はありません。
+  # @source There are no rows to show.
   noRows: 表示する行はありません。
   paging:
     # @reason Japanese has no plural but every branch is kept and translated; nested plural preserved.
+    # @source {pages, plural,
+    # @source =0 {No Items}
+    # @source =1 {{count} {count, plural, =1 {Item} other {Items}}}
+    # @source other {{from} - {to} of {count} Items}}
     generic: |-
         {pages, plural,
         =0 {項目なし}
         =1 {{count} {count, plural, =1 {項目} other {項目}}}
         other {{count} 項目中 {from} - {to}}}
+  # @source Reset
   resetFilters: リセット
+  # @source Filter
   search: フィルター
+  # @source Select a column
   selectCol: 列を選択
   tableHeader:
+    # @source Group by
     groupBy: グループ化
+    # @source This column cannot be filtered by
     noFilter: この列ではフィルターできません
     # @reason Prefix of the page-size selector（表示: 25）; concise noun form.
+    # @source Show
     show: 表示
 sudoPrompt:
+  # @source Always run without administrative access
   alwaysRunWithout: 常に管理者権限なしで実行する
+  # @source OK
   buttonText: OK
+  # @source This will modify the following paths:
   explanation: これにより、次のパスが変更されます：
+  # @source Rancher Desktop requires administrative access ("sudo access") for the following reasons:
   message: Rancher Desktop は次の理由により管理者権限（sudo アクセス）を必要とします：
+  # @source The prompt will be displayed once this window is closed. Cancelling the prompt or disabling administrative access requires you to switch the docker context to rancher-desktop in order to continue using Rancher Desktop.
   messageSecondPart: このウィンドウを閉じるとプロンプトが表示されます。プロンプトをキャンセルした場合や管理者権限を無効にした場合、Rancher Desktop を引き続き使用するには docker コンテキストを rancher-desktop に切り替える必要があります。
   reasons:
     dockerSocket:
+      # @source Provides compatibility with tools that use the docker socket without the ability to use docker contexts.
       description: docker コンテキストを使用できない、docker ソケットを使用するツールとの互換性を提供します。
+      # @source Set up default docker socket
       title: 既定の docker ソケットの設定
     networking:
+      # @source Provides bridged networking so that it is easier to access your containers. If this is not allowed, containers will only be accessible via port forwarding.
       description: ブリッジネットワークを提供し、コンテナーへのアクセスを容易にします。許可されない場合、コンテナーにはポートフォワーディング経由でのみアクセスできます。
+      # @source Configure networking
       title: ネットワークの構成
+  # @source Administrative Access Required
   title: 管理者権限が必要です
 systemPreferences:
+  # @source # CPUs
   cpus: CPU 数
+  # @source Memory (GB)
   memory: メモリ（GB）
 telemetryOptIn:
+  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
   fineprint: 匿名化された使用状況情報やエラーレポートなどを送信して、Rancher Desktop の改善に役立てます。データが第三者と共有されることはなく、デプロイしている具体的なリソースやエンドポイントに関する情報は含まれません。
+  # @source Allow collection of anonymous statistics to help us improve Rancher Desktop
   label: Rancher Desktop の改善に役立てるため、匿名の統計情報の収集を許可する
 tray:
+  # @source Container engine: {name}
   containerEngine: コンテナーエンジン：{name}
+  # @source Kubernetes Contexts
   kubernetesContexts: Kubernetes コンテキスト
+  # @source Network status: {status}
   networkStatus: ネットワーク状態：{status}
+  # @source None found
   noneFound: 見つかりません
+  # @source Open cluster dashboard
   openDashboard: クラスターダッシュボードを開く
+  # @source Open main window
   openMainWindow: メインウィンドウを開く
+  # @source Open preferences dialog
   openPreferences: 設定ダイアログを開く
+  # @source Quit Rancher Desktop
   quitRancherDesktop: Rancher Desktop を終了
   state:
+    # @source Kubernetes is disabled
     disabled: Kubernetes は無効です
+    # @source Kubernetes has encountered an error
     error: Kubernetes でエラーが発生しました
+    # @source Kubernetes is running
     started: Kubernetes は実行中です
+    # @source Kubernetes is starting
     starting: Kubernetes は起動中です
+    # @source Kubernetes is stopped
     stopped: Kubernetes は停止しています
+    # @source Kubernetes is shutting down
     stopping: Kubernetes はシャットダウン中です
+  # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
+  # @source Enable debug mode
   debugMode: デバッグモードを有効にする
   general:
     factoryReset:
       # @reason ファクトリーリセット is the common katakana rendering of Factory Reset; used consistently.
+      # @source Factory Reset
       buttonText: ファクトリーリセット
+      # @source Factory Reset will remove all Rancher Desktop Configurations.
       description: ファクトリーリセットを実行すると、Rancher Desktop のすべての設定が削除されます。
       messageBox:
+        # @source Cancel
         cancel: キャンセル
+        # @source Keep cached Kubernetes images
         checkboxLabel: キャッシュされた Kubernetes イメージを保持する
+        # @source <p>Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again.</p><p>Are you sure you want to reset everything?</p>
         detail: <p>ファクトリーリセットを実行すると、クラスターと Rancher Desktop のすべての設定が削除され、Rancher Desktop がシャットダウンされます。引き続き Rancher Desktop を使用する場合は、手動で起動して初期セットアップをやり直す必要があります。</p><p>本当にすべてをリセットしますか？</p>
+        # @source Perform a factory reset?
         message: ファクトリーリセットを実行しますか？
+        # @source Factory Reset
         ok: ファクトリーリセット
+        # @source Rancher Desktop - Factory Reset
         title: Rancher Desktop - ファクトリーリセット
+      # @source Factory Reset
       title: ファクトリーリセット
     logs:
+      # @source Show Logs
       buttonText: ログを表示
+      # @source Show Rancher Desktop logs
       description: Rancher Desktop のログを表示します
+      # @source Logs
       title: ログ
   kubernetes:
     resetKubernetes:
+      # @source Reset Kubernetes
       buttonText: Kubernetes をリセット
+      # @source Resetting Kubernetes will delete all workloads and configuration.
       description: Kubernetes をリセットすると、すべてのワークロードと構成が削除されます。
       messageBox:
+        # @source Cancel
         cancel: キャンセル
+        # @source Delete container images
         checkboxLabel: コンテナーイメージを削除する
+        # @source Reset Kubernetes?
         message: Kubernetes をリセットしますか？
+        # @source Reset
         ok: リセット
+        # @source Rancher Desktop - Reset Kubernetes
         title: Rancher Desktop - Kubernetes のリセット
+      # @source Reset Kubernetes
       title: Kubernetes のリセット
   # @reason "Rancher Users Slack" kept in English as a community name; sentence reordered so the channel follows the workspace.
+  # @source Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
   needHelp: 問題が解決しませんか？<a href="https://slack.rancher.io/">Rancher Users Slack</a> の <b>#rancher-desktop</b> チャンネルでディスカッションを開始するか、<a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Issue を報告</a>してください。
+  # @source Troubleshooting
   title: トラブルシューティング
 unmetPrerequisites:
+  # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
   action: すべての要件が満たされていることを確認してから、もう一度お試しください。Rancher Desktop を終了します。
+  # @source OK
   buttonText: OK
+  # @source Rancher Desktop cannot start because requirements are missing or not configured:
   message: 要件が不足しているか構成されていないため、Rancher Desktop を起動できません：
+  # @source Rancher Desktop is unable to start
   title: Rancher Desktop を起動できません
 updateStatus:
+  # @source Applying update...
   applyingUpdate: 更新を適用しています...
+  # @source An update to version {version} is available
   available: バージョン {version} への更新が利用可能です
+  # @source Check for updates automatically
   checkForUpdates: 更新を自動的に確認する
+  # @source downloading... ({percent}%, {speed})
   downloading: ダウンロード中...（{percent}%、{speed}）
+  # @source There was an error checking for updates.
   errorChecking: 更新の確認中にエラーが発生しました。
+  # @source Release Notes
   releaseNotes: リリースノート
+  # @source Restart Now
   restartNow: 今すぐ再起動
+  # @source Restart the application to apply the update.
   restartToApply: 更新を適用するには、アプリケーションを再起動してください。
   unsupported:
+    # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: Rancher Desktop の新しいバージョンが利用可能ですが、お使いのシステムではサポートされていません。
+    # @source For more information please see <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.
     seeDocumentation: 詳細については、<a href="https://docs.rancherdesktop.io/getting-started/installation">インストールドキュメント</a>を参照してください。
+    # @source Latest Version Not Supported
     title: 最新バージョンはサポートされていません
+  # @source Update Available
   updateAvailable: 更新が利用可能
 validation:
+  # @source Cannot decrease "{field}" from {from} to {to}
   cannotDecrease: 「{field}」を {from} から {to} に減らすことはできません
+  # @source Cannot enable WebAssembly with classic storage for moby.
   cannotEnableWasmClassic: moby のクラシックストレージでは WebAssembly を有効にできません。
+  # @source Cannot switch to classic storage for moby when WebAssembly is enabled.
   cannotSwitchClassicWasm: WebAssembly が有効な場合、moby のクラシックストレージには切り替えられません。
+  # @source Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
   cannotSwitchMobyClassicWasm: WebAssembly が有効な場合、クラシックストレージの moby コンテナーエンジンには切り替えられません。
+  # @source field "{field}" has duplicate entries: "{duplicates}"
   duplicateEntries: フィールド「{field}」に重複する項目があります：「{duplicates}」
+  # @source Errors in proposed settings:
   errorsInProposedSettings: 指定された設定にエラーがあります：
+  # @source field "{field}" is locked
   fieldLocked: フィールド「{field}」はロックされています
+  # @source {field}: "{pattern}" does not describe an image reference
   invalidImageReference: '{field}: 「{pattern}」はイメージ参照を表していません'
+  # @source {field}: "{value}" is not a valid mapping
   invalidMapping: '{field}: 「{value}」は有効なマッピングではありません'
+  # @source {field}: "{name}" is an invalid name
   invalidName: '{field}: 「{name}」は無効な名前です'
+  # @source field "{field}" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "{entries}"
   invalidNoproxyEntries: フィールド「{field}」に無効な項目があります（IP アドレス、CIDR サブネット、またはドメイン名である必要があります）：「{entries}」
+  # @source {field}: "{value}" is not a valid page name for Preferences Dialog
   invalidPageName: '{field}: 「{value}」は設定ダイアログの有効なページ名ではありません'
+  # @source {field}: tab name "{tabName}" is not a valid tab name for "{page}" Preference page
   invalidTabName: '{field}: タブ名「{tabName}」は設定ページ「{page}」の有効なタブ名ではありません'
+  # @source {field}: "{name}" has invalid tag "{tag}"
   invalidTag: '{field}: 「{name}」に無効なタグ「{tag}」があります'
+  # @source Invalid value for "{field}": <{value}>
   invalidValue: 「{field}」の値が無効です：<{value}>
+  # @source Invalid value for "{field}": <{value}>; must be one of {validValues}
   invalidValueEnum: 「{field}」の値が無効です：<{value}>。{validValues} のいずれかである必要があります
+  # @source Kubernetes version "{version}" not found.
   kubernetesVersionNotFound: Kubernetes バージョン「{version}」が見つかりません。
+  # @source {field}: "{name}" has non-string tag "{tag}"
   nonStringTag: '{field}: 「{name}」に文字列でないタグ「{tag}」があります'
+  # @source Changing field "{field}" via the API isn't supported.
   notSupported: API 経由でのフィールド「{field}」の変更はサポートされていません。
   # @reason Doubled ICU apostrophes (escaped literal quotes) preserved verbatim around the placeholders.
+  # @source Error for field ''{field}'': expecting value of type array, got ''{value}''
   profileExpectedArray: フィールド ''{field}'' のエラー：配列型の値が必要ですが、''{value}'' が指定されました
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got ''{value}''
   profileExpectedType: フィールド ''{field}'' のエラー：{expectedType} 型の値が必要ですが、''{value}'' が指定されました
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got an array {value}
   profileExpectedTypeGotArray: フィールド ''{field}'' のエラー：{expectedType} 型の値が必要ですが、配列 {value} が指定されました
+  # @source Proposed field "{field}" should be an object, got <{value}>.
   proposedShouldBeObject: 指定されたフィールド「{field}」はオブジェクトである必要がありますが、<{value}> が指定されました。
+  # @source Setting {field} can only be enabled on aarch64 systems.
   requiresArm: 設定 {field} は aarch64 システムでのみ有効にできます。
+  # @source Setting {field} can only be changed when virtualMachine.mount.type is "{mountType}".
   requiresNineP: 設定 {field} は、virtualMachine.mount.type が「{mountType}」の場合にのみ変更できます。
+  # @source Setting {field} can only be enabled when virtual-machine.type is "{vmType}".
   requiresVz: 設定 {field} は、virtual-machine.type が「{vmType}」の場合にのみ有効にできます。
+  # @source Setting {field} can only be set when experimental.container-engine.web-assembly.enabled is set as well.
   requiresWebAssembly: 設定 {field} は、experimental.container-engine.web-assembly.enabled も設定されている場合にのみ設定できます。
+  # @source Setting {field} to "{value}" requires that {otherField} is "{required}".
   settingRequires: 設定 {field} を「{value}」にするには、{otherField} が「{required}」である必要があります。
+  # @source Setting {field} to "{value}" requires that {otherField} is "{option1}" or "{option2}".
   settingRequiresEither: 設定 {field} を「{value}」にするには、{otherField} が「{option1}」または「{option2}」である必要があります。
+  # @source Setting "{field}" should wrap an inner object, but got <{value}>.
   shouldBeObject: 設定「{field}」は内部オブジェクトを含む必要がありますが、<{value}> が指定されました。
+  # @source Setting "{field}" should be a simple value, but got <{value}>.
   shouldBeSimple: 設定「{field}」は単純な値である必要がありますが、<{value}> が指定されました。
+  # @source One or more fields in this tab contain a form validation error
   tab: このタブの 1 つ以上のフィールドにフォーム検証エラーがあります
+  # @source Setting {field} to "{vmType}" on ARM requires macOS 13.3 (Ventura) or later.
   vzArmMacOs: ARM で設定 {field} を「{vmType}」にするには、macOS 13.3（Ventura）以降が必要です。
+  # @source Setting {field} to "{vmType}" on Intel requires macOS 13.0 (Ventura) or later.
   vzIntelMacOs: Intel で設定 {field} を「{vmType}」にするには、macOS 13.0（Ventura）以降が必要です。
 virtualMachine:
   mount:
     type:
+      # @source Mount Type
       legend: マウントタイプ
       options:
         9p:
+          # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
           description: QEMU の virtio-9p-pci デバイスを使用してファイルシステムを公開します。
           # @reason Technical option value; kept in English.
+          # @source 9p
           label: 9p
           options:
             cacheMode:
+              # @source Cache Mode
               legend: キャッシュモード
               options:
                 # @reason Technical option value; kept in English.
+                # @source fscache
                 fscache: fscache
                 # @reason Technical option value; kept in English.
+                # @source loose
                 loose: loose
                 # @reason Technical option value; kept in English.
+                # @source mmap
                 mmap: mmap
                 # @reason Technical option value; kept in English.
+                # @source none
                 none: none
+              # @source Caching policy to be used
               tooltip: 使用するキャッシュポリシー
             mSizeInKib:
+              # @source Message Size In KiB
               legend: メッセージサイズ（KiB）
               # @reason English "package size" refers to the 9p msize (maximum message/packet size); rendered as パケット.
+              # @source Maximum message size in KiB
               tooltip: 最大メッセージサイズ（KiB）
             protocolVersion:
+              # @source Protocol Version
               legend: プロトコルバージョン
               options:
                 # @reason Technical option value; kept in English.
+                # @source 9p2000
                 9p2000: 9p2000
                 # @reason Technical option value; kept in English.
+                # @source 9p2000.L
                 9p2000L: 9p2000.L
                 # @reason Technical option value; kept in English.
+                # @source 9p2000.u
                 9p2000u: 9p2000.u
+              # @source 9P protocol version
               tooltip: 9P プロトコルのバージョン
             securityModel:
+              # @source Security Model
               legend: セキュリティモデル
               options:
                 # @reason Technical option value; kept in English.
+                # @source mapped-file
                 mapped-file: mapped-file
                 # @reason Technical option value; kept in English.
+                # @source mapped-xattr
                 mapped-xattr: mapped-xattr
                 # @reason Technical option value; kept in English.
+                # @source none
                 none: none
                 # @reason Technical option value; kept in English.
+                # @source passthrough
                 passthrough: passthrough
+              # @source Security model used for the export path
               tooltip: エクスポートパスに使用するセキュリティモデル
         reverse-sshfs:
+          # @source Exposes the filesystem by running an SFTP server.
           description: SFTP サーバーを実行してファイルシステムを公開します。
           # @reason Technical option value; kept in English.
+          # @source reverse-sshfs
           label: reverse-sshfs
         virtiofs:
+          # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
           description: Apple Virtualization フレームワークの共有ディレクトリデバイスを使用してファイルシステムを公開します。
           # @reason Technical option value; kept in English.
+          # @source virtiofs
           label: virtiofs
   proxy:
+    # @source Address
     address: アドレス
+    # @source Proxy address
     addressTitle: プロキシアドレス
+    # @source Authentication information
     authTitle: 認証情報
+    # @source Enable the proxy used by rancher-desktop
     label: rancher-desktop が使用するプロキシを有効にする
+    # @source WSL Proxy
     legend: WSL プロキシ
     noproxy:
       errors:
+        # @source Error, item is duplicate.
         duplicate: エラー：項目が重複しています。
+      # @source Proxy bypass list
       legend: プロキシバイパスリスト
+      # @source IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy
       placeholder: プロキシをバイパスする IP、CIDR、ドメイン、またはワイルドカード（*.example.com）
+    # @source Password
     password: パスワード
+    # @source Port
     port: ポート
+    # @source Username
     username: ユーザー名
   type:
+    # @source Virtual Machine Type
     legend: 仮想マシンタイプ
     options:
       qemu:
+        # @source Use the QEMU emulator.
         description: QEMU エミュレーターを使用します。
+        # @source QEMU
         label: QEMU
       vz:
+        # @source Use the Apple Virtualization framework.
         description: Apple Virtualization フレームワークを使用します。
+        # @source VZ
         label: VZ
   useRosetta:
+    # @source Enable Rosetta support
     label: Rosetta サポートを有効にする
+    # @source VZ Option
     legend: VZ オプション
 volumes:
   files:
+    # @source Available
     available: 利用可能
+    # @source Error checking volume status
     checkError: ボリューム状態の確認中にエラーが発生しました
+    # @source Invalid volume name "{name}"
     invalidVolumeName: 無効なボリューム名「{name}」
+    # @source Error listing files: {error}
     listError: ファイル一覧の取得エラー：{error}
+    # @source Loading volume files...
     loading: ボリュームのファイルを読み込んでいます...
+    # @source This volume is empty
     noFiles: このボリュームは空です
+    # @source Not Found
     notFound: 見つかりません
     table:
       header:
+        # @source Modified
         modified: 更新日時
+        # @source Name
         name: 名前
         # @reason パーミッション is the standard Japanese term for Unix file permissions in developer tools; アクセス許可 would suggest Windows ACLs.
+        # @source Permissions
         permissions: パーミッション
+        # @source Size
         size: サイズ
+    # @source Volume Files
     title: ボリュームのファイル
+    # @source Volume "{name}" not found
     volumeNotFound: ボリューム「{name}」が見つかりません
   manage:
     table:
       header:
+        # @source Created
         created: 作成日時
+        # @source Driver
         driver: ドライバー
+        # @source Mount Point
         mountpoint: マウントポイント
+        # @source Volume Name
         volumeName: ボリューム名
   manager:
     table:
       action:
+        # @source Browse Files
         browse: ファイルを参照
+        # @source Delete
         delete: 削除
   sortableTables:
+    # @source There are no volumes to show
     noRows: 表示するボリュームはありません
+  # @source Volumes
   title: ボリューム
 webAssembly:
+  # @source Please read the documentation before enabling the experimental WebAssembly feature!
   description: 実験的な WebAssembly 機能を有効にする前に、ドキュメントをお読みください！
+  # @source Enabled
   enabled: 有効
+  # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)

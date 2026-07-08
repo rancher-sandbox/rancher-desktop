@@ -57,10 +57,6 @@ func runRemove(args []string) error {
 		if removed > 0 {
 			relPath, _ := filepath.Rel(root, path)
 			fmt.Fprintf(os.Stderr, "Removed %d keys from %s\n", removed, relPath)
-			locale := strings.TrimSuffix(filepath.Base(path), ".yaml")
-			if err := removeMetadataKeys(root, locale, keySet); err != nil {
-				return err
-			}
 		}
 	}
 
@@ -106,10 +102,6 @@ func removeStaleKeys(root string) error {
 		}
 		relPath, _ := filepath.Rel(root, path)
 		fmt.Fprintf(os.Stderr, "Removed %d stale keys from %s\n", removed, relPath)
-		locale := strings.TrimSuffix(filepath.Base(path), ".yaml")
-		if err := removeMetadataKeys(root, locale, staleKeys); err != nil {
-			return err
-		}
 	}
 
 	return nil

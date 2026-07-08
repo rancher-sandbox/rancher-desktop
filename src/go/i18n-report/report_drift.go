@@ -59,12 +59,12 @@ func reportDrift(w io.Writer, root, locale string) error {
 	treeRoot := documentRoot(doc)
 	localeLeaves := nodeAllLeaves(treeRoot)
 
-	meta, err := loadMetadata(root, locale)
+	meta, err := loadSources(root, locale)
 	if err != nil {
 		return err
 	}
 
-	// Find drifted keys: current English source differs from stored source.
+	// Find drifted keys: current English source differs from the @source snapshot.
 	var drifted []driftEntry
 	for _, key := range computeDrifted(enKeys, meta, localeLeaves) {
 		drifted = append(drifted, driftEntry{
@@ -73,34 +73,25 @@ func reportDrift(w io.Writer, root, locale string) error {
 		})
 	}
 
-	// Report keys missing metadata.
-	var missingMeta []string
+	// Report translated keys that carry no @source snapshot.
+	var missingSource []string
 	for key := range localeLeaves {
 		if _, inEn := enKeys[key]; !inEn {
 			continue
 		}
-		if _, inMeta := meta[key]; !inMeta {
-			missingMeta = append(missingMeta, key)
-		}
-	}
-
-	// Report orphaned metadata (metadata for keys that no longer exist in locale).
-	var orphanedMeta []string
-	for key := range meta {
-		if _, inLocale := localeLeaves[key]; !inLocale {
-			orphanedMeta = append(orphanedMeta, key)
+		if _, hasSource := meta[key]; !hasSource {
+			missingSource = append(missingSource, key)
 		}
 	}
 
 	// Print results.
-	if len(drifted) == 0 && len(missingMeta) == 0 && len(orphanedMeta) == 0 {
+	if len(drifted) == 0 && len(missingSource) == 0 {
 		fmt.Fprintf(w, "No drift detected for %s.\n", locale)
 		return nil
 	}
 
 	sort.Slice(drifted, func(i, j int) bool { return drifted[i].Key < drifted[j].Key })
-	sort.Strings(missingMeta)
-	sort.Strings(orphanedMeta)
+	sort.Strings(missingSource)
 
 	if len(drifted) > 0 {
 		fmt.Fprintf(w, "Found %d drifted keys in %s:\n", len(drifted), locale)
@@ -113,21 +104,13 @@ func reportDrift(w io.Writer, root, locale string) error {
 		}
 	}
 
-	if len(missingMeta) > 0 {
-		fmt.Fprintf(w, "\n%d keys missing metadata:\n", len(missingMeta))
-		for _, key := range missingMeta {
+	if len(missingSource) > 0 {
+		fmt.Fprintf(w, "\n%d keys missing @source:\n", len(missingSource))
+		for _, key := range missingSource {
 			fmt.Fprintf(w, "  %s\n", key)
 		}
-		fmt.Fprintf(os.Stderr, "Run 'i18n-report meta --locale=%s' to generate missing metadata.\n", locale)
+		fmt.Fprintf(os.Stderr, "Run 'i18n-report source --locale=%s' to record the missing @source.\n", locale)
 	}
 
-	if len(orphanedMeta) > 0 {
-		fmt.Fprintf(w, "\n%d orphaned metadata entries:\n", len(orphanedMeta))
-		for _, key := range orphanedMeta {
-			fmt.Fprintf(w, "  %s\n", key)
-		}
-	}
-
-	return findingsError(fmt.Sprintf("found %d drifted, %d missing metadata, %d orphaned metadata",
-		len(drifted), len(missingMeta), len(orphanedMeta)))
+	return findingsError(fmt.Sprintf("found %d drifted, %d missing @source", len(drifted), len(missingSource)))
 }

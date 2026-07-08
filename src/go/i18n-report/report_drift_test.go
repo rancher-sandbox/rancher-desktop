@@ -18,7 +18,7 @@ func TestDriftFindingsVsOperationalError(t *testing.T) {
 	enUS := "status:\n  checking: Checking...\n"
 	de := "status:\n  checking: Wird geprüft…\n"
 	dir := setupDriftTestRepo(t, enUS, de)
-	generateMetadata(dir, "de")
+	bootstrapSource(t, dir)
 
 	// Drift the English so reportDrift reports a finding.
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
@@ -57,7 +57,7 @@ func TestDriftDetectsChangedEnglish(t *testing.T) {
 	dir := setupDriftTestRepo(t, enUS, de)
 
 	// Generate metadata with current English.
-	generateMetadata(dir, "de")
+	bootstrapSource(t, dir)
 
 	// Change English text for "checking".
 	newEnUS := "status:\n  checking: Verifying...\n  done: Done\n"
@@ -84,7 +84,7 @@ func TestDriftNoDrift(t *testing.T) {
 	de := "status:\n  checking: Wird geprüft…\n"
 	dir := setupDriftTestRepo(t, enUS, de)
 
-	generateMetadata(dir, "de")
+	bootstrapSource(t, dir)
 
 	var buf bytes.Buffer
 	if err := reportDrift(&buf, dir, "de"); err != nil {
@@ -101,7 +101,7 @@ func TestDriftFlagsOverride(t *testing.T) {
 	de := "status:\n  # @override\n  checking: Manuelle Übersetzung\n"
 	dir := setupDriftTestRepo(t, enUS, de)
 
-	generateMetadata(dir, "de")
+	bootstrapSource(t, dir)
 
 	// Change English.
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
@@ -138,11 +138,11 @@ func TestDriftMissingMetadata(t *testing.T) {
 	de := "status:\n  checking: Wird geprüft…\n  done: Fertig\n"
 	dir := setupDriftTestRepo(t, enUS, de)
 
-	// No metadata generated — both keys should report as missing metadata.
+	// No @source recorded — both keys should report as missing @source.
 	var buf bytes.Buffer
 	reportDrift(&buf, dir, "de")
 
-	if !strings.Contains(buf.String(), "missing metadata") {
-		t.Errorf("expected missing metadata warning:\n%s", buf.String())
+	if !strings.Contains(buf.String(), "missing @source") {
+		t.Errorf("expected missing @source warning:\n%s", buf.String())
 	}
 }

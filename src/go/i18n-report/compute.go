@@ -8,8 +8,9 @@ package main
 // listers (stale, missing, translate) all derive their findings from these
 // helpers, so a gate and its matching lister agree by construction.
 //
-// All comparisons use raw scalar text: loadYAMLFlat and loadMetadata both
-// preserve the source bytes, so drift detection compares like with like.
+// Drift compares the current en-us value against the @source snapshot recorded
+// at translation time; both are decoded scalars, so re-quoting the English
+// never counts as drift.
 
 // computeStale returns locale keys that no longer exist in en-us, sorted.
 func computeStale[V any](enKeys map[string]string, localeKeys map[string]V) []string {
@@ -33,9 +34,9 @@ func computeMissing[V any](enKeys map[string]string, localeKeys map[string]V) []
 	return missing
 }
 
-// computeDrifted returns keys whose English source differs from the value
-// stored in metadata, sorted. Only keys present in the locale, en-us, and
-// metadata are considered; keys without metadata cannot be checked for drift.
+// computeDrifted returns keys whose English source differs from the @source
+// snapshot, sorted. Only keys present in the locale, en-us, and with a @source
+// are considered; a key without a @source cannot be checked for drift.
 func computeDrifted[V any](enKeys, meta map[string]string, localeKeys map[string]V) []string {
 	var drifted []string
 	for _, k := range sortedKeys(localeKeys) {

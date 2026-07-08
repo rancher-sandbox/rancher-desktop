@@ -10,23 +10,48 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
-// writeMergeFixture creates a repo with the given en-us, locale, and meta
-// content and returns the repo root.
+// writeMergeFixture creates a repo with the given en-us and locale content.
+// meta, if non-empty, is a flat "key: source" map injected inline as @source
+// comments on de.yaml, as the co-located model stores it.
 func writeMergeFixture(t *testing.T, enUS, locale, meta string) string {
 	t.Helper()
 	dir := t.TempDir()
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
-	metaDir := filepath.Join(transDir, "meta")
-	if err := os.MkdirAll(metaDir, 0o755); err != nil {
+	if err := os.MkdirAll(transDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte(enUS), 0o644)
-	os.WriteFile(filepath.Join(transDir, "de.yaml"), []byte(locale), 0o644)
-	if meta != "" {
-		os.WriteFile(filepath.Join(metaDir, "de.yaml"), []byte(meta), 0o644)
+	localePath := filepath.Join(transDir, "de.yaml")
+	os.WriteFile(localePath, []byte(locale), 0o644)
+	if meta == "" {
+		return dir
 	}
+
+	sources := map[string]string{}
+	if err := yaml.Unmarshal([]byte(meta), &sources); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := loadYAMLDocument(localePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := documentRoot(doc)
+	for key, src := range sources {
+		val, comment, found := nodeGetLeaf(root, key)
+		if !found {
+			t.Fatalf("meta key %q absent from locale", key)
+		}
+		if err := nodeSetLeaf(root, key, val, setSourceComment(comment, src)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var buf strings.Builder
+	serializeYAMLNode(&buf, doc)
+	os.WriteFile(localePath, []byte(buf.String()), 0o644)
 	return dir
 }
 
@@ -51,7 +76,7 @@ func TestMergeUpdatesMetadataOnlyForMergedKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := loadMetadata(dir, "de")
+	got, err := loadSources(dir, "de")
 	if err != nil {
 		t.Fatal(err)
 	}

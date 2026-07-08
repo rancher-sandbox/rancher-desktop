@@ -103,7 +103,7 @@ func reportTranslate(w io.Writer, root, locale, mode, format string, batch, batc
 		}
 		treeRoot := documentRoot(doc)
 		localeLeaves := nodeAllLeaves(treeRoot)
-		meta, err := loadMetadata(root, locale)
+		meta, err := loadSources(root, locale)
 		if err != nil {
 			return err
 		}
@@ -128,7 +128,7 @@ func reportTranslate(w io.Writer, root, locale, mode, format string, batch, batc
 		if err != nil {
 			return err
 		}
-		meta, err := loadMetadata(root, locale)
+		meta, err := loadSources(root, locale)
 		if err != nil {
 			return err
 		}

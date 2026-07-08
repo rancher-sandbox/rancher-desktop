@@ -42,7 +42,7 @@ var subcommands = map[string]func([]string) error{
 	"dynamic":      runDynamic,
 	"check":        runCheck,
 	"remove":       runRemove,
-	"meta":         runMeta,
+	"source":       runSource,
 	"drift":        runDrift,
 	"validate":     runValidate,
 }
@@ -89,9 +89,9 @@ Subcommands:
   references    Where each en-us.yaml key is used (file:line)
   dynamic       Template literal patterns that reference keys dynamically
   check         Source gate (unused + undefined); per-locale checks with --locale
-  meta          Generate source metadata for a locale
+  source        Record the English source text on each translated key
   drift         Detect translated keys whose English source has changed
-  validate      Structural checks: placeholders, tags, metadata, overrides
+  validate      Structural checks: placeholders, tags, sources, overrides
 
 Run "i18n-report <subcommand> -h" for subcommand-specific flags.`)
 }

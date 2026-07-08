@@ -33,7 +33,7 @@ Lister commands (`unused`, `stale`, `translate`, `references`, `dynamic`,
 
 ## Annotation conventions
 
-Translation files use YAML comments to carry metadata that the tool reads
+Translation files use YAML comments to carry annotations that the tool reads
 and preserves during merge operations.
 
 ### `@reason`
@@ -86,6 +86,31 @@ A key can have both annotations:
 # @reason human-reviewed; "Settings" preferred over "Preferences" for this locale
 preferences.title: Settings
 ```
+
+### `@source`
+
+Records the English source text a translation was made from, so a later
+`drift` check can tell when the English has changed. Place it on the line
+before the key:
+
+```yaml
+# @source Checking...
+product.networkStatus.checking: Wird geprüft…
+```
+
+A multi-line source repeats the marker, one line per line of English:
+
+```yaml
+# @source {count, plural,
+# @source   one {# item}
+# @source   other {# items}
+# @source }
+sortableTable.rows: …
+```
+
+Unlike `@reason` and `@override`, `@source` is machine-managed: the `source`
+command writes it and `merge` refreshes it as it writes each translation, so
+do not edit it by hand.
 
 ## Subcommands
 
@@ -242,27 +267,31 @@ Checks include:
 - HTML tag preservation (`<a>`, `<b>`, etc.)
 - `data-*` attribute preservation (runtime handlers depend on these)
 - `@override` placement (leaf keys only)
-- Metadata coherence (every translated key has a metadata entry)
+- `@source` coverage (every translated key carries a `@source`)
 
 ### drift
 
 Detect keys whose English source text changed since last translation.
-Compares current `en-us.yaml` values against stored metadata.
+Compares current `en-us.yaml` values against the `@source` snapshot on each key.
 
 ```sh
 i18n-report drift --locale=de
 ```
 
-Exits with code 1 when drift is detected, and also when metadata is
-missing or orphaned.
+Exits with code 1 when drift is detected, and also when a translated key
+carries no `@source`.
 
-### meta
+### source
 
-Generate or regenerate source-text metadata for a locale. The metadata
-records the English text at translation time, enabling drift detection.
+Record the current English source text on each translated key as a co-located
+`# @source` comment, so a later `drift` check can tell when the English has
+changed. Pass `--locale=all` for every locale.
+
+Refreshing a key that has drifted would erase the record of that drift, so
+`source` refuses unless `--force`.
 
 ```sh
-i18n-report meta --locale=de
+i18n-report source --locale=de
 ```
 
 ### check
@@ -333,7 +362,7 @@ i18n-report merge --mode=drift --locale=de drifted.out
 ```
 
 Merge records the new English source for the merged keys itself; do not
-run `meta` here, since regenerating every entry would clear the drift
+run `source` here, since refreshing every `@source` would clear the drift
 markers of keys that still await retranslation.
 
 ## How it works
@@ -376,7 +405,7 @@ The merge command:
    `key=value` / `key: value` lines with `@reason` comments)
 3. Merges new entries with existing ones (new overrides old)
 4. Writes sorted, nested YAML
-5. Records source-text metadata for the merged keys
+5. Records each merged key's English source as a co-located `@source` comment
 
 ## Development
 
@@ -396,7 +425,7 @@ go test ./src/go/i18n-report/...
 | `scan.go` | Source file scanning, key reference detection |
 | `output.go` | Shared text/JSON output formatter |
 | `compute.go` | Shared key-set computations |
-| `metadata.go` | Metadata file I/O, English source-string snapshots |
+| `source.go` | `@source` comment parsing, English snapshot annotation |
 | `report_unused.go` | `unused` subcommand |
 | `report_undefined.go` | `undefined` subcommand |
 | `report_stale.go` | `stale` subcommand |
@@ -408,7 +437,7 @@ go test ./src/go/i18n-report/...
 | `report_remove.go` | `remove` subcommand, YAML key removal |
 | `report_validate.go` | `validate` subcommand, placeholder and structure checks |
 | `report_drift.go` | `drift` subcommand, detects stale translations |
-| `report_meta.go` | `meta` subcommand, source-string metadata generation |
+| `report_source.go` | `source` subcommand, records `@source` snapshots |
 | `report_check.go` | `check` subcommand, registration cross-validation |
 
 All files are in `package main`. The tool has one external dependency:

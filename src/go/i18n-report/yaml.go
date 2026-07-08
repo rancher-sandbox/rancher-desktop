@@ -83,11 +83,17 @@ func flattenNodeWithComments(prefix string, node *yaml.Node, result map[string]m
 // overrideMarker is the comment line that protects a hand-tuned translation.
 const overrideMarker = "# @override"
 
-// commentHasOverride returns true if a comment string contains @override.
+// lineIsOverrideMarker reports whether a single comment line is the @override
+// marker: the bare marker or the marker followed by a note.
+func lineIsOverrideMarker(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	return trimmed == overrideMarker || strings.HasPrefix(trimmed, overrideMarker+" ")
+}
+
+// commentHasOverride returns true if any line of a comment is the @override marker.
 func commentHasOverride(comment string) bool {
 	for _, line := range strings.Split(comment, "\n") {
-		trimmed := strings.TrimSpace(line)
-		if trimmed == overrideMarker || strings.HasPrefix(trimmed, overrideMarker+" ") {
+		if lineIsOverrideMarker(line) {
 			return true
 		}
 	}
@@ -309,12 +315,12 @@ func nodeSetLeaf(root *yaml.Node, dottedKey, value, comment string) error {
 // stripOverrideMarker removes @override lines from a comment, keeping any
 // other comment lines.
 func stripOverrideMarker(comment string) string {
-	if !strings.Contains(comment, "@override") {
+	if !commentHasOverride(comment) {
 		return comment
 	}
 	var kept []string
 	for _, line := range strings.Split(comment, "\n") {
-		if !strings.Contains(line, "@override") {
+		if !lineIsOverrideMarker(line) {
 			kept = append(kept, line)
 		}
 	}
@@ -418,9 +424,16 @@ func serializeYAMLNode(w *strings.Builder, doc *yaml.Node) {
 func serializeNode(w *strings.Builder, keyNode, valNode *yaml.Node, depth int) {
 	indent := strings.Repeat("  ", depth)
 
-	// Write HeadComment from the key node.
-	if keyNode.HeadComment != "" {
-		for _, line := range strings.Split(keyNode.HeadComment, "\n") {
+	// Write HeadComment from the key node. yaml.v3 keeps a trailing newline on
+	// the comment; emitting it as a blank line would detach the comment from
+	// its key on the next parse (re-attaching it as a dropped FootComment), so
+	// strip trailing newlines to keep serialization idempotent.
+	if comment := strings.TrimRight(keyNode.HeadComment, "\n"); comment != "" {
+		for _, line := range strings.Split(comment, "\n") {
+			if line == "" {
+				w.WriteString("\n")
+				continue
+			}
 			w.WriteString(indent)
 			w.WriteString(line)
 			w.WriteString("\n")

@@ -143,8 +143,8 @@ func TestTranslateModeDrift(t *testing.T) {
 	de := "status:\n  checking: Wird geprüft…\n  done: Fertig\n"
 	dir := setupTranslateTestRepo(t, enUS, de)
 
-	// Generate metadata with current English.
-	generateMetadata(dir, "de")
+	// Record @source with current English.
+	bootstrapSource(t, dir)
 
 	// Change English for "checking".
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
@@ -167,7 +167,7 @@ func TestTranslateModeImproveExcludesDrifted(t *testing.T) {
 	dir := setupTranslateTestRepo(t, enUS, de)
 
 	// Bootstrap metadata with current English.
-	generateMetadata(dir, "de")
+	bootstrapSource(t, dir)
 
 	// Change English for "checking" — this key is now drifted.
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
@@ -190,7 +190,7 @@ func TestTranslateModeDriftNoDrift(t *testing.T) {
 	de := "status:\n  checking: Wird geprüft…\n"
 	dir := setupTranslateTestRepo(t, enUS, de)
 
-	generateMetadata(dir, "de")
+	bootstrapSource(t, dir)
 
 	output := runTranslateReport(t, dir, "drift", false)
 
