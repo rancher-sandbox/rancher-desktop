@@ -136,7 +136,7 @@ async function getBody(dependency: VersionedDependency, currentVersion: Version,
   let lastVersion = dependency.versionToTagName(currentVersion);
 
   return releaseNotes.map(([, release]) => {
-    const body = release.body || `Release ${ release.name } does not have release notes.`;
+    const body = release.body?.replace(/(?<!\w)(#\d+)\b/g, (n) => `${ owner }/${ repo }${ n }`) || `Release ${ release.name } does not have release notes.`;
     const compareLink = [
       `[Compare between ${ lastVersion } and ${ release.tag_name }]`,
       `(https://github.com/${ owner }/${ repo }/compare/${ lastVersion }...${ release.tag_name })`,
