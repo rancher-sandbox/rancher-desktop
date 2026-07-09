@@ -18,7 +18,6 @@ describe('fetchWithRetry', () => {
 
   beforeEach(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'dir').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -30,6 +29,21 @@ describe('fetchWithRetry', () => {
     const response = { ok: true } as Response;
     const fetchMock = jest.fn<typeof fetch>()
       .mockRejectedValueOnce(fetchFailed('ECONNRESET'))
+      .mockResolvedValueOnce(response);
+
+    global.fetch = fetchMock;
+
+    await expect(fetchWithRetry('https://example.test/x', { baseDelayMs: 0 })).resolves.toBe(response);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries when the retryable code is nested deeper in the cause chain', async() => {
+    const response = { ok: true } as Response;
+    const nested = Object.assign(new TypeError('fetch failed'), {
+      cause: Object.assign(new Error('proxy error'), { cause: fetchFailed('ECONNRESET').cause }),
+    });
+    const fetchMock = jest.fn<typeof fetch>()
+      .mockRejectedValueOnce(nested)
       .mockResolvedValueOnce(response);
 
     global.fetch = fetchMock;

@@ -8,6 +8,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import stream from 'stream';
+import util from 'util';
 
 import { simpleSpawn } from '@/scripts/simple_process';
 
@@ -63,11 +64,17 @@ const RETRYABLE_CODES = new Set([
 /**
  * Returns the retryable network error code carried by `ex`, if any.  `fetch`
  * wraps the underlying socket error as `TypeError: fetch failed` with the real
- * error in `cause`, so we inspect `cause` as well as the error itself.
+ * error in `cause`, so we walk the `cause` chain to any depth.
  */
 function retryableNetworkError(ex: any): string | undefined {
-  return [ex?.code, ex?.errno, ex?.cause?.code, ex?.cause?.errno]
-    .find((code): code is string => typeof code === 'string' && RETRYABLE_CODES.has(code));
+  for (const prop of ['code', 'errno']) {
+    if (typeof ex?.[prop] === 'string' && RETRYABLE_CODES.has(ex[prop])) {
+      return ex[prop];
+    }
+  }
+  if (ex?.cause) {
+    return retryableNetworkError(ex.cause);
+  }
 }
 
 /**
@@ -88,16 +95,13 @@ export async function fetchWithRetry(
       const code = retryableNetworkError(ex);
 
       if (!code || attempt >= retries) {
-        console.dir(ex);
         throw ex;
       }
       const delayMs = Math.min(baseDelayMs * 2 ** attempt, maxDelayMs);
 
       console.log(`Recoverable error (${ code }) downloading ${ url }, retrying in ${ Math.round(delayMs / 1_000) }s (${ attempt + 1 }/${ retries })...`);
       if (delayMs > 0) {
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, delayMs);
-        });
+        await util.promisify(setTimeout)(delayMs);
       }
     }
   }
