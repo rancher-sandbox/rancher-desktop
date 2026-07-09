@@ -32,11 +32,13 @@ func (e findingsError) Error() string { return string(e) }
 func (findingsError) Is(target error) bool { return target == errFindings }
 
 var subcommands = map[string]func([]string) error{
-	"unused":     runUnused,
-	"undefined":  runUndefined,
-	"stale":      runStale,
-	"references": runReferences,
-	"dynamic":    runDynamic,
+	"unused":       runUnused,
+	"undefined":    runUndefined,
+	"stale":        runStale,
+	"translate":    runTranslate,
+	"untranslated": runUntranslated,
+	"references":   runReferences,
+	"dynamic":      runDynamic,
 }
 
 func main() {
@@ -74,6 +76,8 @@ Subcommands:
   unused        Keys in en-us.yaml not referenced in source code
   undefined     Keys referenced in source code but missing from en-us.yaml
   stale         Keys in a locale file absent from en-us.yaml
+  translate     Keys missing from a locale, with English values
+  untranslated  Hardcoded English strings in Vue/TS files (heuristic)
   references    Where each en-us.yaml key is used (file:line)
   dynamic       Template literal patterns that reference keys dynamically
 
