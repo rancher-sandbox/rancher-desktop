@@ -7,6 +7,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -91,22 +92,23 @@ func TestRemoveKeyFromNode(t *testing.T) {
 				t.Error("expected no removal, but key was removed")
 			}
 
-			data, err := os.ReadFile(path)
+			// A removal reserializes the whole file, which restyles scalars,
+			// so compare the parsed key/value set rather than raw bytes. This
+			// catches both a key that survived and a sibling the rewrite lost.
+			got, err := loadYAMLFlat(path)
 			if err != nil {
 				t.Fatal(err)
 			}
-
-			got := string(data)
-
-			// For removed cases, verify the removed key is absent.
-			if tc.removed {
-				parts := strings.Split(tc.key, ".")
-				leaf := parts[len(parts)-1]
-				// Simple check: the leaf key should not appear with its
-				// original value.
-				if strings.Contains(got, leaf+":") && removed == 0 {
-					t.Errorf("key %q still present in output", tc.key)
-				}
+			wantPath := filepath.Join(dir, "want.yaml")
+			if err := os.WriteFile(wantPath, []byte(tc.wantYAML), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			want, err := loadYAMLFlat(wantPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("after removing %q:\n got %v\nwant %v", tc.key, got, want)
 			}
 		})
 	}
@@ -183,6 +185,7 @@ func TestReadKeysFiltersNonKeys(t *testing.T) {
 		"Found 10 unused keys:",
 		"",
 		"nav.home.title",
+		`secret.types."kubernetes.io/service-account-token"`,
 		"not-dotted",
 		"  whitespace.padded  ",
 	}
@@ -195,7 +198,7 @@ func TestReadKeysFiltersNonKeys(t *testing.T) {
 		}
 	}
 
-	want := []string{"action.refresh", "nav.home.title", "whitespace.padded"}
+	want := []string{"action.refresh", "nav.home.title", `secret.types."kubernetes.io/service-account-token"`, "whitespace.padded"}
 	if len(keys) != len(want) {
 		t.Fatalf("got %d keys, want %d", len(keys), len(want))
 	}

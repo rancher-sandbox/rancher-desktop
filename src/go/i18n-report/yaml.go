@@ -188,9 +188,12 @@ func sortedKeys[V any](m map[string]V) []string {
 }
 
 // isValidDottedKey returns true if s looks like a dotted translation key
-// (e.g., "action.refresh", "containerEngine.tabs.general").
+// (e.g., "action.refresh", "containerEngine.tabs.general"). It tokenizes with
+// splitKeyPath so a quoted dotted segment — secret.types."kubernetes.io/token"
+// — validates as one part, the same form the write path emits; a bare '.' or
+// '/' inside such a segment is therefore allowed.
 func isValidDottedKey(s string) bool {
-	parts := strings.Split(s, ".")
+	parts := splitKeyPath(s)
 	if len(parts) < 2 {
 		return false
 	}
@@ -199,7 +202,7 @@ func isValidDottedKey(s string) bool {
 			return false
 		}
 		for _, c := range part {
-			if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' && c != '-' {
+			if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' && c != '-' && c != '.' && c != '/' {
 				return false
 			}
 		}

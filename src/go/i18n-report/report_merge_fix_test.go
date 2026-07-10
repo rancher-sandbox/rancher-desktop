@@ -244,3 +244,28 @@ func TestMergeRejectsAliases(t *testing.T) {
 		t.Fatal("expected an error for a locale file containing aliases, got nil")
 	}
 }
+
+func TestMergeTextRoundTripsDottedSegmentKey(t *testing.T) {
+	// translate/stale/unused emit secret-type keys whose own segment holds a
+	// dot in the quoted form secret.types."kubernetes.io/service-account-token".
+	// The text merge path must accept that form, not silently drop the key.
+	enUS := "secret:\n" +
+		"  plain: Plain\n" +
+		"  types:\n" +
+		"    'kubernetes.io/service-account-token': Svc Acct Token\n"
+	dir := writeMergeFixture(t, enUS, "{}\n", "")
+	key := `secret.types."kubernetes.io/service-account-token"`
+	input := mergeInputFile(t, dir, "secret.plain=Einfach\n"+key+"=Dienstkonto-Token\n")
+
+	if err := reportMerge(io.Discard, dir, "de", []string{input}, false, "normal", false); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := loadYAMLFlat(translationsPath(dir, "de.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[key] != "Dienstkonto-Token" {
+		t.Errorf("dotted-segment key dropped by text merge: got %q for %s (all: %v)", got[key], key, got)
+	}
+}
