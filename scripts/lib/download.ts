@@ -100,9 +100,7 @@ export async function fetchWithRetry(
       const delayMs = Math.min(baseDelayMs * 2 ** attempt, maxDelayMs);
 
       console.log(`Recoverable error (${ code }) downloading ${ url }, retrying in ${ Math.round(delayMs / 1_000) }s (${ attempt + 1 }/${ retries })...`);
-      if (delayMs > 0) {
-        await util.promisify(setTimeout)(delayMs);
-      }
+      await util.promisify(setTimeout)(delayMs);
     }
   }
 }
