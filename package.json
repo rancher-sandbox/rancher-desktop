@@ -148,7 +148,7 @@
     "jest-environment-jsdom": "30.4.1",
     "js-yaml-loader": "1.2.2",
     "mustache": "4.2.0",
-    "node-abi": "^4.32.0",
+    "node-abi": "^4.33.0",
     "node-addon-api": "8",
     "node-gyp": "13.0.1",
     "node-gyp-build": "4.8.4",
