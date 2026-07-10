@@ -36,9 +36,11 @@ var subcommands = map[string]func([]string) error{
 	"undefined":    runUndefined,
 	"stale":        runStale,
 	"translate":    runTranslate,
+	"merge":        runMerge,
 	"untranslated": runUntranslated,
 	"references":   runReferences,
 	"dynamic":      runDynamic,
+	"remove":       runRemove,
 	"source":       runSource,
 	"validate":     runValidate,
 }
@@ -79,6 +81,8 @@ Subcommands:
   undefined     Keys referenced in source code but missing from en-us.yaml
   stale         Keys in a locale file absent from en-us.yaml
   translate     Keys missing from a locale, with English values
+  merge         Read flat translations, write nested YAML locale file
+  remove        Remove keys from translation files (stdin or --stale)
   untranslated  Hardcoded English strings in Vue/TS files (heuristic)
   references    Where each en-us.yaml key is used (file:line)
   dynamic       Template literal patterns that reference keys dynamically
