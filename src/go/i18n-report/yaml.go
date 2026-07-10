@@ -7,11 +7,52 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+// keyPathToken tokenizes a dotted key path into unquoted runs and quoted
+// sections, mirroring splitObjectPath in pkg/rancher-desktop/utils/string.js.
+var keyPathToken = regexp.MustCompile(`[^."']+|"([^"]*)"|'([^']*)'`)
+
+// splitKeyPath splits a dotted key into its segments, honoring quoted segments
+// whose own text contains a dot, such as "kubernetes.io/service-account-token".
+func splitKeyPath(path string) []string {
+	if !strings.ContainsAny(path, `"'`) {
+		return strings.Split(path, ".")
+	}
+	tokens := keyPathToken.FindAllString(path, -1)
+	segments := make([]string, len(tokens))
+	for i, tok := range tokens {
+		segments[i] = strings.NewReplacer(`"`, "", "'", "").Replace(tok)
+	}
+	return segments
+}
+
+// appendKeyPath appends a segment to a dotted key path, double-quoting the
+// segment when it contains a dot so splitKeyPath can recover the boundary.
+// It mirrors joinObjectPath in the renderer.
+func appendKeyPath(prefix, segment string) string {
+	if strings.Contains(segment, ".") {
+		segment = `"` + segment + `"`
+	}
+	if prefix == "" {
+		return segment
+	}
+	return prefix + "." + segment
+}
+
+// joinKeyPath joins segments into a dotted key path with appendKeyPath.
+func joinKeyPath(segments []string) string {
+	path := ""
+	for _, seg := range segments {
+		path = appendKeyPath(path, seg)
+	}
+	return path
+}
 
 // loadYAMLFlat loads a YAML file and returns flattened key-value pairs.
 // Values are the raw scalar text as written, with no YAML type resolution,
@@ -63,10 +104,7 @@ func flattenNodeWithComments(prefix string, node *yaml.Node, result map[string]m
 	for i := 0; i < len(node.Content)-1; i += 2 {
 		keyNode := node.Content[i]
 		valNode := node.Content[i+1]
-		key := keyNode.Value
-		if prefix != "" {
-			key = prefix + "." + key
-		}
+		key := appendKeyPath(prefix, keyNode.Value)
 		if valNode.Kind == yaml.MappingNode {
 			flattenNodeWithComments(key, valNode, result)
 		} else {
@@ -127,10 +165,7 @@ func checkOverridePlacement(prefix string, node *yaml.Node, errors *[]string) {
 	for i := 0; i < len(node.Content)-1; i += 2 {
 		keyNode := node.Content[i]
 		valNode := node.Content[i+1]
-		key := keyNode.Value
-		if prefix != "" {
-			key = prefix + "." + key
-		}
+		key := appendKeyPath(prefix, keyNode.Value)
 		if valNode.Kind == yaml.MappingNode {
 			// Parent mapping — @override is invalid here.
 			if commentHasOverride(keyNode.HeadComment) {
@@ -250,7 +285,7 @@ func documentRoot(doc *yaml.Node) *yaml.Node {
 // If comment is empty and the key already exists, the existing comment is preserved.
 // An empty path segment is an error; it would serialize to invalid YAML.
 func nodeSetLeaf(root *yaml.Node, dottedKey, value, comment string) error {
-	parts := strings.Split(dottedKey, ".")
+	parts := splitKeyPath(dottedKey)
 	for _, part := range parts {
 		if part == "" {
 			return fmt.Errorf("invalid key %q: empty path segment", dottedKey)
@@ -287,7 +322,7 @@ func nodeSetLeaf(root *yaml.Node, dottedKey, value, comment string) error {
 				// Descend into existing mapping.
 				if valNode.Kind != yaml.MappingNode {
 					return fmt.Errorf("key %q is a leaf; cannot create child %q",
-						strings.Join(parts[:i+1], "."), dottedKey)
+						joinKeyPath(parts[:i+1]), dottedKey)
 				}
 				current = valNode
 			}
@@ -360,7 +395,7 @@ func validateNoAliases(node *yaml.Node) error {
 // nodeGetLeaf retrieves a leaf's value and HeadComment from the tree.
 // Returns empty strings and false if the key is not found.
 func nodeGetLeaf(root *yaml.Node, dottedKey string) (value, comment string, found bool) {
-	parts := strings.Split(dottedKey, ".")
+	parts := splitKeyPath(dottedKey)
 	current := root
 	for i, part := range parts {
 		idx := nodeFindKey(current, part)

@@ -12,6 +12,39 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func TestNodeRoundTripPreservesDottedSegmentKey(t *testing.T) {
+	// en-us.yaml nests secret-type labels under keys whose own segment
+	// contains a literal dot, e.g. "kubernetes.io/service-account-token".
+	// Flattening then rewriting such a key must keep it a single mapping
+	// key, not split it into nested "kubernetes" / "io/..." nodes.
+	src := "secret:\n" +
+		"  types:\n" +
+		"    'kubernetes.io/service-account-token': Svc Acct Token\n"
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte(src), &doc); err != nil {
+		t.Fatal(err)
+	}
+	entries := map[string]mergeEntry{}
+	flattenNodeWithComments("", documentRoot(&doc), entries)
+
+	var out yaml.Node
+	out.Kind = yaml.DocumentNode
+	out.Content = []*yaml.Node{{Kind: yaml.MappingNode}}
+	for k, e := range entries {
+		if err := nodeSetLeaf(out.Content[0], k, e.value, e.comment); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var sb strings.Builder
+	serializeYAMLNode(&sb, &out)
+	want := "secret:\n" +
+		"  types:\n" +
+		"    kubernetes.io/service-account-token: Svc Acct Token\n"
+	if sb.String() != want {
+		t.Errorf("round-trip corrupted key structure:\ngot:\n%s\nwant:\n%s", sb.String(), want)
+	}
+}
+
 func TestSerializeYAMLNodeIdempotentWithBanner(t *testing.T) {
 	// A decorative banner comment set off by blank lines must survive a
 	// serialize -> parse -> serialize round-trip. yaml.v3 keeps a trailing

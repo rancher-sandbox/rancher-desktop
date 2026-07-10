@@ -165,7 +165,7 @@ func removeKeysFromFile(path string, keys map[string]bool) (int, error) {
 
 	removed := 0
 	for key := range keys {
-		if removeKeyFromNode(root, strings.Split(key, ".")) {
+		if removeKeyFromNode(root, splitKeyPath(key)) {
 			removed++
 		}
 	}
