@@ -71,6 +71,16 @@ func collectSources(entries map[string]mergeEntry) map[string]string {
 	return sources
 }
 
+// loadSources reads a locale file and returns each key's @source snapshot,
+// the co-located replacement for a parallel metadata file.
+func loadSources(root, locale string) (map[string]string, error) {
+	entries, err := loadYAMLWithComments(translationsPath(root, locale+".yaml"))
+	if err != nil {
+		return nil, err
+	}
+	return collectSources(entries), nil
+}
+
 // annotateNodeSource walks the mapping tree and sets @source on every leaf key
 // whose dotted path exists in enKeys, to the current English value. It mutates
 // the visited key node's HeadComment directly, so keys whose own segments

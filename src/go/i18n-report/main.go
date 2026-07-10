@@ -40,6 +40,7 @@ var subcommands = map[string]func([]string) error{
 	"references":   runReferences,
 	"dynamic":      runDynamic,
 	"source":       runSource,
+	"validate":     runValidate,
 }
 
 func main() {
@@ -82,6 +83,7 @@ Subcommands:
   references    Where each en-us.yaml key is used (file:line)
   dynamic       Template literal patterns that reference keys dynamically
   source        Record the English source text on each translated key
+  validate      Structural checks: placeholders, tags, sources, overrides
 
 Run "i18n-report <subcommand> -h" for subcommand-specific flags.`)
 }
