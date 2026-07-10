@@ -45,6 +45,45 @@ func TestNodeRoundTripPreservesDottedSegmentKey(t *testing.T) {
 	}
 }
 
+func TestSerializeNodeQuotesOnlyUnsafeKeys(t *testing.T) {
+	emit := func(key string) string {
+		out := yaml.Node{Kind: yaml.DocumentNode, Content: []*yaml.Node{{
+			Kind: yaml.MappingNode,
+			Content: []*yaml.Node{
+				{Kind: yaml.ScalarNode, Value: key},
+				{Kind: yaml.ScalarNode, Value: "v"},
+			},
+		}}}
+		var sb strings.Builder
+		serializeYAMLNode(&sb, &out)
+		return sb.String()
+	}
+
+	// Keys that are not plain-safe scalars must be quoted, or they fail to
+	// round-trip. "#comment" is the worst case: emitted raw it becomes a YAML
+	// comment and the key vanishes with no error.
+	for _, key := range []string{"#comment", "[bracket]", "colon: space", "*star", "@at"} {
+		emitted := emit(key)
+		var m map[string]string
+		if err := yaml.Unmarshal([]byte(emitted), &m); err != nil {
+			t.Errorf("key %q: emitted YAML fails to parse: %v\n%s", key, err, emitted)
+			continue
+		}
+		if _, ok := m[key]; !ok {
+			t.Errorf("key %q lost on round-trip; emitted:\n%s", key, emitted)
+		}
+	}
+
+	// Benign non-plain scalars round-trip as keys already, so quoting them
+	// would churn checked-in locale files for no gain.
+	for _, key := range []string{"yes", "true", "no"} {
+		emitted := emit(key)
+		if strings.ContainsAny(emitted, `"'`) {
+			t.Errorf("benign key %q was needlessly quoted:\n%s", key, emitted)
+		}
+	}
+}
+
 func TestSerializeYAMLNodeIdempotentWithBanner(t *testing.T) {
 	// A decorative banner comment set off by blank lines must survive a
 	// serialize -> parse -> serialize round-trip. yaml.v3 keeps a trailing

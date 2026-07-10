@@ -465,6 +465,46 @@ func serializeYAMLNode(w *strings.Builder, doc *yaml.Node) {
 	}
 }
 
+// plainSafeKey matches keys that are unambiguously safe as bare YAML mapping
+// keys, so the common case skips the round-trip parse below.
+var plainSafeKey = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._/-]*$`)
+
+// keyRoundTripsPlain reports whether key, written as a bare mapping key, parses
+// back to the same string. Plain-unsafe keys (a leading "#", "[", "*", or an
+// embedded ": ") mangle or vanish, so they must be quoted instead.
+func keyRoundTripsPlain(key string) bool {
+	if plainSafeKey.MatchString(key) {
+		return true
+	}
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte(key+":\n"), &doc); err != nil {
+		return false
+	}
+	if doc.Kind != yaml.DocumentNode || len(doc.Content) == 0 {
+		return false
+	}
+	root := doc.Content[0]
+	if root.Kind != yaml.MappingNode || len(root.Content) == 0 {
+		return false
+	}
+	return root.Content[0].Value == key
+}
+
+// yamlKey formats a mapping key, quoting it only when the plain form would not
+// round-trip. Benign non-plain scalars like "yes" keep their text as keys, so
+// they stay unquoted to avoid churning checked-in locale files.
+func yamlKey(key string) string {
+	if keyRoundTripsPlain(key) {
+		return key
+	}
+	quoted := yaml.Node{Kind: yaml.ScalarNode, Value: key, Style: yaml.DoubleQuotedStyle}
+	data, err := yaml.Marshal(&quoted)
+	if err != nil {
+		return key
+	}
+	return strings.TrimSuffix(string(data), "\n")
+}
+
 // serializeNode writes a key-value pair at the given indentation depth.
 func serializeNode(w *strings.Builder, keyNode, valNode *yaml.Node, depth int) {
 	indent := strings.Repeat("  ", depth)
@@ -486,7 +526,7 @@ func serializeNode(w *strings.Builder, keyNode, valNode *yaml.Node, depth int) {
 	}
 
 	w.WriteString(indent)
-	w.WriteString(keyNode.Value)
+	w.WriteString(yamlKey(keyNode.Value))
 
 	if valNode.Kind == yaml.MappingNode {
 		w.WriteString(":\n")
