@@ -400,19 +400,19 @@ func serializeNode(w *strings.Builder, keyNode, valNode *yaml.Node, depth int) {
 		w.WriteString(": ")
 		scalar := yamlScalar(valNode.Value)
 		if strings.Contains(scalar, "\n") {
+			// Leading whitespace inside a block scalar body is part of the value, so
+			// shift whole lines; trimming them per line would rewrite the translation.
 			lines := strings.Split(scalar, "\n")
 			w.WriteString(lines[0])
 			w.WriteString("\n")
-			bodyIndent := indent + "  "
 			for _, line := range lines[1:] {
-				trimmed := strings.TrimPrefix(line, "  ")
-				if trimmed == "" {
+				if line == "" {
 					w.WriteString("\n")
-				} else {
-					w.WriteString(bodyIndent)
-					w.WriteString(trimmed)
-					w.WriteString("\n")
+					continue
 				}
+				w.WriteString(indent)
+				w.WriteString(line)
+				w.WriteString("\n")
 			}
 		} else {
 			w.WriteString(scalar)

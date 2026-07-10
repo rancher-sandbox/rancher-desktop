@@ -129,11 +129,19 @@ func TestAnnotateSourcePreservesOverride(t *testing.T) {
 }
 
 func TestAnnotateSourceIdempotent(t *testing.T) {
-	enUS := "a:\n  b: Hello\n  c: World\n"
-	de := "a:\n  b: Hallo\n  c: Welt\n"
-	dir := setupLocaleTestRepo(t, enUS, de, true)
+	enUS := "a:\n  b: Hello\n  c: World\n  n: |-\n    {n, plural,\n      one {item}\n      other {items}\n    }\n"
+	de := "a:\n  b: Hallo\n  c: Welt\n  n: |-\n    {n, plural,\n      one {Element}\n      other {Elemente}\n    }\n"
+	dir := setupLocaleTestRepo(t, enUS, de, false)
 	path := translationsPath(dir, "de.yaml")
 
+	pristine, err := loadYAMLFlat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := annotateSource(io.Discard, dir, "de", false); err != nil {
+		t.Fatal(err)
+	}
 	first, _ := os.ReadFile(path)
 	if err := annotateSource(io.Discard, dir, "de", false); err != nil {
 		t.Fatal(err)
@@ -141,5 +149,16 @@ func TestAnnotateSourceIdempotent(t *testing.T) {
 	second, _ := os.ReadFile(path)
 	if string(first) != string(second) {
 		t.Errorf("annotate not idempotent:\nfirst:\n%s\nsecond:\n%s", first, second)
+	}
+
+	// Indentation inside a block scalar is part of the translated value.
+	annotated, err := loadYAMLFlat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"a.b", "a.c", "a.n"} {
+		if annotated[key] != pristine[key] {
+			t.Errorf("value of %s changed: %q -> %q", key, pristine[key], annotated[key])
+		}
 	}
 }
