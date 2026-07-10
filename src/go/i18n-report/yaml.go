@@ -213,8 +213,14 @@ func documentRoot(doc *yaml.Node) *yaml.Node {
 // It creates intermediate MappingNode entries as needed.
 // If comment is non-empty, it replaces the key node's HeadComment.
 // If comment is empty and the key already exists, the existing comment is preserved.
+// An empty path segment is an error; it would serialize to invalid YAML.
 func nodeSetLeaf(root *yaml.Node, dottedKey, value, comment string) error {
 	parts := strings.Split(dottedKey, ".")
+	for _, part := range parts {
+		if part == "" {
+			return fmt.Errorf("invalid key %q: empty path segment", dottedKey)
+		}
+	}
 	current := root
 
 	// Navigate or create intermediate mapping nodes.

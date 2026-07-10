@@ -113,6 +113,22 @@ func TestNodeSetAndGetLeaf(t *testing.T) {
 	}
 }
 
+// An empty path segment names no key. Accepting one would emit ": value",
+// which is not valid YAML, silently corrupting the locale file.
+func TestNodeSetLeafRejectsEmptySegment(t *testing.T) {
+	for _, key := range []string{"", "a.", ".a", "a..b"} {
+		doc := &yaml.Node{
+			Kind:    yaml.DocumentNode,
+			Content: []*yaml.Node{{Kind: yaml.MappingNode}},
+		}
+		if err := nodeSetLeaf(documentRoot(doc), key, "value", ""); err == nil {
+			var buf strings.Builder
+			serializeYAMLNode(&buf, doc)
+			t.Errorf("nodeSetLeaf(%q) = nil, want error; emitted %q", key, buf.String())
+		}
+	}
+}
+
 func TestNodeInsertSorted(t *testing.T) {
 	doc := &yaml.Node{
 		Kind:    yaml.DocumentNode,
