@@ -78,16 +78,16 @@ func annotateSource(w io.Writer, root, locale string, force bool) error {
 		return err
 	}
 
+	doc, err := loadYAMLDocument(localePath)
+	if err != nil {
+		return err
+	}
+	localeRoot := documentRoot(doc)
+
 	if !force {
-		entries, err := loadYAMLWithComments(localePath)
-		if err != nil {
-			return err
-		}
-		localeKeys := make(map[string]string, len(entries))
-		for k, e := range entries {
-			localeKeys[k] = e.value
-		}
-		drifted := computeDrifted(enKeys, collectSources(entries), localeKeys)
+		entries := make(map[string]mergeEntry)
+		flattenNodeWithComments("", localeRoot, entries)
+		drifted := computeDrifted(enKeys, collectSources(entries), entries)
 		if len(drifted) > 0 {
 			fmt.Fprintf(w, "%d drifted keys in %s would lose their drift marker:\n", len(drifted), locale)
 			for _, k := range drifted {
@@ -99,11 +99,7 @@ func annotateSource(w io.Writer, root, locale string, force bool) error {
 		}
 	}
 
-	doc, err := loadYAMLDocument(localePath)
-	if err != nil {
-		return err
-	}
-	annotateNodeSource("", documentRoot(doc), enKeys)
+	annotateNodeSource("", localeRoot, enKeys)
 
 	var buf strings.Builder
 	serializeYAMLNode(&buf, doc)
