@@ -22,13 +22,24 @@
       >
         <template #header-middle>
           <div class="header-middle">
-            <Checkbox
-              class="all-images"
-              :value="showAll"
-              :label="t('images.manager.table.label')"
-              :disabled="!supportsShowAll"
-              @update:value="handleShowAllCheckbox"
-            />
+            <div
+              v-clean-tooltip="!supportsShowAll
+                ? {
+                  content: t('images.manager.table.allImagesDisabledTooltip'),
+                  placement: 'top',
+                  html: true,
+                }
+                : null"
+              class="all-images-wrapper"
+            >
+              <Checkbox
+                class="all-images"
+                :value="showAll"
+                :label="t('images.manager.table.label')"
+                :disabled="!supportsShowAll"
+                @update:value="handleShowAllCheckbox"
+              />
+            </div>
             <div v-if="supportsNamespaces">
               <label>Namespace</label>
               <select
