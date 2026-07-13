@@ -5,7 +5,50 @@ import semver from 'semver';
 
 import buildUtils from '../build-utils';
 
+import type webpack from 'webpack';
+
 describe('build-utils', () => {
+  describe('externals', () => {
+    /** Ask a config's externals handler how it would treat a request. */
+    async function classify(config: Promise<webpack.Configuration>, request: string): Promise<string | undefined> {
+      const [handler] = (await config).externals as any[];
+
+      return new Promise((resolve) => {
+        handler({ request }, (_error: unknown, result?: string) => resolve(result));
+      });
+    }
+
+    it.each([
+      // Bare dependencies keep their own resolution.
+      ['electron-updater', 'module-import electron-updater'],
+      ['@napi-rs/xattr', 'module-import @napi-rs/xattr'],
+      // Subpaths need the extension spelled out for Node's ESM loader.
+      ['electron-updater/out/MacUpdater', 'module-import electron-updater/out/MacUpdater.js'],
+      ['lodash/merge', 'module-import lodash/merge.js'],
+      ['lodash/isEqual.js', 'module-import lodash/isEqual.js'],
+      // Optional dependencies ship with the app, so they are external too.
+      ['posix-node', 'module-import posix-node'],
+      // Everything else is bundled.
+      ['@pkg/utils/logging', undefined],
+      ['./relative', undefined],
+    ])('externalizes %s', async(request, expected) => {
+      await expect(classify(buildUtils.webpackConfig, request)).resolves.toBe(expected);
+    });
+
+    it('should bundle everything into the preload script', async() => {
+      // A sandboxed renderer loading it from outside the asar can resolve nothing.
+      await expect(buildUtils.webpackPreloadConfig.then(config => config.externals)).resolves.toEqual([]);
+    });
+
+    it.each([
+      'lodash/no-such-module',
+      'electron-updater/out/DoesNotExist.js',
+    ])('rejects %s, which would only fail once packaged', async(request) => {
+      await expect(classify(buildUtils.webpackConfig, request))
+        .rejects.toThrow(`Cannot resolve external "${ request }"`);
+    });
+  });
+
   describe('docsUrl', () => {
     it.each([
       ['1.9.0', 'https://docs.rancherdesktop.io/1.9'],
