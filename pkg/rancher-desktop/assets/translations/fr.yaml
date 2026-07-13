@@ -1622,17 +1622,22 @@ updateStatus:
   available: Une mise à jour vers la version {version} est disponible
   # @source Check for updates automatically
   checkForUpdates: Rechercher automatiquement les mises à jour
+  # @source The download of version {version} failed.
+  downloadFailed: Le téléchargement de la version {version} a échoué.
   # @reason no-break space added before % per French typography
   # @source downloading... ({percent}%, {speed})
   downloading: téléchargement... ({percent} %, {speed})
-  # @source There was an error checking for updates.
-  errorChecking: Une erreur s’est produite lors de la recherche de mises à jour.
   # @source Release Notes
   releaseNotes: Notes de version
   # @source Restart Now
   restartNow: Redémarrer maintenant
   # @source Restart the application to apply the update.
   restartToApply: Redémarrez l’application pour appliquer la mise à jour.
+  # @source Retry
+  retry: Réessayer
+  # @reason French has no idiomatic gerund label; back-translates as "new attempt", matching the noun-phrase form of applyingUpdate
+  # @source Retrying...
+  retrying: Nouvelle tentative...
   unsupported:
     # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: Une version plus récente de Rancher Desktop est disponible, mais elle n’est pas prise en charge sur votre système.

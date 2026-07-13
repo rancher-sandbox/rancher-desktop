@@ -37,7 +37,7 @@ enum State {
   CHECKED,
   /** An update is being downloaded; suppress checks. */
   DOWNLOADING,
-  /** An update is pending; we should not check again. */
+  /** An update has been downloaded and is waiting to be installed. */
   UPDATE_PENDING,
   /** An error has occurred configuring the updater. */
   ERROR,
@@ -63,6 +63,15 @@ const updateState: UpdateState = {
 };
 /** The version of the update that has finished downloading, if any. */
 let stagedVersion: string | undefined;
+/** Whether an install is under way; a second one must not start a second installer. */
+let installStarted = false;
+/**
+ * How many update checks are in flight. A failing check reports through the same
+ * error handler as a failing install, so a nonzero count tells the two apart: a
+ * check failing must not release the install latch. It is a count, not a flag,
+ * so an overlapping manual retry and scheduled check cannot clear it early.
+ */
+let checksInFlight = 0;
 
 Electron.ipcMain.on('update-state', () => {
   window.send('update-state', updateState);
@@ -72,7 +81,23 @@ Electron.ipcMain.on('update-apply', () => {
   if (!autoUpdater || process.env.RD_FORCE_UPDATES_ENABLED) {
     return;
   }
+  if (installStarted) {
+    // The button that sends this disables itself, but it forgets that when the
+    // user navigates away and back, and a second quitAndInstall() hands the
+    // same update to a second installer process.
+    return;
+  }
+  installStarted = true;
   autoUpdater.quitAndInstall();
+});
+
+Electron.ipcMain.on('update-retry', () => {
+  if (!autoUpdater) {
+    return;
+  }
+  // The next check is not scheduled until some time tomorrow, which is a long
+  // time to leave someone stuck with an update that failed to download.
+  triggerUpdateCheck();
 });
 
 function isLonghornUpdateInfo(info: UpdateInfo | LonghornUpdateInfo): info is LonghornUpdateInfo {
@@ -138,14 +163,37 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
   updater.on('error', (error) => {
     console.error('update: error:', error);
     updateState.error = error;
-    updateState.downloaded = false;
+    if (checksInFlight === 0) {
+      // Installing may be what failed, and the application is still running to
+      // report it, so let the user ask again. A check failing at the same time
+      // must not release the latch, or a second install could start. The rare
+      // cost: an install that fails alongside an in-flight check keeps the latch
+      // until a later error with no check running, or a restart.
+      installStarted = false;
+    }
+    if (state === State.DOWNLOADING) {
+      // The download failed. triggerUpdateCheck() skips every check while we
+      // are DOWNLOADING, so staying here would stop the updater retrying, or
+      // even noticing a newer release, until the application restarts.
+      state = State.CHECKED;
+    }
+    // A failed download or check does not delete an update that already
+    // finished downloading; it stays installable.
+    updateState.downloaded = !!stagedVersion && updateState.info?.version === stagedVersion;
+    if (updateState.downloaded) {
+      // checking-for-update cleared the on-disk flag on the way in; the staged
+      // update outlived the failure, so put it back.
+      setHasQueuedUpdate(true);
+    }
     window.send('update-state', updateState);
   });
   updater.on('checking-for-update', () => {
     console.debug('update: checking for update');
     // Clear any earlier error so a transient failure stops hiding later offers.
     updateState.error = undefined;
-    updateState.available = false;
+    // Leave `available` for update-available/update-not-available to set. A
+    // check that fails before either fires must not retract the card the last
+    // check put up, which the renderer hides entirely without `available`.
     updateState.downloaded = false;
     // Drop stale progress so a newer offer doesn't show the previous
     // download's percentage.
@@ -306,6 +354,7 @@ async function doInitialUpdateCheck(doInstall = false): Promise<boolean> {
         console.log('Update download complete; restarting app');
         // The persistent update-downloaded handler already recorded the staged
         // version and set the queued flag; here we only need to install.
+        installStarted = true;
         autoUpdater.quitAndInstall(true, true);
         finish(true);
       };
@@ -339,7 +388,13 @@ async function doInitialUpdateCheck(doInstall = false): Promise<boolean> {
  * Trigger an update check, and set up the timer to re-check again later.
  */
 async function triggerUpdateCheck() {
+  // Skip only while a download is under way; a fresh check would race it. An
+  // install running at the same time is fine: checksInFlight keeps a failure
+  // here from being read as a failed install, and gating the check on the
+  // install instead would wedge every later check once a quit-to-install is
+  // cancelled and never clears the latch.
   if (state !== State.DOWNLOADING) {
+    checksInFlight += 1;
     try {
       const result = await autoUpdater.checkForUpdates();
 
@@ -365,6 +420,8 @@ async function triggerUpdateCheck() {
       // Retry in 10 minutes to recover within a normal session.
       console.error('Error checking for updates; will retry in 10 minutes:', ex);
       updateInterval = 10 * 60_000;
+    } finally {
+      checksInFlight -= 1;
     }
   }
 

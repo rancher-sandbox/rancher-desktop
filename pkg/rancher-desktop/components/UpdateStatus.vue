@@ -39,6 +39,15 @@
           >
             {{ applyMessage }}
           </button>
+          <button
+            v-else-if="updateFailed"
+            ref="retryButton"
+            class="btn role-secondary"
+            :disabled="retrying"
+            @click="retryUpdate"
+          >
+            {{ retryMessage }}
+          </button>
           <span v-else />
         </template>
       </card>
@@ -94,7 +103,19 @@ export default defineComponent({
   },
 
   data() {
-    return { applying: false };
+    return { applying: false, retrying: false };
+  },
+
+  watch: {
+    updateState() {
+      // The main process has reported the outcome of the retry.
+      this.retrying = false;
+      if (this.updateState?.error) {
+        // Applying failed. The application is still running and the update is
+        // still on disk, so the button has to come back.
+        this.applying = false;
+      }
+    },
   },
 
   computed: {
@@ -103,23 +124,33 @@ export default defineComponent({
     },
 
     updateReady(): boolean {
-      return this.hasUpdate && !!this.updateState?.downloaded && !this.updateState?.error;
+      // An update that finished downloading stays installable even when a later
+      // check or install attempt fails.
+      return this.hasUpdate && !!this.updateState?.downloaded;
+    },
+
+    updateFailed(): boolean {
+      return this.hasUpdate && !!this.updateState?.error && !this.updateState?.downloaded;
     },
 
     statusMessage(): string {
-      if (this.updateState?.error) {
-        return this.t('updateStatus.errorChecking');
-      }
       if (!this.updateState?.info) {
         return '';
       }
 
       const { info, progress } = this.updateState;
+
+      if (this.updateFailed) {
+        // The card only appears once a check has found an update, so the update
+        // exists and it is the download that failed.
+        return this.t('updateStatus.downloadFailed', { version: info.version });
+      }
+
       // Punctuation is hardcoded here (period, semicolon). Some locales use
       // different punctuation; revisit when locale coverage grows.
       const prefix = this.t('updateStatus.available', { version: info.version });
 
-      if (!progress) {
+      if (this.updateReady || !progress) {
         return `${ prefix }.`;
       }
 
@@ -153,6 +184,10 @@ export default defineComponent({
       return this.applying ? this.t('updateStatus.applyingUpdate') : this.t('updateStatus.restartNow');
     },
 
+    retryMessage(): string {
+      return this.retrying ? this.t('updateStatus.retrying') : this.t('updateStatus.retry');
+    },
+
     unsupportedUpdateAvailable(): boolean {
       return !this.hasUpdate && !!this.updateState?.info?.unsupportedUpdateAvailable;
     },
@@ -162,6 +197,11 @@ export default defineComponent({
     applyUpdate() {
       this.applying = true;
       this.$emit('apply');
+    },
+
+    retryUpdate() {
+      this.retrying = true;
+      this.$emit('retry');
     },
   },
 });

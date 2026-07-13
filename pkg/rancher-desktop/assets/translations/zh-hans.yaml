@@ -1654,16 +1654,20 @@ updateStatus:
   available: 版本 {version} 的更新可用
   # @source Check for updates automatically
   checkForUpdates: 自动检查更新
+  # @source The download of version {version} failed.
+  downloadFailed: 版本 {version} 下载失败。
   # @source downloading... ({percent}%, {speed})
   downloading: 正在下载... ({percent}%, {speed})
-  # @source There was an error checking for updates.
-  errorChecking: 检查更新时出错。
   # @source Release Notes
   releaseNotes: 发行说明
   # @source Restart Now
   restartNow: 立即重启
   # @source Restart the application to apply the update.
   restartToApply: 重启应用程序以应用更新。
+  # @source Retry
+  retry: 重试
+  # @source Retrying...
+  retrying: 正在重试...
   unsupported:
     # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: Rancher Desktop 有新版本可用，但您的系统不支持该版本。

@@ -16,6 +16,7 @@
       :enabled="settings.application.updater.enabled"
       :update-state="updateState"
       @apply="onUpdateApply"
+      @retry="onUpdateRetry"
     />
     <blog-feed />
   </div>
@@ -68,6 +69,9 @@ export default {
     },
     onUpdateApply() {
       ipcRenderer.send('update-apply');
+    },
+    onUpdateRetry() {
+      ipcRenderer.send('update-retry');
     },
     onUpdateState(event, state) {
       this.$data.updateState = state;

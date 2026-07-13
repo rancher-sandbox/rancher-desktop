@@ -1574,16 +1574,20 @@ updateStatus:
   available: 버전 {version} 업데이트를 사용할 수 있습니다
   # @source Check for updates automatically
   checkForUpdates: 자동으로 업데이트 확인
+  # @source The download of version {version} failed.
+  downloadFailed: 버전 {version} 다운로드에 실패했습니다.
   # @source downloading... ({percent}%, {speed})
   downloading: 다운로드 중... ({percent}%, {speed})
-  # @source There was an error checking for updates.
-  errorChecking: 업데이트를 확인하는 동안 오류가 발생했습니다.
   # @source Release Notes
   releaseNotes: 릴리스 노트
   # @source Restart Now
   restartNow: 지금 다시 시작
   # @source Restart the application to apply the update.
   restartToApply: 업데이트를 적용하려면 애플리케이션을 다시 시작하십시오.
+  # @source Retry
+  retry: 다시 시도
+  # @source Retrying...
+  retrying: 다시 시도 중...
   unsupported:
     # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: 최신 버전의 Rancher Desktop을 사용할 수 있지만 현재 시스템에서는 지원되지 않습니다.
