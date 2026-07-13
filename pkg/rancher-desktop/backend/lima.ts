@@ -241,6 +241,10 @@ const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 
 export const MACHINE_NAME = '0';
+/** Lima version shipped with Rancher Desktop 1.13, the last release that created
+ *  instances without a recorded version.
+ */
+const LEGACY_LIMA_VERSION = 'v0.19.0';
 const IMAGE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.version.isoVersion;
 const ALPINE_EDITION = 'rd';
 const ALPINE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.version.alpineVersion;
@@ -1807,6 +1811,32 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   /**
+   * Instances created before Lima 0.20 lack a recorded Lima version. Lima treats an
+   * instance without the version file as newly created, and since 2.1.0 that moves the
+   * guest home directory from `/home/<user>.linux` to `/home/<user>.guest`. The persistent
+   * data volume keeps the old home directory, so provisioning fails and the VM never
+   * finishes booting.
+   * https://github.com/rancher-sandbox/rancher-desktop/issues/10610
+   */
+  protected async recordLegacyLimaVersion() {
+    const versionPath = path.join(paths.lima, MACHINE_NAME, 'lima-version');
+
+    try {
+      // `wx` writes only when the instance directory exists without a version file:
+      // EEXIST means the version is already recorded, and ENOENT that Lima has yet to
+      // create the instance, recording its own version when it does.
+      await fs.promises.writeFile(versionPath, LEGACY_LIMA_VERSION, { flag: 'wx', mode: 0o444 });
+      console.log(`Recorded Lima version ${ LEGACY_LIMA_VERSION } for pre-existing instance.`);
+    } catch (ex) {
+      const { code } = ex as NodeJS.ErrnoException;
+
+      if (code !== 'EEXIST' && code !== 'ENOENT') {
+        console.error(`Failed to write ${ versionPath }:`, ex);
+      }
+    }
+  }
+
+  /**
    * Start the VM.  If the machine is already started, this does nothing.
    * Note that this does not start k3s.
    * @precondition The VM configuration is correct.
@@ -1831,6 +1861,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         const env: NodeJS.ProcessEnv = {};
 
         env.LIMA_SSH_PORT_FORWARDER = this.cfg?.experimental.virtualMachine.sshPortForwarder ? 'true' : 'false';
+        await this.recordLegacyLimaVersion();
         await this.lima(env, 'start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
       } finally {
         // Symlink the logs (especially if start failed) so the users can find them
