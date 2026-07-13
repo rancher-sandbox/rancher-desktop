@@ -12,6 +12,10 @@ updates:
     default-days: 7
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
+  groups:
+    # init and analyze share a config file and abort when their versions differ.
+    codeql-action:
+      patterns: ["github/codeql-action/*"]
 
 # Maintain dependencies for npm
 - package-ecosystem: "npm"
