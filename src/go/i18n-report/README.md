@@ -26,10 +26,10 @@ go build -o src/go/i18n-report/i18n-report ./src/go/i18n-report
   references.
 - `2` — an operational failure: an unreadable file or an invalid flag.
 
-Gate commands (`undefined`) split exit `1` from exit `2`, so CI can tell
-a real finding from a broken invocation. Lister commands (`unused`, `stale`,
-`translate`, `references`, `dynamic`, `untranslated`) exit `0` even when
-they list results.
+Gate commands (`undefined` and `validate`) split exit `1` from exit `2`,
+so CI can tell a real finding from a broken invocation. Lister commands
+(`unused`, `stale`, `translate`, `references`, `dynamic`, `untranslated`)
+exit `0` even when they list results.
 
 ## Subcommands
 
@@ -136,6 +136,22 @@ i18n-report source --locale=de
 i18n-report source --locale=all
 ```
 
+### validate
+
+Check structural correctness of translations in a locale file.
+
+```sh
+i18n-report validate --locale=de
+```
+
+Checks include:
+- Placeholder parity (`{name}`, `{count}`) between English and locale
+- ICU MessageFormat structure (plural/select branch names)
+- HTML tag preservation (`<a>`, `<b>`, etc.)
+- `data-*` attribute preservation (runtime handlers depend on these)
+- `@override` placement (leaf keys only)
+- `@source` coverage (every translated key carries a `@source`)
+
 ## How it works
 
 ### Source scanning
@@ -195,6 +211,7 @@ go test ./src/go/i18n-report/...
 | `report_references.go` | `references` subcommand |
 | `report_dynamic.go` | `dynamic` subcommand, finds dynamic key patterns |
 | `report_source.go` | `source` subcommand |
+| `report_validate.go` | `validate` subcommand, placeholder and structure checks |
 
 All files are in `package main`. The tool has one external dependency:
 `gopkg.in/yaml.v3`.
