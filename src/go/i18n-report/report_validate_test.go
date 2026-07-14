@@ -10,6 +10,16 @@ import (
 	"testing"
 )
 
+// mustParseICU parses an ICU message, failing the test if it does not parse.
+func mustParseICU(t *testing.T, msg string) []icuNode {
+	t.Helper()
+	nodes, err := parseICU(msg)
+	if err != nil {
+		t.Fatalf("parseICU(%q): %v", msg, err)
+	}
+	return nodes
+}
+
 func TestCheckPlaceholders(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -75,7 +85,7 @@ func TestCheckPlaceholders(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			errs := checkPlaceholders("test.key", tc.enValue, tc.localeValue)
+			errs := checkPlaceholders("test.key", mustParseICU(t, tc.enValue), mustParseICU(t, tc.localeValue))
 			if len(errs) != tc.wantErrors {
 				t.Errorf("got %d errors, want %d: %v", len(errs), tc.wantErrors, errs)
 			}
@@ -162,6 +172,24 @@ func TestCheckTags(t *testing.T) {
 			localeValue: "<二进制数据: {n, number} bytes>",
 			wantErrors:  0,
 		},
+		{
+			name:        "uppercase tag is the same tag",
+			enValue:     "<b>bold</b>",
+			localeValue: "<B>fett</B>",
+			wantErrors:  0, // HTML tag names are case-insensitive
+		},
+		{
+			name:        "uppercase attribute name is the same attribute",
+			enValue:     `<a href="https://docs.example/Guide">docs</a>`,
+			localeValue: `<a HREF="https://docs.example/Guide">Doku</a>`,
+			wantErrors:  0, // HTML attribute names are case-insensitive
+		},
+		{
+			name:        "attribute value case still matters",
+			enValue:     `<a href="https://docs.example/Guide">docs</a>`,
+			localeValue: `<a href="https://docs.example/guide">Doku</a>`,
+			wantErrors:  1, // URL paths are case-sensitive
+		},
 	}
 
 	for _, tc := range tests {
@@ -227,7 +255,7 @@ func TestCheckICUStructure(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			errs := checkICUStructure("test.key", tc.enValue, tc.localeValue)
+			errs := checkICUStructure("test.key", mustParseICU(t, tc.enValue), mustParseICU(t, tc.localeValue))
 			if len(errs) != tc.wantErrors {
 				t.Errorf("got %d errors, want %d: %v", len(errs), tc.wantErrors, errs)
 			}
@@ -295,6 +323,9 @@ func TestExtractTagNames(t *testing.T) {
 		{"<br/>", map[string]int{"br": 1}},
 		{"<code>x</code> and <b>y</b>", map[string]int{"code": 2, "b": 2}},
 		{"no tags", map[string]int{}},
+		{"<B>text</B>", map[string]int{"b": 2}},
+		{"<b>x</b> and <B>y</B>", map[string]int{"b": 4}},
+		{"<BR/>", map[string]int{"br": 1}},
 	}
 
 	for _, tc := range tests {

@@ -161,8 +161,8 @@ func checkICU(key, enValue, localeValue string) []validationError {
 	}
 
 	var errors []validationError
-	_, enErr := parseICU(enValue)
-	_, localeErr := parseICU(localeValue)
+	enNodes, enErr := parseICU(enValue)
+	localeNodes, localeErr := parseICU(localeValue)
 	if enErr != nil {
 		errors = append(errors, validationError{
 			Key:     key,
@@ -181,24 +181,15 @@ func checkICU(key, enValue, localeValue string) []validationError {
 		return errors
 	}
 
-	errors = append(errors, checkPlaceholders(key, enValue, localeValue)...)
-	errors = append(errors, checkICUStructure(key, enValue, localeValue)...)
+	errors = append(errors, checkPlaceholders(key, enNodes, localeNodes)...)
+	errors = append(errors, checkICUStructure(key, enNodes, localeNodes)...)
 	return errors
 }
 
-// checkPlaceholders verifies that the locale value references the same set of
+// checkPlaceholders verifies that the locale message references the same set of
 // argument names as the English source, including names nested inside ICU
 // plural/select branches and '#' number substitutions.
-func checkPlaceholders(key, enValue, localeValue string) []validationError {
-	enNodes, err := parseICU(enValue)
-	if err != nil {
-		return nil
-	}
-	localeNodes, err := parseICU(localeValue)
-	if err != nil {
-		return nil
-	}
-
+func checkPlaceholders(key string, enNodes, localeNodes []icuNode) []validationError {
 	enNames := icuArgumentNames(enNodes)
 	localeNames := icuArgumentNames(localeNodes)
 
@@ -237,7 +228,7 @@ var tagRe = regexp.MustCompile(`(?i)</?(a|b|br|code|em|i|li|ol|p|pre|span|strong
 // attrRe matches the HTML attributes a translation must preserve verbatim:
 // data-* (runtime click handlers dispatch on them) and href (a translation
 // must not change link targets).
-var attrRe = regexp.MustCompile(`(data-[\w-]+|href)=(?:"([^"]*)"|'([^']*)')`)
+var attrRe = regexp.MustCompile(`(?i)(data-[\w-]+|href)=(?:"([^"]*)"|'([^']*)')`)
 
 // checkTags verifies that the locale value contains the same HTML-like
 // tag names as the English source, and that required data-* attributes
@@ -308,16 +299,7 @@ func checkTags(key, enValue, localeValue string) []validationError {
 // categories differ from English (Polish few/many, or a locale that omits the
 // never-selected one branch). Relax the plural case — not select — if such a
 // locale is added.
-func checkICUStructure(key, enValue, localeValue string) []validationError {
-	enNodes, err := parseICU(enValue)
-	if err != nil {
-		return nil
-	}
-	localeNodes, err := parseICU(localeValue)
-	if err != nil {
-		return nil
-	}
-
+func checkICUStructure(key string, enNodes, localeNodes []icuNode) []validationError {
 	en := icuConstructs(enNodes)
 	locale := icuConstructs(localeNodes)
 	if len(en) == 0 && len(locale) == 0 {
@@ -404,12 +386,14 @@ func compareBranchLabels(key string, en, locale *icuConstruct) []validationError
 	return errors
 }
 
-// extractTagNames returns a count map of HTML-like tag names in a string.
+// extractTagNames returns a count map of HTML-like tag names in a string. Names
+// are folded to lower case, because HTML tag names are case-insensitive: a
+// translation that writes <B> for English's <b> keeps the same markup.
 func extractTagNames(s string) map[string]int {
 	matches := tagRe.FindAllStringSubmatch(s, -1)
 	result := make(map[string]int)
 	for _, m := range matches {
-		result[m[1]]++
+		result[strings.ToLower(m[1])]++
 	}
 	return result
 }
@@ -417,6 +401,8 @@ func extractTagNames(s string) map[string]int {
 // extractDataAttrs maps each href/data-* attribute name to the sorted list of
 // every value it takes in the string. Keeping all occurrences, not just the
 // last, lets checkTags catch a changed link target when an attribute repeats.
+// Names fold to lower case as in extractTagNames, but values are kept verbatim:
+// URL paths and data-* values are case-sensitive.
 func extractDataAttrs(s string) map[string][]string {
 	matches := attrRe.FindAllStringSubmatch(s, -1)
 	result := make(map[string][]string)
@@ -426,7 +412,8 @@ func extractDataAttrs(s string) map[string][]string {
 		if val == "" {
 			val = m[3]
 		}
-		result[m[1]] = append(result[m[1]], val)
+		name := strings.ToLower(m[1])
+		result[name] = append(result[name], val)
 	}
 	for _, vals := range result {
 		sort.Strings(vals)
