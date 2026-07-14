@@ -166,7 +166,7 @@ check_directories() {
         # TODO on macOS (not implemented by `rdctl factory-reset`)
         # ~/Library/Saved Application State/io.rancherdesktop.app.savedState
         # this one only exists after an update has been downloaded
-        # ~/Library/Application Support/Caches/rancher-desktop-updater
+        # ~/Library/Caches/rancher-desktop-updater
     fi
 
     if is_windows; then

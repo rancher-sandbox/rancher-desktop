@@ -117,6 +117,10 @@ describe('setupUpdate state machine', () => {
   });
 
   beforeEach(() => {
+    // A shell that exports this sends the queued-install path down its test
+    // branch, so two of these cases fail for reasons outside the change.
+    delete process.env.RD_FORCE_UPDATES_ENABLED;
+    delete process.env.RD_UPGRADE_RESPONDER_URL;
     // Reset to a clean slate: error cleared, no staged version, updater re-armed.
     updater.emit('checking-for-update');
     updater.emit('update-not-available', makeInfo('v0.0.0'));
@@ -320,5 +324,50 @@ describe('setupUpdate state machine', () => {
     await jest.runOnlyPendingTimersAsync();
 
     expect(updater.checkForUpdates).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('the upgrade responder override', () => {
+  beforeAll(() => {
+    fs.writeFileSync(appUpdateConfigPath, '{}');
+  });
+
+  afterAll(() => {
+    fs.rmSync(appUpdateConfigPath, { force: true });
+  });
+
+  beforeEach(() => {
+    delete process.env.RD_FORCE_UPDATES_ENABLED;
+    delete process.env.RD_UPGRADE_RESPONDER_URL;
+    updaterInstances.length = 0;
+  });
+
+  /**
+   * setupUpdate builds an updater only while it is still unconfigured, so each
+   * case needs its own copy of the module to reach the options it assembles.
+   */
+  async function optionsFromFreshSetup(): Promise<any> {
+    jest.resetModules();
+    const { default: setup } = await import('../index');
+
+    // Configure without enabling: enough to build the updater, and it returns
+    // before scheduling any checks.
+    await setup(false);
+
+    return updaterInstances[updaterInstances.length - 1].options;
+  }
+
+  it('reaches the updater when updates are forced', async() => {
+    process.env.RD_FORCE_UPDATES_ENABLED = '1';
+    process.env.RD_UPGRADE_RESPONDER_URL = 'http://127.0.0.1:8314/v1/checkupgrade';
+
+    await expect(optionsFromFreshSetup()).resolves
+      .toMatchObject({ upgradeServer: 'http://127.0.0.1:8314/v1/checkupgrade' });
+  });
+
+  it('leaves the configured server alone unless updates are forced', async() => {
+    process.env.RD_UPGRADE_RESPONDER_URL = 'http://127.0.0.1:8314/v1/checkupgrade';
+
+    await expect(optionsFromFreshSetup()).resolves.not.toHaveProperty('upgradeServer');
   });
 });
