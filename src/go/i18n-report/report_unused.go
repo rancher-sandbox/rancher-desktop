@@ -38,12 +38,7 @@ func reportUnused(root, format string) error {
 		return err
 	}
 
-	var unused []string
-	for _, k := range sortedKeys(keys) {
-		if _, found := refs[k]; !found {
-			unused = append(unused, k)
-		}
-	}
+	unused := computeUnused(keys, refs)
 
 	return outputStrings(os.Stdout, unused, format, "unused keys")
 }

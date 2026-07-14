@@ -284,6 +284,53 @@ Checks include:
 - `@override` placement (leaf keys only)
 - `@source` coverage (every translated key carries a `@source`)
 
+### drift
+
+Detect keys whose English source text changed since last translation.
+Compares current `en-us.yaml` values against the `@source` snapshot on each key.
+
+```sh
+i18n-report drift --locale=de
+```
+
+Exits with code 1 when drift is detected, and also when a translated key
+carries no `@source`.
+
+### check
+
+The command CI runs. It has three forms.
+
+Bare `check` runs the locale-independent source gate: keys defined in
+`en-us.yaml` but referenced nowhere (unused), and keys referenced in source
+but missing from `en-us.yaml` (undefined).
+
+```sh
+i18n-report check
+```
+
+`check --locale=<code>` runs the source gate, the registration checks, and
+the per-locale checks: locale file readable, no stale keys, validate passes.
+Checking the source locale (`en-us`) per-locale is an error.
+
+```sh
+i18n-report check --locale=de
+i18n-report check --locale=de --strict
+```
+
+`check --locale=all` covers every translation file on disk.
+
+```sh
+i18n-report check --locale=all
+```
+
+`--strict` adds the completeness checks — no missing keys, no drifted
+keys — for periodic and pre-release runs, while PR CI uses the default
+structural set. Passing `--strict` without `--locale` is an error.
+
+The registration checks verify that the locale enum in `command-api.yaml`,
+`settingsValidator.ts`, its spec, and the `locale.*` display-name keys in
+`en-us.yaml` agree with the translation files on disk.
+
 ## Common workflows
 
 ### Clean up dead keys
@@ -389,6 +436,8 @@ go test ./src/go/i18n-report/...
 | `report_remove.go` | `remove` subcommand, YAML key removal |
 | `report_source.go` | `source` subcommand |
 | `report_validate.go` | `validate` subcommand, placeholder and structure checks |
+| `report_check.go` | `check` subcommand, CI gate |
+| `report_drift.go` | `drift` subcommand |
 
 All files are in `package main`. The tool has one external dependency:
 `gopkg.in/yaml.v3`.
