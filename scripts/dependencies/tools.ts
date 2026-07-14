@@ -5,7 +5,6 @@ import path from 'path';
 import { defined } from '@/pkg/rancher-desktop/utils/typeUtils';
 import {
   AssetPlatform,
-  assetChecksum,
   DependencyAsset,
   DownloadContext,
   downloadAndHash,
@@ -13,6 +12,7 @@ import {
   GitHubDependency,
   GlobalDependency,
   GoArch,
+  hostArch,
   selectAsset,
   selectAssets,
 } from '@/scripts/lib/dependencies';
@@ -29,14 +29,9 @@ function exeName(context: DownloadContext, name: string) {
   return `${ name }${ onWindows ? '.exe' : '' }`;
 }
 
-/** The suffix upstream appends to Windows artifact filenames. */
+/** The file name suffix for executable files. */
 function exeSuffix(platform: AssetPlatform): string {
   return platform === 'windows' ? '.exe' : '';
-}
-
-/** The architecture to install for on this host. */
-function hostArch(context: DownloadContext): GoArch {
-  return context.isM1 ? 'arm64' : 'amd64';
 }
 
 export function cartesian<A extends string, B extends string>(
@@ -56,22 +51,18 @@ export class KuberlrAndKubectl extends GlobalDependency(GitHubDependency) {
   readonly githubRepo = 'kuberlr';
 
   async download(context: DownloadContext): Promise<void> {
-    const kuberlrPath = await this.downloadKuberlr(context, context.dependencies.kuberlr.version as string, hostArch(context));
-
-    await this.bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
-  }
-
-  async downloadKuberlr(context: DownloadContext, version: string, arch: GoArch): Promise<string> {
-    const asset = selectAsset(context, this.name, { platform: context.goPlatform, arch });
-    const platformDir = `kuberlr_${ version }_${ context.goPlatform }_${ arch }`;
+    const version = context.dependencies[this.name].version;
+    const asset = selectAsset(context, this.name);
+    const platformDir = `kuberlr_${ version }_${ context.goPlatform }_${ hostArch(context) }`;
     const binName = exeName(context, 'kuberlr');
     const options: ArchiveDownloadOptions = {
-      expectedChecksum: assetChecksum(asset),
+      expectedChecksum: asset.checksum,
       entryName:        `${ platformDir }/${ binName }`,
     };
     const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
+    const kuberlrPath = await downloadFunc(asset.url, path.join(context.binDir, binName), options);
 
-    return await downloadFunc(asset.url, path.join(context.binDir, binName), options);
+    await this.bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -128,10 +119,10 @@ export class Helm extends GlobalDependency(GitHubDependency) {
   async download(context: DownloadContext): Promise<void> {
     // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
     const arch = hostArch(context);
-    const asset = selectAsset(context, this.name, { platform: context.goPlatform, arch });
+    const asset = selectAsset(context, this.name);
 
     await downloadTarGZ(asset.url, path.join(context.binDir, exeName(context, 'helm')), {
-      expectedChecksum: assetChecksum(asset),
+      expectedChecksum: asset.checksum,
       entryName:        `${ context.goPlatform }-${ arch }/${ exeName(context, 'helm') }`,
     });
   }
@@ -162,7 +153,7 @@ export class DockerCLI extends GlobalDependency(GitHubDependency) {
     const destPath = path.join(context.binDir, exeName(context, 'docker'));
     const codesign = process.platform === 'darwin';
 
-    await download(asset.url, destPath, { expectedChecksum: assetChecksum(asset), codesign });
+    await download(asset.url, destPath, { expectedChecksum: asset.checksum, codesign });
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -189,10 +180,10 @@ export class DockerBuildx extends GlobalDependency(GitHubDependency) {
 
   async download(context: DownloadContext): Promise<void> {
     // Download the Docker-Buildx Plug-In
-    const asset = selectAsset(context, this.name, { platform: context.goPlatform, arch: hostArch(context) });
+    const asset = selectAsset(context, this.name);
     const dockerBuildxPath = path.join(context.dockerPluginsDir, exeName(context, 'docker-buildx'));
 
-    await download(asset.url, dockerBuildxPath, { expectedChecksum: assetChecksum(asset) });
+    await download(asset.url, dockerBuildxPath, { expectedChecksum: asset.checksum });
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -222,10 +213,10 @@ export class DockerCompose extends GlobalDependency(GitHubDependency) {
   private static readonly upstreamArch: Record<GoArch, string> = { amd64: 'x86_64', arm64: 'aarch64' };
 
   async download(context: DownloadContext): Promise<void> {
-    const asset = selectAsset(context, this.name, { platform: context.goPlatform, arch: hostArch(context) });
+    const asset = selectAsset(context, this.name);
     const destPath = path.join(context.dockerPluginsDir, exeName(context, 'docker-compose'));
 
-    await download(asset.url, destPath, { expectedChecksum: assetChecksum(asset) });
+    await download(asset.url, destPath, { expectedChecksum: asset.checksum });
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -293,7 +284,7 @@ export class Trivy extends GlobalDependency(GitHubDependency) {
     const trivyPath = path.join(context.resourcesDir, 'linux', trivyDir, 'trivy');
 
     // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
-    await downloadTarGZ(asset.url, trivyPath, { expectedChecksum: assetChecksum(asset) });
+    await downloadTarGZ(asset.url, trivyPath, { expectedChecksum: asset.checksum });
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -321,10 +312,10 @@ export class Steve extends GlobalDependency(GitHubDependency) {
   readonly releaseFilter = 'published-pre';
 
   async download(context: DownloadContext): Promise<void> {
-    const asset = selectAsset(context, this.name, { platform: context.goPlatform, arch: hostArch(context) });
+    const asset = selectAsset(context, this.name);
     const stevePath = path.join(context.internalDir, exeName(context, 'steve'));
 
-    await downloadTarGZ(asset.url, stevePath, { expectedChecksum: assetChecksum(asset) });
+    await downloadTarGZ(asset.url, stevePath, { expectedChecksum: asset.checksum });
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -365,10 +356,11 @@ export class DockerProvidedCredHelpers extends GlobalDependency(GitHubDependency
   async download(context: DownloadContext): Promise<void> {
     const version = context.dependencies[this.name].version;
     const arch = hostArch(context);
-    const assets = selectAssets(context, this.name, { platform: context.goPlatform, arch });
+    const assets = selectAssets(context, this.name);
     const expected = DockerProvidedCredHelpers.helperNames[context.goPlatform];
 
-    // selectAssets() returns [] on no match, so a missing helper would install silently.
+    // selectAssets() returns [] rather than throwing, so we would silently skip
+    // a helper the manifest omits.
     if (assets.length !== expected.length) {
       throw new Error(
         `Expected ${ expected.length } ${ this.name } assets for ` +
@@ -385,7 +377,7 @@ export class DockerProvidedCredHelpers extends GlobalDependency(GitHubDependency
         .replace(/\.exe$/, '');
       const destPath = path.join(context.binDir, exeName(context, baseName));
 
-      return download(asset.url, destPath, { expectedChecksum: assetChecksum(asset), codesign });
+      return download(asset.url, destPath, { expectedChecksum: asset.checksum, codesign });
     }));
   }
 
@@ -418,10 +410,10 @@ export class ECRCredHelper extends GlobalDependency(GitHubDependency) {
   readonly githubRepo = 'amazon-ecr-credential-helper';
 
   async download(context: DownloadContext): Promise<void> {
-    const asset = selectAsset(context, this.name, { platform: context.goPlatform, arch: hostArch(context) });
+    const asset = selectAsset(context, this.name);
     const destPath = path.join(context.binDir, exeName(context, 'docker-credential-ecr-login'));
 
-    return await download(asset.url, destPath, { expectedChecksum: assetChecksum(asset) });
+    return await download(asset.url, destPath, { expectedChecksum: asset.checksum });
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -452,7 +444,7 @@ export class WasmShims extends GlobalDependency(GitHubDependency) {
     const asset = selectAsset(context, this.name, { platform: 'linux', arch: hostArch(context) });
     const destPath = path.join(context.resourcesDir, 'linux', 'internal', 'containerd-shim-spin-v2');
 
-    await downloadTarGZ(asset.url, destPath, { expectedChecksum: assetChecksum(asset) });
+    await downloadTarGZ(asset.url, destPath, { expectedChecksum: asset.checksum });
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -477,17 +469,18 @@ export class CertManager extends GlobalDependency(GitHubDependency) {
   readonly githubRepo = 'cert-manager';
 
   async download(context: DownloadContext): Promise<void> {
-    const crds = selectAsset(context, this.name, { platform: 'linux', variant: 'crds' });
+    const fileNames = {
+      crds:  'cert-manager.crds.yaml',
+      chart: 'cert-manager.tgz',
+    };
 
-    await download(crds.url, path.join(context.resourcesDir, 'cert-manager.crds.yaml'), {
-      expectedChecksum: assetChecksum(crds),
-    });
+    await Promise.all(Object.entries(fileNames).map(([variant, fileName]) => {
+      const asset = selectAsset(context, this.name, { platform: 'linux', variant });
 
-    const chart = selectAsset(context, this.name, { platform: 'linux', variant: 'chart' });
-
-    await download(chart.url, path.join(context.resourcesDir, 'cert-manager.tgz'), {
-      expectedChecksum: assetChecksum(chart),
-    });
+      return download(asset.url, path.join(context.resourcesDir, fileName), {
+        expectedChecksum: asset.checksum,
+      });
+    }));
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -515,17 +508,18 @@ export class SpinOperator extends GlobalDependency(GitHubDependency) {
   readonly githubRepo = 'spin-operator';
 
   async download(context: DownloadContext): Promise<void> {
-    const crds = selectAsset(context, this.name, { platform: 'linux', variant: 'crds' });
+    const fileNames = {
+      crds:  'spin-operator.crds.yaml',
+      chart: 'spin-operator.tgz',
+    };
 
-    await download(crds.url, path.join(context.resourcesDir, 'spin-operator.crds.yaml'), {
-      expectedChecksum: assetChecksum(crds),
-    });
+    await Promise.all(Object.entries(fileNames).map(([variant, fileName]) => {
+      const asset = selectAsset(context, this.name, { platform: 'linux', variant });
 
-    const chart = selectAsset(context, this.name, { platform: 'linux', variant: 'chart' });
-
-    await download(chart.url, path.join(context.resourcesDir, 'spin-operator.tgz'), {
-      expectedChecksum: assetChecksum(chart),
-    });
+      return download(asset.url, path.join(context.resourcesDir, fileName), {
+        expectedChecksum: asset.checksum,
+      });
+    }));
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -553,9 +547,9 @@ export class SpinCLI extends GlobalDependency(GitHubDependency) {
   readonly githubRepo = 'spin';
 
   async download(context: DownloadContext): Promise<void> {
-    const asset = selectAsset(context, this.name, { platform: context.goPlatform, arch: hostArch(context) });
+    const asset = selectAsset(context, this.name);
     const entryName = exeName(context, 'spin');
-    const options: ArchiveDownloadOptions = { expectedChecksum: assetChecksum(asset), entryName };
+    const options: ArchiveDownloadOptions = { expectedChecksum: asset.checksum, entryName };
     const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
 
     await downloadFunc(asset.url, path.join(context.internalDir, entryName), options);

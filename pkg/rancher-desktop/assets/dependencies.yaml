@@ -7,419 +7,419 @@
 # Each entry pairs a version with the assets resolved for it; every asset
 # carries its full url and sha256 so a downloader can fetch and verify it
 # without per-package knowledge.
-lima:
-  version: 2.1.2.rd1
-  assets:
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.1.2.rd1/lima.macos-15.amd64.tar.gz
-      checksum: sha256:bd950152a85166368c27383729b6b7337b95e2bcd62a3c6f5633ba7fd4dabe41
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.1.2.rd1/lima.macos-15.arm64.tar.gz
-      checksum: sha256:e009be05824a64f1c07e7882c5e7fd0dc5877384985285e102dd99f5d4976264
-    - platform: linux
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.1.2.rd1/lima.linux.amd64.tar.gz
-      checksum: sha256:faefe3c9dfe29ca45593cafba5686a7760a09a2193e62a320c3a2b2f7b429155
-    - platform: linux
-      arch: arm64
-      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.1.2.rd1/lima.linux.arm64.tar.gz
-      checksum: sha256:416aa8b93dbc3ab547adc3a29f14890c325c473bc3c3aa1a0f275cce50ee8c2f
-qemu:
-  version: 9.2.0.rd2
-  assets:
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-qemu/releases/download/v9.2.0.rd2/qemu-9.2.0.rd2-darwin-x86_64.tar.gz
-      checksum: sha256:c25f85aa32993b1974705a21515890a66a72f773d2f1a01758c207d827ace47d
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/rancher-sandbox/rancher-desktop-qemu/releases/download/v9.2.0.rd2/qemu-9.2.0.rd2-darwin-aarch64.tar.gz
-      checksum: sha256:1e65ce4c9c15da404732b446d434f05b373438d9a9ebf01a6082b3634cb0b3b1
-    - platform: linux
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-qemu/releases/download/v9.2.0.rd2/qemu-9.2.0.rd2-linux-x86_64.tar.gz
-      checksum: sha256:03c39317c9c87118853e4261d0fd082a724ef9617196b2921519a4e4794e9e8d
-electron:
-  version: 43.0.0
-  assets:
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-darwin-x64.zip
-      checksum: sha256:c0102711ff41d8329426e2ca7378fa13a467775e721b69ebe413c0898da14f6e
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-darwin-arm64.zip
-      checksum: sha256:e6994f68dba65a6371577eaf68ac69a5858d2c52371869837c64affc6157eca5
-    - platform: linux
-      arch: amd64
-      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-linux-x64.zip
-      checksum: sha256:53b5562e17ed87b728e01318fa4e7f9040709eafa8f2e09b327362e6abaf961c
-    - platform: linux
-      arch: arm64
-      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-linux-arm64.zip
-      checksum: sha256:6fe9c068cc536b7f10af50ffd0ed7d6f86e399378e3868d10ad35b0899256dd5
-    - platform: windows
-      arch: amd64
-      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-win32-x64.zip
-      checksum: sha256:a195f798837e4c5719b462d3210c47619f6fc44ce032d06dbdcfbc88327b26e0
-    - platform: windows
-      arch: arm64
-      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-win32-arm64.zip
-      checksum: sha256:32c3dbc483263061a0994b6c3e97ea1d01c07237551cdbb2991e45234170434e
-socketVMNet:
-  version: 1.2.2
-  assets:
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/lima-vm/socket_vmnet/releases/download/v1.2.2/socket_vmnet-1.2.2-x86_64.tar.gz
-      checksum: sha256:2968a82c97e692c2d36f87230152e8018e00589c1b598e8257775adfe83800a1
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/lima-vm/socket_vmnet/releases/download/v1.2.2/socket_vmnet-1.2.2-arm64.tar.gz
-      checksum: sha256:c7bf62308fbcfdc29bdfb8373c9b1951f7ac2396446e4390919796a94972e6dc
-alpineLimaISO:
-  version:
-    isoVersion: 0.2.47.rd9
-    alpineVersion: 3.24.1
-  assets:
-    - platform: linux
-      arch: amd64
-      url: https://github.com/rancher-sandbox/alpine-lima/releases/download/v0.2.47.rd9/alpine-lima-rd-3.24.1-x86_64.iso
-      checksum: sha256:7f17877b28ae07a268328d9c91a9f4bb741dd2f5140576568aa9ff4f801fa110
-    - platform: linux
-      arch: arm64
-      url: https://github.com/rancher-sandbox/alpine-lima/releases/download/v0.2.47.rd9/alpine-lima-rd-3.24.1-aarch64.iso
-      checksum: sha256:ce0838d5c49f76c9e09ec6b91279525b5483981bb94f206140d24a012de75be6
-WSLDistro:
-  version: "0.100"
-  assets:
-    - platform: wsl
-      url: https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v0.100/distro-0.100.tar
-      checksum: sha256:9063dfd3b7d5a750b03f5b5bdafacd84c25a5ac51e012f2f59aa91653e4ab438
-kuberlr:
-  version: 0.7.0
-  assets:
-    - platform: linux
-      arch: amd64
-      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_linux_amd64.tar.gz
-      checksum: sha256:2f131dbf61d136eafcafa583f7884262972c6cc4059d8c811fc2e46ac7ca6128
-    - platform: linux
-      arch: arm64
-      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_linux_arm64.tar.gz
-      checksum: sha256:50a94652653cd067587878d45518326430c9a731e642cb05d0d8e4d3813b18be
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_darwin_amd64.tar.gz
-      checksum: sha256:5e3ddf382679ef0cf97e037e225c88fa17d546c75015b6cbb9df0aedb0aa47d4
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_darwin_arm64.tar.gz
-      checksum: sha256:e4ff7747d02e498af552cb4abc63d07adad6ee4ae8f7b9d31b4a9a98072614a4
-    - platform: windows
-      arch: amd64
-      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_windows_amd64.zip
-      checksum: sha256:8f3928ba651ee25428a5294778b74e477c44babc093e353b07d4f9aa68be8457
-    - platform: windows
-      arch: arm64
-      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_windows_arm64.zip
-      checksum: sha256:d531ce6b6c48e5654083a57cf4ed2eae620ff9c650b797483f04fd1d3aea4b55
-helm:
-  version: 4.2.3
-  assets:
-    - platform: linux
-      arch: amd64
-      url: https://get.helm.sh/helm-v4.2.3-linux-amd64.tar.gz
-      checksum: sha256:e9b88b4ee95b18c706839c28d3a0220e5bc470e9cd9262410c90793c45ff8b7c
-    - platform: linux
-      arch: arm64
-      url: https://get.helm.sh/helm-v4.2.3-linux-arm64.tar.gz
-      checksum: sha256:21abd9354d39b2cd79a8d76be6912cd137a983cbf997193503fb8a6a6e2f2785
-    - platform: darwin
-      arch: amd64
-      url: https://get.helm.sh/helm-v4.2.3-darwin-amd64.tar.gz
-      checksum: sha256:ff3ac86755a45f3422473bc1200776aac0fe04c5766abe6ca66699f7b564b23b
-    - platform: darwin
-      arch: arm64
-      url: https://get.helm.sh/helm-v4.2.3-darwin-arm64.tar.gz
-      checksum: sha256:048ecf5ad3160f83d918f9fe945238d2132b079640f7b106175331c25f242c64
-    - platform: windows
-      arch: amd64
-      url: https://get.helm.sh/helm-v4.2.3-windows-amd64.tar.gz
-      checksum: sha256:02c6137bb5f050479193afad5a28804e9edc3beeab7e7b53a6e1499c9ba387ef
-    - platform: windows
-      arch: arm64
-      url: https://get.helm.sh/helm-v4.2.3-windows-arm64.tar.gz
-      checksum: sha256:c7a6b0fc66521ba0ff4f8d7930f38c658fbf1a5aa2569042305b12eac41ed0c3
-dockerCLI:
-  version: 29.6.1
-  assets:
-    - platform: linux
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-linux-amd64
-      checksum: sha256:9538977b55435e392ce5d312dd6e9ff5338e138275044733fd6a11f6b2dfcaca
-    - platform: linux
-      arch: arm64
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-linux-arm64
-      checksum: sha256:608ef1462d2f5d6c52fff9ce7141c0e8dc88704ae06eb7215ec14ec982ca713a
-    - platform: wsl
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-wsl-amd64
-      checksum: sha256:4126faf3aaebc983260ab676ad739df7338c3e0ce0dcc135017c9a514e8c488a
-    - platform: wsl
-      arch: arm64
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-wsl-arm64
-      checksum: sha256:4f716b44640d4c9feac1f9a46b7eaf97c206e06f4087ad5d618e4b08dd170a69
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-darwin-amd64
-      checksum: sha256:6a5d1be0a87bbd069abb73eb5affbb36608ea931ad411ecd71a75c5fc0da6dfc
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-darwin-arm64
-      checksum: sha256:1d7e8d612b09d52e80381b6e1a60d0de9d78bb9586e70745186fa8aa770b402b
-    - platform: windows
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-windows-amd64.exe
-      checksum: sha256:f27e888d2e00ed28907964e5242d61dc30df74d0e83985f542cd5af7f5093877
-    - platform: windows
-      arch: arm64
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-windows-arm64.exe
-      checksum: sha256:4a10b5d48a8242c94e002e1c3c46c860b91e04768d4e90aa15f11c1769a29d76
-dockerBuildx:
-  version: 0.35.0
-  assets:
-    - platform: linux
-      arch: amd64
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.linux-amd64
-      checksum: sha256:d41ece72044243b4f58b343441ae37446d9c29a7d6b5e11c61847bbcf8f7dfda
-    - platform: linux
-      arch: arm64
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.linux-arm64
-      checksum: sha256:c4248d6cbc4a619a7e0b4609c11e509ad4ac0b475e1c64817c0ac20c5d90c766
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.darwin-amd64
-      checksum: sha256:7d53fd11deca2d4caebc5436c9eebece5c81c8bbc6d4b539cf30be5c133c38c7
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.darwin-arm64
-      checksum: sha256:fedbcbd488dcdb46414c6119920d8186d406531a1157ceede4e857e25af77ff1
-    - platform: windows
-      arch: amd64
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.windows-amd64.exe
-      checksum: sha256:8076395009787cd1d30c94edeb5d7ac3945273374fc162c00e9810c3e9325ebe
-    - platform: windows
-      arch: arm64
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.windows-arm64.exe
-      checksum: sha256:ae03abd184e69ecefd9b751cdd5862db6d4822c2d27861b5b059fe6c1722681a
-dockerCompose:
-  version: 5.3.1
-  assets:
-    - platform: linux
-      arch: amd64
-      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-linux-x86_64
-      checksum: sha256:f9ebc6ebdb19d769b793c245a736caaeb198c62587f13b25c660c13b4987f959
-    - platform: linux
-      arch: arm64
-      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-linux-aarch64
-      checksum: sha256:aa611e811d0ea25897839c404bfb5bf93ce706dc51c500a4457890f5d0606a86
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-darwin-x86_64
-      checksum: sha256:56620a2e87e789147b9b1cc5d37eeecec2332e2cdf5c2d58a68f999f2dc416ca
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-darwin-aarch64
-      checksum: sha256:32691ba1196d819fa68cbdc0aad9a5569e730a35ae40c6fdd8458110ecd69488
-    - platform: windows
-      arch: amd64
-      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-windows-x86_64.exe
-      checksum: sha256:6d36cc701393c066d67ebc77773b718d8c738bc4ccb350fbf1dc0e6a09f44cb9
-    - platform: windows
-      arch: arm64
-      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-windows-aarch64.exe
-      checksum: sha256:5871699d19ee22904f7d1a7ce7e9e6b5a582f6cf9286afd0117ad601cc6737d6
-golangci-lint:
-  version: 2.12.2
-  assets: []
-trivy:
-  version: 0.72.0
-  assets:
-    - platform: linux
-      arch: amd64
-      url: https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
-      checksum: sha256:bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea
-    - platform: linux
-      arch: arm64
-      url: https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-ARM64.tar.gz
-      checksum: sha256:2ca2c023109c2db6b2b77366b6717291452d4531167377d95c79547f0c8e3467
-steve:
-  version: 0.1.0-beta9.2
-  assets:
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-darwin-amd64.tar.gz
-      checksum: sha256:0886c0bf0823f1c0893d7d05fd3a34b4bea4a7999c8d66a7241549cadecea676
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-darwin-arm64.tar.gz
-      checksum: sha256:901f858c27f96481fad3f3fcc734080a1861838005963a9913a68dbefc2792b9
-    - platform: linux
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-linux-amd64.tar.gz
-      checksum: sha256:31d68b0c92b688984dc0db270c17b87164c07626c0b69f92f0b2f7f31017d3de
-    - platform: linux
-      arch: arm64
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-linux-arm64.tar.gz
-      checksum: sha256:f976de1c9c63a1732c0e7f0365c228747e669a62ad9a4fa7ae98dc2277919970
-    - platform: windows
-      arch: amd64
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-windows-amd64.tar.gz
-      checksum: sha256:a70a9bfecb43abd94350eb8919a5d86425632393c2d04f15b8bafcdf158da39d
-dockerProvidedCredentialHelpers:
-  version: 0.9.8
-  assets:
-    - platform: linux
-      arch: amd64
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-secretservice-v0.9.8.linux-amd64
-      checksum: sha256:052a0243588b231fde8009f7fe95afc6f536e9d20f6b5896dfd5bc8fd55852f2
-    - platform: linux
-      arch: arm64
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-secretservice-v0.9.8.linux-arm64
-      checksum: sha256:b9e7b135c9b0cacf8f058d785dbc7188df38d98717dbc2fb1d6c63afb6d67198
-    - platform: linux
-      arch: amd64
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-pass-v0.9.8.linux-amd64
-      checksum: sha256:3ae93407d42dc90bd0393b0a50da3ce95246d3f30c3255225cb6b0401cd74cac
-    - platform: linux
-      arch: arm64
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-pass-v0.9.8.linux-arm64
-      checksum: sha256:b75d27a59a1b4e1b1eb1059184d5760a34c54cf730e97cb18832956fead18551
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-osxkeychain-v0.9.8.darwin-amd64
-      checksum: sha256:0575a404c4ead8b5135a2482ece4dd142bde3cbd319433697e212bbea0afb100
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-osxkeychain-v0.9.8.darwin-arm64
-      checksum: sha256:6fae515ffbc74f395af1b51c6f079ddb57895ed9e428e0bea3f6aff64e916b22
-    - platform: windows
-      arch: amd64
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-wincred-v0.9.8.windows-amd64.exe
-      checksum: sha256:fec0aa06335bbefc7f515630c9368afaa1423fa9fa585112f123b6625f72d560
-    - platform: windows
-      arch: arm64
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-wincred-v0.9.8.windows-arm64.exe
-      checksum: sha256:34fc52a556c2703d9b307cd5a9d1ec9cd6f8554d7f50210e3bc4fb93aceca45a
 ECRCredentialHelper:
-  version: 0.12.0
   assets:
-    - platform: linux
-      arch: amd64
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/linux-amd64/docker-credential-ecr-login
+    - arch: amd64
       checksum: sha256:a22ab6d59dbac777b8fb31984709461da00a4c778b6ae14c8d3729e8d5ded1a6
-    - platform: linux
-      arch: arm64
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/linux-arm64/docker-credential-ecr-login
+      platform: linux
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/linux-amd64/docker-credential-ecr-login
+    - arch: arm64
       checksum: sha256:5bdd30fb6c7a92462f5b454cce1aa906ca7926a6c2e39efad9613a7bf7661fac
-    - platform: darwin
-      arch: amd64
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/darwin-amd64/docker-credential-ecr-login
+      platform: linux
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/linux-arm64/docker-credential-ecr-login
+    - arch: amd64
       checksum: sha256:c168e51ecfcc3a9e3704537da88bf65aa228d4223e80d363f9f346cde18af443
-    - platform: darwin
-      arch: arm64
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/darwin-arm64/docker-credential-ecr-login
+      platform: darwin
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/darwin-amd64/docker-credential-ecr-login
+    - arch: arm64
       checksum: sha256:aa9e902a4dd80aa34ac0f753f6ab4723050b9d9846b07237ea56c5f814b9f457
-    - platform: windows
-      arch: amd64
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/windows-amd64/docker-credential-ecr-login.exe
+      platform: darwin
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/darwin-arm64/docker-credential-ecr-login
+    - arch: amd64
       checksum: sha256:1545d0c797ad7d539f0b85ef6c8702193a93764d537b01f93b55cefae994c9e1
-    - platform: windows
-      arch: arm64
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/windows-arm64/docker-credential-ecr-login.exe
+      platform: windows
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/windows-amd64/docker-credential-ecr-login.exe
+    - arch: arm64
       checksum: sha256:42bbcac22405c1a98ae211555918dc37f8e0e9c458a93f4026cf102aa1011256
+      platform: windows
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/windows-arm64/docker-credential-ecr-login.exe
+  version: 0.12.0
+WSLDistro:
+  assets:
+    - checksum: sha256:9063dfd3b7d5a750b03f5b5bdafacd84c25a5ac51e012f2f59aa91653e4ab438
+      platform: wsl
+      url: https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v0.100/distro-0.100.tar
+  version: "0.100"
+alpineLimaISO:
+  assets:
+    - arch: amd64
+      checksum: sha256:7f17877b28ae07a268328d9c91a9f4bb741dd2f5140576568aa9ff4f801fa110
+      platform: linux
+      url: https://github.com/rancher-sandbox/alpine-lima/releases/download/v0.2.47.rd9/alpine-lima-rd-3.24.1-x86_64.iso
+    - arch: arm64
+      checksum: sha256:ce0838d5c49f76c9e09ec6b91279525b5483981bb94f206140d24a012de75be6
+      platform: linux
+      url: https://github.com/rancher-sandbox/alpine-lima/releases/download/v0.2.47.rd9/alpine-lima-rd-3.24.1-aarch64.iso
+  version:
+    alpineVersion: 3.24.1
+    isoVersion: 0.2.47.rd9
+certManager:
+  assets:
+    - checksum: sha256:cc046deb0ef4aaa8237f1ae448ef463446905bfc310cba88f25fc614389f84fd
+      platform: linux
+      url: https://github.com/cert-manager/cert-manager/releases/download/v1.21.0/cert-manager.crds.yaml
+      variant: crds
+    - checksum: sha256:9c2c6fabf3cf8fe14dacb016f37c819b66bc2c79e8b7acde4573d45ec141fb97
+      platform: linux
+      url: https://charts.jetstack.io/charts/cert-manager-v1.21.0.tgz
+      variant: chart
+  version: 1.21.0
+check-spelling:
+  assets: []
+  version: 0.0.26
+dockerBuildx:
+  assets:
+    - arch: amd64
+      checksum: sha256:d41ece72044243b4f58b343441ae37446d9c29a7d6b5e11c61847bbcf8f7dfda
+      platform: linux
+      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.linux-amd64
+    - arch: arm64
+      checksum: sha256:c4248d6cbc4a619a7e0b4609c11e509ad4ac0b475e1c64817c0ac20c5d90c766
+      platform: linux
+      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.linux-arm64
+    - arch: amd64
+      checksum: sha256:7d53fd11deca2d4caebc5436c9eebece5c81c8bbc6d4b539cf30be5c133c38c7
+      platform: darwin
+      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.darwin-amd64
+    - arch: arm64
+      checksum: sha256:fedbcbd488dcdb46414c6119920d8186d406531a1157ceede4e857e25af77ff1
+      platform: darwin
+      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.darwin-arm64
+    - arch: amd64
+      checksum: sha256:8076395009787cd1d30c94edeb5d7ac3945273374fc162c00e9810c3e9325ebe
+      platform: windows
+      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.windows-amd64.exe
+    - arch: arm64
+      checksum: sha256:ae03abd184e69ecefd9b751cdd5862db6d4822c2d27861b5b059fe6c1722681a
+      platform: windows
+      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.windows-arm64.exe
+  version: 0.35.0
+dockerCLI:
+  assets:
+    - arch: amd64
+      checksum: sha256:9538977b55435e392ce5d312dd6e9ff5338e138275044733fd6a11f6b2dfcaca
+      platform: linux
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-linux-amd64
+    - arch: arm64
+      checksum: sha256:608ef1462d2f5d6c52fff9ce7141c0e8dc88704ae06eb7215ec14ec982ca713a
+      platform: linux
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-linux-arm64
+    - arch: amd64
+      checksum: sha256:4126faf3aaebc983260ab676ad739df7338c3e0ce0dcc135017c9a514e8c488a
+      platform: wsl
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-wsl-amd64
+    - arch: arm64
+      checksum: sha256:4f716b44640d4c9feac1f9a46b7eaf97c206e06f4087ad5d618e4b08dd170a69
+      platform: wsl
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-wsl-arm64
+    - arch: amd64
+      checksum: sha256:6a5d1be0a87bbd069abb73eb5affbb36608ea931ad411ecd71a75c5fc0da6dfc
+      platform: darwin
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-darwin-amd64
+    - arch: arm64
+      checksum: sha256:1d7e8d612b09d52e80381b6e1a60d0de9d78bb9586e70745186fa8aa770b402b
+      platform: darwin
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-darwin-arm64
+    - arch: amd64
+      checksum: sha256:f27e888d2e00ed28907964e5242d61dc30df74d0e83985f542cd5af7f5093877
+      platform: windows
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-windows-amd64.exe
+    - arch: arm64
+      checksum: sha256:4a10b5d48a8242c94e002e1c3c46c860b91e04768d4e90aa15f11c1769a29d76
+      platform: windows
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.6.1/docker-windows-arm64.exe
+  version: 29.6.1
+dockerCompose:
+  assets:
+    - arch: amd64
+      checksum: sha256:f9ebc6ebdb19d769b793c245a736caaeb198c62587f13b25c660c13b4987f959
+      platform: linux
+      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-linux-x86_64
+    - arch: arm64
+      checksum: sha256:aa611e811d0ea25897839c404bfb5bf93ce706dc51c500a4457890f5d0606a86
+      platform: linux
+      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-linux-aarch64
+    - arch: amd64
+      checksum: sha256:56620a2e87e789147b9b1cc5d37eeecec2332e2cdf5c2d58a68f999f2dc416ca
+      platform: darwin
+      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-darwin-x86_64
+    - arch: arm64
+      checksum: sha256:32691ba1196d819fa68cbdc0aad9a5569e730a35ae40c6fdd8458110ecd69488
+      platform: darwin
+      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-darwin-aarch64
+    - arch: amd64
+      checksum: sha256:6d36cc701393c066d67ebc77773b718d8c738bc4ccb350fbf1dc0e6a09f44cb9
+      platform: windows
+      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-windows-x86_64.exe
+    - arch: arm64
+      checksum: sha256:5871699d19ee22904f7d1a7ce7e9e6b5a582f6cf9286afd0117ad601cc6737d6
+      platform: windows
+      url: https://github.com/docker/compose/releases/download/v5.3.1/docker-compose-windows-aarch64.exe
+  version: 5.3.1
+dockerProvidedCredentialHelpers:
+  assets:
+    - arch: amd64
+      checksum: sha256:052a0243588b231fde8009f7fe95afc6f536e9d20f6b5896dfd5bc8fd55852f2
+      platform: linux
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-secretservice-v0.9.8.linux-amd64
+    - arch: arm64
+      checksum: sha256:b9e7b135c9b0cacf8f058d785dbc7188df38d98717dbc2fb1d6c63afb6d67198
+      platform: linux
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-secretservice-v0.9.8.linux-arm64
+    - arch: amd64
+      checksum: sha256:3ae93407d42dc90bd0393b0a50da3ce95246d3f30c3255225cb6b0401cd74cac
+      platform: linux
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-pass-v0.9.8.linux-amd64
+    - arch: arm64
+      checksum: sha256:b75d27a59a1b4e1b1eb1059184d5760a34c54cf730e97cb18832956fead18551
+      platform: linux
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-pass-v0.9.8.linux-arm64
+    - arch: amd64
+      checksum: sha256:0575a404c4ead8b5135a2482ece4dd142bde3cbd319433697e212bbea0afb100
+      platform: darwin
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-osxkeychain-v0.9.8.darwin-amd64
+    - arch: arm64
+      checksum: sha256:6fae515ffbc74f395af1b51c6f079ddb57895ed9e428e0bea3f6aff64e916b22
+      platform: darwin
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-osxkeychain-v0.9.8.darwin-arm64
+    - arch: amd64
+      checksum: sha256:fec0aa06335bbefc7f515630c9368afaa1423fa9fa585112f123b6625f72d560
+      platform: windows
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-wincred-v0.9.8.windows-amd64.exe
+    - arch: arm64
+      checksum: sha256:34fc52a556c2703d9b307cd5a9d1ec9cd6f8554d7f50210e3bc4fb93aceca45a
+      platform: windows
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-wincred-v0.9.8.windows-arm64.exe
+  version: 0.9.8
+electron:
+  assets:
+    - arch: amd64
+      checksum: sha256:c0102711ff41d8329426e2ca7378fa13a467775e721b69ebe413c0898da14f6e
+      platform: darwin
+      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-darwin-x64.zip
+    - arch: arm64
+      checksum: sha256:e6994f68dba65a6371577eaf68ac69a5858d2c52371869837c64affc6157eca5
+      platform: darwin
+      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-darwin-arm64.zip
+    - arch: amd64
+      checksum: sha256:53b5562e17ed87b728e01318fa4e7f9040709eafa8f2e09b327362e6abaf961c
+      platform: linux
+      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-linux-x64.zip
+    - arch: arm64
+      checksum: sha256:6fe9c068cc536b7f10af50ffd0ed7d6f86e399378e3868d10ad35b0899256dd5
+      platform: linux
+      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-linux-arm64.zip
+    - arch: amd64
+      checksum: sha256:a195f798837e4c5719b462d3210c47619f6fc44ce032d06dbdcfbc88327b26e0
+      platform: windows
+      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-win32-x64.zip
+    - arch: arm64
+      checksum: sha256:32c3dbc483263061a0994b6c3e97ea1d01c07237551cdbb2991e45234170434e
+      platform: windows
+      url: https://github.com/electron/electron/releases/download/v43.0.0/electron-v43.0.0-win32-arm64.zip
+  version: 43.0.0
+golangci-lint:
+  assets: []
+  version: 2.12.2
+helm:
+  assets:
+    - arch: amd64
+      checksum: sha256:e9b88b4ee95b18c706839c28d3a0220e5bc470e9cd9262410c90793c45ff8b7c
+      platform: linux
+      url: https://get.helm.sh/helm-v4.2.3-linux-amd64.tar.gz
+    - arch: arm64
+      checksum: sha256:21abd9354d39b2cd79a8d76be6912cd137a983cbf997193503fb8a6a6e2f2785
+      platform: linux
+      url: https://get.helm.sh/helm-v4.2.3-linux-arm64.tar.gz
+    - arch: amd64
+      checksum: sha256:ff3ac86755a45f3422473bc1200776aac0fe04c5766abe6ca66699f7b564b23b
+      platform: darwin
+      url: https://get.helm.sh/helm-v4.2.3-darwin-amd64.tar.gz
+    - arch: arm64
+      checksum: sha256:048ecf5ad3160f83d918f9fe945238d2132b079640f7b106175331c25f242c64
+      platform: darwin
+      url: https://get.helm.sh/helm-v4.2.3-darwin-arm64.tar.gz
+    - arch: amd64
+      checksum: sha256:02c6137bb5f050479193afad5a28804e9edc3beeab7e7b53a6e1499c9ba387ef
+      platform: windows
+      url: https://get.helm.sh/helm-v4.2.3-windows-amd64.tar.gz
+    - arch: arm64
+      checksum: sha256:c7a6b0fc66521ba0ff4f8d7930f38c658fbf1a5aa2569042305b12eac41ed0c3
+      platform: windows
+      url: https://get.helm.sh/helm-v4.2.3-windows-arm64.tar.gz
+  version: 4.2.3
+kuberlr:
+  assets:
+    - arch: amd64
+      checksum: sha256:2f131dbf61d136eafcafa583f7884262972c6cc4059d8c811fc2e46ac7ca6128
+      platform: linux
+      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_linux_amd64.tar.gz
+    - arch: arm64
+      checksum: sha256:50a94652653cd067587878d45518326430c9a731e642cb05d0d8e4d3813b18be
+      platform: linux
+      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_linux_arm64.tar.gz
+    - arch: amd64
+      checksum: sha256:5e3ddf382679ef0cf97e037e225c88fa17d546c75015b6cbb9df0aedb0aa47d4
+      platform: darwin
+      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_darwin_amd64.tar.gz
+    - arch: arm64
+      checksum: sha256:e4ff7747d02e498af552cb4abc63d07adad6ee4ae8f7b9d31b4a9a98072614a4
+      platform: darwin
+      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_darwin_arm64.tar.gz
+    - arch: amd64
+      checksum: sha256:8f3928ba651ee25428a5294778b74e477c44babc093e353b07d4f9aa68be8457
+      platform: windows
+      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_windows_amd64.zip
+    - arch: arm64
+      checksum: sha256:d531ce6b6c48e5654083a57cf4ed2eae620ff9c650b797483f04fd1d3aea4b55
+      platform: windows
+      url: https://github.com/flavio/kuberlr/releases/download/v0.7.0/kuberlr_0.7.0_windows_arm64.zip
+  version: 0.7.0
+lima:
+  assets:
+    - arch: amd64
+      checksum: sha256:bd950152a85166368c27383729b6b7337b95e2bcd62a3c6f5633ba7fd4dabe41
+      platform: darwin
+      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.1.2.rd1/lima.macos-15.amd64.tar.gz
+    - arch: arm64
+      checksum: sha256:e009be05824a64f1c07e7882c5e7fd0dc5877384985285e102dd99f5d4976264
+      platform: darwin
+      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.1.2.rd1/lima.macos-15.arm64.tar.gz
+    - arch: amd64
+      checksum: sha256:faefe3c9dfe29ca45593cafba5686a7760a09a2193e62a320c3a2b2f7b429155
+      platform: linux
+      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.1.2.rd1/lima.linux.amd64.tar.gz
+    - arch: arm64
+      checksum: sha256:416aa8b93dbc3ab547adc3a29f14890c325c473bc3c3aa1a0f275cce50ee8c2f
+      platform: linux
+      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.1.2.rd1/lima.linux.arm64.tar.gz
+  version: 2.1.2.rd1
 mobyOpenAPISpec:
+  assets:
+    - checksum: sha256:10617b2a7c57362f083d69ad24c0545b878d22dee447f300622dc9830fe9a82c
+      platform: linux
+      url: https://raw.githubusercontent.com/moby/moby/826b3f64b8d35457b68b847e5af8283d51e04c4d/api/docs/v1.55.yaml
   version:
     apiVersion: "1.55"
     commit: 826b3f64b8d35457b68b847e5af8283d51e04c4d
-  assets:
-    - platform: linux
-      url: https://raw.githubusercontent.com/moby/moby/826b3f64b8d35457b68b847e5af8283d51e04c4d/api/docs/v1.55.yaml
-      checksum: sha256:10617b2a7c57362f083d69ad24c0545b878d22dee447f300622dc9830fe9a82c
-wix:
-  version: v3.14.1
-  assets:
-    - platform: windows
-      url: https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip
-      checksum: sha256:6ac824e1642d6f7277d0ed7ea09411a508f6116ba6fae0aa5f2c7daa2ff43d31
 moproxy:
-  version: 0.5.1
   assets:
-    - platform: linux
-      arch: amd64
-      url: https://github.com/sorz/moproxy/releases/download/v0.5.1/moproxy_0.5.1_linux_x86_64_musl.bin.xz
+    - arch: amd64
       checksum: sha256:c44eb985e60859e56a21a780550b96975431b1334232927b4056f508ab47219b
-spinShim:
-  version: 0.25.1
+      platform: linux
+      url: https://github.com/sorz/moproxy/releases/download/v0.5.1/moproxy_0.5.1_linux_x86_64_musl.bin.xz
+  version: 0.5.1
+qemu:
   assets:
-    - platform: linux
-      arch: amd64
-      url: https://github.com/spinframework/containerd-shim-spin/releases/download/v0.25.1/containerd-shim-spin-v2-linux-x86_64.tar.gz
-      checksum: sha256:1755fbeb2dec7d026faf8c37031d8a025975f5e194b782da10188206a386d6e4
-    - platform: linux
-      arch: arm64
-      url: https://github.com/spinframework/containerd-shim-spin/releases/download/v0.25.1/containerd-shim-spin-v2-linux-aarch64.tar.gz
-      checksum: sha256:5ca9c9207a146a182dc9c870eaaad1afbf64e1d9a4781228dbf6e7ef90ff2e1f
-spinOperator:
-  version: 0.6.1
+    - arch: amd64
+      checksum: sha256:c25f85aa32993b1974705a21515890a66a72f773d2f1a01758c207d827ace47d
+      platform: darwin
+      url: https://github.com/rancher-sandbox/rancher-desktop-qemu/releases/download/v9.2.0.rd2/qemu-9.2.0.rd2-darwin-x86_64.tar.gz
+    - arch: arm64
+      checksum: sha256:1e65ce4c9c15da404732b446d434f05b373438d9a9ebf01a6082b3634cb0b3b1
+      platform: darwin
+      url: https://github.com/rancher-sandbox/rancher-desktop-qemu/releases/download/v9.2.0.rd2/qemu-9.2.0.rd2-darwin-aarch64.tar.gz
+    - arch: amd64
+      checksum: sha256:03c39317c9c87118853e4261d0fd082a724ef9617196b2921519a4e4794e9e8d
+      platform: linux
+      url: https://github.com/rancher-sandbox/rancher-desktop-qemu/releases/download/v9.2.0.rd2/qemu-9.2.0.rd2-linux-x86_64.tar.gz
+  version: 9.2.0.rd2
+socketVMNet:
   assets:
-    - platform: linux
-      variant: crds
-      url: https://github.com/spinframework/spin-operator/releases/download/v0.6.1/spin-operator.crds.yaml
-      checksum: sha256:146fbc3ea2cd9089999c25e38e0aa6779485e788fdd7a2c775287df4360edfc9
-    - platform: linux
-      variant: chart
-      url: https://github.com/spinframework/spin-operator/releases/download/v0.6.1/spin-operator-0.6.1.tgz
-      checksum: sha256:640fcbf0da182ab0482228aa33872a06adec1d3849bea234ae8f725d1de60ff5
-certManager:
-  version: 1.21.0
-  assets:
-    - platform: linux
-      variant: crds
-      url: https://github.com/cert-manager/cert-manager/releases/download/v1.21.0/cert-manager.crds.yaml
-      checksum: sha256:cc046deb0ef4aaa8237f1ae448ef463446905bfc310cba88f25fc614389f84fd
-    - platform: linux
-      variant: chart
-      url: https://charts.jetstack.io/charts/cert-manager-v1.21.0.tgz
-      checksum: sha256:9c2c6fabf3cf8fe14dacb016f37c819b66bc2c79e8b7acde4573d45ec141fb97
+    - arch: amd64
+      checksum: sha256:2968a82c97e692c2d36f87230152e8018e00589c1b598e8257775adfe83800a1
+      platform: darwin
+      url: https://github.com/lima-vm/socket_vmnet/releases/download/v1.2.2/socket_vmnet-1.2.2-x86_64.tar.gz
+    - arch: arm64
+      checksum: sha256:c7bf62308fbcfdc29bdfb8373c9b1951f7ac2396446e4390919796a94972e6dc
+      platform: darwin
+      url: https://github.com/lima-vm/socket_vmnet/releases/download/v1.2.2/socket_vmnet-1.2.2-arm64.tar.gz
+  version: 1.2.2
 spinCLI:
-  version: 4.0.2
   assets:
-    - platform: darwin
-      arch: amd64
-      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-macos-amd64.tar.gz
+    - arch: amd64
       checksum: sha256:5ff1e5fef22c7a99bf8dfeacad26229ba51ccb74cdd1742074e96e7a9e8e86bc
-    - platform: darwin
-      arch: arm64
-      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-macos-aarch64.tar.gz
+      platform: darwin
+      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-macos-amd64.tar.gz
+    - arch: arm64
       checksum: sha256:d16a438d9261c3f8c1e791b9214760bf039a625a91098e62b64e6c563a20627e
-    - platform: linux
-      arch: amd64
-      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-static-linux-amd64.tar.gz
+      platform: darwin
+      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-macos-aarch64.tar.gz
+    - arch: amd64
       checksum: sha256:0adf37a36fb228a12296f9da583513e0962b7e119d909d847d254892986d0839
-    - platform: linux
-      arch: arm64
-      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-static-linux-aarch64.tar.gz
+      platform: linux
+      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-static-linux-amd64.tar.gz
+    - arch: arm64
       checksum: sha256:89d1d69e7cd7ceacd5e9705d4dbb6562d800b8430504922df66706a70d17dd6b
-    - platform: windows
-      arch: amd64
-      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-windows-amd64.zip
+      platform: linux
+      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-static-linux-aarch64.tar.gz
+    - arch: amd64
       checksum: sha256:fbcd6b2817c7ee74a69365559ce0c582647205dd9667f418cf90b0345b1dba18
+      platform: windows
+      url: https://github.com/spinframework/spin/releases/download/v4.0.2/spin-v4.0.2-windows-amd64.zip
+  version: 4.0.2
 spinKubePlugin:
+  assets: []
   version: 0.4.0
-  assets: []
-check-spelling:
-  version: 0.0.26
-  assets: []
+spinOperator:
+  assets:
+    - checksum: sha256:146fbc3ea2cd9089999c25e38e0aa6779485e788fdd7a2c775287df4360edfc9
+      platform: linux
+      url: https://github.com/spinframework/spin-operator/releases/download/v0.6.1/spin-operator.crds.yaml
+      variant: crds
+    - checksum: sha256:640fcbf0da182ab0482228aa33872a06adec1d3849bea234ae8f725d1de60ff5
+      platform: linux
+      url: https://github.com/spinframework/spin-operator/releases/download/v0.6.1/spin-operator-0.6.1.tgz
+      variant: chart
+  version: 0.6.1
+spinShim:
+  assets:
+    - arch: amd64
+      checksum: sha256:1755fbeb2dec7d026faf8c37031d8a025975f5e194b782da10188206a386d6e4
+      platform: linux
+      url: https://github.com/spinframework/containerd-shim-spin/releases/download/v0.25.1/containerd-shim-spin-v2-linux-x86_64.tar.gz
+    - arch: arm64
+      checksum: sha256:5ca9c9207a146a182dc9c870eaaad1afbf64e1d9a4781228dbf6e7ef90ff2e1f
+      platform: linux
+      url: https://github.com/spinframework/containerd-shim-spin/releases/download/v0.25.1/containerd-shim-spin-v2-linux-aarch64.tar.gz
+  version: 0.25.1
+steve:
+  assets:
+    - arch: amd64
+      checksum: sha256:0886c0bf0823f1c0893d7d05fd3a34b4bea4a7999c8d66a7241549cadecea676
+      platform: darwin
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-darwin-amd64.tar.gz
+    - arch: arm64
+      checksum: sha256:901f858c27f96481fad3f3fcc734080a1861838005963a9913a68dbefc2792b9
+      platform: darwin
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-darwin-arm64.tar.gz
+    - arch: amd64
+      checksum: sha256:31d68b0c92b688984dc0db270c17b87164c07626c0b69f92f0b2f7f31017d3de
+      platform: linux
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-linux-amd64.tar.gz
+    - arch: arm64
+      checksum: sha256:f976de1c9c63a1732c0e7f0365c228747e669a62ad9a4fa7ae98dc2277919970
+      platform: linux
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-linux-arm64.tar.gz
+    - arch: amd64
+      checksum: sha256:a70a9bfecb43abd94350eb8919a5d86425632393c2d04f15b8bafcdf158da39d
+      platform: windows
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.2/steve-windows-amd64.tar.gz
+  version: 0.1.0-beta9.2
+trivy:
+  assets:
+    - arch: amd64
+      checksum: sha256:bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea
+      platform: linux
+      url: https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+    - arch: arm64
+      checksum: sha256:2ca2c023109c2db6b2b77366b6717291452d4531167377d95c79547f0c8e3467
+      platform: linux
+      url: https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-ARM64.tar.gz
+  version: 0.72.0
+wix:
+  assets:
+    - checksum: sha256:6ac824e1642d6f7277d0ed7ea09411a508f6116ba6fae0aa5f2c7daa2ff43d31
+      platform: windows
+      url: https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip
+  version: v3.14.1

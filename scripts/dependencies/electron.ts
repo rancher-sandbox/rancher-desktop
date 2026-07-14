@@ -4,13 +4,13 @@ import path from 'node:path';
 import { cartesian } from '@/scripts/dependencies/tools';
 import {
   AssetPlatform,
-  assetChecksum,
   DependencyAsset,
   DownloadContext,
   downloadAndHash,
   GlobalDependency,
   GoArch,
-  selectAssets,
+  parseSha256Checksum,
+  selectAsset,
   VersionedDependency,
 } from '@/scripts/lib/dependencies';
 import { download } from '@/scripts/lib/download';
@@ -55,29 +55,32 @@ export class Electron extends GlobalDependency(VersionedDependency) {
     const archivePath = path.join(context.resourcesDir, 'host', archiveName);
     const outPath = path.join(process.cwd(), 'node_modules', 'electron', 'dist');
     const { default: upstreamChecksums } = await import('electron/checksums.json');
-    const expectedChecksum = upstreamChecksums[archiveName as keyof typeof upstreamChecksums];
+    const upstreamChecksum = upstreamChecksums[archiveName as keyof typeof upstreamChecksums];
     const executable = {
       darwin: 'Electron.app/Contents/MacOS/Electron',
       linux:  'electron',
       win32:  'electron.exe',
     }[context.platform];
 
-    if (!expectedChecksum) {
+    if (!upstreamChecksum) {
       // The upstream checksum is expected to always exist; we may need to
       // update how we look it up.
       throw new Error(`Upstream checksum is missing for ${ archiveName }`);
     }
+    // checksums.json records raw hex; the manifest and download() both speak
+    // the prefixed form.
+    const expectedChecksum = parseSha256Checksum(`sha256:${ upstreamChecksum }`);
+
     // If the version in the dependency manifest matches the version installed
     // via `package.json`, check that the recorded checksum matches the upstream
     // checksum; this ensures upstream hasn't been tampered with.
     if (context.dependencies[this.name].version === version) {
-      const [recorded] = selectAssets(context, this.name, { platform: context.goPlatform, arch: GO_ARCH[arch] });
-      const recordedChecksum = recorded && assetChecksum(recorded);
+      const recorded = selectAsset(context, this.name, { platform: context.goPlatform, arch: GO_ARCH[arch] });
 
-      if (recordedChecksum !== expectedChecksum) {
+      if (recorded.checksum !== expectedChecksum) {
         throw new Error(`
           Upstream checksum for Electron archive ${ archiveName }
-          is ${ expectedChecksum }, does not match recorded checksum ${ recordedChecksum }.
+          is ${ expectedChecksum }, does not match recorded checksum ${ recorded.checksum }.
           `.replace(/\s+/g, ' '));
       }
     }

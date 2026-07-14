@@ -1,4 +1,20 @@
-// A cross-platform script to create PRs that bump versions of dependencies.
+/**
+ * rddepman - manage the versions of Rancher Desktop's external dependencies.
+ *
+ *   yarn rddepman [<config>] [--regenerate]
+ *
+ * Checks every dependency in <config> (default `host`) for a newer upstream
+ * release and opens one pull request per bump, recording the new version and
+ * the assets resolved for it.  Bumping needs a GITHUB_TOKEN.
+ *
+ * With --regenerate, re-resolves the assets of every dependency at its recorded
+ * version and rewrites the manifest in place, opening no pull requests.  Run it
+ * after changing how a dependency resolves its assets; regenerating needs only
+ * network access.
+ *
+ * Setting RD_DEPMAN_LOCAL_CHANGES leaves the bumped manifest in the working
+ * tree instead of opening pull requests, to test the workflow locally.
+ */
 
 import { spawnSync } from 'child_process';
 
@@ -36,11 +52,11 @@ interface VersionComparison {
  */
 interface DependencyConfig {
   manifest: VersionedDependency[];
-  extras:   VersionedDependency[];
+  extras:   () => VersionedDependency[];
 }
 
 const configs: Record<string, DependencyConfig> = {
-  host: { manifest: globalDependencies, extras: getExtensions(true) },
+  host: { manifest: globalDependencies, extras: () => getExtensions(true) },
 };
 
 /**
@@ -327,8 +343,8 @@ async function checkDependencies(dependencies: VersionedDependency[]): Promise<v
  * version bump; needs no GitHub token, only network access to the artifacts.
  */
 async function regenerateAssets(dependencies: VersionedDependency[]): Promise<void> {
-  // Every write rewrites the whole manifest, so the first regenerated sibling
-  // would drop the assets of a dependency skipped below.
+  // A write rewrites the whole manifest, so regenerating the first dependency
+  // would persist an empty asset list for a skipped one.  Check them up front.
   for (const dependency of dependencies.filter(d => !d.regenerable)) {
     if ((await dependency.currentAssets).length === 0) {
       throw new Error(
@@ -372,7 +388,7 @@ function parseArgs(): { config: DependencyConfig, regenerate: boolean } {
   if (regenerate) {
     await regenerateAssets(config.manifest);
   } else {
-    await checkDependencies([...config.manifest, ...config.extras]);
+    await checkDependencies([...config.manifest, ...config.extras()]);
   }
 })().catch((e) => {
   console.error(e);

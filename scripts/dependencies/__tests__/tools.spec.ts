@@ -12,6 +12,7 @@ const sha = (hex: string) => parseSha256Checksum(`sha256:${ hex.padEnd(64, '0') 
 function contextFor(manifest: DependencyManifest): DownloadContext {
   return {
     dependencies: manifest,
+    manifestPath: 'dependencies.yaml',
     platform:     'linux',
     goPlatform:   'linux',
     isM1:         false,

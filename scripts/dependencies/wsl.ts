@@ -5,7 +5,6 @@ import { download } from '../lib/download';
 import { simpleSpawn } from '../simple_process';
 
 import {
-  assetChecksum,
   DependencyAsset,
   DownloadContext,
   downloadAndHash,
@@ -30,7 +29,7 @@ export class Moproxy extends GlobalDependency(GitHubDependency) {
       asset.url,
       archivePath,
       {
-        expectedChecksum: assetChecksum(asset),
+        expectedChecksum: asset.checksum,
         access:           fs.constants.W_OK,
       });
 
@@ -45,7 +44,8 @@ export class Moproxy extends GlobalDependency(GitHubDependency) {
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
     // Upstream does not publish a checksum file, so we record the sha256 we
-    // observe at bump time.  moproxy ships a single linux/amd64 musl build.
+    // observe at bump time.  moproxy also publishes an armv7 build, which the
+    // x86_64 WSL distro has no use for.
     const archiveName = `moproxy_${ version }_linux_x86_64_musl.bin.xz`;
     const url = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }/${ archiveName }`;
 
@@ -64,7 +64,7 @@ export class WSLDistro extends GlobalDependency(GitHubDependency) {
     const destPath = path.join(context.resourcesDir, context.platform, 'staging', tarName);
 
     await download(asset.url, destPath, {
-      expectedChecksum: assetChecksum(asset),
+      expectedChecksum: asset.checksum,
       access:           fs.constants.W_OK,
     });
   }

@@ -10,7 +10,6 @@ import { download, downloadTarGZ } from '../lib/download';
 import {
   AlpineLimaISOVersion,
   AssetPlatform,
-  assetChecksum,
   DependencyAsset,
   DownloadContext,
   downloadAndHash,
@@ -20,6 +19,7 @@ import {
   GitHubRelease,
   GlobalDependency,
   GoArch,
+  hostArch,
   selectAsset,
 } from '@/scripts/lib/dependencies';
 import { simpleSpawn } from '@/scripts/simple_process';
@@ -36,7 +36,7 @@ export class Lima extends GlobalDependency(GitHubDependency) {
   static readonly MACOS_RUNNER = 'macos-15';
 
   async download(context: DownloadContext): Promise<void> {
-    const arch: GoArch = context.isM1 ? 'arm64' : 'amd64';
+    const arch = hostArch(context);
     const platform: AssetPlatform = context.platform === 'darwin' ? 'darwin' : 'linux';
     const token = context.platform === 'darwin' ? `${ Lima.MACOS_RUNNER }.${ arch }` : `linux.${ arch }`;
     const asset = selectAsset(context, this.name, { platform, arch });
@@ -44,7 +44,7 @@ export class Lima extends GlobalDependency(GitHubDependency) {
     const tarPath = path.join(context.resourcesDir, context.platform, `lima.${ token }.v${ context.dependencies.lima.version }.tgz`);
 
     await download(asset.url, tarPath, {
-      expectedChecksum: assetChecksum(asset),
+      expectedChecksum: asset.checksum,
       access:           fs.constants.W_OK,
     });
     await fs.promises.mkdir(limaDir, { recursive: true });
@@ -98,12 +98,12 @@ export class Qemu extends GlobalDependency(GitHubDependency) {
     }
 
     const platform: AssetPlatform = context.platform === 'darwin' ? 'darwin' : 'linux';
-    const asset = selectAsset(context, this.name, { platform, arch: context.isM1 ? 'arm64' : 'amd64' });
+    const asset = selectAsset(context, this.name, { platform, arch: hostArch(context) });
     const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
     const tarPath = path.join(context.resourcesDir, context.platform, `qemu.v${ context.dependencies.qemu.version }.tgz`);
 
     await download(asset.url, tarPath, {
-      expectedChecksum: assetChecksum(asset), access: fs.constants.W_OK,
+      expectedChecksum: asset.checksum, access: fs.constants.W_OK,
     });
     await fs.promises.mkdir(limaDir, { recursive: true });
 
@@ -138,11 +138,11 @@ export class SocketVMNet extends GlobalDependency(GitHubDependency) {
   readonly githubRepo = 'socket_vmnet';
 
   async download(context: DownloadContext): Promise<void> {
-    const asset = selectAsset(context, this.name, { platform: 'darwin', arch: context.isM1 ? 'arm64' : 'amd64' });
+    const asset = selectAsset(context, this.name, { platform: 'darwin', arch: hostArch(context) });
 
     await downloadTarGZ(asset.url,
       path.join(context.resourcesDir, context.platform, 'lima', 'socket_vmnet', 'bin', 'socket_vmnet'),
-      { expectedChecksum: assetChecksum(asset), entryName: './opt/socket_vmnet/bin/socket_vmnet' });
+      { expectedChecksum: asset.checksum, entryName: './opt/socket_vmnet/bin/socket_vmnet' });
   }
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
@@ -172,11 +172,11 @@ export class AlpineLimaISO extends GlobalDependency(GitHubDependency) {
   async download(context: DownloadContext): Promise<void> {
     const edition = 'rd';
     const version = context.dependencies.alpineLimaISO.version as AlpineLimaISOVersion;
-    const asset = selectAsset(context, this.name, { platform: 'linux', arch: context.isM1 ? 'arm64' : 'amd64' });
+    const asset = selectAsset(context, this.name, { platform: 'linux', arch: hostArch(context) });
     const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-v${ version.isoVersion }-${ edition }-${ version.alpineVersion }.iso`);
 
     await download(asset.url, destPath, {
-      expectedChecksum: assetChecksum(asset), access: fs.constants.W_OK,
+      expectedChecksum: asset.checksum, access: fs.constants.W_OK,
     });
   }
 

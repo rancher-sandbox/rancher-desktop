@@ -4,7 +4,6 @@ import path from 'path';
 import semver from 'semver';
 
 import {
-  assetChecksum,
   DependencyAsset,
   DownloadContext,
   downloadAndHash,
@@ -40,7 +39,7 @@ export class Wix extends GlobalDependency(GitHubDependency) {
     const archivePath = path.join(hostDir, path.basename(new URL(asset.url).pathname));
 
     await fs.promises.mkdir(wixDir, { recursive: true });
-    await download(asset.url, archivePath, { expectedChecksum: assetChecksum(asset) });
+    await download(asset.url, archivePath, { expectedChecksum: asset.checksum });
     await simpleSpawn('unzip', ['-q', '-o', archivePath, '-d', wixDir], { cwd: wixDir });
   }
 

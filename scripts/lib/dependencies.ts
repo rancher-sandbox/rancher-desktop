@@ -7,7 +7,11 @@ import { Octokit } from 'octokit';
 import semver from 'semver';
 import YAML from 'yaml';
 
-import { download, getResource, hashFile } from './download';
+import {
+  download, getResource, hashFile, parseSha256Checksum, Sha256Checksum,
+} from './download';
+
+export { parseSha256Checksum, type Sha256Checksum };
 
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
@@ -23,6 +27,9 @@ export type AssetPlatform = GoPlatform | 'wsl';
 
 export interface DownloadContext {
   dependencies:       DependencyManifest;
+  // manifestPath is the dependencies.yaml `dependencies` came from;
+  // asset-selection errors name it.
+  manifestPath:       string;
   dependencyPlatform: DependencyPlatform;
   platform:           Platform;
   goPlatform:         GoPlatform;
@@ -86,29 +93,6 @@ export interface DependencyVersions {
 }
 
 export const DEP_VERSIONS_PATH = 'pkg/rancher-desktop/assets/dependencies.yaml';
-
-/**
- * A sha256 checksum as stored in `dependencies.yaml`, including the algorithm
- * prefix.  The prefix documents the algorithm for readers of the file; the
- * install path strips it and treats the remainder as sha256 hex.  Values
- * carry lowercase hex; {@link parseSha256Checksum} normalizes on parse so
- * `download()` can compare against `crypto.createHash('sha256').digest('hex')`
- * (always lowercase) with a plain `===`.
- */
-export type Sha256Checksum = `sha256:${ string }`;
-
-/**
- * Parses a raw string as a {@link Sha256Checksum}.  Throws unless the value
- * has the form `sha256:<64 hex chars>`.  Uppercase hex parses but normalizes
- * to lowercase so consumers can compare with `===`.
- */
-export function parseSha256Checksum(value: unknown): Sha256Checksum {
-  if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/i.test(value)) {
-    throw new Error(`Invalid sha256 checksum ${ JSON.stringify(value) }; expected "sha256:<64 hex chars>"`);
-  }
-
-  return value.toLowerCase() as Sha256Checksum;
-}
 
 /**
  * One downloadable artifact for a dependency.  Every field needed to fetch and
@@ -177,6 +161,9 @@ function parseAsset(name: string, path: string, raw: RawAsset): DependencyAsset 
   if (typeof raw.url !== 'string' || !URL.canParse(raw.url)) {
     throw new Error(`Asset for ${ name } in ${ path } has invalid url ${ JSON.stringify(raw.url) }`);
   }
+  if (raw.variant !== undefined && typeof raw.variant !== 'string') {
+    throw new Error(`Asset for ${ name } in ${ path } has invalid variant ${ JSON.stringify(raw.variant) }`);
+  }
   const asset: DependencyAsset = {
     platform: raw.platform as AssetPlatform,
     url:      raw.url,
@@ -187,9 +174,6 @@ function parseAsset(name: string, path: string, raw: RawAsset): DependencyAsset 
     asset.arch = raw.arch as GoArch;
   }
   if (raw.variant !== undefined) {
-    if (typeof raw.variant !== 'string') {
-      throw new Error(`Asset for ${ name } in ${ path } has invalid variant ${ JSON.stringify(raw.variant) }`);
-    }
     asset.variant = raw.variant;
   }
 
@@ -290,40 +274,16 @@ function getCachedManifest(path: string): Promise<DependencyManifest> {
 }
 
 /**
- * Renders an asset with a fixed key order (selector fields, then url and
- * checksum), omitting absent optional fields.  Keeps the emitted YAML
- * deterministic regardless of how the asset object was built.
- */
-function serializeAsset(asset: DependencyAsset): Record<string, unknown> {
-  const out: Record<string, unknown> = { platform: asset.platform };
-
-  if (asset.arch !== undefined) {
-    out.arch = asset.arch;
-  }
-  if (asset.variant !== undefined) {
-    out.variant = asset.variant;
-  }
-  out.url = asset.url;
-  out.checksum = asset.checksum;
-
-  return out;
-}
-
-/**
- * Writes the manifest to disk and invalidates the cached read for that path so
- * subsequent reads observe the new contents.  Always emits a leading header
- * comment so contributors editing the YAML directly see the warning where they
- * are editing; everything else round-trips through `YAML.stringify`, which
- * drops any other comments on the next rddepman bump.
+ * Writes the manifest and drops its cache entry, so later reads see the new
+ * contents.  `YAML.stringify` discards comments, so every write re-emits the
+ * header; whatever order the manifest had in memory, sorted keys hold a bump's
+ * diff to the entries that changed.
  */
 export async function writeDependencyManifest(path: string, manifest: DependencyManifest): Promise<void> {
-  const serializable = Object.fromEntries(Object.entries(manifest).map(([name, entry]) => [name, {
-    version: entry.version,
-    assets:  entry.assets.map(serializeAsset),
-  }]));
-
   manifestCache.delete(path);
-  await fs.promises.writeFile(path, MANIFEST_HEADER + YAML.stringify(serializable), { encoding: 'utf-8' });
+  await fs.promises.writeFile(path,
+    MANIFEST_HEADER + YAML.stringify(manifest, { sortMapEntries: true }),
+    { encoding: 'utf-8' });
 }
 
 /**
@@ -360,41 +320,44 @@ function describeSelector(selector: AssetSelector): string {
   return Object.entries(selector).map(([key, value]) => `${ key }=${ value }`).join(', ');
 }
 
+/** The architecture to install binaries for. */
+export function hostArch(context: DownloadContext): GoArch {
+  return context.isM1 ? 'arm64' : 'amd64';
+}
+
+/** The default selector: the platform and architecture we install for. */
+function hostSelector(context: DownloadContext): AssetSelector {
+  return { platform: context.goPlatform, arch: hostArch(context) };
+}
+
 /**
- * Returns every asset of dependency `name` matching `selector`.  Throws if the
- * dependency is absent from the manifest.
+ * Returns every asset of `name` matching `selector`.  Throws when the manifest
+ * has no such dependency; returns [] when it has no matching asset.
  */
-export function selectAssets(context: DownloadContext, name: string, selector: AssetSelector): DependencyAsset[] {
+export function selectAssets(context: DownloadContext, name: string, selector = hostSelector(context)): DependencyAsset[] {
   const entry = context.dependencies[name];
 
   if (!entry) {
-    throw new Error(`Dependency "${ name }" is not present in the dependency manifest.`);
+    throw new Error(`Dependency "${ name }" is not present in ${ context.manifestPath }.`);
   }
 
   return entry.assets.filter(asset => assetMatches(asset, selector));
 }
 
-/**
- * Returns the single asset of dependency `name` matching `selector`.  Throws
- * unless exactly one asset matches.
- */
-export function selectAsset(context: DownloadContext, name: string, selector: AssetSelector): DependencyAsset {
+/** Returns the asset of `name` matching `selector`; throws unless exactly one does. */
+export function selectAsset(context: DownloadContext, name: string, selector = hostSelector(context)): DependencyAsset {
   const matches = selectAssets(context, name, selector);
 
   if (matches.length !== 1) {
     const urls = matches.map(asset => asset.url).join(', ') || '(none)';
 
     throw new Error(
-      `Expected exactly one ${ name } asset for ${ describeSelector(selector) }, found ${ matches.length }: ${ urls }.`,
+      `Expected exactly one ${ name } asset for ${ describeSelector(selector) } in ${ context.manifestPath }, ` +
+      `found ${ matches.length }: ${ urls }.`,
     );
   }
 
   return matches[0];
-}
-
-/** Returns an asset's checksum as raw hex, ready for `download()`. */
-export function assetChecksum(asset: DependencyAsset): string {
-  return asset.checksum.slice('sha256:'.length);
 }
 
 /**

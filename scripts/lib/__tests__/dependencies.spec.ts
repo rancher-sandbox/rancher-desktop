@@ -6,8 +6,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import YAML from 'yaml';
+
 import {
-  assetChecksum,
   DependencyManifest,
   DownloadContext,
   parseSha256Checksum,
@@ -54,7 +55,10 @@ const manifest: DependencyManifest = {
 };
 
 /** Builds the minimal context the asset selectors read. */
-const contextFor = (m: DependencyManifest) => ({ dependencies: m } as DownloadContext);
+const contextFor = (m: DependencyManifest) => ({
+  dependencies: m,
+  manifestPath: 'dependencies.yaml',
+} as DownloadContext);
 
 describe('dependency manifest', () => {
   let tmpDir: string;
@@ -105,8 +109,14 @@ describe('dependency manifest', () => {
 
   it('loads a legacy checksums-schema entry with no assets', async() => {
     const file = path.join(tmpDir, 'legacy.yaml');
+    const legacy = YAML.stringify({
+      helm: {
+        version:   '4.2.0',
+        checksums: { 'helm-linux-amd64.tar.gz': 'sha256:abc' },
+      },
+    });
 
-    await fs.promises.writeFile(file, 'helm:\n  version: 4.2.0\n  checksums:\n    helm-linux-amd64.tar.gz: sha256:abc\n', 'utf-8');
+    await fs.promises.writeFile(file, legacy, 'utf-8');
     const loaded = await readDependencyManifest(file);
 
     expect(loaded.helm).toEqual({ version: '4.2.0', assets: [] });
@@ -181,12 +191,5 @@ describe('selectAsset / selectAssets', () => {
   it('throws when the dependency is absent', () => {
     expect(() => selectAsset(context, 'nonexistent', { platform: 'linux', arch: 'amd64' }))
       .toThrow(/not present/);
-  });
-});
-
-describe('assetChecksum', () => {
-  it('strips the sha256 prefix', () => {
-    expect(assetChecksum({ platform: 'linux', url: 'u', checksum: sha('ab') }))
-      .toBe('ab'.padEnd(64, '0'));
   });
 });

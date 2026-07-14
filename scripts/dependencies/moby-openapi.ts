@@ -7,7 +7,6 @@ import yaml from 'yaml';
 import { download } from '../lib/download';
 
 import {
-  assetChecksum,
   DependencyAsset,
   DownloadContext,
   downloadAndHash,
@@ -33,7 +32,7 @@ export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
     const modifiedPath = path.join(path.dirname(outPath), 'swagger-modified.yaml');
 
     await download(asset.url, outPath, {
-      expectedChecksum: assetChecksum(asset),
+      expectedChecksum: asset.checksum,
       access:           fs.constants.W_OK,
     });
 
