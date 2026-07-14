@@ -141,6 +141,39 @@ a.b=hello
 	}
 }
 
+// A rejected key must be reported — dropping it quietly would lose a
+// translation from a long piped batch.
+func TestParseMergeInputRejectsMalformedKey(t *testing.T) {
+	lines := []string{
+		`a"b.c=Läuft`,
+		`secret.types."kubernetes.io/service-account-token=Svc Acct Token`,
+	}
+
+	for _, line := range lines {
+		t.Run(line, func(t *testing.T) {
+			oldStderr := os.Stderr
+			r, w, _ := os.Pipe()
+			os.Stderr = w
+
+			got, err := parseMergeInput(strings.NewReader(line + "\n"))
+			w.Close()
+			os.Stderr = oldStderr
+
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(got) != 0 {
+				t.Errorf("parseMergeInput(%q) = %+v, want no entries", line, got)
+			}
+
+			stderr, _ := io.ReadAll(r)
+			if !strings.Contains(string(stderr), "Warning: ignoring unparseable input line") {
+				t.Errorf("line %q was dropped without a warning; stderr: %q", line, stderr)
+			}
+		})
+	}
+}
+
 func TestMergePreservesExistingComments(t *testing.T) {
 	dir := t.TempDir()
 

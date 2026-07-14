@@ -22,7 +22,9 @@ const modeNormal = "normal"
 // looksLikeEntry matches lines that were probably meant as key-value
 // entries, so their silent loss can be reported. Report header lines
 // ("Found 15 keys ...") contain spaces before the separator and stay quiet.
-var looksLikeEntry = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.-]*\s*[:=]`)
+// The key run admits quotes and slashes, so a key rejected for a stray quote
+// still matches here.
+var looksLikeEntry = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.'"/-]*\s*[:=]`)
 
 func runMerge(args []string) error {
 	fs := flag.NewFlagSet("merge", flag.ExitOnError)

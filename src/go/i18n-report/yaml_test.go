@@ -201,6 +201,59 @@ func TestNodeSetLeafRejectsEmptySegment(t *testing.T) {
 	}
 }
 
+// A malformed key resolves to a different, real key that merge would write to
+// and remove would delete.
+func TestIsValidDottedKeyRejectsMalformedQuotes(t *testing.T) {
+	tests := []struct {
+		key  string
+		want bool
+	}{
+		{"action.refresh", true},
+		{"containerEngine.tabs.general", true},
+		{`secret.types."kubernetes.io/service-account-token"`, true},
+		{`secret.types.'helm.sh/release.v1'`, true},
+		{`a"b.c`, false},                                             // resolved to a.b.c
+		{`a.b"c"d.e`, false},                                         // resolved to a.b.c.d.e
+		{`secret.types."kubernetes.io/service-account-token`, false}, // split into kubernetes / io/... nodes
+		{`"a.b"c`, false},
+		{"a", false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.key, func(t *testing.T) {
+			if got := isValidDottedKey(tc.key); got != tc.want {
+				t.Errorf("isValidDottedKey(%q) = %v, want %v", tc.key, got, tc.want)
+			}
+		})
+	}
+}
+
+// merge accepts `key: "value"`, so a quoted value must mean what YAML says it
+// means. Hand-unescaping only \" and \\ turns "Line\nTwo" into a literal backslash.
+func TestStripYAMLQuotesResolvesEscapes(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{`"Line\nTwo"`, "Line\nTwo"},
+		{`"Tab\there"`, "Tab\there"},
+		{`"café"`, "café"},
+		{`"say \"hi\""`, `say "hi"`},
+		{`'it''s'`, "it's"},
+		{"plain value", "plain value"},
+		{`"unterminated`, `"unterminated`},
+		{`'tis the season`, `'tis the season`},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			if got := stripYAMLQuotes(tc.input); got != tc.want {
+				t.Errorf("stripYAMLQuotes(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestNodeInsertSorted(t *testing.T) {
 	doc := &yaml.Node{
 		Kind:    yaml.DocumentNode,

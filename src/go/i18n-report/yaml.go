@@ -5,6 +5,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -14,22 +15,52 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// keyPathToken tokenizes a dotted key path into unquoted runs and quoted
-// sections, mirroring splitObjectPath in pkg/rancher-desktop/utils/string.js.
-var keyPathToken = regexp.MustCompile(`[^."']+|"([^"]*)"|'([^']*)'`)
-
-// splitKeyPath splits a dotted key into its segments, honoring quoted segments
-// whose own text contains a dot, such as "kubernetes.io/service-account-token".
-func splitKeyPath(path string) []string {
-	if !strings.ContainsAny(path, `"'`) {
-		return strings.Split(path, ".")
+// splitKeyPath splits a dotted key into segments, honoring quotes around a
+// segment that contains a dot, such as "kubernetes.io/service-account-token".
+// Malformed input is an error, because a stray quote would otherwise resolve
+// to a different, real key that merge and remove would act on.
+func splitKeyPath(path string) ([]string, error) {
+	var segments []string
+	for i := 0; i < len(path); {
+		var segment string
+		switch quote := path[i]; quote {
+		case '"', '\'':
+			end := strings.IndexByte(path[i+1:], quote)
+			if end < 0 {
+				return nil, fmt.Errorf("unterminated %c quote", quote)
+			}
+			segment = path[i+1 : i+1+end]
+			i += end + 2
+			if i < len(path) && path[i] != '.' {
+				return nil, fmt.Errorf("quoted segment %q is followed by %q instead of a dot", segment, path[i])
+			}
+		default:
+			end := strings.IndexByte(path[i:], '.')
+			if end < 0 {
+				end = len(path) - i
+			}
+			segment = path[i : i+end]
+			if strings.ContainsAny(segment, `"'`) {
+				return nil, fmt.Errorf("segment %q contains a quote; quote the whole segment to include one", segment)
+			}
+			i += end
+		}
+		if segment == "" {
+			return nil, errors.New("empty path segment")
+		}
+		segments = append(segments, segment)
+		// Step over the separator; a trailing dot leaves an empty final segment.
+		if i < len(path) {
+			i++
+			if i == len(path) {
+				return nil, errors.New("empty path segment")
+			}
+		}
 	}
-	tokens := keyPathToken.FindAllString(path, -1)
-	segments := make([]string, len(tokens))
-	for i, tok := range tokens {
-		segments[i] = strings.NewReplacer(`"`, "", "'", "").Replace(tok)
+	if len(segments) == 0 {
+		return nil, errors.New("empty key")
 	}
-	return segments
+	return segments, nil
 }
 
 // appendKeyPath appends a segment to a dotted key path, double-quoting the
@@ -151,14 +182,14 @@ func nodeHasOverride(root *yaml.Node, dottedKey string) bool {
 // nodes, not on parent mapping nodes. Returns a list of invalid placements.
 func validateOverridePlacement(doc *yaml.Node) []string {
 	root := documentRoot(doc)
-	var errors []string
-	checkOverridePlacement("", root, &errors)
-	return errors
+	var misplaced []string
+	checkOverridePlacement("", root, &misplaced)
+	return misplaced
 }
 
 // checkOverridePlacement recursively checks for misplaced @override on
 // parent mapping nodes.
-func checkOverridePlacement(prefix string, node *yaml.Node, errors *[]string) {
+func checkOverridePlacement(prefix string, node *yaml.Node, misplaced *[]string) {
 	if node.Kind != yaml.MappingNode {
 		return
 	}
@@ -169,9 +200,9 @@ func checkOverridePlacement(prefix string, node *yaml.Node, errors *[]string) {
 		if valNode.Kind == yaml.MappingNode {
 			// Parent mapping — @override is invalid here.
 			if commentHasOverride(keyNode.HeadComment) {
-				*errors = append(*errors, key)
+				*misplaced = append(*misplaced, key)
 			}
-			checkOverridePlacement(key, valNode, errors)
+			checkOverridePlacement(key, valNode, misplaced)
 		}
 		// Leaf nodes with @override are valid — no error.
 	}
@@ -193,14 +224,11 @@ func sortedKeys[V any](m map[string]V) []string {
 // — validates as one part, the same form the write path emits; a bare '.' or
 // '/' inside such a segment is therefore allowed.
 func isValidDottedKey(s string) bool {
-	parts := splitKeyPath(s)
-	if len(parts) < 2 {
+	parts, err := splitKeyPath(s)
+	if err != nil || len(parts) < 2 {
 		return false
 	}
 	for _, part := range parts {
-		if part == "" {
-			return false
-		}
 		for _, c := range part {
 			if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' && c != '-' && c != '.' && c != '/' {
 				return false
@@ -223,19 +251,18 @@ func yamlScalar(s string) string {
 	return strings.TrimSuffix(string(data), "\n")
 }
 
-// stripYAMLQuotes removes outer YAML quotes from a value string.
+// stripYAMLQuotes resolves a quoted YAML scalar to the text it denotes, so \n
+// reaches the file as a newline rather than a backslash. Anything else passes
+// through as written, matching the raw scalar text loadYAMLFlat reports.
 func stripYAMLQuotes(s string) string {
-	if len(s) >= 2 && s[0] == '\'' && s[len(s)-1] == '\'' {
-		inner := s[1 : len(s)-1]
-		return strings.ReplaceAll(inner, "''", "'")
+	if len(s) < 2 || (s[0] != '"' && s[0] != '\'') {
+		return s
 	}
-	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
-		inner := s[1 : len(s)-1]
-		inner = strings.ReplaceAll(inner, `\"`, `"`)
-		inner = strings.ReplaceAll(inner, `\\`, `\`)
-		return inner
+	var scalar string
+	if err := yaml.Unmarshal([]byte(s), &scalar); err != nil {
+		return s
 	}
-	return s
+	return scalar
 }
 
 // loadYAMLDocument loads a YAML file into a yaml.Node document tree.
@@ -286,13 +313,10 @@ func documentRoot(doc *yaml.Node) *yaml.Node {
 // It creates intermediate MappingNode entries as needed.
 // If comment is non-empty, it replaces the key node's HeadComment.
 // If comment is empty and the key already exists, the existing comment is preserved.
-// An empty path segment is an error; it would serialize to invalid YAML.
 func nodeSetLeaf(root *yaml.Node, dottedKey, value, comment string) error {
-	parts := splitKeyPath(dottedKey)
-	for _, part := range parts {
-		if part == "" {
-			return fmt.Errorf("invalid key %q: empty path segment", dottedKey)
-		}
+	parts, err := splitKeyPath(dottedKey)
+	if err != nil {
+		return fmt.Errorf("invalid key %q: %w", dottedKey, err)
 	}
 	current := root
 
@@ -396,9 +420,12 @@ func validateNoAliases(node *yaml.Node) error {
 }
 
 // nodeGetLeaf retrieves a leaf's value and HeadComment from the tree.
-// Returns empty strings and false if the key is not found.
+// Returns empty strings and false if the key is malformed or not found.
 func nodeGetLeaf(root *yaml.Node, dottedKey string) (value, comment string, found bool) {
-	parts := splitKeyPath(dottedKey)
+	parts, err := splitKeyPath(dottedKey)
+	if err != nil {
+		return "", "", false
+	}
 	current := root
 	for i, part := range parts {
 		idx := nodeFindKey(current, part)
