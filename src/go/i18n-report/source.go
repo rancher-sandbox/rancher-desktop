@@ -92,10 +92,7 @@ func annotateNodeSource(prefix string, node *yaml.Node, enKeys map[string]string
 	for i := 0; i < len(node.Content)-1; i += 2 {
 		keyNode := node.Content[i]
 		valNode := node.Content[i+1]
-		key := keyNode.Value
-		if prefix != "" {
-			key = prefix + "." + key
-		}
+		key := appendKeyPath(prefix, keyNode.Value)
 		if valNode.Kind == yaml.MappingNode {
 			annotateNodeSource(key, valNode, enKeys)
 		} else if english, ok := enKeys[key]; ok {

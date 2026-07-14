@@ -94,7 +94,7 @@ func TestAnnotateSourceDottedSegmentKey(t *testing.T) {
 	dir := setupLocaleTestRepo(t, enUS, de, true)
 
 	entries, _ := loadYAMLWithComments(translationsPath(dir, "de.yaml"))
-	key := "secret.types.kubernetes.io/dockercfg"
+	key := `secret.types."kubernetes.io/dockercfg"`
 	if _, exists := entries[key]; !exists {
 		t.Fatalf("dotted-segment key corrupted; got keys %v", sortedKeys(entries))
 	}

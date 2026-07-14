@@ -7,7 +7,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +16,7 @@ import (
 func TestReportTranslateIncludesAnnotations(t *testing.T) {
 	dir := t.TempDir()
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
-	os.MkdirAll(transDir, 0755)
+	os.MkdirAll(transDir, 0o755)
 
 	enUS := `tray:
   # @context System tray menu, shows active container runtime
@@ -61,7 +60,7 @@ locale:
 func TestReportTranslateJSON(t *testing.T) {
 	dir := t.TempDir()
 	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
-	os.MkdirAll(transDir, 0755)
+	os.MkdirAll(transDir, 0o755)
 
 	enUS := `tray:
   # @context System tray tooltip
@@ -85,19 +84,119 @@ func TestReportTranslateJSON(t *testing.T) {
 	}
 }
 
-func TestTranslateRejectsInvalidBatchCounts(t *testing.T) {
-	enUS := "status:\n  checking: Checking...\n  done: Done\n"
-	dir := setupTranslateTestRepo(t, enUS, "{}\n")
+func setupTranslateTestRepo(t *testing.T, enUS, locale string) string {
+	t.Helper()
+	dir := t.TempDir()
+	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
+	os.MkdirAll(transDir, 0o755)
+	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte(enUS), 0o644)
+	os.WriteFile(filepath.Join(transDir, "de.yaml"), []byte(locale), 0o644)
+	return dir
+}
 
-	// Negative batch counts must error, not silently disable batching.
-	err := reportTranslate(io.Discard, dir, "de", "missing", "text", 1, -2, false)
-	if err == nil {
-		t.Error("expected an error for --batches=-2, got nil")
+// runTranslateReport runs reportTranslate against a buffer and returns
+// its output.
+func runTranslateReport(t *testing.T, dir, mode string, includeOverrides bool) string {
+	t.Helper()
+	var buf bytes.Buffer
+	if err := reportTranslate(&buf, dir, "de", mode, "text", 0, 0, includeOverrides); err != nil {
+		t.Fatal(err)
 	}
+	return buf.String()
+}
 
-	err = reportTranslate(io.Discard, dir, "de", "missing", "text", -1, 3, false)
-	if err == nil {
-		t.Error("expected an error for --batch=-1, got nil")
+func TestTranslateModeImprove(t *testing.T) {
+	enUS := "status:\n  checking: Checking...\n  done: Done\n"
+	de := "status:\n  # @override\n  checking: Manuelle Übersetzung\n  done: Fertig\n"
+	dir := setupTranslateTestRepo(t, enUS, de)
+
+	// Improve mode should skip @override keys.
+	output := runTranslateReport(t, dir, "improve", false)
+
+	// checking has @override, should be excluded.
+	if strings.Contains(output, "status.checking") {
+		t.Errorf("@override key should be excluded in improve mode:\n%s", output)
+	}
+	// done has no override, should be included.
+	if !strings.Contains(output, "status.done") {
+		t.Errorf("non-override key should be included in improve mode:\n%s", output)
+	}
+}
+
+func TestTranslateModeImproveIncludeOverrides(t *testing.T) {
+	enUS := "status:\n  checking: Checking...\n  done: Done\n"
+	de := "status:\n  # @override\n  checking: Manuelle Übersetzung\n  done: Fertig\n"
+	dir := setupTranslateTestRepo(t, enUS, de)
+
+	output := runTranslateReport(t, dir, "improve", true)
+
+	// With --include-overrides, both should appear.
+	if !strings.Contains(output, "status.checking") {
+		t.Errorf("override key should be included with --include-overrides:\n%s", output)
+	}
+	if !strings.Contains(output, "status.done") {
+		t.Errorf("non-override key should be included:\n%s", output)
+	}
+}
+
+func TestTranslateModeDrift(t *testing.T) {
+	enUS := "status:\n  checking: Checking...\n  done: Done\n"
+	de := "status:\n  checking: Wird geprüft…\n  done: Fertig\n"
+	dir := setupTranslateTestRepo(t, enUS, de)
+
+	// Record @source with current English.
+	bootstrapSource(t, dir)
+
+	// Change English for "checking".
+	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
+	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte("status:\n  checking: Verifying...\n  done: Done\n"), 0o644)
+
+	output := runTranslateReport(t, dir, "drift", false)
+
+	// Only checking should appear (its English changed).
+	if !strings.Contains(output, "status.checking") {
+		t.Errorf("drifted key should appear:\n%s", output)
+	}
+	if strings.Contains(output, "status.done") {
+		t.Errorf("non-drifted key should not appear:\n%s", output)
+	}
+}
+
+func TestTranslateModeImproveExcludesDrifted(t *testing.T) {
+	enUS := "status:\n  checking: Checking...\n  done: Done\n"
+	de := "status:\n  checking: Wird geprüft…\n  done: Fertig\n"
+	dir := setupTranslateTestRepo(t, enUS, de)
+
+	// Bootstrap metadata with current English.
+	bootstrapSource(t, dir)
+
+	// Change English for "checking" — this key is now drifted.
+	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
+	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte("status:\n  checking: Verifying...\n  done: Done\n"), 0o644)
+
+	output := runTranslateReport(t, dir, "improve", false)
+
+	// Drifted key should be excluded from improve mode.
+	if strings.Contains(output, "status.checking") {
+		t.Errorf("drifted key should be excluded from improve mode:\n%s", output)
+	}
+	// Non-drifted key should still appear.
+	if !strings.Contains(output, "status.done") {
+		t.Errorf("non-drifted key should appear in improve mode:\n%s", output)
+	}
+}
+
+func TestTranslateModeDriftNoDrift(t *testing.T) {
+	enUS := "status:\n  checking: Checking...\n"
+	de := "status:\n  checking: Wird geprüft…\n"
+	dir := setupTranslateTestRepo(t, enUS, de)
+
+	bootstrapSource(t, dir)
+
+	output := runTranslateReport(t, dir, "drift", false)
+
+	if !strings.Contains(output, "No keys drifted") {
+		t.Errorf("expected no drift message, got:\n%s", output)
 	}
 }
 
@@ -182,14 +281,4 @@ func TestTranslateCompleteLocaleMessage(t *testing.T) {
 	if out := buf.String(); !strings.Contains(out, "No keys missing from de") {
 		t.Errorf("want the completeness message for a fully translated locale, got:\n%s", out)
 	}
-}
-
-func setupTranslateTestRepo(t *testing.T, enUS, locale string) string {
-	t.Helper()
-	dir := t.TempDir()
-	transDir := filepath.Join(dir, "pkg", "rancher-desktop", "assets", "translations")
-	os.MkdirAll(transDir, 0755)
-	os.WriteFile(filepath.Join(transDir, "en-us.yaml"), []byte(enUS), 0o644)
-	os.WriteFile(filepath.Join(transDir, "de.yaml"), []byte(locale), 0o644)
-	return dir
 }

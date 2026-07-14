@@ -11,6 +11,14 @@ import (
 	"testing"
 )
 
+// bootstrapSource records @source snapshots on de.yaml, as `source` would.
+func bootstrapSource(t *testing.T, dir string) {
+	t.Helper()
+	if err := annotateSource(io.Discard, dir, "de", false); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // setupLocaleTestRepo builds a repo fixture with en-us.yaml and de.yaml. When
 // withSource is set, de.yaml is annotated with @source snapshots of the current
 // English, as a real bootstrap would leave it.
@@ -24,9 +32,7 @@ func setupLocaleTestRepo(t *testing.T, enUS, locale string, withSource bool) str
 	os.WriteFile(filepath.Join(transDir, "de.yaml"), []byte(locale), 0o644)
 
 	if withSource {
-		if err := annotateSource(io.Discard, dir, "de", false); err != nil {
-			t.Fatal(err)
-		}
+		bootstrapSource(t, dir)
 	}
 	return dir
 }

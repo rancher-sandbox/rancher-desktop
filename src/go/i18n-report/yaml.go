@@ -5,13 +5,85 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+// splitKeyPath splits a dotted key into segments, honoring quotes around a
+// segment that contains a dot, such as "kubernetes.io/service-account-token".
+// Malformed input is an error, because a stray quote would otherwise resolve
+// to a different, real key that merge and remove would act on.
+func splitKeyPath(path string) ([]string, error) {
+	var segments []string
+	for i := 0; i < len(path); {
+		var segment string
+		switch quote := path[i]; quote {
+		case '"', '\'':
+			end := strings.IndexByte(path[i+1:], quote)
+			if end < 0 {
+				return nil, fmt.Errorf("unterminated %c quote", quote)
+			}
+			segment = path[i+1 : i+1+end]
+			i += end + 2
+			if i < len(path) && path[i] != '.' {
+				return nil, fmt.Errorf("quoted segment %q is followed by %q instead of a dot", segment, path[i])
+			}
+		default:
+			end := strings.IndexByte(path[i:], '.')
+			if end < 0 {
+				end = len(path) - i
+			}
+			segment = path[i : i+end]
+			if strings.ContainsAny(segment, `"'`) {
+				return nil, fmt.Errorf("segment %q contains a quote; quote the whole segment to include one", segment)
+			}
+			i += end
+		}
+		if segment == "" {
+			return nil, errors.New("empty path segment")
+		}
+		segments = append(segments, segment)
+		// Step over the separator; a trailing dot leaves an empty final segment.
+		if i < len(path) {
+			i++
+			if i == len(path) {
+				return nil, errors.New("empty path segment")
+			}
+		}
+	}
+	if len(segments) == 0 {
+		return nil, errors.New("empty key")
+	}
+	return segments, nil
+}
+
+// appendKeyPath appends a segment to a dotted key path, double-quoting the
+// segment when it contains a dot so splitKeyPath can recover the boundary.
+// It mirrors joinObjectPath in the renderer.
+func appendKeyPath(prefix, segment string) string {
+	if strings.Contains(segment, ".") {
+		segment = `"` + segment + `"`
+	}
+	if prefix == "" {
+		return segment
+	}
+	return prefix + "." + segment
+}
+
+// joinKeyPath joins segments into a dotted key path with appendKeyPath.
+func joinKeyPath(segments []string) string {
+	path := ""
+	for _, seg := range segments {
+		path = appendKeyPath(path, seg)
+	}
+	return path
+}
 
 // loadYAMLFlat loads a YAML file and returns flattened key-value pairs.
 // Values are the raw scalar text as written, with no YAML type resolution,
@@ -63,10 +135,7 @@ func flattenNodeWithComments(prefix string, node *yaml.Node, result map[string]m
 	for i := 0; i < len(node.Content)-1; i += 2 {
 		keyNode := node.Content[i]
 		valNode := node.Content[i+1]
-		key := keyNode.Value
-		if prefix != "" {
-			key = prefix + "." + key
-		}
+		key := appendKeyPath(prefix, keyNode.Value)
 		if valNode.Kind == yaml.MappingNode {
 			flattenNodeWithComments(key, valNode, result)
 		} else {
@@ -113,30 +182,27 @@ func nodeHasOverride(root *yaml.Node, dottedKey string) bool {
 // nodes, not on parent mapping nodes. Returns a list of invalid placements.
 func validateOverridePlacement(doc *yaml.Node) []string {
 	root := documentRoot(doc)
-	var errors []string
-	checkOverridePlacement("", root, &errors)
-	return errors
+	var misplaced []string
+	checkOverridePlacement("", root, &misplaced)
+	return misplaced
 }
 
 // checkOverridePlacement recursively checks for misplaced @override on
 // parent mapping nodes.
-func checkOverridePlacement(prefix string, node *yaml.Node, errors *[]string) {
+func checkOverridePlacement(prefix string, node *yaml.Node, misplaced *[]string) {
 	if node.Kind != yaml.MappingNode {
 		return
 	}
 	for i := 0; i < len(node.Content)-1; i += 2 {
 		keyNode := node.Content[i]
 		valNode := node.Content[i+1]
-		key := keyNode.Value
-		if prefix != "" {
-			key = prefix + "." + key
-		}
+		key := appendKeyPath(prefix, keyNode.Value)
 		if valNode.Kind == yaml.MappingNode {
 			// Parent mapping — @override is invalid here.
 			if commentHasOverride(keyNode.HeadComment) {
-				*errors = append(*errors, key)
+				*misplaced = append(*misplaced, key)
 			}
-			checkOverridePlacement(key, valNode, errors)
+			checkOverridePlacement(key, valNode, misplaced)
 		}
 		// Leaf nodes with @override are valid — no error.
 	}
@@ -152,6 +218,26 @@ func sortedKeys[V any](m map[string]V) []string {
 	return keys
 }
 
+// isValidDottedKey returns true if s looks like a dotted translation key
+// (e.g., "action.refresh", "containerEngine.tabs.general"). It tokenizes with
+// splitKeyPath so a quoted dotted segment — secret.types."kubernetes.io/token"
+// — validates as one part, the same form the write path emits; a bare '.' or
+// '/' inside such a segment is therefore allowed.
+func isValidDottedKey(s string) bool {
+	parts, err := splitKeyPath(s)
+	if err != nil || len(parts) < 2 {
+		return false
+	}
+	for _, part := range parts {
+		for _, c := range part {
+			if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' && c != '-' && c != '.' && c != '/' {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // yamlScalar formats a string as a YAML scalar value, adding quotes
 // when needed for special characters.
 func yamlScalar(s string) string {
@@ -163,6 +249,20 @@ func yamlScalar(s string) string {
 		return "'" + strings.ReplaceAll(s, "'", "''") + "'"
 	}
 	return strings.TrimSuffix(string(data), "\n")
+}
+
+// stripYAMLQuotes resolves a quoted YAML scalar to the text it denotes, so \n
+// reaches the file as a newline rather than a backslash. Anything else passes
+// through as written, matching the raw scalar text loadYAMLFlat reports.
+func stripYAMLQuotes(s string) string {
+	if len(s) < 2 || (s[0] != '"' && s[0] != '\'') {
+		return s
+	}
+	var scalar string
+	if err := yaml.Unmarshal([]byte(s), &scalar); err != nil {
+		return s
+	}
+	return scalar
 }
 
 // loadYAMLDocument loads a YAML file into a yaml.Node document tree.
@@ -213,13 +313,10 @@ func documentRoot(doc *yaml.Node) *yaml.Node {
 // It creates intermediate MappingNode entries as needed.
 // If comment is non-empty, it replaces the key node's HeadComment.
 // If comment is empty and the key already exists, the existing comment is preserved.
-// An empty path segment is an error; it would serialize to invalid YAML.
 func nodeSetLeaf(root *yaml.Node, dottedKey, value, comment string) error {
-	parts := strings.Split(dottedKey, ".")
-	for _, part := range parts {
-		if part == "" {
-			return fmt.Errorf("invalid key %q: empty path segment", dottedKey)
-		}
+	parts, err := splitKeyPath(dottedKey)
+	if err != nil {
+		return fmt.Errorf("invalid key %q: %w", dottedKey, err)
 	}
 	current := root
 
@@ -252,7 +349,7 @@ func nodeSetLeaf(root *yaml.Node, dottedKey, value, comment string) error {
 				// Descend into existing mapping.
 				if valNode.Kind != yaml.MappingNode {
 					return fmt.Errorf("key %q is a leaf; cannot create child %q",
-						strings.Join(parts[:i+1], "."), dottedKey)
+						joinKeyPath(parts[:i+1]), dottedKey)
 				}
 				current = valNode
 			}
@@ -302,10 +399,33 @@ func stripOverrideMarker(comment string) string {
 	return strings.Join(kept, "\n")
 }
 
+// validateNoAliases rejects anchors, aliases, and sequences anywhere in the
+// tree; the serializer cannot round-trip them and would corrupt the file.
+func validateNoAliases(node *yaml.Node) error {
+	if node.Kind == yaml.AliasNode {
+		return fmt.Errorf("YAML aliases are not supported in translation files")
+	}
+	if node.Anchor != "" {
+		return fmt.Errorf("YAML anchors are not supported in translation files (anchor %q)", node.Anchor)
+	}
+	if node.Kind == yaml.SequenceNode {
+		return fmt.Errorf("YAML sequences are not supported in translation files")
+	}
+	for _, child := range node.Content {
+		if err := validateNoAliases(child); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // nodeGetLeaf retrieves a leaf's value and HeadComment from the tree.
-// Returns empty strings and false if the key is not found.
+// Returns empty strings and false if the key is malformed or not found.
 func nodeGetLeaf(root *yaml.Node, dottedKey string) (value, comment string, found bool) {
-	parts := strings.Split(dottedKey, ".")
+	parts, err := splitKeyPath(dottedKey)
+	if err != nil {
+		return "", "", false
+	}
 	current := root
 	for i, part := range parts {
 		idx := nodeFindKey(current, part)
@@ -355,6 +475,13 @@ func nodeInsertSorted(mapping, keyNode, valNode *yaml.Node) {
 	mapping.Content = newContent
 }
 
+// nodeAllLeaves returns all leaf entries from a yaml.Node tree as a flat map.
+func nodeAllLeaves(root *yaml.Node) map[string]mergeEntry {
+	result := make(map[string]mergeEntry)
+	flattenNodeWithComments("", root, result)
+	return result
+}
+
 // serializeYAMLNode writes a yaml.Node tree as YAML text.
 // It does not insert blank lines between top-level groups, which keeps
 // round-trips stable regardless of the original file's formatting.
@@ -366,6 +493,46 @@ func serializeYAMLNode(w *strings.Builder, doc *yaml.Node) {
 	for i := 0; i < len(root.Content)-1; i += 2 {
 		serializeNode(w, root.Content[i], root.Content[i+1], 0)
 	}
+}
+
+// plainSafeKey matches keys that are unambiguously safe as bare YAML mapping
+// keys, so the common case skips the round-trip parse below.
+var plainSafeKey = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._/-]*$`)
+
+// keyRoundTripsPlain reports whether key, written as a bare mapping key, parses
+// back to the same string. Plain-unsafe keys (a leading "#", "[", "*", or an
+// embedded ": ") mangle or vanish, so they must be quoted instead.
+func keyRoundTripsPlain(key string) bool {
+	if plainSafeKey.MatchString(key) {
+		return true
+	}
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte(key+":\n"), &doc); err != nil {
+		return false
+	}
+	if doc.Kind != yaml.DocumentNode || len(doc.Content) == 0 {
+		return false
+	}
+	root := doc.Content[0]
+	if root.Kind != yaml.MappingNode || len(root.Content) == 0 {
+		return false
+	}
+	return root.Content[0].Value == key
+}
+
+// yamlKey formats a mapping key, quoting it only when the plain form would not
+// round-trip. Benign non-plain scalars like "yes" keep their text as keys, so
+// they stay unquoted to avoid churning checked-in locale files.
+func yamlKey(key string) string {
+	if keyRoundTripsPlain(key) {
+		return key
+	}
+	quoted := yaml.Node{Kind: yaml.ScalarNode, Value: key, Style: yaml.DoubleQuotedStyle}
+	data, err := yaml.Marshal(&quoted)
+	if err != nil {
+		return key
+	}
+	return strings.TrimSuffix(string(data), "\n")
 }
 
 // serializeNode writes a key-value pair at the given indentation depth.
@@ -389,7 +556,7 @@ func serializeNode(w *strings.Builder, keyNode, valNode *yaml.Node, depth int) {
 	}
 
 	w.WriteString(indent)
-	w.WriteString(keyNode.Value)
+	w.WriteString(yamlKey(keyNode.Value))
 
 	if valNode.Kind == yaml.MappingNode {
 		w.WriteString(":\n")

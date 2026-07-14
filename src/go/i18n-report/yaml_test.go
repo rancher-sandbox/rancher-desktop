@@ -12,6 +12,78 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func TestNodeRoundTripPreservesDottedSegmentKey(t *testing.T) {
+	// en-us.yaml nests secret-type labels under keys whose own segment
+	// contains a literal dot, e.g. "kubernetes.io/service-account-token".
+	// Flattening then rewriting such a key must keep it a single mapping
+	// key, not split it into nested "kubernetes" / "io/..." nodes.
+	src := "secret:\n" +
+		"  types:\n" +
+		"    'kubernetes.io/service-account-token': Svc Acct Token\n"
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte(src), &doc); err != nil {
+		t.Fatal(err)
+	}
+	entries := map[string]mergeEntry{}
+	flattenNodeWithComments("", documentRoot(&doc), entries)
+
+	var out yaml.Node
+	out.Kind = yaml.DocumentNode
+	out.Content = []*yaml.Node{{Kind: yaml.MappingNode}}
+	for k, e := range entries {
+		if err := nodeSetLeaf(out.Content[0], k, e.value, e.comment); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var sb strings.Builder
+	serializeYAMLNode(&sb, &out)
+	want := "secret:\n" +
+		"  types:\n" +
+		"    kubernetes.io/service-account-token: Svc Acct Token\n"
+	if sb.String() != want {
+		t.Errorf("round-trip corrupted key structure:\ngot:\n%s\nwant:\n%s", sb.String(), want)
+	}
+}
+
+func TestSerializeNodeQuotesOnlyUnsafeKeys(t *testing.T) {
+	emit := func(key string) string {
+		out := yaml.Node{Kind: yaml.DocumentNode, Content: []*yaml.Node{{
+			Kind: yaml.MappingNode,
+			Content: []*yaml.Node{
+				{Kind: yaml.ScalarNode, Value: key},
+				{Kind: yaml.ScalarNode, Value: "v"},
+			},
+		}}}
+		var sb strings.Builder
+		serializeYAMLNode(&sb, &out)
+		return sb.String()
+	}
+
+	// Keys that are not plain-safe scalars must be quoted, or they fail to
+	// round-trip. "#comment" is the worst case: emitted raw it becomes a YAML
+	// comment and the key vanishes with no error.
+	for _, key := range []string{"#comment", "[bracket]", "colon: space", "*star", "@at"} {
+		emitted := emit(key)
+		var m map[string]string
+		if err := yaml.Unmarshal([]byte(emitted), &m); err != nil {
+			t.Errorf("key %q: emitted YAML fails to parse: %v\n%s", key, err, emitted)
+			continue
+		}
+		if _, ok := m[key]; !ok {
+			t.Errorf("key %q lost on round-trip; emitted:\n%s", key, emitted)
+		}
+	}
+
+	// Benign non-plain scalars round-trip as keys already, so quoting them
+	// would churn checked-in locale files for no gain.
+	for _, key := range []string{"yes", "true", "no"} {
+		emitted := emit(key)
+		if strings.ContainsAny(emitted, `"'`) {
+			t.Errorf("benign key %q was needlessly quoted:\n%s", key, emitted)
+		}
+	}
+}
+
 func TestSerializeYAMLNodeIdempotentWithBanner(t *testing.T) {
 	// A decorative banner comment set off by blank lines must survive a
 	// serialize -> parse -> serialize round-trip. yaml.v3 keeps a trailing
@@ -126,6 +198,59 @@ func TestNodeSetLeafRejectsEmptySegment(t *testing.T) {
 			serializeYAMLNode(&buf, doc)
 			t.Errorf("nodeSetLeaf(%q) = nil, want error; emitted %q", key, buf.String())
 		}
+	}
+}
+
+// A malformed key resolves to a different, real key that merge would write to
+// and remove would delete.
+func TestIsValidDottedKeyRejectsMalformedQuotes(t *testing.T) {
+	tests := []struct {
+		key  string
+		want bool
+	}{
+		{"action.refresh", true},
+		{"containerEngine.tabs.general", true},
+		{`secret.types."kubernetes.io/service-account-token"`, true},
+		{`secret.types.'helm.sh/release.v1'`, true},
+		{`a"b.c`, false},                                             // resolved to a.b.c
+		{`a.b"c"d.e`, false},                                         // resolved to a.b.c.d.e
+		{`secret.types."kubernetes.io/service-account-token`, false}, // split into kubernetes / io/... nodes
+		{`"a.b"c`, false},
+		{"a", false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.key, func(t *testing.T) {
+			if got := isValidDottedKey(tc.key); got != tc.want {
+				t.Errorf("isValidDottedKey(%q) = %v, want %v", tc.key, got, tc.want)
+			}
+		})
+	}
+}
+
+// merge accepts `key: "value"`, so a quoted value must mean what YAML says it
+// means. Hand-unescaping only \" and \\ turns "Line\nTwo" into a literal backslash.
+func TestStripYAMLQuotesResolvesEscapes(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{`"Line\nTwo"`, "Line\nTwo"},
+		{`"Tab\there"`, "Tab\there"},
+		{`"café"`, "café"},
+		{`"say \"hi\""`, `say "hi"`},
+		{`'it''s'`, "it's"},
+		{"plain value", "plain value"},
+		{`"unterminated`, `"unterminated`},
+		{`'tis the season`, `'tis the season`},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			if got := stripYAMLQuotes(tc.input); got != tc.want {
+				t.Errorf("stripYAMLQuotes(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
 	}
 }
 
