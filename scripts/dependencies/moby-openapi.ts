@@ -7,13 +7,13 @@ import yaml from 'yaml';
 import { download } from '../lib/download';
 
 import {
+  DependencyAsset,
   DownloadContext,
   downloadAndHash,
   getOctokit,
   GlobalDependency,
-  lookupChecksum,
   MobyOpenAPISpecVersion,
-  Sha256Checksum,
+  selectAsset,
   VersionedDependency,
 } from '@/scripts/lib/dependencies';
 import { simpleSpawn } from '@/scripts/simple_process';
@@ -27,19 +27,12 @@ export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
   readonly releaseFilter = 'custom';
 
   async download(context: DownloadContext): Promise<void> {
-    const { apiVersion, commit } = context.dependencies.mobyOpenAPISpec.version;
-
-    if (!apiVersion || !/^[0-9a-f]{40}$/i.test(commit ?? '')) {
-      throw new Error(`mobyOpenAPISpec entry must specify apiVersion and a 40-char commit SHA; got ${ JSON.stringify({ apiVersion, commit }) }`);
-    }
-    const baseUrl = `https://raw.githubusercontent.com/${ this.githubOwner }/${ this.githubRepo }/${ commit }/api/docs`;
-    const fileName = `v${ apiVersion }.yaml`;
-    const url = `${ baseUrl }/${ fileName }`;
+    const asset = selectAsset(context, this.name, { platform: 'linux' });
     const outPath = path.join(process.cwd(), 'src', 'go', 'wsl-helper', 'pkg', 'dockerproxy', 'swagger.yaml');
     const modifiedPath = path.join(path.dirname(outPath), 'swagger-modified.yaml');
 
-    await download(url, outPath, {
-      expectedChecksum: lookupChecksum(context, this.name, fileName),
+    await download(asset.url, outPath, {
+      expectedChecksum: asset.checksum,
       access:           fs.constants.W_OK,
     });
 
@@ -102,14 +95,14 @@ export class MobyOpenAPISpec extends GlobalDependency(VersionedDependency) {
     console.log('Moby API swagger models generated.');
   }
 
-  async getChecksums(version: MobyOpenAPISpecVersion): Promise<Record<string, Sha256Checksum>> {
+  async getAssets(version: MobyOpenAPISpecVersion): Promise<DependencyAsset[]> {
     // version.commit pins the URL to an immutable git object; raw.githubusercontent.com
     // serves no sidecar to cross-check.  rddepman records the digest we observe
-    // at bump time as the source of truth.
+    // at bump time as the source of truth.  The spec is a single, platform-independent file.
     const fileName = `v${ version.apiVersion }.yaml`;
     const url = `https://raw.githubusercontent.com/${ this.githubOwner }/${ this.githubRepo }/${ version.commit }/api/docs/${ fileName }`;
 
-    return { [fileName]: await downloadAndHash(url) };
+    return [{ platform: 'linux', url, checksum: await downloadAndHash(url) }];
   }
 
   // Returns each historical apiVersion with a placeholder commit;
