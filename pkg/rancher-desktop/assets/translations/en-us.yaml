@@ -375,6 +375,20 @@ application:
         dark:
           label: Dark
           description: Always use dark mode
+  general:
+    adminAccess:
+      legendText: Administrative Access
+      label: Allow administrative credentials (sudo access)
+      legendTooltip: If checked, {appName} will acquire administrative credentials ("sudo access") when starting. This enables bridged networking and default docker socket support. Takes effect on next start.
+    automaticUpdates:
+      legendText: Automatic Updates
+      label: Check for updates automatically
+    statistics:
+      legendText: Statistics
+      label: Allow collection of anonymous statistics to help improve {appName}
+  locale:
+    legendText: Language
+    disclaimer: Community and AI tools provide translations. English is the canonical language. Report translation issues on GitHub.
 
 virtualMachine:
   networkingTunnel:
