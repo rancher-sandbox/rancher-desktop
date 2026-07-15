@@ -14536,7 +14536,7 @@ __metadata:
     typescript: "npm:6.0.3"
     vue: "npm:3.5.39"
     vue-3-slider-component: "npm:1.0.2"
-    vue-chartjs: "npm:5.3.3"
+    vue-chartjs: "npm:5.3.4"
     vue-router: "npm:5.1.0"
     vue-select: "npm:3.20.4"
     vuex: "npm:4.1.0"
@@ -16948,13 +16948,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-chartjs@npm:5.3.3":
-  version: 5.3.3
-  resolution: "vue-chartjs@npm:5.3.3"
+"vue-chartjs@npm:5.3.4":
+  version: 5.3.4
+  resolution: "vue-chartjs@npm:5.3.4"
   peerDependencies:
     chart.js: ^4.1.1
     vue: ^3.0.0-0 || ^2.7.0
-  checksum: 10c0/6bfc31e39c8c87f04a6cc0c8f28eac3983899dcf26b7c1e4a695a4684692c28c3cb545e7addab9f470e0ebba26adebc0d17943eab75a5ca1eb750c78e9f757ed
+  checksum: 10c0/f13c917f3c31cebddc059c62649354dcf62529e0d4f0558926257b224906107c1dd7eec41f3289fd01e8813a7492011c5ff59732c308281fe4718f0d58413db7
   languageName: node
   linkType: hard
 
