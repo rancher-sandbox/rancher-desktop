@@ -109,3 +109,5 @@ ignore$
 ^screenshots/test-data/
 # i18n tool tests use German sample translations
 ^src/go/i18n-report/.*_test\.go$
+# i18n runtime tests use German sample translations
+^\Qpkg/rancher-desktop/store/__tests__/i18n.spec.ts\E$
