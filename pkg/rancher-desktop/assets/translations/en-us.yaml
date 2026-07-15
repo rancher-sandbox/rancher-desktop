@@ -3891,6 +3891,39 @@ validation:
     route:
       match: At least one Match or Match Regex must be selected
       interval: '"{key}" must be of a format with digits followed by a unit i.e. 1h, 2m, 30s'
+  cannotDecrease: Cannot decrease "{field}" from {from} to {to}
+  cannotEnableWasmClassic: Cannot enable WebAssembly with classic storage for moby.
+  cannotSwitchClassicWasm: Cannot switch to classic storage for moby when WebAssembly is enabled.
+  cannotSwitchMobyClassicWasm: Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
+  duplicateEntries: 'field "{field}" has duplicate entries: "{duplicates}"'
+  errorsInProposedSettings: 'Errors in proposed settings:'
+  fieldLocked: field "{field}" is locked
+  invalidImageReference: '{field}: "{pattern}" does not describe an image reference'
+  invalidMapping: '{field}: "{value}" is not a valid mapping'
+  invalidName: '{field}: "{name}" is an invalid name'
+  invalidNoproxyEntries: 'field "{field}" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "{entries}"'
+  invalidPageName: '{field}: "{value}" is not a valid page name for Preferences Dialog'
+  invalidTabName: '{field}: tab name "{tabName}" is not a valid tab name for "{page}" Preference page'
+  invalidTag: '{field}: "{name}" has invalid tag "{tag}"'
+  invalidValue: 'Invalid value for "{field}": <{value}>'
+  invalidValueEnum: 'Invalid value for "{field}": <{value}>; must be one of {validValues}'
+  kubernetesVersionNotFound: Kubernetes version "{version}" not found.
+  nonStringTag: '{field}: "{name}" has non-string tag "{tag}"'
+  notSupported: Changing field "{field}" via the API isn't supported.
+  profileExpectedArray: 'Error for field ''''{field}'''': expecting value of type array, got ''''{value}'''''
+  profileExpectedType: 'Error for field ''''{field}'''': expecting value of type {expectedType}, got ''''{value}'''''
+  profileExpectedTypeGotArray: 'Error for field ''''{field}'''': expecting value of type {expectedType}, got an array {value}'
+  proposedShouldBeObject: Proposed field "{field}" should be an object, got <{value}>.
+  requiresArm: Setting {field} can only be enabled on aarch64 systems.
+  requiresNineP: Setting {field} can only be changed when virtualMachine.mount.type is "{mountType}".
+  requiresVz: Setting {field} can only be enabled when virtual-machine.type is "{vmType}".
+  requiresWebAssembly: Setting {field} can only be set when experimental.container-engine.web-assembly.enabled is set as well.
+  settingRequires: Setting {field} to "{value}" requires that {otherField} is "{required}".
+  settingRequiresEither: Setting {field} to "{value}" requires that {otherField} is "{option1}" or "{option2}".
+  shouldBeObject: Setting "{field}" should wrap an inner object, but got <{value}>.
+  shouldBeSimple: Setting "{field}" should be a simple value, but got <{value}>.
+  vzArmMacOs: Setting {field} to "{vmType}" on ARM requires macOS 13.3 (Ventura) or later.
+  vzIntelMacOs: Setting {field} to "{vmType}" on Intel requires macOS 13.0 (Ventura) or later.
 
 wizard:
   previous: Previous

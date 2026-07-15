@@ -78,6 +78,7 @@ describe('SettingsValidator', () => {
     // Special fields that cannot be checked here; this includes enums and maps.
     const specialFields = [
       ['application', 'pathManagementStrategy'],
+      ['application', 'locale'],
       ['application', 'theme'],
       ['containerEngine', 'allowedImages', 'locked'],
       ['containerEngine', 'mobyStorageDriver'],
@@ -464,6 +465,40 @@ describe('SettingsValidator', () => {
     });
   });
 
+  describe('application.locale', () => {
+    it('should accept valid locales', () => {
+      const [needToUpdate, errors] = subject.validateSettings({
+        ...cfg,
+        application: { ...cfg.application, locale: 'en-us' },
+      }, { application: { locale: 'none' } });
+
+      expect({ needToUpdate, errors }).toEqual({
+        needToUpdate: true,
+        errors:       [],
+      });
+    });
+
+    it('should accept no-op changes', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg,
+        { application: { locale: 'none' } });
+
+      expect({ needToUpdate, errors }).toEqual({
+        needToUpdate: false,
+        errors:       [],
+      });
+    });
+
+    it('should reject invalid values', () => {
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg,
+        { application: { locale: 'invalid' } });
+
+      expect(needToUpdate).toBe(false);
+      expect(isFatal).toBe(true);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('Invalid value for "application.locale"');
+    });
+  });
+
   describe('pathManagementStrategy', () => {
     beforeEach(() => {
       modules.os.platform.mockReturnValue('linux');
@@ -592,6 +627,7 @@ describe('SettingsValidator', () => {
               errors:       ['field "containerEngine.allowedImages.enabled" is locked'],
               isFatal:      true,
             });
+            expect(subject.hasLockedFieldError).toBe(true);
           });
           it('can be set to the same value', () => {
             const currentEnabled = allowedImageListConfig.containerEngine.allowedImages.enabled;
@@ -602,6 +638,7 @@ describe('SettingsValidator', () => {
               needToUpdate: false,
               errors:       [],
             });
+            expect(subject.hasLockedFieldError).toBe(false);
           });
         });
 
