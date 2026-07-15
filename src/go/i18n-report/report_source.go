@@ -30,7 +30,7 @@ func runSource(args []string) error {
 		return err
 	}
 
-	if *locale == "all" {
+	if *locale == localeAll {
 		locales, err := translationLocales(root)
 		if err != nil {
 			return err

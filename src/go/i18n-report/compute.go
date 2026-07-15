@@ -4,8 +4,9 @@
 
 package main
 
-// Shared key-set computations. The listers (stale, missing, translate) all
-// derive their findings from these helpers.
+// Shared key-set computations. The gate commands (check, drift) and the
+// listers (stale, missing, translate, unused) all derive their findings from
+// these helpers, so a gate and its matching lister agree by construction.
 //
 // Drift compares the current en-us value against the @source snapshot recorded
 // at translation time; both are decoded scalars, so re-quoting the English
@@ -31,6 +32,17 @@ func computeMissing[V any](enKeys map[string]string, localeKeys map[string]V) []
 		}
 	}
 	return missing
+}
+
+// computeUnused returns en-us keys that no source reference covers, sorted.
+func computeUnused[V any](enKeys map[string]string, refs map[string]V) []string {
+	var unused []string
+	for _, k := range sortedKeys(enKeys) {
+		if _, found := refs[k]; !found {
+			unused = append(unused, k)
+		}
+	}
+	return unused
 }
 
 // computeDrifted returns keys whose English source differs from the @source

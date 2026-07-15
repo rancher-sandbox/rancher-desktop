@@ -16,6 +16,9 @@ const translationsDir = "pkg/rancher-desktop/assets/translations"
 // sourceLocale is the locale every translation derives from.
 const sourceLocale = "en-us"
 
+// localeAll is the --locale value that selects every translation on disk.
+const localeAll = "all"
+
 // repoRoot returns the repository root by walking up from the current
 // directory looking for the translations directory. Nested package.json
 // files (bats/, sudo-prompt/) make that marker ambiguous.

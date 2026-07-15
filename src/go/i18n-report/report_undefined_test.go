@@ -7,6 +7,9 @@ package main
 import (
 	"bytes"
 	"errors"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -69,5 +72,26 @@ func TestReportUndefinedFindingsError(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), "findings") {
 		t.Errorf("sentinel text leaked into the message: %q", err.Error())
+	}
+}
+
+func TestCheckSourceFailsOnUndefinedKeys(t *testing.T) {
+	enUS := "status:\n  checking: Checking...\n"
+	de := "status:\n  checking: Wird geprüft…\n"
+	dir := setupLocaleTestRepo(t, enUS, de, true)
+
+	srcDir := filepath.Join(dir, "pkg", "rancher-desktop", "components")
+	if err := os.MkdirAll(srcDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// status.checking is referenced so nothing is unused; status.removed is
+	// referenced but not defined, so only the undefined check can fail.
+	source := "<template>\n  <span v-t=\"'status.checking'\" />\n  <span v-t=\"'status.removed'\" />\n</template>\n"
+	if err := os.WriteFile(filepath.Join(srcDir, "Sample.vue"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := reportCheckSource(io.Discard, dir); err == nil {
+		t.Error("source gate should fail when a referenced key is missing from en-us.yaml")
 	}
 }
