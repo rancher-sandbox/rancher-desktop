@@ -28,7 +28,7 @@ export default {
       <rd-checkbox
         :value="telemetry"
         :is-locked="isTelemetryLocked"
-        label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
+        :label="t('application.general.statistics.label')"
         @update:value="toggleTelemetry"
       />
       <p class="fineprint">
