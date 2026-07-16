@@ -840,6 +840,8 @@ locale:
   es: Espanhol
   # @source French
   fr: Francês
+  # @source Japanese
+  ja: Japonês
   # @reason Standard self-designation for the Brazilian Portuguese locale
   # @source Portuguese (Brazilian)
   pt-br: Português (Brasil)

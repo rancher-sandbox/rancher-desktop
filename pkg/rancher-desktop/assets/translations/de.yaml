@@ -852,6 +852,8 @@ locale:
   es: Spanisch
   # @source French
   fr: Französisch
+  # @source Japanese
+  ja: Japanisch
   # @source Portuguese (Brazilian)
   pt-br: Portugiesisch (Brasilien)
   # @source Chinese (Simplified)
