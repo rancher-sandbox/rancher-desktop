@@ -848,6 +848,8 @@ locale:
   de: Deutsch
   # @source English
   en-us: Englisch
+  # @source French
+  fr: Französisch
   # @source Chinese (Simplified)
   zh-hans: Chinesisch (vereinfacht)
 mainMenu:
