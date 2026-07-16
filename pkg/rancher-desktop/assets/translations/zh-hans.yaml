@@ -875,6 +875,8 @@ locale:
   it: 意大利语
   # @source Japanese
   ja: 日语
+  # @source Korean
+  ko: 韩语
   # @source Portuguese (Brazilian)
   pt-br: 葡萄牙语（巴西）
   # @reason locale name for Simplified Chinese - using the Chinese name per rules for locale names
