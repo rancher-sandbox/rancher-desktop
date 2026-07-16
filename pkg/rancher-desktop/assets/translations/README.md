@@ -50,8 +50,7 @@ process; run `i18n-report undefined` to find such references.
 
 ## YAML comment conventions
 
-Add these comments directly above the key they describe. The `js-yaml-loader`
-strips all comments at build time, so they cost nothing at runtime.
+Add these comments directly above the key they describe.
 
 | Comment | Where | Purpose |
 |---------|-------|---------|
@@ -63,34 +62,34 @@ strips all comments at build time, so they cost nothing at runtime.
 ### Examples in en-us.yaml
 
 ```yaml
-# @context Preferences > Application > General, checkbox label
-# @meaning Administrative privilege escalation for bridged networking and docker socket
 application:
   adminAccess:
+    # @context Preferences > Application > General, checkbox label
+    # @meaning Administrative privilege escalation for bridged networking and docker socket
     label: Allow to acquire administrative credentials (sudo access)
 
-# @context Preferences > Container Engine > General, dropdown label
-# @meaning The OCI runtime (containerd or moby/dockerd), not a JavaScript engine
 containerEngine:
+  # @context Preferences > Container Engine > General, dropdown label
+  # @meaning The OCI runtime (containerd or moby/dockerd), not a JavaScript engine
   label: Container Engine
 
-# @no-translate — Unix command name
 resetKubernetes:
+  # @no-translate Kubernetes
   description: "Run {command} to reset Kubernetes"
 ```
 
 ### Examples in locale files
 
 ```yaml
-# @reason "Administratorzugriff" is the standard German term for admin access
-#   in software UIs; "sudo" kept untranslated as a Unix command name
 application:
   adminAccess:
+    # @reason "Administratorzugriff" is the standard German term for admin access
+    #   in software UIs; "sudo" kept untranslated as a Unix command name
     label: Administratorzugriff erlauben (sudo-Zugriff)
 
-# @reason "Container-Laufzeit" (container runtime) is more common in German
-#   than a literal translation of "container engine"
 containerEngine:
+  # @reason "Container-Laufzeit" (container runtime) is more common in German
+  #   than a literal translation of "container engine"
   label: Container-Laufzeit
 ```
 
@@ -110,7 +109,7 @@ A Go CLI at `src/go/i18n-report/` for translation maintenance. See
 | `untranslated` | Hardcoded English strings in Vue/TS files (heuristic) |
 | `references` | Where each en-us.yaml key is used (file:line) |
 | `dynamic` | Template literal patterns that reference keys dynamically |
-| `check` | CI gate: source checks, plus per-locale checks with `--locale` |
+| `check` | source checks, plus per-locale checks with `--locale` |
 | `source` | Record each translated key's English source as a `@source` comment |
 | `drift` | Detect translated keys whose English source changed |
 | `validate` | Structural checks: placeholders, tags, metadata, overrides |
@@ -125,9 +124,11 @@ go tool i18n-report unused --format=json
 go tool i18n-report check --locale=de
 ```
 
-The `merge` subcommand accepts agent output files (JSONL), markdown with YAML
-fences, or raw flat `key=value` text. Without file arguments, it reads from
-stdin.
+The `merge` subcommand reads flat `key: value` or `key=value` lines, one full
+dotted key per line, from plain text, JSON, or agent JSONL transcripts. A YAML
+code fence around the lines is stripped as a convenience, but the content
+inside must still be flat — nested YAML is not supported, fenced or not.
+Without file arguments, it reads from stdin.
 
 ## Adding a new language
 

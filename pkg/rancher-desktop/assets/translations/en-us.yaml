@@ -3896,7 +3896,6 @@ validation:
   cannotSwitchClassicWasm: Cannot switch to classic storage for moby when WebAssembly is enabled.
   cannotSwitchMobyClassicWasm: Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
   duplicateEntries: 'field "{field}" has duplicate entries: "{duplicates}"'
-  errorsInProposedSettings: 'Errors in proposed settings:'
   fieldLocked: field "{field}" is locked
   invalidImageReference: '{field}: "{pattern}" does not describe an image reference'
   invalidMapping: '{field}: "{value}" is not a valid mapping'
@@ -3910,9 +3909,6 @@ validation:
   kubernetesVersionNotFound: Kubernetes version "{version}" not found.
   nonStringTag: '{field}: "{name}" has non-string tag "{tag}"'
   notSupported: Changing field "{field}" via the API isn't supported.
-  profileExpectedArray: 'Error for field ''''{field}'''': expecting value of type array, got ''''{value}'''''
-  profileExpectedType: 'Error for field ''''{field}'''': expecting value of type {expectedType}, got ''''{value}'''''
-  profileExpectedTypeGotArray: 'Error for field ''''{field}'''': expecting value of type {expectedType}, got an array {value}'
   proposedShouldBeObject: Proposed field "{field}" should be an object, got <{value}>.
   requiresArm: Setting {field} can only be enabled on aarch64 systems.
   requiresNineP: Setting {field} can only be changed when virtualMachine.mount.type is "{mountType}".
