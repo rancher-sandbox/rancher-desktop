@@ -15,6 +15,7 @@ locale:
   en-us: English
   es: Spanish
   fr: French
+  pt-br: Portuguese (Brazilian)
   zh-hans: Chinese (Simplified)
 nav:
   userMenu:

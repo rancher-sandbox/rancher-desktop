@@ -830,6 +830,8 @@ locale:
   es: Espagnol
   # @source French
   fr: Français
+  # @source Portuguese (Brazilian)
+  pt-br: Portugais (Brésil)
   # @source Chinese (Simplified)
   zh-hans: Chinois (simplifié)
 mainMenu:
