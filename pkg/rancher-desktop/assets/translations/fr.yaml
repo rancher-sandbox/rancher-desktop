@@ -830,6 +830,8 @@ locale:
   es: Espagnol
   # @source French
   fr: Français
+  # @source Italian
+  it: Italien
   # @source Japanese
   ja: Japonais
   # @source Portuguese (Brazilian)
