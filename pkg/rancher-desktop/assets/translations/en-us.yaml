@@ -13,6 +13,7 @@ generic:
 locale:
   de: German
   en-us: English
+  zh-hans: Chinese (Simplified)
 nav:
   userMenu:
     clusterDashboard: Cluster Dashboard

@@ -34,7 +34,7 @@ describe('main-process i18n', () => {
   });
 
   it('lists the bundled locales', () => {
-    expect(availableLocales).toEqual(expect.arrayContaining(['en-us', 'de']));
+    expect(availableLocales).toEqual(expect.arrayContaining(['en-us', 'de', 'zh-hans']));
   });
 
   it('switches locale on settings-update and notifies callbacks', async() => {
