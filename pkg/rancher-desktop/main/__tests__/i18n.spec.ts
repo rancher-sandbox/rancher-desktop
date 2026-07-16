@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 
-import { availableLocales, t } from '@pkg/main/i18n';
+import { availableLocales, initMainI18n, onLocaleChange, t } from '@pkg/main/i18n';
+import mainEvents from '@pkg/main/mainEvents';
 
 describe('main-process i18n', () => {
   it('translates from the default locale', () => {
@@ -33,6 +34,32 @@ describe('main-process i18n', () => {
   });
 
   it('lists the bundled locales', () => {
-    expect(availableLocales).toEqual(expect.arrayContaining(['en-us']));
+    expect(availableLocales).toEqual(expect.arrayContaining(['en-us', 'de']));
+  });
+
+  it('switches locale on settings-update and notifies callbacks', async() => {
+    await initMainI18n();
+    const changed = new Promise<void>((resolve) => {
+      const off = onLocaleChange(() => {
+        off();
+        resolve();
+      });
+    });
+
+    mainEvents.emit('settings-update', { application: { locale: 'de' } } as any);
+    await changed;
+
+    expect(t('generic.cancel')).toEqual('Abbrechen');
+    const reverted = new Promise<void>((resolve) => {
+      const off = onLocaleChange(() => {
+        off();
+        resolve();
+      });
+    });
+
+    mainEvents.emit('settings-update', { application: { locale: 'en-us' } } as any);
+    await reverted;
+
+    expect(t('generic.cancel')).toEqual('Cancel');
   });
 });

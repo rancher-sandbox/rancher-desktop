@@ -166,9 +166,9 @@ func writeCrossValidationFiles(t *testing.T, dir string, apiEnum string, validat
 	// settingsValidator.ts
 	validatorDir := filepath.Join(dir, "pkg", "rancher-desktop", "main", "commandServer")
 	os.MkdirAll(validatorDir, 0o755)
-	validatorContent := "locale: this.checkEnum('none', 'de'),\n"
+	validatorContent := "locale: this.checkEnum('de'),\n"
 	if validatorDynamic {
-		validatorContent = "locale: this.checkEnum('none', ...availableLocales),\n"
+		validatorContent = "locale: this.checkEnum(...availableLocales),\n"
 	}
 	os.WriteFile(filepath.Join(validatorDir, "settingsValidator.ts"), []byte(validatorContent), 0o644)
 
@@ -200,7 +200,7 @@ func checkRegistration(t *testing.T, dir string) error {
 
 func TestCheckRegistrationMatch(t *testing.T) {
 	dir := setupRegistrationTestRepo(t, []string{"de.yaml"})
-	writeCrossValidationFiles(t, dir, "none, de, en-us", true,
+	writeCrossValidationFiles(t, dir, "de, en-us", true,
 		"{ application: { locale: 'en-us' } }, { application: { locale: 'de' } }")
 
 	if err := checkRegistration(t, dir); err != nil {
@@ -212,7 +212,7 @@ func TestCheckRegistrationMissingFromEnum(t *testing.T) {
 	dir := setupRegistrationTestRepo(t, []string{"de.yaml", "fa.yaml"})
 
 	// The API enum is missing "fa".
-	writeCrossValidationFiles(t, dir, "none, de, en-us", true,
+	writeCrossValidationFiles(t, dir, "de, en-us", true,
 		"{ application: { locale: 'de' } }")
 
 	err := checkRegistration(t, dir)
@@ -224,11 +224,23 @@ func TestCheckRegistrationMissingFromEnum(t *testing.T) {
 	}
 }
 
+func TestCheckRegistrationRejectsNone(t *testing.T) {
+	dir := setupRegistrationTestRepo(t, []string{"de.yaml"})
+
+	// "none" is not a locale; the enum must list translation files only.
+	writeCrossValidationFiles(t, dir, "none, de, en-us", true,
+		"{ application: { locale: 'de' } }")
+
+	if err := checkRegistration(t, dir); err == nil {
+		t.Error(`registration checks should fail when the enum still lists "none"`)
+	}
+}
+
 func TestCheckRegistrationEnumWithoutFile(t *testing.T) {
 	dir := setupRegistrationTestRepo(t, []string{"de.yaml"})
 
 	// The API enum lists "fa", but fa.yaml does not exist.
-	writeCrossValidationFiles(t, dir, "none, de, en-us, fa", true,
+	writeCrossValidationFiles(t, dir, "de, en-us, fa", true,
 		"{ application: { locale: 'de' } }")
 
 	if err := checkRegistration(t, dir); err == nil {
@@ -240,7 +252,7 @@ func TestCheckRegistrationHardcodedValidator(t *testing.T) {
 	dir := setupRegistrationTestRepo(t, []string{"de.yaml"})
 
 	// settingsValidator.ts uses a hardcoded list instead of ...availableLocales.
-	writeCrossValidationFiles(t, dir, "none, de, en-us", false,
+	writeCrossValidationFiles(t, dir, "de, en-us", false,
 		"{ application: { locale: 'de' } }")
 
 	if err := checkRegistration(t, dir); err == nil {
@@ -252,7 +264,7 @@ func TestCheckRegistrationSpecUnknownLocale(t *testing.T) {
 	dir := setupRegistrationTestRepo(t, []string{"de.yaml"})
 
 	// The spec references 'fr', which has no translation file.
-	writeCrossValidationFiles(t, dir, "none, de, en-us", true,
+	writeCrossValidationFiles(t, dir, "de, en-us", true,
 		"{ application: { locale: 'fr' } }")
 
 	if err := checkRegistration(t, dir); err == nil {
@@ -264,7 +276,7 @@ func TestCheckRegistrationMissingDisplayName(t *testing.T) {
 	dir := setupRegistrationTestRepo(t, []string{"de.yaml", "pt.yaml"})
 
 	// en-us.yaml has no locale.pt display name.
-	writeCrossValidationFiles(t, dir, "none, de, en-us, pt", true,
+	writeCrossValidationFiles(t, dir, "de, en-us, pt", true,
 		"{ application: { locale: 'de' } }")
 
 	if err := checkRegistration(t, dir); err == nil {
@@ -313,7 +325,7 @@ func setupCheckRepo(t *testing.T, referenced bool) string {
 		os.WriteFile(filepath.Join(compDir, "Sample.vue"), []byte(src), 0o644)
 	}
 
-	writeCrossValidationFiles(t, dir, "none, de, en-us", true,
+	writeCrossValidationFiles(t, dir, "de, en-us", true,
 		"{ application: { locale: 'de' } }")
 	return dir
 }

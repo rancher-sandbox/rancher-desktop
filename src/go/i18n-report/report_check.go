@@ -156,9 +156,8 @@ func reportCheckRegistration(w io.Writer, root string, locales []string) error {
 		return err
 	}
 
-	// The expected enum: "none" (no language selected), the source locale,
-	// and every translation file on disk.
-	expected := map[string]bool{"none": true, sourceLocale: true}
+	// The expected enum: the source locale and every translation file on disk.
+	expected := map[string]bool{sourceLocale: true}
 	for _, code := range locales {
 		expected[code] = true
 	}
