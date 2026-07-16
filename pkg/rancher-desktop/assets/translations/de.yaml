@@ -888,6 +888,8 @@ locale:
   de: Deutsch
   # @source English
   en-us: Englisch
+  # @source Chinese (Simplified)
+  zh-hans: Chinesisch (vereinfacht)
 mainMenu:
   # @source About {appName}
   about: Über {appName}
