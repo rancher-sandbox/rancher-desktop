@@ -140,13 +140,20 @@ Without file arguments, it reads from stdin.
 ## Adding a new language
 
 1. Create an empty locale file `{code}.yaml` in this directory.
-2. Register the locale code in four places: en-us.yaml locale names,
-   `command-api.yaml` enum, `settingsValidator.ts` `checkEnum`, and
-   `settingsValidator.spec.ts` error string.
-3. Run `yarn postinstall` to regenerate Go CLI code from the API spec.
-4. Run `go tool i18n-report translate --locale={code}` to get keys
+2. Register the locale code in three places: the `locale.` display names
+   in en-us.yaml, the `application.locale` enum in `command-api.yaml`,
+   and the `Locale` type in `config/settings.ts`. The settings validator
+   builds its enum from the translation files at build time and needs no
+   edit.
+3. Add the new locale's display name to every other locale file,
+   translated into that file's language: `merge` a one-entry
+   `locale.{code}` translation into each.
+4. Run `yarn postinstall` to regenerate Go CLI code from the API spec.
+5. Run `go tool i18n-report translate --locale={code}` to get keys
    that need translation; translate them and merge with
    `go tool i18n-report merge --locale={code}`.
+6. Run `go tool i18n-report check --locale=all` to verify the
+   registration.
 
 Webpack discovers new YAML files automatically — no other code changes are
 needed.
@@ -206,10 +213,11 @@ leaking callbacks.
 
 ### i18n-report tool
 
-- **Registration cross-validation is string-based** for
-  settingsValidator.ts and its spec test. Generating those registrations
-  from the translation file list would make drift impossible; revisit
-  when the next locale is added.
+- **The `Locale` type in `config/settings.ts` is synced by hand.**
+  `check` cross-validates the `command-api.yaml` enum and the
+  validator's dynamic `...availableLocales` pattern against the
+  translation files, but nothing checks the TypeScript union; a
+  forgotten entry surfaces only where a locale literal meets the type.
 
 ### Scanner gaps
 
