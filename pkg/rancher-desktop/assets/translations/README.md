@@ -66,6 +66,9 @@ Add these comments directly above the key they describe.
 | `@no-translate` | en-us.yaml | Terms that should stay in English by default |
 | `@reason` | locale files | Why a particular translation was chosen |
 
+A translation left identical to its English source must carry a `@reason`
+(or `@override`) comment; `validate` flags unmarked identical values.
+
 ### Examples in en-us.yaml
 
 ```yaml

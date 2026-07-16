@@ -41,6 +41,7 @@ const (
 	catTag         = "tag"
 	catICU         = "icu"
 	catICUSyntax   = "icu-syntax"
+	catIdentical   = "identical"
 )
 
 // validationError represents a single validation issue.
@@ -70,10 +71,11 @@ func validateLocale(root, locale string) ([]validationError, error) {
 		return nil, err
 	}
 
-	meta, err := loadSources(root, locale)
+	entries, err := loadYAMLWithComments(localePath)
 	if err != nil {
 		return nil, err
 	}
+	meta := collectSources(entries)
 
 	var errors []validationError
 
@@ -115,6 +117,29 @@ func validateLocale(root, locale string) ([]validationError, error) {
 				Message: "translated key has no @source",
 			})
 		}
+	}
+
+	// A translation left identical to its English source must be marked as
+	// deliberate with a @reason (or @override) comment; without one it is
+	// indistinguishable from a missed translation.
+	for key, e := range entries {
+		if _, inEn := enKeys[key]; !inEn {
+			continue // stale key, reported by stale check
+		}
+		if e.value == "" {
+			continue // an empty source stays empty; nothing to explain
+		}
+		if storedSource, hasSource := meta[key]; !hasSource || e.value != storedSource {
+			continue // no snapshot or drifted, reported by other checks
+		}
+		if e.override || commentHasReason(e.comment) {
+			continue
+		}
+		errors = append(errors, validationError{
+			Key:     key,
+			Check:   catIdentical,
+			Message: "translation identical to source without @reason",
+		})
 	}
 
 	// Sort errors by key for stable output.

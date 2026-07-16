@@ -169,6 +169,26 @@ func commentHasOverride(comment string) bool {
 	return false
 }
 
+// reasonMarker is the comment line that documents a translation choice.
+const reasonMarker = "# @reason"
+
+// lineIsReasonMarker reports whether a single comment line is the @reason
+// marker: the bare marker or the marker followed by a note.
+func lineIsReasonMarker(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	return trimmed == reasonMarker || strings.HasPrefix(trimmed, reasonMarker+" ")
+}
+
+// commentHasReason returns true if any line of a comment is the @reason marker.
+func commentHasReason(comment string) bool {
+	for _, line := range strings.Split(comment, "\n") {
+		if lineIsReasonMarker(line) {
+			return true
+		}
+	}
+	return false
+}
+
 // nodeHasOverride returns true if a leaf key's HeadComment contains @override.
 func nodeHasOverride(root *yaml.Node, dottedKey string) bool {
 	_, comment, found := nodeGetLeaf(root, dottedKey)
