@@ -57,6 +57,10 @@ product.networkStatus.online: Online
 The `merge` command preserves `@reason` comments on existing keys and
 attaches them to new keys when present in the input.
 
+A translation left identical to its English source must carry a `@reason`
+(or `@override`): `validate` flags unmarked identical values, since they
+are indistinguishable from missed translations.
+
 ### `@override`
 
 Marks a translation as intentionally different from what an automated
@@ -283,6 +287,8 @@ Checks include:
 - `data-*` attribute preservation (runtime handlers depend on these)
 - `@override` placement (leaf keys only)
 - `@source` coverage (every translated key carries a `@source`)
+- Deliberate identity (a translation identical to a current `@source` carries
+  a `@reason` or `@override`; a stale snapshot is left to `drift`)
 
 ### drift
 

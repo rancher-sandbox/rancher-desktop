@@ -66,6 +66,9 @@ Add these comments directly above the key they describe.
 | `@no-translate` | en-us.yaml | Terms that should stay in English by default |
 | `@reason` | locale files | Why a particular translation was chosen |
 
+A translation left identical to its English source must carry a `@reason`
+(or `@override`) comment; `validate` flags unmarked identical values.
+
 ### Examples in en-us.yaml
 
 ```yaml
@@ -170,7 +173,11 @@ needed.
    ```
 3. Run `i18n-report translate --locale=<code>` to find keys that need
    translation, then merge the results with `i18n-report merge`.
-4. Run `i18n-report untranslated` to find hardcoded English strings in
+4. Review `validate --locale=<code>` findings. An `[identical]` finding
+   is a translation that matches a current `@source` without a `@reason`:
+   either translate the key or mark the keep with a `@reason`, then
+   merge with `merge --mode=improve`.
+5. Run `i18n-report untranslated` to find hardcoded English strings in
    Vue/TS files that should be externalized.
 
 CI runs `i18n-report check --locale=all` on every pull request: the
