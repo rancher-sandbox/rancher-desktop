@@ -360,6 +360,7 @@ containerInspect:
   summary:
     # @source Created
     created: Creato
+    # @reason 'ID' is the same abbreviation in Italian
     # @source ID
     id: ID
     # @source Image
@@ -374,6 +375,7 @@ containerStats:
   charts:
     # @source Block I/O (bytes/s)
     blockIO: I/O blocchi (byte/s)
+    # @reason 'CPU' acronym and % symbol are identical in Italian
     # @source CPU %
     cpu: CPU %
     # @source Memory
@@ -381,8 +383,10 @@ containerStats:
     # @source Network I/O (bytes/s)
     network: I/O rete (byte/s)
   interval:
+    # @reason 'min' is also the standard Italian abbreviation of 'minuti'
     # @source {minutes} min
     minutes: '{minutes} min'
+    # @reason 's' is the SI symbol for seconds, identical in Italian
     # @source {seconds} s
     seconds: '{seconds} s'
   # @source Stats are currently only available for the Docker (Moby) engine.
@@ -401,8 +405,10 @@ containerStats:
     limit: Limite
     # @source Read
     read: Lettura
+    # @reason RX (receive) is the universal networking abbreviation, unchanged in Italian
     # @source RX
     rx: RX
+    # @reason TX (transmit) is the universal networking abbreviation, unchanged in Italian
     # @source TX
     tx: TX
     # @reason Feminine, agreeing with "memoria" in the memory chart.
@@ -414,6 +420,7 @@ containers:
   manage:
     table:
       action:
+        # @reason 'Info' is standard Italian shorthand for 'informazioni'; matches containerInfo.info
         # @source Info
         info: Info
         # @source Restart
@@ -556,6 +563,7 @@ firstRun:
     otherVersions: Altre versioni
     # @source Recommended Versions
     recommendedVersions: Versioni consigliate
+  # @reason 'OK' is the standard confirmation button label in Italian dialogs
   # @source OK
   ok: OK
   # @reason "Ti diamo il benvenuto" avoids the gendered "Benvenuto".
@@ -588,6 +596,7 @@ generic:
   cancel: Annulla
   # @source Close
   close: Chiudi
+  # @reason list separator; Italian uses the same comma + space
   # @source , 
   comma: ', '
   # @reason Assumed port-forwarding context; would be "Avanti" if used for navigation.
@@ -598,6 +607,7 @@ generic:
   # @reason Kubernetes/containerd term, untranslated in Italian.
   # @source Namespace
   namespace: Namespace
+  # @reason 'OK' is the standard confirmation button label in Italian dialogs
   # @source OK
   ok: OK
   # @source Rerun
@@ -696,13 +706,16 @@ images:
         button: Build
         # @source Name of image to build:
         label: 'Nome dell''immagine di cui eseguire la build:'
+        # @reason literal example image reference, not translatable text
         # @source registry.example.com/namespace/image:tag
         placeholder: registry.example.com/namespace/image:tag
       pull:
+        # @reason 'Pull' kept as Docker term, matching the file's pull/push convention
         # @source Pull
         button: Pull
         # @source Name of image to pull:
         label: 'Nome dell''immagine di cui eseguire il pull:'
+        # @reason literal example image reference, not translatable text
         # @source registry.example.com/namespace/image
         placeholder: registry.example.com/namespace/image
     table:
@@ -721,6 +734,7 @@ images:
         imageName: Immagine
         # @source Size
         size: Dimensione
+        # @reason 'tag' is the standard loanword for image tags in Italian Docker usage
         # @source Tag
         tag: Tag
       # @source All images
@@ -794,6 +808,7 @@ kubernetesPrefs:
   kubernetes:
     # @source Enable Kubernetes
     label: Abilita Kubernetes
+    # @reason Kubernetes product name
     # @source Kubernetes
     legendText: Kubernetes
   options:
@@ -873,6 +888,7 @@ mainMenu:
     close: Chiudi
     # @source E&xit
     exit: '&Esci'
+    # @reason Italian Windows/macOS applications keep 'File' as the menu name
     # @source &File
     label: '&File'
   help:
@@ -1060,10 +1076,12 @@ preferences:
     # @reason Kept English: established term among Italian developers for the moby/containerd runtime choice.
     # @source Container Engine
     containerEngine: Container engine
+    # @reason Kubernetes product name
     # @source Kubernetes
     kubernetes: Kubernetes
     # @source Virtual Machine
     virtualMachine: Macchina virtuale
+    # @reason WSL is the product acronym (Windows Subsystem for Linux)
     # @source WSL
     wsl: WSL
   resetDialog:
@@ -1086,10 +1104,12 @@ preferences:
     environment: Ambiente
     # @source General
     general: Generale
+    # @reason 'hardware' is a fully assimilated loanword in Italian
     # @source Hardware
     hardware: Hardware
     # @source Integrations
     integrations: Integrazioni
+    # @reason 'proxy' is the standard Italian networking term, as in macOS/Windows settings
     # @source Proxy
     proxy: Proxy
     # @source Volumes
@@ -1128,6 +1148,7 @@ product:
     fullName: Container Engine
   # @source deactivated
   deactivated: disattivato
+  # @reason Kubernetes product name
   # @source Kubernetes
   kubernetesVersion: Kubernetes
   # @source Network status
@@ -1135,8 +1156,10 @@ product:
   networkStatusValues:
     # @source checking...
     checking: verifica in corso...
+    # @reason 'offline' is an assimilated loanword in Italian
     # @source offline
     offline: offline
+    # @reason 'online' is an assimilated loanword in Italian
     # @source online
     online: online
   # @source Version
@@ -1457,6 +1480,7 @@ sortableTable:
 sudoPrompt:
   # @source Always run without administrative access
   alwaysRunWithout: Esegui sempre senza accesso amministrativo
+  # @reason 'OK' is the standard confirmation button label in Italian dialogs
   # @source OK
   buttonText: OK
   # @source This will modify the following paths:
@@ -1523,6 +1547,7 @@ tray:
     stopped: Kubernetes è arrestato
     # @source Kubernetes is shutting down
     stopping: Kubernetes è in fase di arresto
+  # @reason Rancher Desktop product name
   # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
@@ -1584,6 +1609,7 @@ troubleshooting:
 unmetPrerequisites:
   # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
   action: Assicurati che tutti i requisiti siano soddisfatti e riprova. Rancher Desktop verrà ora chiuso.
+  # @reason 'OK' is the standard confirmation button label in Italian dialogs
   # @source OK
   buttonText: OK
   # @source Rancher Desktop cannot start because requirements are missing or not configured:
@@ -1695,6 +1721,7 @@ virtualMachine:
         9p:
           # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
           description: Espone il file system usando i dispositivi virtio-9p-pci di QEMU.
+          # @reason literal mount-type value passed to the VM configuration; kept in English
           # @source 9p
           label: 9p
           options:
@@ -1702,10 +1729,13 @@ virtualMachine:
               # @source Cache Mode
               legend: Modalità cache
               options:
+                # @reason literal 9p cache-mode value passed to QEMU; kept in English
                 # @source fscache
                 fscache: fscache
+                # @reason literal 9p cache-mode value passed to QEMU; kept in English
                 # @source loose
                 loose: loose
+                # @reason literal 9p cache-mode value passed to QEMU; kept in English
                 # @source mmap
                 mmap: mmap
                 # @reason literal 9p cache-mode value passed to QEMU; kept in English
@@ -1722,10 +1752,13 @@ virtualMachine:
               # @source Protocol Version
               legend: Versione del protocollo
               options:
+                # @reason literal 9p protocol-version identifier; kept in English
                 # @source 9p2000
                 9p2000: 9p2000
+                # @reason literal 9p protocol-version identifier; kept in English
                 # @source 9p2000.L
                 9p2000L: 9p2000.L
+                # @reason literal 9p protocol-version identifier; kept in English
                 # @source 9p2000.u
                 9p2000u: 9p2000.u
               # @source 9P protocol version
@@ -1734,13 +1767,16 @@ virtualMachine:
               # @source Security Model
               legend: Modello di sicurezza
               options:
+                # @reason literal 9p security-model value passed to QEMU; kept in English
                 # @source mapped-file
                 mapped-file: mapped-file
+                # @reason literal 9p security-model value passed to QEMU; kept in English
                 # @source mapped-xattr
                 mapped-xattr: mapped-xattr
                 # @reason literal 9p security-model value passed to QEMU; kept in English
                 # @source none
                 none: none
+                # @reason literal 9p security-model value passed to QEMU; kept in English
                 # @source passthrough
                 passthrough: passthrough
               # @source Security model used for the export path
@@ -1748,11 +1784,13 @@ virtualMachine:
         reverse-sshfs:
           # @source Exposes the filesystem by running an SFTP server.
           description: Espone il file system eseguendo un server SFTP.
+          # @reason literal mount-type value passed to the VM configuration; kept in English
           # @source reverse-sshfs
           label: reverse-sshfs
         virtiofs:
           # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
           description: Espone il file system usando un dispositivo di directory condivisa del framework Virtualization di Apple.
+          # @reason literal mount-type value passed to the VM configuration; kept in English
           # @source virtiofs
           label: virtiofs
   proxy:
@@ -1774,6 +1812,7 @@ virtualMachine:
       legend: Elenco di esclusione dal proxy
       # @source IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy
       placeholder: IP, CIDR, dominio o wildcard (*.example.com) da escludere dal proxy
+    # @reason 'password' is the standard term in Italian UIs, unchanged
     # @source Password
     password: Password
     # @source Port
@@ -1787,11 +1826,13 @@ virtualMachine:
       qemu:
         # @source Use the QEMU emulator.
         description: Usa l'emulatore QEMU.
+        # @reason QEMU product name
         # @source QEMU
         label: QEMU
       vz:
         # @source Use the Apple Virtualization framework.
         description: Usa il framework Virtualization di Apple.
+        # @reason VZ is the Apple Virtualization framework identifier, not translatable text
         # @source VZ
         label: VZ
   useRosetta:
@@ -1834,6 +1875,7 @@ volumes:
       header:
         # @source Created
         created: Data di creazione
+        # @reason 'driver' is the standard loanword in Italian (Docker volume driver)
         # @source Driver
         driver: Driver
         # @source Mount Point
@@ -1857,5 +1899,6 @@ webAssembly:
   description: Leggi la documentazione prima di abilitare la funzionalità sperimentale WebAssembly!
   # @source Enabled
   enabled: Abilitato
+  # @reason WebAssembly/Wasm product name
   # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)

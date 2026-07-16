@@ -55,6 +55,7 @@ application:
           # @reason Theme option: follow OS setting - "Systemeinstellung" is the standard German term
           # @source Follow the operating system setting
           description: Betriebssystemeinstellung folgen
+          # @reason 'System' is the identical German word; standard theme-option label in German UIs
           # @source System
           label: System
     windowQuitOnClose:
@@ -304,8 +305,9 @@ asyncButton:
     # @source Starting&hellip;
     waiting: Starten&hellip;
 containerEngine:
+  # @reason matches preferences.nav.containerEngine and product.containerEngine.fullName; this legend heads the page that nav entry opens
   # @source Container Engine
-  label: Container Engine
+  label: Container-Laufzeit
   options:
     containerd:
       # @reason "nerdctl" kept in English
@@ -324,6 +326,7 @@ containerEngine:
 containerInfo:
   # @source Container Info
   fallbackTitle: Container-Info
+  # @reason 'Info' is standard German (die Info)
   # @source Info
   info: Info
   # @source Logs
@@ -339,6 +342,7 @@ containerInfo:
     placeholder: Protokolle durchsuchen...
     # @source Previous match
     previousMatch: Vorheriger Treffer
+  # @reason 'Shell' is standard German IT usage (die Shell)
   # @source Shell
   shell: Shell
   # @source Stats
@@ -354,6 +358,7 @@ containerInspect:
     args: Argumente
     # @source Command
     command: Befehl
+    # @reason Dockerfile ENTRYPOINT directive; technical term with no German equivalent
     # @source Entrypoint
     entrypoint: Entrypoint
   error:
@@ -366,10 +371,13 @@ containerInspect:
   mounts:
     # @source Destination
     destination: Ziel
+    # @reason read-only abbreviation, identical in German
     # @source RO
     readOnly: RO
+    # @reason read-write abbreviation, identical in German
     # @source RW
     readWrite: RW
+    # @reason column header for the RO/RW values, which are also kept as abbreviations
     # @source R/W
     rw: R/W
     # @source Source
@@ -379,27 +387,34 @@ containerInspect:
   # @source None
   none: Keine
   sections:
+    # @reason Linux capabilities(7); German security literature keeps the term
     # @source Capabilities
     capabilities: Capabilities
     # @source Command & Args
     commandArgs: Befehl & Argumente
     # @source Environment
     environment: Umgebung
+    # @reason Docker label metadata; 'Label' is a German loanword and German container docs keep it
     # @source Labels
     labels: Labels
+    # @reason docker inspect 'Mounts' section; 'Mounts'/'Bind Mounts' kept in German Docker literature
     # @source Mounts
     mounts: Mounts
+    # @reason 'Port' is a German loanword; plural is identical
     # @source Ports
     ports: Ports
   summary:
     # @source Created
     created: Erstellt
+    # @reason identical abbreviation in German
     # @source ID
     id: ID
+    # @reason 'Image' is the established container term throughout de.yaml
     # @source Image
     image: Image
     # @source IP Address
     ipAddress: IP-Adresse
+    # @reason 'Name' is the identical German word
     # @source Name
     name: Name
     # @source Started
@@ -408,6 +423,7 @@ containerStats:
   charts:
     # @source Block I/O (bytes/s)
     blockIO: Block-I/O (Bytes/s)
+    # @reason abbreviation plus percent sign, identical in German
     # @source CPU %
     cpu: CPU %
     # @source Memory
@@ -417,6 +433,7 @@ containerStats:
   interval:
     # @source {minutes} min
     minutes: '{minutes} Min.'
+    # @reason 's' is the SI unit symbol for seconds, identical in German
     # @source {seconds} s
     seconds: '{seconds} s'
   # @source Stats are currently only available for the Docker (Moby) engine.
@@ -430,12 +447,15 @@ containerStats:
   # @source Refresh
   refresh: Aktualisierung
   series:
+    # @reason 'Limit' is the identical German word (das Limit)
     # @source Limit
     limit: Limit
     # @source Read
     read: Lesen
+    # @reason network receive abbreviation, identical in German
     # @source RX
     rx: RX
+    # @reason network transmit abbreviation, identical in German
     # @source TX
     tx: TX
     # @source Used
@@ -446,6 +466,7 @@ containers:
   manage:
     table:
       action:
+        # @reason 'Info' is standard German (die Info)
         # @source Info
         info: Info
         # @source Restart
@@ -455,10 +476,13 @@ containers:
         # @source Stop
         stop: Stoppen
       header:
+        # @reason 'Name' is the identical German word
         # @source Name
         containerName: Name
+        # @reason 'Image' is the established container term throughout de.yaml
         # @source Image
         image: Image
+        # @reason 'Port' is a German loanword; the optional-plural marker works identically
         # @source Port(s)
         ports: Port(s)
         # @source Uptime
@@ -471,6 +495,7 @@ containers:
   # @source Containers
   title: Container
 dashboard:
+  # @reason @no-translate product name
   # @source Rancher Dashboard
   windowTitle: Rancher Dashboard
 denyRoot:
@@ -496,6 +521,7 @@ diagnostics:
       body: Versuchen Sie, stummgeschaltete Diagnosen anzuzeigen.
       # @source No results found
       heading: Keine Ergebnisse gefunden
+      # @reason icon identifier, not translatable text
       # @source icon-search
       icon: icon-search
     success:
@@ -503,6 +529,7 @@ diagnostics:
       body: Rancher Desktop scheint ordnungsgemäß zu funktionieren.
       # @source No problems detected
       heading: Keine Probleme erkannt
+      # @reason icon identifier, not translatable text
       # @source icon-checkmark
       icon: icon-checkmark
   # @source Show Muted
@@ -510,6 +537,7 @@ diagnostics:
   tableHeaders:
     # @source Mute
     mute: Stumm
+    # @reason 'Name' is the identical German word
     # @source Name
     name: Name
   # @source Diagnostics
@@ -544,6 +572,7 @@ dialog:
     # @source Network failure
     title: Netzwerkfehler
 extensions:
+  # @reason icon identifier, not translatable text
   # @source icon-extension
   icon: icon-extension
   installed:
@@ -555,6 +584,7 @@ extensions:
         text: Erweiterungen durchsuchen
       # @source No extensions installed
       heading: Keine Erweiterungen installiert
+      # @reason icon identifier, not translatable text
       # @source icon-extension
       icon: icon-extension
     list:
@@ -580,6 +610,7 @@ firstRun:
     otherVersions: Weitere Versionen
     # @source Recommended Versions
     recommendedVersions: Empfohlene Versionen
+  # @reason 'OK' is standard German button text
   # @source OK
   ok: OK
   # @source Welcome to Rancher Desktop by SUSE
@@ -608,6 +639,7 @@ generic:
   cancel: Abbrechen
   # @source Close
   close: Schließen
+  # @reason list-separator punctuation, identical in German
   # @source , 
   comma: ', '
   # @source Forward
@@ -616,6 +648,7 @@ generic:
   loading: Wird geladen&hellip;
   # @source Namespace
   namespace: Namensraum
+  # @reason 'OK' is standard German button text
   # @source OK
   ok: OK
   # @source Rerun
@@ -656,8 +689,9 @@ images:
     add: Image hinzufügen
   add:
     action:
+      # @reason tab label on the Add Image page; matches its submit button images.manager.input.build.button 'Erstellen'
       # @source Build
-      build: Build
+      build: Erstellen
       gerund:
         # @reason Past participle, not a noun — loadingText is restructured as passive "Image wird {action}..."
         # @source Building
@@ -679,8 +713,9 @@ images:
         # @reason Nominalized so successText "{action} des Images abgeschlossen" composes; the participle "Abgerufen" did not
         # @source Pulled
         pull: Abrufen
+      # @reason tab label on the Add Image page; matches its submit button images.manager.input.pull.button 'Abrufen'
       # @source Pull
-      pull: Pull
+      pull: Abrufen
     # @reason Restructured to the "Fehler beim ... von" pattern already used by images.scan.errorText; en dash matches file convention
     # @source Error trying to { action } ''{ image }'' - see console output for more information
     errorText: Fehler beim { action } von ''{ image }'' – siehe Konsolenausgabe für weitere Informationen
@@ -728,6 +763,7 @@ images:
       action:
         # @source Delete
         delete: Löschen
+        # @reason kept as loanword; de.yaml already uses 'Pushen' (imageEvents.pushError) and German dev tools such as VS Code keep 'Push'
         # @source Push
         push: Push
         # @source Scan...
@@ -735,10 +771,12 @@ images:
       header:
         # @source Image ID
         imageId: Image-ID
+        # @reason 'Image' is the established container term throughout de.yaml
         # @source Image
         imageName: Image
         # @source Size
         size: Größe
+        # @reason Docker image tag; 'Tag' (das Tag) is standard German container usage
         # @source Tag
         tag: Tag
       # @source All images
@@ -790,6 +828,7 @@ images:
     imagesUnready: Warten auf Bereitschaft des Image-Managers
     # @source Error: Unknown state; please reload.
     unknown: 'Fehler: Unbekannter Status – bitte laden Sie die Seite neu.'
+  # @reason nav page title; 'Image' is the established German container term used throughout de.yaml (e.g. 'Erlaubte Images')
   # @source Images
   title: Images
 integrations:
@@ -809,6 +848,7 @@ kubernetesPrefs:
   kubernetes:
     # @source Enable Kubernetes
     label: Kubernetes aktivieren
+    # @reason product name
     # @source Kubernetes
     legendText: Kubernetes
   options:
@@ -948,6 +988,7 @@ marketplace:
       header:
         # @source Description
         description: Beschreibung
+        # @reason 'Name' is the identical German word
         # @source Name
         name: Name
         # @source Vendor
@@ -1010,10 +1051,12 @@ portForwarding:
       header:
         # @source Local Port
         listenPort: Lokaler Port
+        # @reason 'Name' is the identical German word
         # @source Name
         name: Name
         # @source Namespace
         namespace: Namensraum
+        # @reason 'Port' is a German loanword (der Port)
         # @source Port
         port: Port
   sortableTables:
@@ -1059,10 +1102,12 @@ preferences:
     application: Anwendung
     # @source Container Engine
     containerEngine: Container-Laufzeit
+    # @reason product name
     # @source Kubernetes
     kubernetes: Kubernetes
     # @source Virtual Machine
     virtualMachine: Virtuelle Maschine
+    # @reason product abbreviation (Windows Subsystem for Linux)
     # @source WSL
     wsl: WSL
   resetDialog:
@@ -1079,18 +1124,22 @@ preferences:
     allowedImages: Erlaubte Images
     # @source Behavior
     behavior: Verhalten
+    # @reason 'Emulation' is the identical German word (die Emulation)
     # @source Emulation
     emulation: Emulation
     # @source Environment
     environment: Umgebung
     # @source General
     general: Allgemein
+    # @reason 'Hardware' is a German loanword (die Hardware)
     # @source Hardware
     hardware: Hardware
     # @source Integrations
     integrations: Integrationen
+    # @reason 'Proxy' is a German loanword (der Proxy)
     # @source Proxy
     proxy: Proxy
+    # @reason Docker volume term; 'das Volume/Volumes' is standard in German container UIs and used throughout de.yaml
     # @source Volumes
     volumes: Volumes
 preferencesWindow:
@@ -1122,12 +1171,14 @@ prefs:
   onlyWithVZ_x64: Diese Einstellung erfordert die Verwendung des VZ-Emulationsmodus. VZ ist nur unter macOS 13.0 (Ventura) oder neuer verfügbar.
 product:
   containerEngine:
+    # @reason status-bar abbreviation identifier; no German abbreviation exists
     # @source CE
     abbreviation: CE
     # @source Container Engine
     fullName: Container-Laufzeit
   # @source deactivated
   deactivated: deaktiviert
+  # @reason product name
   # @source Kubernetes
   kubernetesVersion: Kubernetes
   # @source Network status
@@ -1142,6 +1193,7 @@ product:
     # @reason Network status label
     # @source online
     online: online
+  # @reason 'Version' is the identical German word (die Version)
   # @source Version
   version: Version
 progress:
@@ -1387,6 +1439,7 @@ snapshots:
     body: Klicken Sie auf Snapshot erstellen, um loszulegen
     # @source No snapshots found
     heading: Keine Snapshots gefunden
+    # @reason icon identifier, not translatable text
     # @source icon-search
     icon: icon-search
   info:
@@ -1417,6 +1470,7 @@ snapshots:
       success: '''<b>''{snapshot}''</b>'' wiederhergestellt'
     # @source  at {time}
     when: ' um {time}'
+  # @reason 'Snapshot' is the term used throughout de.yaml (Snapshot erstellen, Snapshot-Name); German VM tools like VMware keep it
   # @source Snapshots
   title: Snapshots
 sortableTable:
@@ -1435,6 +1489,7 @@ sortableTable:
       label: Aktionen
   # @source Filter for...
   filterFor: Filtern nach...
+  # @reason the preposition 'in' is identical in German
   # @source in
   in: in
   # @source No actions available
@@ -1451,6 +1506,7 @@ sortableTable:
     generic: '{pages, plural, =0 {Keine Einträge} =1 {{count} {count, plural, =1 {Eintrag} other {Einträge}}} other {{from} - {to} von {count} Einträgen}}'
   # @source Reset
   resetFilters: Zurücksetzen
+  # @reason 'Filter' is the identical German word (der Filter)
   # @source Filter
   search: Filter
   # @source Select a column
@@ -1465,6 +1521,7 @@ sortableTable:
 sudoPrompt:
   # @source Always run without administrative access
   alwaysRunWithout: Immer ohne Administratorzugriff ausführen
+  # @reason 'OK' is standard German button text
   # @source OK
   buttonText: OK
   # @source This will modify the following paths:
@@ -1530,6 +1587,7 @@ tray:
     stopped: Kubernetes ist gestoppt
     # @source Kubernetes is shutting down
     stopping: Kubernetes wird heruntergefahren
+  # @reason product name
   # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
@@ -1589,6 +1647,7 @@ troubleshooting:
 unmetPrerequisites:
   # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
   action: Bitte stellen Sie sicher, dass alle Voraussetzungen erfüllt sind, und versuchen Sie es erneut. Rancher Desktop wird jetzt geschlossen.
+  # @reason 'OK' is standard German button text
   # @source OK
   buttonText: OK
   # @source Rancher Desktop cannot start because requirements are missing or not configured:
@@ -1795,6 +1854,7 @@ virtualMachine:
       placeholder: Hostname, der nicht über den Proxy umgeleitet werden soll
     # @source Password
     password: Passwort
+    # @reason 'Port' is a German loanword (der Port)
     # @source Port
     port: Port
     # @source Username
@@ -1842,6 +1902,7 @@ volumes:
       header:
         # @source Modified
         modified: Geändert
+        # @reason 'Name' is the identical German word
         # @source Name
         name: Name
         # @source Permissions
@@ -1873,6 +1934,7 @@ volumes:
   sortableTables:
     # @source There are no volumes to show
     noRows: Es sind keine Volumes vorhanden
+  # @reason nav page title; Docker volume term, standard in German container UIs and used throughout de.yaml (Volume-Name, Volume-Dateien)
   # @source Volumes
   title: Volumes
 webAssembly:
@@ -1880,5 +1942,6 @@ webAssembly:
   description: Bitte lesen Sie die Dokumentation, bevor Sie die experimentelle WebAssembly-Funktion aktivieren!
   # @source Enabled
   enabled: Aktiviert
+  # @reason technology name
   # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)

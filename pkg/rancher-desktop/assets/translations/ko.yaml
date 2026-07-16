@@ -200,18 +200,22 @@ asyncButton:
   refresh:
     # @source
     action: ''
+    # @reason Icon name fragment; component builds CSS class icon-{value}
     # @source refresh
     actionIcon: refresh
     # @source
     error: ''
+    # @reason Icon name fragment; component builds CSS class icon-{value}
     # @source error
     errorIcon: error
     # @source
     success: ''
+    # @reason Icon name fragment; component builds CSS class icon-{value}
     # @source checkmark
     successIcon: checkmark
     # @source
     waiting: ''
+    # @reason Icon name fragment; component builds CSS class icon-{value}
     # @source refresh
     waitingIcon: refresh
   remove:
@@ -265,11 +269,13 @@ containerEngine:
     containerd:
       # @source Namespaces for container images; use with nerdctl.
       description: 컨테이너 이미지 네임스페이스를 지원합니다. nerdctl과 함께 사용합니다.
+      # @reason Product name of the containerd runtime
       # @source containerd
       label: containerd
     moby:
       # @source Docker API; use with Docker CLI.
       description: Docker API를 제공합니다. Docker CLI와 함께 사용합니다.
+      # @reason Product names (dockerd binary, Moby project)
       # @source dockerd (moby)
       label: dockerd (moby)
 containerInfo:
@@ -349,6 +355,7 @@ containerInspect:
   summary:
     # @source Created
     created: 생성됨
+    # @reason Standard identifier abbreviation; kept in English as in common Korean dev UIs
     # @source ID
     id: ID
     # @source Image
@@ -363,6 +370,7 @@ containerStats:
   charts:
     # @source Block I/O (bytes/s)
     blockIO: 블록 I/O(바이트/초)
+    # @reason Chart legend; CPU is the standard term in Korean UIs
     # @source CPU %
     cpu: CPU %
     # @source Memory
@@ -454,6 +462,7 @@ diagnostics:
       body: 무시된 진단을 표시해 보십시오.
       # @source No results found
       heading: 결과를 찾을 수 없음
+      # @reason Icon identifier (CSS class), not translatable text
       # @source icon-search
       icon: icon-search
     success:
@@ -461,6 +470,7 @@ diagnostics:
       body: Rancher Desktop이 정상적으로 작동하고 있는 것으로 보입니다.
       # @source No problems detected
       heading: 문제가 감지되지 않음
+      # @reason Icon identifier (CSS class), not translatable text
       # @source icon-checkmark
       icon: icon-checkmark
   # @source Show Muted
@@ -503,6 +513,7 @@ dialog:
     # @source Network failure
     title: 네트워크 오류
 extensions:
+  # @reason Icon identifier (CSS class), not translatable text
   # @source icon-extension
   icon: icon-extension
   installed:
@@ -514,6 +525,7 @@ extensions:
         text: 확장 찾아보기
       # @source No extensions installed
       heading: 설치된 확장 없음
+      # @reason Icon identifier (CSS class), not translatable text
       # @source icon-extension
       icon: icon-extension
     list:
@@ -568,6 +580,7 @@ generic:
   cancel: 취소
   # @source Close
   close: 닫기
+  # @reason List separator; Korean uses the same comma and space
   # @source , 
   comma: ', '
   # @reason Button on the Port Forwarding page; matches the established 포트 포워딩 terminology
@@ -672,6 +685,7 @@ images:
         button: 빌드
         # @source Name of image to build:
         label: '빌드할 이미지 이름:'
+        # @reason Example image reference; OCI image names are always Latin script
         # @source registry.example.com/namespace/image:tag
         placeholder: registry.example.com/namespace/image:tag
       pull:
@@ -680,6 +694,7 @@ images:
         # @reason verbified loanword to stay consistent with the 풀 action/button label
         # @source Name of image to pull:
         label: '풀할 이미지 이름:'
+        # @reason Example image reference; OCI image names are always Latin script
         # @source registry.example.com/namespace/image
         placeholder: registry.example.com/namespace/image
     table:
@@ -769,6 +784,7 @@ kubernetesPrefs:
   kubernetes:
     # @source Enable Kubernetes
     label: Kubernetes 사용
+    # @reason Product name; Kubernetes stays in Latin script throughout this file
     # @source Kubernetes
     legendText: Kubernetes
   options:
@@ -1020,10 +1036,12 @@ preferences:
     application: 애플리케이션
     # @source Container Engine
     containerEngine: 컨테이너 엔진
+    # @reason Product name; Kubernetes stays in Latin script throughout this file
     # @source Kubernetes
     kubernetes: Kubernetes
     # @source Virtual Machine
     virtualMachine: 가상 머신
+    # @reason Product acronym (Windows Subsystem for Linux)
     # @source WSL
     wsl: WSL
   resetDialog:
@@ -1079,12 +1097,14 @@ prefs:
   onlyWithVZ_x64: 이 설정을 사용하려면 VZ 에뮬레이션 모드가 필요합니다. VZ는 macOS 13.0(Ventura) 이상에서만 사용할 수 있습니다.
 product:
   containerEngine:
+    # @reason Compact status-bar label with no Korean abbreviation for 컨테이너 엔진; the tooltip shows the translated full name
     # @source CE
     abbreviation: CE
     # @source Container Engine
     fullName: 컨테이너 엔진
   # @source deactivated
   deactivated: 비활성화됨
+  # @reason Product name used as status-bar label
   # @source Kubernetes
   kubernetesVersion: Kubernetes
   # @source Network status
@@ -1472,6 +1492,7 @@ tray:
     stopped: Kubernetes 중지됨
     # @source Kubernetes is shutting down
     stopping: Kubernetes 종료 중
+  # @reason Product name
   # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
@@ -1641,6 +1662,7 @@ virtualMachine:
         9p:
           # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
           description: QEMU의 virtio-9p-pci 장치를 사용하여 파일시스템을 노출합니다.
+          # @reason Literal mount type value
           # @source 9p
           label: 9p
           options:
@@ -1648,12 +1670,16 @@ virtualMachine:
               # @source Cache Mode
               legend: 캐시 모드
               options:
+                # @reason Literal 9p cache-mode value
                 # @source fscache
                 fscache: fscache
+                # @reason Literal 9p cache-mode value
                 # @source loose
                 loose: loose
+                # @reason Literal 9p cache-mode value
                 # @source mmap
                 mmap: mmap
+                # @reason Literal 9p cache-mode value
                 # @source none
                 none: none
               # @source Caching policy to be used
@@ -1667,10 +1693,13 @@ virtualMachine:
               # @source Protocol Version
               legend: 프로토콜 버전
               options:
+                # @reason Literal 9p protocol version value
                 # @source 9p2000
                 9p2000: 9p2000
+                # @reason Literal 9p protocol version value
                 # @source 9p2000.L
                 9p2000L: 9p2000.L
+                # @reason Literal 9p protocol version value
                 # @source 9p2000.u
                 9p2000u: 9p2000.u
               # @source 9P protocol version
@@ -1679,12 +1708,16 @@ virtualMachine:
               # @source Security Model
               legend: 보안 모델
               options:
+                # @reason Literal 9p security-model value
                 # @source mapped-file
                 mapped-file: mapped-file
+                # @reason Literal 9p security-model value
                 # @source mapped-xattr
                 mapped-xattr: mapped-xattr
+                # @reason Literal 9p security-model value
                 # @source none
                 none: none
+                # @reason Literal 9p security-model value
                 # @source passthrough
                 passthrough: passthrough
               # @source Security model used for the export path
@@ -1692,11 +1725,13 @@ virtualMachine:
         reverse-sshfs:
           # @source Exposes the filesystem by running an SFTP server.
           description: SFTP 서버를 실행하여 파일시스템을 노출합니다.
+          # @reason Literal mount type value
           # @source reverse-sshfs
           label: reverse-sshfs
         virtiofs:
           # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
           description: Apple Virtualization 프레임워크의 공유 디렉터리 장치를 사용하여 파일시스템을 노출합니다.
+          # @reason Literal mount type value
           # @source virtiofs
           label: virtiofs
   proxy:
@@ -1731,11 +1766,13 @@ virtualMachine:
       qemu:
         # @source Use the QEMU emulator.
         description: QEMU 에뮬레이터를 사용합니다.
+        # @reason Product name (QEMU emulator)
         # @source QEMU
         label: QEMU
       vz:
         # @source Use the Apple Virtualization framework.
         description: Apple Virtualization 프레임워크를 사용합니다.
+        # @reason Apple Virtualization.framework identifier
         # @source VZ
         label: VZ
   useRosetta:
@@ -1801,5 +1838,6 @@ webAssembly:
   description: 실험적인 WebAssembly 기능을 활성화하기 전에 설명서를 읽어 주십시오!
   # @source Enabled
   enabled: 활성화
+  # @reason Technology name; WebAssembly stays in Latin script throughout this file
   # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)

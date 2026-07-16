@@ -125,6 +125,7 @@ asyncButton:
   default:
     # @source Action
     action: Acción
+    # @reason 'Error' is the same word in Spanish.
     # @source Error
     error: Error
     # @source Success
@@ -266,11 +267,13 @@ containerEngine:
     containerd:
       # @source Namespaces for container images; use with nerdctl.
       description: Espacios de nombres para las imágenes de contenedores; se usa con nerdctl.
+      # @reason 'containerd' is a product name.
       # @source containerd
       label: containerd
     moby:
       # @source Docker API; use with Docker CLI.
       description: API de Docker; se usa con la CLI de Docker.
+      # @reason 'dockerd' and 'moby' are the daemon binary and project names.
       # @source dockerd (moby)
       label: dockerd (moby)
 containerInfo:
@@ -354,6 +357,7 @@ containerInspect:
   summary:
     # @source Created
     created: Creado
+    # @reason 'ID' is the standard abbreviation in Spanish as well.
     # @source ID
     id: ID
     # @source Image
@@ -375,8 +379,10 @@ containerStats:
     # @source Network I/O (bytes/s)
     network: E/S de red (bytes/s)
   interval:
+    # @reason 'min' is also the Spanish abbreviation for minutos.
     # @source {minutes} min
     minutes: '{minutes} min'
+    # @reason 's' is the unit symbol for segundos.
     # @source {seconds} s
     seconds: '{seconds} s'
   # @source Stats are currently only available for the Docker (Moby) engine.
@@ -564,6 +570,7 @@ general:
   # @reason Kept in English; the link goes to the GitHub issue tracker, where the term appears untranslated
   # @source Issues
   issues: Issues
+  # @reason 'General' is the same word in Spanish.
   # @source General
   navLabel: General
   # @source Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack
@@ -582,6 +589,7 @@ generic:
   cancel: Cancelar
   # @source Close
   close: Cerrar
+  # @reason List separator; Spanish uses the same comma-plus-space.
   # @source , 
   comma: ', '
   # @reason Used as the port-forwarding action button (PortForwarding.vue), so the forwarding sense, not navigation
@@ -787,6 +795,7 @@ kubernetesPrefs:
   kubernetes:
     # @source Enable Kubernetes
     label: Habilitar Kubernetes
+    # @reason 'Kubernetes' is a product name.
     # @source Kubernetes
     legendText: Kubernetes
   options:
@@ -973,6 +982,7 @@ pathManagement:
     manual:
       # @source Rancher Desktop does not change your PATH configuration; add <code>$HOME/.rd/bin</code> to your path manually.
       description: Rancher Desktop no modifica la configuración de su PATH; agregue <code>$HOME/.rd/bin</code> a su PATH manualmente.
+      # @reason 'Manual' is the same word in Spanish.
       # @source Manual
       label: Manual
     rcFiles:
@@ -1045,10 +1055,12 @@ preferences:
     application: Aplicación
     # @source Container Engine
     containerEngine: Motor de contenedores
+    # @reason 'Kubernetes' is a product name.
     # @source Kubernetes
     kubernetes: Kubernetes
     # @source Virtual Machine
     virtualMachine: Máquina virtual
+    # @reason 'WSL' is the product name (Windows Subsystem for Linux).
     # @source WSL
     wsl: WSL
   resetDialog:
@@ -1069,12 +1081,15 @@ preferences:
     emulation: Emulación
     # @source Environment
     environment: Entorno
+    # @reason 'General' is the same word in Spanish.
     # @source General
     general: General
+    # @reason 'Hardware' is an established loanword in Spanish (RAE), used as-is in Windows/macOS Spanish UIs.
     # @source Hardware
     hardware: Hardware
     # @source Integrations
     integrations: Integraciones
+    # @reason 'Proxy' is an established loanword in Spanish (RAE), used as-is in Spanish network settings UIs.
     # @source Proxy
     proxy: Proxy
     # @source Volumes
@@ -1092,6 +1107,7 @@ preferencesWindow:
   # @source Rancher Desktop - Preferences
   title: Rancher Desktop - Configuración
 prefs:
+  # @reason 'Experimental' is the same word in Spanish.
   # @source Experimental
   experimental: Experimental
   # @source This setting requires macOS 13.3 (Ventura) or later.
@@ -1111,6 +1127,7 @@ product:
     fullName: Motor de contenedores
   # @source deactivated
   deactivated: desactivado
+  # @reason 'Kubernetes' is a product name.
   # @source Kubernetes
   kubernetesVersion: Kubernetes
   # @source Network status
@@ -1503,6 +1520,7 @@ tray:
     stopped: Kubernetes está detenido
     # @source Kubernetes is shutting down
     stopping: Kubernetes se está deteniendo
+  # @reason 'Rancher Desktop' is the product name.
   # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
@@ -1676,6 +1694,7 @@ virtualMachine:
         9p:
           # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
           description: Expone el sistema de archivos mediante los dispositivos virtio-9p-pci de QEMU.
+          # @reason Literal mount-type value; must match the setting, kept in English.
           # @source 9p
           label: 9p
           options:
@@ -1683,10 +1702,13 @@ virtualMachine:
               # @source Cache Mode
               legend: Modo de caché
               options:
+                # @reason Literal 9p cache-mode value; must match the setting, kept in English.
                 # @source fscache
                 fscache: fscache
+                # @reason Literal 9p cache-mode value; must match the setting, kept in English.
                 # @source loose
                 loose: loose
+                # @reason Literal 9p cache-mode value; must match the setting, kept in English.
                 # @source mmap
                 mmap: mmap
                 # @reason Literal 9p cache-mode value; must match the setting, kept in English.
@@ -1703,10 +1725,13 @@ virtualMachine:
               # @source Protocol Version
               legend: Versión del protocolo
               options:
+                # @reason Literal 9p protocol-version value; must match the setting, kept in English.
                 # @source 9p2000
                 9p2000: 9p2000
+                # @reason Literal 9p protocol-version value; must match the setting, kept in English.
                 # @source 9p2000.L
                 9p2000L: 9p2000.L
+                # @reason Literal 9p protocol-version value; must match the setting, kept in English.
                 # @source 9p2000.u
                 9p2000u: 9p2000.u
               # @source 9P protocol version
@@ -1715,13 +1740,16 @@ virtualMachine:
               # @source Security Model
               legend: Modelo de seguridad
               options:
+                # @reason Literal 9p security-model value; kept in English.
                 # @source mapped-file
                 mapped-file: mapped-file
+                # @reason Literal 9p security-model value; kept in English.
                 # @source mapped-xattr
                 mapped-xattr: mapped-xattr
                 # @reason Literal 9p security-model value; kept in English.
                 # @source none
                 none: none
+                # @reason Literal 9p security-model value; kept in English.
                 # @source passthrough
                 passthrough: passthrough
               # @source Security model used for the export path
@@ -1729,12 +1757,14 @@ virtualMachine:
         reverse-sshfs:
           # @source Exposes the filesystem by running an SFTP server.
           description: Expone el sistema de archivos ejecutando un servidor SFTP.
+          # @reason Literal mount-type value; must match the setting, kept in English.
           # @source reverse-sshfs
           label: reverse-sshfs
         virtiofs:
           # @reason 'Apple Virtualization' kept as the framework's product name.
           # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
           description: Expone el sistema de archivos mediante un dispositivo de directorio compartido del framework Apple Virtualization.
+          # @reason Literal mount-type value; must match the setting, kept in English.
           # @source virtiofs
           label: virtiofs
   proxy:
@@ -1769,12 +1799,14 @@ virtualMachine:
       qemu:
         # @source Use the QEMU emulator.
         description: Usar el emulador QEMU.
+        # @reason 'QEMU' is a product name.
         # @source QEMU
         label: QEMU
       vz:
         # @reason 'Apple Virtualization' kept as the framework's product name.
         # @source Use the Apple Virtualization framework.
         description: Usar el framework Apple Virtualization.
+        # @reason 'VZ' is the identifier for the Apple Virtualization framework backend.
         # @source VZ
         label: VZ
   useRosetta:
@@ -1840,5 +1872,6 @@ webAssembly:
   description: ¡Lea la documentación antes de habilitar la función experimental de WebAssembly!
   # @source Enabled
   enabled: Habilitado
+  # @reason 'WebAssembly (Wasm)' is a technology name.
   # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)

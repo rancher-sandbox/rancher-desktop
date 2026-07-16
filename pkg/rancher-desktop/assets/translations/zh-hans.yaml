@@ -368,6 +368,7 @@ containerInfo:
     placeholder: 搜索日志...
     # @source Previous match
     previousMatch: 上一个匹配
+  # @reason tab opening a shell in the container; Shell is kept untranslated in Chinese dev UIs (Kubernetes zh docs, VS Code)
   # @source Shell
   shell: Shell
   # @source Stats
@@ -383,6 +384,7 @@ containerInspect:
     args: 参数
     # @source Command
     command: 命令
+    # @reason names the Docker config field Entrypoint (ENTRYPOINT directive); kept untranslated in Chinese Docker/Kubernetes docs
     # @source Entrypoint
     entrypoint: Entrypoint
   error:
@@ -423,6 +425,7 @@ containerInspect:
   summary:
     # @source Created
     created: 创建时间
+    # @reason ID is standard in Chinese UIs; this file already uses 镜像 ID and 漏洞 ID
     # @source ID
     id: ID
     # @source Image
@@ -437,6 +440,7 @@ containerStats:
   charts:
     # @source Block I/O (bytes/s)
     blockIO: 块 I/O（字节/秒）
+    # @reason CPU is a standard untranslated abbreviation in Chinese (file uses CPU 数量); % is universal
     # @source CPU %
     cpu: CPU %
     # @source Memory
@@ -500,6 +504,7 @@ containers:
   # @source Containers
   title: 容器
 dashboard:
+  # @reason @no-translate product name
   # @source Rancher Dashboard
   windowTitle: Rancher Dashboard
 denyRoot:
@@ -525,6 +530,7 @@ diagnostics:
       body: 尝试显示已静音的诊断项。
       # @source No results found
       heading: 未找到结果
+      # @reason icon identifier, not translatable text
       # @source icon-search
       icon: icon-search
     success:
@@ -532,6 +538,7 @@ diagnostics:
       body: Rancher Desktop 运行正常。
       # @source No problems detected
       heading: 未检测到问题
+      # @reason icon identifier, not translatable text
       # @source icon-checkmark
       icon: icon-checkmark
   # @source Show Muted
@@ -573,6 +580,7 @@ dialog:
     # @source Network failure
     title: 网络故障
 extensions:
+  # @reason icon identifier, not translatable text
   # @source icon-extension
   icon: icon-extension
   installed:
@@ -584,6 +592,7 @@ extensions:
         text: 浏览扩展
       # @source No extensions installed
       heading: 未安装扩展
+      # @reason icon identifier, not translatable text
       # @source icon-extension
       icon: icon-extension
     list:
@@ -809,7 +818,7 @@ images:
     # @source Error: Unknown state; please reload.
     unknown: 错误：未知状态，请重新加载。
   # @source Images
-  title: Images
+  title: 镜像
 integrations:
   windows:
     # @source Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros
@@ -827,6 +836,7 @@ kubernetesPrefs:
   kubernetes:
     # @source Enable Kubernetes
     label: 启用 Kubernetes
+    # @reason product name
     # @source Kubernetes
     legendText: Kubernetes
   options:
@@ -1079,10 +1089,12 @@ preferences:
     application: 应用程序
     # @source Container Engine
     containerEngine: 容器引擎
+    # @reason product name
     # @source Kubernetes
     kubernetes: Kubernetes
     # @source Virtual Machine
     virtualMachine: 虚拟机
+    # @reason product name (Windows Subsystem for Linux); kept as-is in Chinese Windows documentation
     # @source WSL
     wsl: WSL
   resetDialog:
@@ -1142,12 +1154,14 @@ prefs:
   onlyWithVZ_x64: 此设置需要使用 VZ 仿真模式。VZ 仅在 macOS 13.0（Ventura）或更高版本上可用。
 product:
   containerEngine:
+    # @reason space-constrained status-bar abbreviation; the tooltip shows the translated full name 容器引擎
     # @source CE
     abbreviation: CE
     # @source Container Engine
     fullName: 容器引擎
   # @source deactivated
   deactivated: 已停用
+  # @reason product name (status-bar label next to the version number)
   # @source Kubernetes
   kubernetesVersion: Kubernetes
   # @source Network status
@@ -1407,6 +1421,7 @@ snapshots:
     body: 点击"创建快照"开始
     # @source No snapshots found
     heading: 未找到快照
+    # @reason icon identifier, not translatable text
     # @source icon-search
     icon: icon-search
   info:
@@ -1476,8 +1491,9 @@ sortableTable:
         other {{count}项中的第{from} - {to}项}}
   # @source Reset
   resetFilters: 重置
+  # @reason placeholder of the table filter box (en source is Filter despite the key name); 过滤 matches addFilter/filterFor terminology
   # @source Filter
-  search: Filter
+  search: 过滤
   # @source Select a column
   selectCol: 选择列
   tableHeader:
@@ -1555,6 +1571,7 @@ tray:
     stopped: Kubernetes 已停止
     # @source Kubernetes is shutting down
     stopping: Kubernetes 正在关闭
+  # @reason product name
   # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
@@ -1905,5 +1922,6 @@ webAssembly:
   description: 启用实验性 WebAssembly 功能前请先阅读文档！
   # @source Enabled
   enabled: 已启用
+  # @reason technology name; kept as-is in Chinese documentation
   # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)

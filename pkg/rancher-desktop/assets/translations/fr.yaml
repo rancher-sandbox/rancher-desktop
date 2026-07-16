@@ -124,6 +124,7 @@ asyncButton:
     # @source Deactivating&hellip;
     waiting: Désactivation&hellip;
   default:
+    # @reason 'Action' is the same word in French
     # @source Action
     action: Action
     # @source Error
@@ -267,11 +268,13 @@ containerEngine:
     containerd:
       # @source Namespaces for container images; use with nerdctl.
       description: Espaces de noms pour les images de conteneurs ; à utiliser avec nerdctl.
+      # @reason containerd is a product name
       # @source containerd
       label: containerd
     moby:
       # @source Docker API; use with Docker CLI.
       description: API Docker ; à utiliser avec la CLI Docker.
+      # @reason dockerd and moby are product names
       # @source dockerd (moby)
       label: dockerd (moby)
 containerInfo:
@@ -321,6 +324,7 @@ containerInspect:
   # @source Loading container details…
   loading: Chargement des détails du conteneur…
   mounts:
+    # @reason 'Destination' is the same word in French
     # @source Destination
     destination: Destination
     # @reason Kept RO/RW, the mount-mode abbreviations shown by docker itself
@@ -332,8 +336,10 @@ containerInspect:
     # @reason Kept in English to match the RO/RW values displayed in this column
     # @source R/W
     rw: R/W
+    # @reason 'Source' is the same word in French
     # @source Source
     source: Source
+    # @reason 'Type' is the same word in French
     # @source Type
     type: Type
   # @reason "Aucune entrée" (no entries) avoids gender agreement with the varying section nouns
@@ -350,13 +356,16 @@ containerInspect:
     labels: Étiquettes
     # @source Mounts
     mounts: Montages
+    # @reason 'Ports' is the same word in French
     # @source Ports
     ports: Ports
   summary:
     # @source Created
     created: Créé
+    # @reason 'ID' is the standard abbreviation in French UIs (cf. « ID de l'image » elsewhere in this file)
     # @source ID
     id: ID
+    # @reason 'Image' is the same word in French
     # @source Image
     image: Image
     # @source IP Address
@@ -376,8 +385,10 @@ containerStats:
     # @source Network I/O (bytes/s)
     network: E/S réseau (octets/s)
   interval:
+    # @reason 'min' is the French abbreviation for minutes as well
     # @source {minutes} min
     minutes: '{minutes} min'
+    # @reason 's' is the SI symbol for seconds in French as well
     # @source {seconds} s
     seconds: '{seconds} s'
   # @source Stats are currently only available for the Docker (Moby) engine.
@@ -399,6 +410,7 @@ containerStats:
     # @reason RX/TX are the standard network abbreviations in French as well
     # @source RX
     rx: RX
+    # @reason RX/TX are the standard network abbreviations in French as well
     # @source TX
     tx: TX
     # @reason Feminine, agrees with "mémoire"
@@ -421,8 +433,10 @@ containers:
       header:
         # @source Name
         containerName: Nom
+        # @reason 'Image' is the same word in French
         # @source Image
         image: Image
+        # @reason 'Port(s)' is the same word in French
         # @source Port(s)
         ports: Port(s)
         # @source Uptime
@@ -481,6 +495,7 @@ diagnostics:
     mute: Ignorer
     # @source Name
     name: Nom
+  # @reason nav page title; 'Diagnostics' is the same word in French (plural of « diagnostic »)
   # @source Diagnostics
   title: Diagnostics
 dialog:
@@ -552,6 +567,7 @@ firstRun:
     otherVersions: Autres versions
     # @source Recommended Versions
     recommendedVersions: Versions recommandées
+  # @reason 'OK' is standard on French buttons
   # @source OK
   ok: OK
   # @source Welcome to Rancher Desktop by SUSE
@@ -581,6 +597,7 @@ generic:
   cancel: Annuler
   # @source Close
   close: Fermer
+  # @reason list-separator punctuation, identical in French
   # @source , 
   comma: ', '
   # @reason Port-forwarding action button (PortForwarding.vue); French uses "redirection de ports"
@@ -590,6 +607,7 @@ generic:
   loading: Chargement&hellip;
   # @source Namespace
   namespace: Espace de noms
+  # @reason 'OK' is standard on French buttons
   # @source OK
   ok: OK
   # @source Rerun
@@ -707,6 +725,7 @@ images:
       header:
         # @source Image ID
         imageId: ID de l'image
+        # @reason 'Image' is the same word in French
         # @source Image
         imageName: Image
         # @source Size
@@ -721,6 +740,7 @@ images:
     title: Sortie de la console
   scan:
     details:
+      # @reason 'Description' is the same word in French
       # @source Description
       description: Description
       # @source Primary URL
@@ -767,6 +787,7 @@ images:
     imagesUnready: En attente de la disponibilité du gestionnaire d'images
     # @source Error: Unknown state; please reload.
     unknown: 'Erreur : état inconnu ; veuillez recharger.'
+  # @reason nav page title; 'Images' is the same word in French
   # @source Images
   title: Images
 integrations:
@@ -786,9 +807,11 @@ kubernetesPrefs:
   kubernetes:
     # @source Enable Kubernetes
     label: Activer Kubernetes
+    # @reason Kubernetes is a product name
     # @source Kubernetes
     legendText: Kubernetes
   options:
+    # @reason 'Options' is the same word in French
     # @source Options
     legendText: Options
     # @reason "Operator" translated (standard Kubernetes term "opérateur"); "Spin" is a product name.
@@ -895,6 +918,7 @@ mainMenu:
   preferences: Paramètres
   # @source Quit {appName}
   quit: Quitter {appName}
+  # @reason macOS Services menu (role: services); named 'Services' in French macOS as well
   # @source Services
   services: Services
   # @source Show All
@@ -930,6 +954,7 @@ marketplace:
   installed:
     table:
       header:
+        # @reason 'Description' is the same word in French
         # @source Description
         description: Description
         # @source Name
@@ -960,6 +985,7 @@ marketplace:
     # @reason Feminine plural, agreeing with "extensions".
     # @source Installed
     installed: Installées
+  # @reason nav page title; 'Extensions' is the same word in French
   # @source Extensions
   title: Extensions
 nav:
@@ -997,6 +1023,7 @@ portForwarding:
         name: Nom
         # @source Namespace
         namespace: Espace de noms
+        # @reason 'Port' is the same word in French
         # @source Port
         port: Port
   sortableTables:
@@ -1041,14 +1068,17 @@ preferences:
     # @source Locked due to organization's policy
     tooltip: Verrouillé par la politique de l'organisation
   nav:
+    # @reason 'Application' is the same word in French
     # @source Application
     application: Application
     # @source Container Engine
     containerEngine: Moteur de conteneurs
+    # @reason Kubernetes is a product name
     # @source Kubernetes
     kubernetes: Kubernetes
     # @source Virtual Machine
     virtualMachine: Machine virtuelle
+    # @reason WSL (Windows Subsystem for Linux) is a product name
     # @source WSL
     wsl: WSL
   resetDialog:
@@ -1075,8 +1105,10 @@ preferences:
     hardware: Matériel
     # @source Integrations
     integrations: Intégrations
+    # @reason 'Proxy' is the same word in French; « proxy » is used throughout this file
     # @source Proxy
     proxy: Proxy
+    # @reason 'Volumes' is the same word in French
     # @source Volumes
     volumes: Volumes
 preferencesWindow:
@@ -1111,6 +1143,7 @@ product:
     fullName: Moteur de conteneurs
   # @source deactivated
   deactivated: désactivé
+  # @reason Kubernetes is a product name
   # @source Kubernetes
   kubernetesVersion: Kubernetes
   # @source Network status
@@ -1122,6 +1155,7 @@ product:
     offline: hors ligne
     # @source online
     online: en ligne
+  # @reason 'Version' is the same word in French
   # @source Version
   version: Version
 progress:
@@ -1293,6 +1327,7 @@ snapshots:
       # @source Create
       submit: Créer
     description:
+      # @reason 'Description' is the same word in French
       # @source Description
       label: Description
     # @source Rancher Desktop will be temporarily unavailable while creating a new Snapshot
@@ -1401,6 +1436,7 @@ sortableTable:
   addFilter: Ajouter un filtre
   bulkActions:
     collapsed:
+      # @reason 'Actions' is the same word in French
       # @source Actions
       label: Actions
   # @source Filter for...
@@ -1440,6 +1476,7 @@ sortableTable:
 sudoPrompt:
   # @source Always run without administrative access
   alwaysRunWithout: Toujours exécuter sans accès administrateur
+  # @reason 'OK' is standard on French buttons
   # @source OK
   buttonText: OK
   # @source This will modify the following paths:
@@ -1502,6 +1539,7 @@ tray:
     stopped: Kubernetes est arrêté
     # @source Kubernetes is shutting down
     stopping: Kubernetes est en cours d’arrêt
+  # @reason Rancher Desktop is the product name
   # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
@@ -1561,6 +1599,7 @@ troubleshooting:
 unmetPrerequisites:
   # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
   action: Veuillez vous assurer que toutes les conditions requises sont remplies, puis réessayez. Rancher Desktop va maintenant se fermer.
+  # @reason 'OK' is standard on French buttons
   # @source OK
   buttonText: OK
   # @source Rancher Desktop cannot start because requirements are missing or not configured:
@@ -1676,6 +1715,7 @@ virtualMachine:
         9p:
           # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
           description: Expose le système de fichiers en utilisant les périphériques virtio-9p-pci de QEMU.
+          # @reason literal mount-type config value
           # @source 9p
           label: 9p
           options:
@@ -1683,10 +1723,13 @@ virtualMachine:
               # @source Cache Mode
               legend: Mode de cache
               options:
+                # @reason literal 9p cache-mode config value
                 # @source fscache
                 fscache: fscache
+                # @reason literal 9p cache-mode config value
                 # @source loose
                 loose: loose
+                # @reason literal 9p cache-mode config value
                 # @source mmap
                 mmap: mmap
                 # @reason literal mount option value; kept in English
@@ -1704,10 +1747,13 @@ virtualMachine:
               # @source Protocol Version
               legend: Version du protocole
               options:
+                # @reason literal 9p protocol-version identifier
                 # @source 9p2000
                 9p2000: 9p2000
+                # @reason literal 9p protocol-version identifier
                 # @source 9p2000.L
                 9p2000L: 9p2000.L
+                # @reason literal 9p protocol-version identifier
                 # @source 9p2000.u
                 9p2000u: 9p2000.u
               # @source 9P protocol version
@@ -1716,13 +1762,16 @@ virtualMachine:
               # @source Security Model
               legend: Modèle de sécurité
               options:
+                # @reason literal 9p security-model config value
                 # @source mapped-file
                 mapped-file: mapped-file
+                # @reason literal 9p security-model config value
                 # @source mapped-xattr
                 mapped-xattr: mapped-xattr
                 # @reason literal mount option value; kept in English
                 # @source none
                 none: none
+                # @reason literal 9p security-model config value
                 # @source passthrough
                 passthrough: passthrough
               # @source Security model used for the export path
@@ -1730,11 +1779,13 @@ virtualMachine:
         reverse-sshfs:
           # @source Exposes the filesystem by running an SFTP server.
           description: Expose le système de fichiers en exécutant un serveur SFTP.
+          # @reason literal mount-type config value
           # @source reverse-sshfs
           label: reverse-sshfs
         virtiofs:
           # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
           description: Expose le système de fichiers en utilisant un périphérique de répertoire partagé du framework Virtualization d’Apple.
+          # @reason literal mount-type config value
           # @source virtiofs
           label: virtiofs
   proxy:
@@ -1758,6 +1809,7 @@ virtualMachine:
       placeholder: IP, CIDR, domaine ou caractère générique (*.example.com) pour contourner le proxy
     # @source Password
     password: Mot de passe
+    # @reason 'Port' is the same word in French
     # @source Port
     port: Port
     # @source Username
@@ -1769,11 +1821,13 @@ virtualMachine:
       qemu:
         # @source Use the QEMU emulator.
         description: Utiliser l’émulateur QEMU.
+        # @reason QEMU is a product name
         # @source QEMU
         label: QEMU
       vz:
         # @source Use the Apple Virtualization framework.
         description: Utiliser le framework Virtualization d’Apple.
+        # @reason VZ names Apple's Virtualization framework
         # @source VZ
         label: VZ
   useRosetta:
@@ -1803,6 +1857,7 @@ volumes:
         modified: Modifié
         # @source Name
         name: Nom
+        # @reason 'Permissions' is the same word in French
         # @source Permissions
         permissions: Permissions
         # @source Size
@@ -1832,6 +1887,7 @@ volumes:
   sortableTables:
     # @source There are no volumes to show
     noRows: Aucun volume à afficher
+  # @reason nav page title; 'Volumes' is the same word in French
   # @source Volumes
   title: Volumes
 webAssembly:
@@ -1839,5 +1895,6 @@ webAssembly:
   description: Veuillez lire la documentation avant d’activer la fonctionnalité expérimentale WebAssembly !
   # @source Enabled
   enabled: Activé
+  # @reason WebAssembly/Wasm is a technology name
   # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)

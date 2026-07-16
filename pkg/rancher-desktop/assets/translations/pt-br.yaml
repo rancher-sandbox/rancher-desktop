@@ -270,11 +270,13 @@ containerEngine:
       # @reason 'Namespaces' kept in English: containerd/Kubernetes technical term
       # @source Namespaces for container images; use with nerdctl.
       description: Namespaces para imagens de contêiner; use com nerdctl.
+      # @reason product name of the container runtime, not translatable
       # @source containerd
       label: containerd
     moby:
       # @source Docker API; use with Docker CLI.
       description: API do Docker; use com a CLI do Docker.
+      # @reason product names: the dockerd daemon and the Moby project
       # @source dockerd (moby)
       label: dockerd (moby)
 containerInfo:
@@ -296,6 +298,7 @@ containerInfo:
     placeholder: Pesquisar logs...
     # @source Previous match
     previousMatch: Ocorrência anterior
+  # @reason 'Shell' kept in English: standard term among Brazilian developers; tab label next to Logs/Stats
   # @source Shell
   shell: Shell
   # @source Stats
@@ -358,6 +361,7 @@ containerInspect:
   summary:
     # @source Created
     created: Criado
+    # @reason 'ID' is the same abbreviation in pt-br
     # @source ID
     id: ID
     # @source Image
@@ -372,6 +376,7 @@ containerStats:
   charts:
     # @source Block I/O (bytes/s)
     blockIO: E/S de bloco (bytes/s)
+    # @reason 'CPU' and '%' are identical in pt-br
     # @source CPU %
     cpu: CPU %
     # @source Memory
@@ -379,8 +384,10 @@ containerStats:
     # @source Network I/O (bytes/s)
     network: E/S de rede (bytes/s)
   interval:
+    # @reason 'min' is the same abbreviation for 'minutos' in pt-br
     # @source {minutes} min
     minutes: '{minutes} min'
+    # @reason 's' is the SI symbol for seconds, same in pt-br
     # @source {seconds} s
     seconds: '{seconds} s'
   # @source Stats are currently only available for the Docker (Moby) engine.
@@ -557,6 +564,7 @@ firstRun:
     otherVersions: Outras versões
     # @source Recommended Versions
     recommendedVersions: Versões recomendadas
+  # @reason 'OK' is the standard dialog button label in pt-br
   # @source OK
   ok: OK
   # @reason 'Boas-vindas' avoids the gendered 'Bem-vindo/Bem-vinda'; widely used in Brazilian product UI
@@ -588,6 +596,7 @@ generic:
   cancel: Cancelar
   # @source Close
   close: Fechar
+  # @reason list separator punctuation, identical in pt-br
   # @source , 
   comma: ', '
   # @reason Used as the port-forwarding action button (PortForwarding.vue), not browser-style navigation
@@ -598,6 +607,7 @@ generic:
   # @reason Kubernetes/containerd technical term, kept in English
   # @source Namespace
   namespace: Namespace
+  # @reason 'OK' is the standard dialog button label in pt-br
   # @source OK
   ok: OK
   # @source Rerun
@@ -797,6 +807,7 @@ kubernetesPrefs:
   kubernetes:
     # @source Enable Kubernetes
     label: Habilitar Kubernetes
+    # @reason Kubernetes is a product name
     # @source Kubernetes
     legendText: Kubernetes
   options:
@@ -986,6 +997,7 @@ pathManagement:
     manual:
       # @source Rancher Desktop does not change your PATH configuration; add <code>$HOME/.rd/bin</code> to your path manually.
       description: O Rancher Desktop não altera a configuração do seu PATH; adicione <code>$HOME/.rd/bin</code> ao seu PATH manualmente.
+      # @reason 'Manual' is the same word in Portuguese
       # @source Manual
       label: Manual
     rcFiles:
@@ -1057,10 +1069,12 @@ preferences:
     # @reason Common pt-br rendering of "container engine" (used in Red Hat and Microsoft documentation)
     # @source Container Engine
     containerEngine: Mecanismo de contêiner
+    # @reason Kubernetes is a product name
     # @source Kubernetes
     kubernetes: Kubernetes
     # @source Virtual Machine
     virtualMachine: Máquina virtual
+    # @reason WSL is a Microsoft product name (Windows Subsystem for Linux)
     # @source WSL
     wsl: WSL
   resetDialog:
@@ -1083,12 +1097,15 @@ preferences:
     environment: Ambiente
     # @source General
     general: Geral
+    # @reason 'Hardware' is an established loanword in pt-br
     # @source Hardware
     hardware: Hardware
     # @source Integrations
     integrations: Integrações
+    # @reason 'Proxy' is the standard term in pt-br, as in Windows/macOS network settings
     # @source Proxy
     proxy: Proxy
+    # @reason 'Volumes' is the same word in Portuguese
     # @source Volumes
     volumes: Volumes
 preferencesWindow:
@@ -1104,6 +1121,7 @@ preferencesWindow:
   # @source Rancher Desktop - Preferences
   title: Rancher Desktop - Configurações
 prefs:
+  # @reason 'Experimental' is the same word in Portuguese
   # @source Experimental
   experimental: Experimental
   # @source This setting requires macOS 13.3 (Ventura) or later.
@@ -1123,6 +1141,7 @@ product:
     fullName: Mecanismo de contêiner
   # @source deactivated
   deactivated: desativado
+  # @reason Kubernetes is a product name; status bar label for the version
   # @source Kubernetes
   kubernetesVersion: Kubernetes
   # @source Network status
@@ -1133,6 +1152,7 @@ product:
     # @reason "offline"/"online" are standard in pt-br
     # @source offline
     offline: offline
+    # @reason 'online' is standard in pt-br, matching sibling 'offline'
     # @source online
     online: online
   # @source Version
@@ -1399,6 +1419,7 @@ snapshots:
       success: Snapshot '<b>'{snapshot}'</b>' restaurado
     # @source  at {time}
     when: ' às {time}'
+  # @reason 'snapshot' kept in English throughout this file: established term in Brazilian virtualization usage
   # @source Snapshots
   title: Snapshots
 sortableTable:
@@ -1453,6 +1474,7 @@ sortableTable:
 sudoPrompt:
   # @source Always run without administrative access
   alwaysRunWithout: Sempre executar sem acesso administrativo
+  # @reason 'OK' is the standard dialog button label in pt-br
   # @source OK
   buttonText: OK
   # @source This will modify the following paths:
@@ -1516,6 +1538,7 @@ tray:
     stopped: O Kubernetes está parado
     # @source Kubernetes is shutting down
     stopping: O Kubernetes está sendo encerrado
+  # @reason Rancher Desktop is the product name
   # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
@@ -1547,6 +1570,7 @@ troubleshooting:
       buttonText: Mostrar logs
       # @source Show Rancher Desktop logs
       description: Mostrar os logs do Rancher Desktop
+      # @reason 'Logs' kept in English: standard term among Brazilian developers, matching containerInfo.logs
       # @source Logs
       title: Logs
   kubernetes:
@@ -1576,6 +1600,7 @@ troubleshooting:
 unmetPrerequisites:
   # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
   action: Verifique se todos os requisitos foram atendidos e tente novamente. O Rancher Desktop será fechado agora.
+  # @reason 'OK' is the standard dialog button label in pt-br
   # @source OK
   buttonText: OK
   # @source Rancher Desktop cannot start because requirements are missing or not configured:
@@ -1690,6 +1715,7 @@ virtualMachine:
         9p:
           # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
           description: Expõe o sistema de arquivos usando os dispositivos virtio-9p-pci do QEMU.
+          # @reason literal mount type value (9p protocol name)
           # @source 9p
           label: 9p
           options:
@@ -1697,11 +1723,13 @@ virtualMachine:
               # @source Cache Mode
               legend: Modo de cache
               options:
+                # @reason literal cache-mode config value
                 # @source fscache
                 fscache: fscache
                 # @reason literal option value passed to QEMU; not translated
                 # @source loose
                 loose: loose
+                # @reason literal cache-mode config value
                 # @source mmap
                 mmap: mmap
                 # @reason literal option value passed to QEMU; not translated
@@ -1718,10 +1746,13 @@ virtualMachine:
               # @source Protocol Version
               legend: Versão do protocolo
               options:
+                # @reason literal 9p protocol version identifier
                 # @source 9p2000
                 9p2000: 9p2000
+                # @reason literal 9p protocol version identifier
                 # @source 9p2000.L
                 9p2000L: 9p2000.L
+                # @reason literal 9p protocol version identifier
                 # @source 9p2000.u
                 9p2000u: 9p2000.u
               # @source 9P protocol version
@@ -1730,13 +1761,16 @@ virtualMachine:
               # @source Security Model
               legend: Modelo de segurança
               options:
+                # @reason literal security-model config value
                 # @source mapped-file
                 mapped-file: mapped-file
+                # @reason literal security-model config value
                 # @source mapped-xattr
                 mapped-xattr: mapped-xattr
                 # @reason literal option value passed to QEMU; not translated
                 # @source none
                 none: none
+                # @reason literal security-model config value
                 # @source passthrough
                 passthrough: passthrough
               # @source Security model used for the export path
@@ -1744,11 +1778,13 @@ virtualMachine:
         reverse-sshfs:
           # @source Exposes the filesystem by running an SFTP server.
           description: Expõe o sistema de arquivos executando um servidor SFTP.
+          # @reason literal mount type value
           # @source reverse-sshfs
           label: reverse-sshfs
         virtiofs:
           # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
           description: Expõe o sistema de arquivos usando um dispositivo de diretório compartilhado do framework Apple Virtualization.
+          # @reason literal mount type value (virtiofs technology name)
           # @source virtiofs
           label: virtiofs
   proxy:
@@ -1783,11 +1819,13 @@ virtualMachine:
       qemu:
         # @source Use the QEMU emulator.
         description: Usar o emulador QEMU.
+        # @reason QEMU is a product name
         # @source QEMU
         label: QEMU
       vz:
         # @source Use the Apple Virtualization framework.
         description: Usar o framework Apple Virtualization.
+        # @reason literal VM type value, abbreviation of Apple's Virtualization.framework
         # @source VZ
         label: VZ
   useRosetta:
@@ -1830,6 +1868,7 @@ volumes:
       header:
         # @source Created
         created: Criado
+        # @reason 'Driver' is an established loanword in pt-br Docker terminology
         # @source Driver
         driver: Driver
         # @source Mount Point
@@ -1846,6 +1885,7 @@ volumes:
   sortableTables:
     # @source There are no volumes to show
     noRows: Não há volumes para mostrar
+  # @reason 'Volumes' is the same word in Portuguese
   # @source Volumes
   title: Volumes
 webAssembly:
@@ -1853,5 +1893,6 @@ webAssembly:
   description: Leia a documentação antes de ativar o recurso experimental de WebAssembly!
   # @source Enabled
   enabled: Ativado
+  # @reason WebAssembly and Wasm are technology names
   # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)

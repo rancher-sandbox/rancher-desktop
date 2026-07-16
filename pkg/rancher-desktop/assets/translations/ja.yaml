@@ -269,11 +269,13 @@ containerEngine:
     containerd:
       # @source Namespaces for container images; use with nerdctl.
       description: コンテナーイメージの名前空間。nerdctlと組み合わせて使用します。
+      # @reason product name of the container runtime, always lowercase Latin
       # @source containerd
       label: containerd
     moby:
       # @source Docker API; use with Docker CLI.
       description: Docker API。Docker CLIと組み合わせて使用します。
+      # @reason binary name and project name, not translatable text
       # @source dockerd (moby)
       label: dockerd (moby)
 containerInfo:
@@ -355,6 +357,7 @@ containerInspect:
   summary:
     # @source Created
     created: 作成日時
+    # @reason Latin abbreviation standard in Japanese UIs (Docker Desktop ja uses ID)
     # @source ID
     id: ID
     # @source Image
@@ -369,6 +372,7 @@ containerStats:
   charts:
     # @source Block I/O (bytes/s)
     blockIO: ブロックI/O（バイト/秒）
+    # @reason chart legend; CPU is standard Latin in Japanese UIs, matches Docker Desktop ja
     # @source CPU %
     cpu: CPU %
     # @source Memory
@@ -551,6 +555,7 @@ firstRun:
     otherVersions: その他のバージョン
     # @source Recommended Versions
     recommendedVersions: 推奨バージョン
+  # @reason OK button label is kept as-is in Japanese Windows/macOS dialogs
   # @source OK
   ok: OK
   # @reason "Rancher Desktop by SUSE" kept intact as branding.
@@ -593,6 +598,7 @@ generic:
   loading: 読み込み中&hellip;
   # @source Namespace
   namespace: 名前空間
+  # @reason OK button label is kept as-is in Japanese Windows/macOS dialogs
   # @source OK
   ok: OK
   # @source Rerun
@@ -787,6 +793,7 @@ kubernetesPrefs:
   kubernetes:
     # @source Enable Kubernetes
     label: Kubernetes を有効にする
+    # @reason product name, kept in Latin script per Japanese convention
     # @source Kubernetes
     legendText: Kubernetes
   options:
@@ -1043,10 +1050,12 @@ preferences:
     application: アプリケーション
     # @source Container Engine
     containerEngine: コンテナーエンジン
+    # @reason product name, kept in Latin script per Japanese convention
     # @source Kubernetes
     kubernetes: Kubernetes
     # @source Virtual Machine
     virtualMachine: 仮想マシン
+    # @reason Microsoft product acronym (Windows Subsystem for Linux), never localized
     # @source WSL
     wsl: WSL
   resetDialog:
@@ -1110,6 +1119,7 @@ product:
     fullName: コンテナーエンジン
   # @source deactivated
   deactivated: 無効
+  # @reason status-bar label showing the product name next to the version number
   # @source Kubernetes
   kubernetesVersion: Kubernetes
   # @source Network status
@@ -1441,6 +1451,7 @@ sortableTable:
 sudoPrompt:
   # @source Always run without administrative access
   alwaysRunWithout: 常に管理者権限なしで実行する
+  # @reason OK button label is kept as-is in Japanese Windows/macOS dialogs
   # @source OK
   buttonText: OK
   # @source This will modify the following paths:
@@ -1502,6 +1513,7 @@ tray:
     stopped: Kubernetes は停止しています
     # @source Kubernetes is shutting down
     stopping: Kubernetes はシャットダウン中です
+  # @reason application product name
   # @source Rancher Desktop
   tooltip: Rancher Desktop
 troubleshooting:
@@ -1563,6 +1575,7 @@ troubleshooting:
 unmetPrerequisites:
   # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
   action: すべての要件が満たされていることを確認してから、もう一度お試しください。Rancher Desktop を終了します。
+  # @reason OK button label is kept as-is in Japanese Windows/macOS dialogs
   # @source OK
   buttonText: OK
   # @source Rancher Desktop cannot start because requirements are missing or not configured:
@@ -1779,11 +1792,13 @@ virtualMachine:
       qemu:
         # @source Use the QEMU emulator.
         description: QEMU エミュレーターを使用します。
+        # @reason emulator product name
         # @source QEMU
         label: QEMU
       vz:
         # @source Use the Apple Virtualization framework.
         description: Apple Virtualization フレームワークを使用します。
+        # @reason technical identifier for the Apple Virtualization.framework backend
         # @source VZ
         label: VZ
   useRosetta:
@@ -1850,5 +1865,6 @@ webAssembly:
   description: 実験的な WebAssembly 機能を有効にする前に、ドキュメントをお読みください！
   # @source Enabled
   enabled: 有効
+  # @reason technology name and its standard abbreviation
   # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)
