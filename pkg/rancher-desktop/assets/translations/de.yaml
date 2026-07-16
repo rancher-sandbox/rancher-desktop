@@ -896,6 +896,8 @@ locale:
   it: Italienisch
   # @source Japanese
   ja: Japanisch
+  # @source Korean
+  ko: Koreanisch
   # @source Portuguese (Brazilian)
   pt-br: Portugiesisch (Brasilien)
   # @source Chinese (Simplified)

@@ -12,6 +12,7 @@ This directory holds the YAML translation files for Rancher Desktop.
 | `fr.yaml` | French translation |
 | `it.yaml` | Italian translation |
 | `ja.yaml` | Japanese translation |
+| `ko.yaml` | Korean translation |
 | `pt-br.yaml` | Brazilian Portuguese translation |
 | `zh-hans.yaml` | Simplified Chinese translation |
 

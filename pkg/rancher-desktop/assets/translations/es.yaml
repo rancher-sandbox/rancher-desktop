@@ -844,6 +844,8 @@ locale:
   it: Italiano
   # @source Japanese
   ja: Japonés
+  # @source Korean
+  ko: Coreano
   # @source Portuguese (Brazilian)
   pt-br: Portugués (Brasil)
   # @source Chinese (Simplified)

@@ -855,6 +855,8 @@ locale:
   it: Italiano
   # @source Japanese
   ja: Japonês
+  # @source Korean
+  ko: Coreano
   # @reason Standard self-designation for the Brazilian Portuguese locale
   # @source Portuguese (Brazilian)
   pt-br: Português (Brasil)
