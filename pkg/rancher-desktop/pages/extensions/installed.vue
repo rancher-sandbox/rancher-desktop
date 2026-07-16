@@ -83,7 +83,7 @@ export default defineComponent({
       return this.t('extensions.installed.emptyState.heading');
     },
     emptyStateBody(): string {
-      return this.t('extensions.installed.emptyState.body', { }, true);
+      return this.t('extensions.installed.emptyState.body');
     },
     installedExtensionRows(): InstalledExtensionRow[] {
       return this.installedExtensions.map(extension => ({

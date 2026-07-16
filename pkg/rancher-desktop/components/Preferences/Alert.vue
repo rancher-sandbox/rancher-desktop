@@ -42,7 +42,7 @@ export default defineComponent({
       }
 
       if (this.alert) {
-        return this.t(this.alert, { }, true);
+        return this.t(this.alert);
       }
 
       return null;

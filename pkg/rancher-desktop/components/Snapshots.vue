@@ -93,7 +93,7 @@ export default defineComponent({
       >
         <span
           v-clean-html="t(`snapshots.info.${snapshotEvent.type}.${snapshotEvent.result}`,
-                          { snapshot: escapeHtml(snapshotEvent.snapshotName), error: snapshotEvent.error }, true)"
+                          { snapshot: escapeHtml(snapshotEvent.snapshotName), error: snapshotEvent.error })"
           class="event-message"
         />
         <span
