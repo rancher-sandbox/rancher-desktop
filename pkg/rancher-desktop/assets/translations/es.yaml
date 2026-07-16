@@ -1,0 +1,1836 @@
+action:
+  # @source Refresh
+  refresh: Actualizar
+allowedImages:
+  # @source The image name needs to match one of the patterns defined in the Allowed Images preference tab.
+  alert: El nombre de la imagen debe coincidir con uno de los patrones definidos en la pestaña de configuración Imágenes permitidas.
+  # @source Enable
+  enable: Habilitar
+  errors:
+    # @source Error, item is duplicate.
+    duplicate: 'Error: el elemento está duplicado.'
+  # @source Allowed Image Patterns
+  label: Patrones de imágenes permitidas
+  patterns:
+    # @source Type the image pattern
+    placeholder: Escriba el patrón de imagen
+application:
+  behavior:
+    autoStart:
+      # @source Automatically start at login
+      label: Iniciar automáticamente al iniciar sesión
+      # @source Startup
+      legendText: Inicio
+    background:
+      # @source Background
+      legendText: Segundo plano
+      # @source Hide the app window when Rancher Desktop is running in the background. It can be opened via the Notification Icon (if visible) or by running Rancher Desktop from the Applications menu.
+      # @source
+      legendTooltip: |
+          Ocultar la ventana de la aplicación cuando Rancher Desktop se ejecuta en segundo plano. Puede abrirse mediante el icono de notificación (si está visible) o ejecutando Rancher Desktop desde el menú de aplicaciones.
+    notificationIcon:
+      # @source Hide Notification Icon
+      label: Ocultar el icono de notificación
+      # @source Notification Icon
+      legendText: Icono de notificación
+    startInBackground:
+      # @source Start in the background
+      label: Iniciar en segundo plano
+    theme:
+      # @source Appearance
+      legendText: Apariencia
+      options:
+        dark:
+          # @source Always use dark mode
+          description: Usar siempre el modo oscuro
+          # @source Dark
+          label: Oscuro
+        light:
+          # @source Always use light mode
+          description: Usar siempre el modo claro
+          # @source Light
+          label: Claro
+        system:
+          # @source Follow the operating system setting
+          description: Seguir la configuración del sistema operativo
+          # @source System
+          label: Sistema
+    windowQuitOnClose:
+      # @source Quit when closing application window
+      label: Salir al cerrar la ventana de la aplicación
+  general:
+    adminAccess:
+      # @source Allow administrative credentials (sudo access)
+      label: Permitir credenciales administrativas (acceso sudo)
+      # @source Administrative Access
+      legendText: Acceso administrativo
+      # @source If checked, {appName} will acquire administrative credentials ("sudo access") when starting. This enables bridged networking and default docker socket support. Takes effect on next start.
+      legendTooltip: Si está marcada, {appName} obtendrá credenciales administrativas ("acceso sudo") al iniciarse. Esto habilita la red en modo puente y la compatibilidad con el socket predeterminado de docker. Surte efecto en el próximo inicio.
+    automaticUpdates:
+      # @source Check for updates automatically
+      label: Buscar actualizaciones automáticamente
+      # @source Automatic Updates
+      legendText: Actualizaciones automáticas
+    statistics:
+      # @source Allow collection of anonymous statistics to help improve {appName}
+      label: Permitir la recopilación de estadísticas anónimas para ayudar a mejorar {appName}
+      # @source Statistics
+      legendText: Estadísticas
+  locale:
+    # @source Community and AI tools provide translations. English is the canonical language. Report translation issues on GitHub.
+    disclaimer: La comunidad y herramientas de IA proporcionan las traducciones. El inglés es el idioma canónico. Informe de los problemas de traducción en GitHub.
+    # @source Language
+    legendText: Idioma
+asyncButton:
+  activate:
+    # @source Activate
+    action: Activar
+    # @source Activated
+    success: Activado
+    # @source Activating&hellip;
+    waiting: Activando&hellip;
+  apply:
+    # @source Apply
+    action: Aplicar
+    # @source Applied
+    success: Aplicado
+    # @source Applying&hellip;
+    waiting: Aplicando&hellip;
+  continue:
+    # @source Continue
+    action: Continuar
+    # @source Saved
+    success: Guardado
+    # @source Saving&hellip;
+    waiting: Guardando&hellip;
+  copy:
+    # @source Click to Copy
+    action: Haga clic para copiar
+    # @source Copied!
+    success: ¡Copiado!
+  create:
+    # @source Create
+    action: Crear
+    # @source Created
+    success: Creado
+    # @source Creating&hellip;
+    waiting: Creando&hellip;
+  deactivate:
+    # @source Deactivate
+    action: Desactivar
+    # @source Deactivated
+    success: Desactivado
+    # @source Deactivating&hellip;
+    waiting: Desactivando&hellip;
+  default:
+    # @source Action
+    action: Acción
+    # @source Error
+    error: Error
+    # @source Success
+    success: Éxito
+    # @source Waiting
+    waiting: Esperando
+  delete:
+    # @source Delete
+    action: Eliminar
+    # @source Deleted
+    success: Eliminado
+    # @source Deleting&hellip;
+    waiting: Eliminando&hellip;
+  disable:
+    # @source Disable
+    action: Deshabilitar
+    # @source Disabled
+    success: Deshabilitado
+    # @source Disabling&hellip;
+    waiting: Deshabilitando&hellip;
+  done:
+    # @source Done
+    action: Listo
+    # @source Saved
+    success: Guardado
+    # @source Saving&hellip;
+    waiting: Guardando&hellip;
+  download:
+    # @source Download
+    action: Descargar
+    # @source Saving
+    success: Guardando
+    # @source Downloading&hellip;
+    waiting: Descargando&hellip;
+  edit:
+    # @source Save
+    action: Guardar
+    # @source Saved
+    success: Guardado
+    # @source Saving&hellip;
+    waiting: Guardando&hellip;
+  enable:
+    # @source Enable
+    action: Habilitar
+    # @source Enabled
+    success: Habilitado
+    # @source Enabling&hellip;
+    waiting: Habilitando&hellip;
+  finish:
+    # @source Finish
+    action: Finalizar
+    # @source Finished
+    success: Finalizado
+    # @source Finishing&hellip;
+    waiting: Finalizando&hellip;
+  import:
+    # @source Import
+    action: Importar
+    # @source Imported
+    success: Importado
+    # @source Importing&hellip;
+    waiting: Importando&hellip;
+  install:
+    # @source Install
+    action: Instalar
+    # @source Installing
+    success: Instalando
+    # @source Starting&hellip;
+    waiting: Iniciando&hellip;
+  refresh:
+    # @source
+    action: ''
+    # @reason Icon identifier, not user-visible text; kept unchanged
+    # @source refresh
+    actionIcon: refresh
+    # @source
+    error: ''
+    # @reason Icon identifier, not user-visible text; kept unchanged
+    # @source error
+    errorIcon: error
+    # @source
+    success: ''
+    # @reason Icon identifier, not user-visible text; kept unchanged
+    # @source checkmark
+    successIcon: checkmark
+    # @source
+    waiting: ''
+    # @reason Icon identifier, not user-visible text; kept unchanged
+    # @source refresh
+    waitingIcon: refresh
+  remove:
+    # @source Remove
+    action: Quitar
+    # @source Removed
+    success: Quitado
+    # @source Removing&hellip;
+    waiting: Quitando&hellip;
+  restore:
+    # @source Restore
+    action: Restaurar
+    # @source Restored
+    success: Restaurado
+    # @source Restoring&hellip;
+    waiting: Restaurando&hellip;
+  snapshot:
+    # @reason "snapshot" rendered as "instantánea", the established Spanish term for VM/state snapshots
+    # @source Snapshot Now
+    action: Crear instantánea ahora
+    # @source Creating Snapshot
+    success: Creando instantánea
+    # @source Snapshotting&hellip;
+    waiting: Creando instantánea&hellip;
+  uninstall:
+    # @source Uninstall
+    action: Desinstalar
+    # @source Uninstalled
+    success: Desinstalado
+    # @source Uninstalling&hellip;
+    waiting: Desinstalando&hellip;
+  update:
+    # @source Update
+    action: Actualizar
+    # @source Updated
+    success: Actualizado
+    # @source Updating&hellip;
+    waiting: Actualizando&hellip;
+  upgrade:
+    # @reason Spanish uses "actualizar" for both update and upgrade; no distinct common term
+    # @source Upgrade
+    action: Actualizar
+    # @source Upgrading
+    success: Actualizando
+    # @source Starting&hellip;
+    waiting: Iniciando&hellip;
+containerEngine:
+  # @source Container Engine
+  label: Motor de contenedores
+  options:
+    containerd:
+      # @source Namespaces for container images; use with nerdctl.
+      description: Espacios de nombres para las imágenes de contenedores; se usa con nerdctl.
+      # @source containerd
+      label: containerd
+    moby:
+      # @source Docker API; use with Docker CLI.
+      description: API de Docker; se usa con la CLI de Docker.
+      # @source dockerd (moby)
+      label: dockerd (moby)
+containerInfo:
+  # @source Container Info
+  fallbackTitle: Información del contenedor
+  # @source Info
+  info: Información
+  # @source Logs
+  logs: Registros
+  search:
+    # @source Search in logs
+    ariaLabel: Buscar en los registros
+    # @source Clear search
+    clearSearch: Borrar búsqueda
+    # @source Next match
+    nextMatch: Coincidencia siguiente
+    # @source Search logs...
+    placeholder: Buscar en los registros...
+    # @source Previous match
+    previousMatch: Coincidencia anterior
+  # @reason Kept in English; standard technical term with no widely used Spanish equivalent
+  # @source Shell
+  shell: Shell
+  # @source Stats
+  stats: Estadísticas
+containerInspect:
+  capabilities:
+    # @reason Feminine plural to agree with "capacidades" (Linux capabilities)
+    # @source Added
+    added: Agregadas
+    # @reason Feminine plural to agree with "capacidades"
+    # @source Dropped
+    dropped: Eliminadas
+  command:
+    # @source Args
+    args: Argumentos
+    # @source Command
+    command: Comando
+    # @reason Kept in English; Dockerfile field name used verbatim in Spanish documentation
+    # @source Entrypoint
+    entrypoint: Entrypoint
+  error:
+    # @source Failed to load container details.
+    loadFailed: No se pudieron cargar los detalles del contenedor.
+    # @source An unknown error has occurred
+    unknown: Se ha producido un error desconocido
+  # @source Loading container details…
+  loading: Cargando detalles del contenedor…
+  mounts:
+    # @source Destination
+    destination: Destino
+    # @reason Kept as-is; standard mount-mode abbreviation shown by container tooling
+    # @source RO
+    readOnly: RO
+    # @reason Kept as-is; standard mount-mode abbreviation shown by container tooling
+    # @source RW
+    readWrite: RW
+    # @reason Kept as-is; compact column header matching the RO/RW values below it
+    # @source R/W
+    rw: R/W
+    # @source Source
+    source: Origen
+    # @source Type
+    type: Tipo
+  # @reason Masculine default; the placeholder serves sections of mixed grammatical gender
+  # @source None
+  none: Ninguno
+  sections:
+    # @source Capabilities
+    capabilities: Capacidades
+    # @source Command & Args
+    commandArgs: Comando y argumentos
+    # @source Environment
+    environment: Entorno
+    # @source Labels
+    labels: Etiquetas
+    # @source Mounts
+    mounts: Montajes
+    # @source Ports
+    ports: Puertos
+  summary:
+    # @source Created
+    created: Creado
+    # @source ID
+    id: ID
+    # @source Image
+    image: Imagen
+    # @source IP Address
+    ipAddress: Dirección IP
+    # @source Name
+    name: Nombre
+    # @source Started
+    started: Iniciado
+containerStats:
+  charts:
+    # @source Block I/O (bytes/s)
+    blockIO: E/S de bloque (bytes/s)
+    # @source CPU %
+    cpu: '% de CPU'
+    # @source Memory
+    memory: Memoria
+    # @source Network I/O (bytes/s)
+    network: E/S de red (bytes/s)
+  interval:
+    # @source {minutes} min
+    minutes: '{minutes} min'
+    # @source {seconds} s
+    seconds: '{seconds} s'
+  # @source Stats are currently only available for the Docker (Moby) engine.
+  mobyOnly: Actualmente, las estadísticas solo están disponibles para el motor Docker (Moby).
+  # @source No processes found.
+  noProcesses: No se encontraron procesos.
+  # @source Stats are only available for running containers.
+  notRunning: Las estadísticas solo están disponibles para los contenedores en ejecución.
+  # @source Processes
+  processes: Procesos
+  # @reason Noun rather than the verb "Actualizar": it labels the interval selector, not an action
+  # @source Refresh
+  refresh: Actualización
+  series:
+    # @source Limit
+    limit: Límite
+    # @source Read
+    read: Lectura
+    # @reason Kept as-is; standard networking abbreviation for receive
+    # @source RX
+    rx: RX
+    # @reason Kept as-is; standard networking abbreviation for transmit
+    # @source TX
+    tx: TX
+    # @reason Feminine to agree with "memoria" (memory chart legend)
+    # @source Used
+    used: Usada
+    # @source Write
+    write: Escritura
+containers:
+  manage:
+    table:
+      action:
+        # @source Info
+        info: Información
+        # @source Restart
+        restart: Reiniciar
+        # @source Start
+        start: Iniciar
+        # @source Stop
+        stop: Detener
+      header:
+        # @source Name
+        containerName: Nombre
+        # @source Image
+        image: Imagen
+        # @source Port(s)
+        ports: Puerto(s)
+        # @source Uptime
+        started: Tiempo de actividad
+        # @source State
+        state: Estado
+  sortableTables:
+    # @source There are no containers to show
+    noRows: No hay contenedores que mostrar
+  # @source Containers
+  title: Contenedores
+dashboard:
+  # @reason Product name; kept in English
+  # @source Rancher Dashboard
+  windowTitle: Rancher Dashboard
+denyRoot:
+  # @source Rancher Desktop cannot be run with root privileges. Please run again as a regular user.
+  message: Rancher Desktop no puede ejecutarse con privilegios de root. Ejecútelo de nuevo como un usuario normal.
+  # @source Cannot run as Root
+  title: No se puede ejecutar como root
+deploymentProfile:
+  # @source Invalid deployment file {path}: no version specified. Add a version field to make it valid (current version is {version}).
+  noVersion: 'Archivo de implementación {path} no válido: no se especificó ninguna versión. Agregue un campo de versión para que sea válido (la versión actual es {version}).'
+  # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
+  noVersionRegistry: 'Implementación no válida: no se especificó ninguna versión en {path}. Agregue un campo de versión para que sea válida (la versión actual es {version}).'
+diagnostics:
+  # @source {count} failed plus {muted} muted
+  failedCount: '{count} fallidos más {muted} silenciados'
+  # @source Last run:
+  lastRun: 'Última ejecución:'
+  # @source (No fixes available)
+  noFixes: (No hay correcciones disponibles)
+  results:
+    muted:
+      # @source Try showing muted diagnostics.
+      body: Pruebe a mostrar los diagnósticos silenciados.
+      # @source No results found
+      heading: No se encontraron resultados
+      # @reason Icon identifier, not user-visible text; kept unchanged
+      # @source icon-search
+      icon: icon-search
+    success:
+      # @source Rancher Desktop appears to be functioning correctly.
+      body: Rancher Desktop parece estar funcionando correctamente.
+      # @source No problems detected
+      heading: No se detectaron problemas
+      # @reason Icon identifier, not user-visible text; kept unchanged
+      # @source icon-checkmark
+      icon: icon-checkmark
+  # @source Show Muted
+  showMuted: Mostrar silenciados
+  tableHeaders:
+    # @source Mute
+    mute: Silenciar
+    # @source Name
+    name: Nombre
+  # @source Diagnostics
+  title: Diagnósticos
+dialog:
+  bridgedNetwork:
+    # @source Shared network isn't available either. Only network access is via port forwarding to the host.
+    noNetwork: La red compartida tampoco está disponible. El único acceso a la red es mediante el reenvío de puertos al host.
+    # @source Using shared network address {ip}
+    sharedFallback: Usando la dirección de red compartida {ip}
+    # @source Bridged network did not get an IP address.
+    title: La red en modo puente no obtuvo una dirección IP.
+  confirmMigration:
+    # @source Delete Workloads
+    delete: Eliminar cargas de trabajo
+    # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
+    message: Bajar de la versión {from} a la {to} hará que se pierdan las cargas de trabajo de Kubernetes existentes. ¿Desea eliminar los datos?
+    # @source Confirming migration
+    title: Confirmación de la migración
+  invalidK8sVersion:
+    # @source Falling back to recommended minimum upgrade version of {version}
+    detail: 'Se usará en su lugar la versión mínima de actualización recomendada: {version}'
+    # @source Requested Kubernetes version ''{version}'' is not a supported version.
+    message: La versión de Kubernetes solicitada ''{version}'' no es una versión compatible.
+    # @source Invalid Kubernetes Version
+    title: Versión de Kubernetes no válida
+  networkFailure:
+    # @source Please acquire a version in the range {range} and install in ''{path}''
+    detail: Obtenga una versión dentro del rango {range} e instálela en ''{path}''
+    # @source Can't download a compatible version of kubectl in offline-mode
+    message: No se puede descargar una versión compatible de kubectl en modo sin conexión
+    # @source Network failure
+    title: Fallo de red
+extensions:
+  # @reason Icon identifier, not user-visible text; kept unchanged
+  # @source icon-extension
+  icon: icon-extension
+  installed:
+    emptyState:
+      # @source It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
+      body: Parece que aún no tiene ninguna extensión instalada. Explore el catálogo de extensiones para empezar.
+      button:
+        # @source Browse Extensions
+        text: Explorar extensiones
+      # @source No extensions installed
+      heading: No hay extensiones instaladas
+      # @reason Icon identifier, not user-visible text; kept unchanged
+      # @source icon-extension
+      icon: icon-extension
+    list:
+      # @source Remove
+      uninstall: Quitar
+      # @source Upgrade
+      upgrade: Actualizar
+  view:
+    emptyState:
+      # @source {extensionId} was removed. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.
+      body: Se ha quitado {extensionId}. Visite el catálogo de extensiones para reinstalar la extensión o busque otras extensiones para mejorar su experiencia con Rancher Desktop.
+      # @reason "Quitar/quitada" for remove (vs "eliminar" for delete), matching the Remove action label
+      # @source Extension removed
+      heading: Extensión quitada
+firstRun:
+  # @source Enable Kubernetes
+  enableKubernetes: Habilitar Kubernetes
+  kubernetesVersion:
+    # @source (cached versions only)
+    cachedOnly: (solo versiones en caché)
+    # @source Kubernetes Version
+    legend: Versión de Kubernetes
+    # @source Other Versions
+    otherVersions: Otras versiones
+    # @source Recommended Versions
+    recommendedVersions: Versiones recomendadas
+  # @reason Spanish UI convention: OK buttons are labeled "Aceptar"
+  # @source OK
+  ok: Aceptar
+  # @reason Gender-neutral phrasing instead of "Bienvenido/a"
+  # @source Welcome to Rancher Desktop by SUSE
+  welcome: Le damos la bienvenida a Rancher Desktop de SUSE
+general:
+  # @source Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
+  description: Rancher Desktop proporciona Kubernetes y gestión de imágenes mediante una aplicación de escritorio.
+  # @source Homepage
+  homepage: Página principal
+  # @reason Kept in English; the link goes to the GitHub issue tracker, where the term appears untranslated
+  # @source Issues
+  issues: Issues
+  # @source General
+  navLabel: General
+  # @source Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack
+  projectDiscussions: 'Discusiones del proyecto: <b>#rancher-desktop</b> en el Slack de <a href="https://slack.rancher.io/">Rancher Users</a>'
+  # @source Project Links:
+  projectLinks: 'Enlaces del proyecto:'
+  # @reason Gender-neutral phrasing instead of "Bienvenido/a"
+  # @source Welcome to Rancher Desktop by SUSE
+  title: Le damos la bienvenida a Rancher Desktop de SUSE
+generic:
+  # @source  and 
+  and: ' y '
+  # @source Apply
+  apply: Aplicar
+  # @source Cancel
+  cancel: Cancelar
+  # @source Close
+  close: Cerrar
+  # @source , 
+  comma: ', '
+  # @reason Used as the port-forwarding action button (PortForwarding.vue), so the forwarding sense, not navigation
+  # @source Forward
+  forward: Reenviar
+  # @source Loading&hellip;
+  loading: Cargando&hellip;
+  # @source Namespace
+  namespace: Espacio de nombres
+  # @reason Spanish UI convention: OK buttons are labeled "Aceptar"
+  # @source OK
+  ok: Aceptar
+  # @source Rerun
+  rerun: Volver a ejecutar
+  # @source Search
+  search: Buscar
+imageEvents:
+  # @source Please select the Dockerfile to use (could have a different name)
+  buildMessage: Seleccione el Dockerfile que desea usar (podría tener otro nombre)
+  # @reason "build" of images rendered as "construcción", matching the "Construir" button
+  # @source Pick the build directory
+  buildTitle: Elija el directorio de construcción
+  # @source Error trying to delete images {ids}
+  deleteBatchError: Error al intentar eliminar las imágenes {ids}
+  # @source Error trying to delete image {name} ({id}):
+  # @source
+  # @source  {error}
+  deleteError: |-
+      Error al intentar eliminar la imagen {name} ({id}):
+
+       {error}
+  # @reason "subir" aligns with images.manager.table.action.push (Subir)
+  # @source Error trying to push {name}:
+  # @source
+  # @source  {error}
+  pushError: |-
+      Error al intentar subir {name}:
+
+       {error}
+  # @source Error trying to scan {name}:
+  # @source
+  # @source  {error}
+  scanError: |-
+      Error al intentar escanear {name}:
+
+       {error}
+images:
+  action:
+    # @source Add Image
+    add: Agregar imagen
+  add:
+    action:
+      # @source Build
+      build: Construir
+      gerund:
+        # @source Building
+        build: Construyendo
+        # @reason "Descargando" follows the subtree's pull terminology (Descargar/descargada) instead of the anglicism "pull".
+        # @source Pulling
+        pull: Descargando
+      infinitive:
+        # @source build
+        build: construir
+        # @reason "descargar" follows the subtree's pull terminology (Descargar/descargada) instead of the anglicism "pull".
+        # @source pull
+        pull: descargar
+      pastTense:
+        # @reason Lowercase feminine participle; composed as "Imagen construida" via images.add.successText.
+        # @source Built
+        build: construida
+        # @reason Lowercase feminine participle; composed as "Imagen descargada" via images.add.successText.
+        # @source Pulled
+        pull: descargada
+      # @reason Infinitive so it composes with images.add.errorText ("Error al intentar {action}..."); "descargar" is the common Spanish for pulling an image.
+      # @source Pull
+      pull: Descargar
+    # @source Error trying to { action } ''{ image }'' - see console output for more information
+    errorText: Error al intentar { action } ''{ image }'' - consulte la salida de la consola para obtener más información
+    # @reason No article before "imagen", matching the terse en-us style; composes as "Construyendo imagen..." / "Descargando imagen...".
+    # @source {action} image...
+    loadingText: '{action} imagen...'
+    # @reason Reordered: {action} carries a feminine participle (construida/descargada) that follows the noun in Spanish.
+    # @source {action} image
+    successText: Imagen {action}
+    # @source Add Image
+    title: Agregar imagen
+  confirmDelete:
+    # @source Delete
+    confirm: Eliminar
+    # @source Delete {count} {count, plural, one {image} other {images}}?
+    multiple: ¿Eliminar {count} {count, plural, one {imagen} other {imágenes}}?
+    # @source Delete image {name}:{tag}?
+    single: ¿Eliminar la imagen {name}:{tag}?
+    # @source Confirming image deletion
+    title: Confirmación de eliminación de imágenes
+  manager:
+    # @source Close Output to Continue
+    close: Cerrar la salida para continuar
+    input:
+      build:
+        # @source Build
+        button: Construir
+        # @source Name of image to build:
+        label: 'Nombre de la imagen a construir:'
+        # @reason Example registry reference kept in English; it illustrates the technical format.
+        # @source registry.example.com/namespace/image:tag
+        placeholder: registry.example.com/namespace/image:tag
+      pull:
+        # @source Pull
+        button: Descargar
+        # @source Name of image to pull:
+        label: 'Nombre de la imagen a descargar:'
+        # @reason Example registry reference kept in English; it illustrates the technical format.
+        # @source registry.example.com/namespace/image
+        placeholder: registry.example.com/namespace/image
+    table:
+      action:
+        # @source Delete
+        delete: Eliminar
+        # @reason "Subir" (upload to a registry) mirrors "Descargar" for pull; clearer than keeping the anglicism "push".
+        # @source Push
+        push: Subir
+        # @reason "Analizar" is the usual Spanish for vulnerability scanning; avoids the anglicism "escanear".
+        # @source Scan...
+        scan: Analizar...
+      header:
+        # @source Image ID
+        imageId: ID de imagen
+        # @source Image
+        imageName: Imagen
+        # @source Size
+        size: Tamaño
+        # @source Tag
+        tag: Etiqueta
+      # @source All images
+      label: Todas las imágenes
+    # @source Image Output
+    title: Salida de imágenes
+  scan:
+    details:
+      # @source Description
+      description: Descripción
+      # @source Primary URL
+      primaryUrl: URL principal
+      # @source References
+      references: Referencias
+    # @source Error trying to scan ''{ image }'' - see console output for more information
+    errorText: Error al intentar analizar ''{ image }'' - consulte la salida de la consola para obtener más información
+    labels:
+      # @reason Severity labels take feminine forms, agreeing with "gravedad".
+      # @source CRITICAL
+      critical: CRÍTICA
+      # @source HIGH
+      high: ALTA
+      # @source Issues Found
+      issuesFound: Problemas encontrados
+      # @source LOW
+      low: BAJA
+      # @source MEDIUM
+      medium: MEDIA
+    # @source Scanning ''{ image }''
+    loadingText: Analizando ''{ image }''
+    results:
+      headers:
+        # @reason Feminine: the column lists the fixed version ("versión corregida").
+        # @source Fixed
+        fixed: Corregida
+        # @reason Feminine: the column lists the installed version ("versión instalada").
+        # @source Installed
+        installed: Instalada
+        # @source Package
+        package: Paquete
+        # @source Severity
+        severity: Gravedad
+        # @source Vulnerability ID
+        vulnerabilityId: ID de vulnerabilidad
+    # @source Scan details for ''{ image }''
+    title: Detalles del análisis de ''{ image }''
+  sortableTables:
+    # @source There are no images to show
+    noRows: No hay imágenes para mostrar
+  state:
+    # @source Waiting for image manager to be ready
+    imagesUnready: Esperando a que el administrador de imágenes esté listo
+    # @source Error: Unknown state; please reload.
+    unknown: 'Error: estado desconocido; vuelva a cargar.'
+  # @source Images
+  title: Imágenes
+integrations:
+  windows:
+    # @source Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros
+    description: Exponer la configuración de Kubernetes y el socket de Docker de Rancher Desktop a las distribuciones del Subsistema de Windows para Linux (WSL)
+kubernetesError:
+  # @source Context:
+  context: 'Contexto:'
+  # @source Last command run:
+  lastCommand: 'Último comando ejecutado:'
+  # @source Some recent <a href="#" data-action="showLogs">logfile</a> lines:
+  logLines: 'Algunas líneas recientes del <a href="#" data-action="showLogs">archivo de registro</a>:'
+  # @source {appName} Error
+  title: Error de {appName}
+kubernetesPrefs:
+  kubernetes:
+    # @source Enable Kubernetes
+    label: Habilitar Kubernetes
+    # @source Kubernetes
+    legendText: Kubernetes
+  options:
+    # @source Options
+    legendText: Opciones
+    # @reason "Spin Operator" kept as a product name.
+    # @source Install Spin Operator
+    spinkube: Instalar Spin Operator
+    # @source Spin operator requires <a href="#" data-navigate="Container Engine,general">WebAssembly</a> to be enabled.
+    spinkubeWarning: El operador Spin requiere que <a href="#" data-navigate="Container Engine,general">WebAssembly</a> esté habilitado.
+    # @source Enable Traefik
+    traefik: Habilitar Traefik
+  port:
+    # @source Kubernetes Port
+    legendText: Puerto de Kubernetes
+  version:
+    # @source Kubernetes version
+    legendText: Versión de Kubernetes
+    # @source Kubernetes version (cached versions only)
+    legendTextCached: Versión de Kubernetes (solo versiones en caché)
+    # @source Other Versions
+    otherVersions: Otras versiones
+    # @source Recommended Versions
+    recommendedVersions: Versiones recomendadas
+labelSelect:
+  noOptions:
+    # @source No options
+    empty: Sin opciones
+    # @source No matching options
+    noMatch: No hay opciones coincidentes
+  pagination:
+    # @source {count} / {totalCount} items
+    counts: '{count} / {totalCount} elementos'
+    # @source Load More...
+    more: Cargar más...
+locale:
+  # @source German
+  de: Alemán
+  # @source English
+  en-us: Inglés
+  # @source Spanish
+  es: Español
+  # @source French
+  fr: Francés
+  # @source Chinese (Simplified)
+  zh-hans: Chino (simplificado)
+mainMenu:
+  # @source About {appName}
+  about: Acerca de {appName}
+  edit:
+    # @source &Copy
+    copy: '&Copiar'
+    # @source Cu&t
+    cut: Cor&tar
+    # @source De&lete
+    delete: '&Eliminar'
+    # @source &Edit
+    label: '&Edición'
+    # @source &Paste
+    paste: '&Pegar'
+    # @source &Redo
+    redo: '&Rehacer'
+    # @reason Accelerator moved to S; T is already taken by "Cor&tar" in the same menu.
+    # @source Select &All
+    selectAll: '&Seleccionar todo'
+    # @source &Undo
+    undo: '&Deshacer'
+  file:
+    # @source Close
+    close: Cerrar
+    # @source E&xit
+    exit: '&Salir'
+    # @source &File
+    label: '&Archivo'
+  help:
+    # @source &About {appName}
+    about: '&Acerca de {appName}'
+    # @reason Noun form; the item links to the community discussion forum, and an imperative would read oddly in Spanish menus.
+    # @source &Discuss
+    discuss: '&Discusiones'
+    # @source File a &Bug
+    fileABug: Informar de un &error
+    # @source Get &Help
+    getHelp: Obtener a&yuda
+    # @source {appName} &Help
+    help: Ay&uda de {appName}
+    # @source &Help
+    label: Ay&uda
+    # @source &Project Page
+    projectPage: '&Página del proyecto'
+  # @source Hide {appName}
+  hide: Ocultar {appName}
+  # @source Hide Others
+  hideOthers: Ocultar los demás
+  # @source Preferences
+  preferences: Configuración
+  # @source Quit {appName}
+  quit: Salir de {appName}
+  # @source Services
+  services: Servicios
+  # @source Show All
+  showAll: Mostrar todo
+  view:
+    # @source &Actual Size
+    actualSize: '&Tamaño real'
+    # @source &Force Reload
+    forceReload: '&Forzar recarga'
+    # @source &View
+    label: '&Ver'
+    # @source &Reload
+    reload: '&Recargar'
+    # @source Toggle &Developer Tools
+    toggleDevTools: Alternar herramientas de &desarrollo
+    # @source Toggle Full &Screen
+    toggleFullScreen: Alternar &pantalla completa
+    # @source Zoom &In
+    zoomIn: '&Acercar'
+    # @source Zoom &Out
+    zoomOut: Ale&jar
+  window:
+    # @source Bring All to Front
+    front: Traer todo al frente
+    # @source &Window
+    label: Ve&ntana
+    # @source Minimize
+    minimize: Minimizar
+    # @reason "Zoom" matches the macOS Spanish Window menu.
+    # @source Zoom
+    zoom: Zoom
+marketplace:
+  installed:
+    table:
+      header:
+        # @source Description
+        description: Descripción
+        # @source Name
+        name: Nombre
+        # @source Vendor
+        vendor: Proveedor
+  labels:
+    # @source Install
+    install: Instalar
+    # @source Remove
+    uninstall: Quitar
+    # @source Upgrade
+    upgrade: Actualizar
+  loading:
+    # @source Installing...
+    install: Instalando...
+    # @source Removing...
+    uninstall: Quitando...
+    # @source Upgrading...
+    upgrade: Actualizando...
+  # @source More information
+  moreInfo: Más información
+  # @source No extension found for the search criteria
+  noResults: No se encontró ninguna extensión para los criterios de búsqueda
+  tabs:
+    # @source Catalog
+    catalog: Catálogo
+    # @reason Feminine plural, agreeing with "extensiones".
+    # @source Installed
+    installed: Instaladas
+  # @source Extensions
+  title: Extensiones
+nav:
+  userMenu:
+    # @source Cluster Dashboard
+    clusterDashboard: Panel del clúster
+    # @source Preferences
+    preferences: Configuración
+pathManagement:
+  # @source Configure PATH
+  label: Configurar PATH
+  options:
+    manual:
+      # @source Rancher Desktop does not change your PATH configuration; add <code>$HOME/.rd/bin</code> to your path manually.
+      description: Rancher Desktop no modifica la configuración de su PATH; agregue <code>$HOME/.rd/bin</code> a su PATH manualmente.
+      # @source Manual
+      label: Manual
+    rcFiles:
+      # @source Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.
+      description: Rancher Desktop edita el perfil de su shell por usted. Reinicie los shells que tenga abiertos para que los cambios surtan efecto.
+      # @source Automatic
+      label: Automático
+  # @source Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, <code>$HOME/.rd/bin</code> must be in your PATH.
+  tooltip: Rancher Desktop incluye herramientas como kubectl, nerdctl, helm y docker. Para poder usar estas herramientas, <code>$HOME/.rd/bin</code> debe estar en su PATH.
+portForwarding:
+  # @source Include Kubernetes services
+  includeKubernetesServices: Incluir servicios de Kubernetes
+  manage:
+    table:
+      header:
+        # @source Local Port
+        listenPort: Puerto local
+        # @source Name
+        name: Nombre
+        # @reason Kubernetes term; "espacio de nombres" per the Kubernetes Spanish documentation.
+        # @source Namespace
+        namespace: Espacio de nombres
+        # @source Port
+        port: Puerto
+  sortableTables:
+    # @source There are no port forwarding entries to show
+    noRows: No hay entradas de reenvío de puertos para mostrar
+  # @source Port Forwarding
+  title: Reenvío de puertos
+preferences:
+  actions:
+    banner:
+      # @source There's a problem with the preferences selection.
+      error: Hay un problema con la configuración seleccionada.
+      # @source Kubernetes will reset after applying changes.
+      reset: Kubernetes se restablecerá después de aplicar los cambios.
+      # @source Kubernetes will restart after applying changes.
+      restart: Kubernetes se reiniciará después de aplicar los cambios.
+  containerEngine:
+    webAssembly:
+      # @reason "Spin Operator" kept as a product name inside the link text.
+      # @source WebAssembly must be enabled for the <a href="#" data-navigate="Kubernetes">Spin Operator</a> to be installed.
+      warning: WebAssembly debe estar habilitado para que se pueda instalar el <a href="#" data-navigate="Kubernetes">Spin Operator</a>.
+  error:
+    # @source Reload Preferences to try again.
+    body: Vuelva a cargar la configuración para volver a intentarlo.
+    # @source Unable to fetch preferences
+    heading: No se pudo obtener la configuración
+    # @source Reload preferences
+    reload: Volver a cargar la configuración
+  # @source Preferences
+  header: Configuración
+  # @reason Spanish "o" should become "u" before words starting with o-/ho-; the fragment cannot adapt to what follows at runtime.
+  # @source or
+  incompatiblePrefWarningOr: o
+  # @reason Composed at runtime as Pre + option + Post: "La opción requiere que <X> no esté seleccionado."; the negation must live in this fragment.
+  # @source to be unselected.
+  incompatibleTypeWarningPostDisabled: no esté seleccionado.
+  # @reason Composed at runtime as Pre + option + Post: "La opción requiere que <X> esté seleccionado."
+  # @source to be selected.
+  incompatibleTypeWarningPostSelected: esté seleccionado.
+  # @reason Ends with "que" so the runtime-inserted option reads as a subjunctive clause completed by the Post fragments.
+  # @source The option requires
+  incompatibleTypeWarningPre: La opción requiere que
+  locked:
+    # @source Locked due to organization's policy
+    tooltip: Bloqueado por la política de la organización
+  nav:
+    # @source Application
+    application: Aplicación
+    # @source Container Engine
+    containerEngine: Motor de contenedores
+    # @source Kubernetes
+    kubernetes: Kubernetes
+    # @source Virtual Machine
+    virtualMachine: Máquina virtual
+    # @source WSL
+    wsl: WSL
+  resetDialog:
+    # @source Apply and reset
+    apply: Aplicar y restablecer
+    # @source These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.
+    detail: Estos cambios restablecerán el clúster de Kubernetes, lo que provocará la pérdida de las cargas de trabajo y de las imágenes de contenedores.
+    # @source Apply preferences and reset Kubernetes?
+    message: ¿Aplicar la configuración y restablecer Kubernetes?
+    # @source Rancher Desktop - Reset Kubernetes
+    title: Rancher Desktop - Restablecer Kubernetes
+  tabs:
+    # @source Allowed Images
+    allowedImages: Imágenes permitidas
+    # @source Behavior
+    behavior: Comportamiento
+    # @source Emulation
+    emulation: Emulación
+    # @source Environment
+    environment: Entorno
+    # @source General
+    general: General
+    # @source Hardware
+    hardware: Hardware
+    # @source Integrations
+    integrations: Integraciones
+    # @source Proxy
+    proxy: Proxy
+    # @source Volumes
+    volumes: Volúmenes
+preferencesWindow:
+  close:
+    # @source There are preferences with changes that have not been applied. All unsaved preferences will be lost.
+    detail: Hay cambios de configuración que no se han aplicado. Se perderán todos los cambios no guardados.
+    # @source Discard changes
+    discardChanges: Descartar cambios
+    # @source Close preferences without applying?
+    message: ¿Cerrar la configuración sin aplicar los cambios?
+    # @source Rancher Desktop - Close Preferences
+    title: Rancher Desktop - Cerrar configuración
+  # @source Rancher Desktop - Preferences
+  title: Rancher Desktop - Configuración
+prefs:
+  # @source Experimental
+  experimental: Experimental
+  # @source This setting requires macOS 13.3 (Ventura) or later.
+  onlyFromVentura_arm64: Esta opción requiere macOS 13.3 (Ventura) o posterior.
+  # @source This setting requires macOS 13.0 (Ventura) or later.
+  onlyFromVentura_x64: Esta opción requiere macOS 13.0 (Ventura) o posterior.
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.3 (Ventura) or later.
+  onlyWithVZ_arm64: Esta opción requiere usar el modo de emulación VZ. VZ solo está disponible en macOS 13.3 (Ventura) o posterior.
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.0 (Ventura) or later.
+  onlyWithVZ_x64: Esta opción requiere usar el modo de emulación VZ. VZ solo está disponible en macOS 13.0 (Ventura) o posterior.
+product:
+  containerEngine:
+    # @reason Abbreviation of the English "Container Engine" used across the product; no established Spanish abbreviation.
+    # @source CE
+    abbreviation: CE
+    # @source Container Engine
+    fullName: Motor de contenedores
+  # @source deactivated
+  deactivated: desactivado
+  # @source Kubernetes
+  kubernetesVersion: Kubernetes
+  # @source Network status
+  networkStatus: Estado de la red
+  networkStatusValues:
+    # @source checking...
+    checking: comprobando...
+    # @source offline
+    offline: sin conexión
+    # @source online
+    online: en línea
+  # @source Version
+  version: Versión
+progress:
+  # @source Asking for permission to run tasks as administrator
+  askingPermission: Solicitando permiso para ejecutar tareas como administrador
+  # @source Bundling certificates
+  bundlingCertificates: Empaquetando certificados
+  # @source Checking k3s images
+  checkingK3sImages: Comprobando las imágenes de k3s
+  # @source Configuring container engine
+  configuringContainerEngine: Configurando el motor de contenedores
+  # @source Configuring image proxy
+  configuringImageProxy: Configurando el proxy de imágenes
+  # @source Configuring logrotate
+  configuringLogrotate: Configurando logrotate
+  # @source Container engine components
+  containerEngineComponents: Componentes del motor de contenedores
+  # @source Copying certificates
+  copyingCertificates: Copiando certificados
+  # @source Deleting incompatible Kubernetes state
+  deletingIncompatibleState: Eliminando el estado incompatible de Kubernetes
+  # @source Deleting Kubernetes
+  deletingKubernetes: Eliminando Kubernetes
+  # @source Deleting virtual machine
+  deletingVirtualMachine: Eliminando la máquina virtual
+  # @source DNS configuration
+  dnsConfiguration: Configuración de DNS
+  # @source Ensuring compatible kubectl
+  ensuringCompatibleKubectl: Comprobando que kubectl sea compatible
+  # @source Ensuring virtualization is supported
+  ensuringVirtualizationSupported: Comprobando la compatibilidad con la virtualización
+  # @source Expecting user permission to continue
+  expectingPermission: Esperando el permiso del usuario para continuar
+  # @source Extracting certificates
+  extractingCertificates: Extrayendo certificados
+  # @source Fetching certificates
+  fetchingCertificates: Obteniendo certificados
+  # @source Initializing Rancher Desktop
+  initializingRancherDesktop: Inicializando Rancher Desktop
+  # @source Initializing WSL data
+  initializingWslData: Inicializando los datos de WSL
+  # @source Installing Buildkit
+  installingBuildkit: Instalando Buildkit
+  # @source Installing CA certificates
+  installingCaCertificates: Instalando certificados de CA
+  # @source Installing container engine
+  installingContainerEngine: Instalando el motor de contenedores
+  # @reason "Asistente de credenciales" follows common Spanish documentation usage for "credential helper".
+  # @source Installing credential helper
+  installingCredentialHelper: Instalando el asistente de credenciales
+  # @reason "docker-credential" is the helper binary name prefix; kept verbatim.
+  # @source Installing the docker-credential helper
+  installingDockerCredentialHelper: Instalando el asistente docker-credential
+  # @source Installing helpers
+  installingHelpers: Instalando utilidades auxiliares
+  # @source Installing image scanner
+  installingImageScanner: Instalando el analizador de imágenes
+  # @source Installing k3s
+  installingK3s: Instalando k3s
+  # @source Installing Kubernetes
+  installingKubernetes: Instalando Kubernetes
+  # @source Kubernetes components
+  kubernetesComponents: Componentes de Kubernetes
+  # @source Kubernetes dockerd compatibility
+  kubernetesDockerCompatibility: Compatibilidad de Kubernetes con dockerd
+  # @source Mounting WSL data
+  mountingWslData: Montando los datos de WSL
+  # @source Preparing to start
+  preparingToStart: Preparándose para iniciar
+  # @source Proxy Config Setup
+  proxyConfigSetup: Configuración del proxy
+  # @source Rancher Desktop guest agent
+  rancherDesktopGuestAgent: Agente invitado de Rancher Desktop
+  # @source Regenerating configuration to account for lack of permissions
+  regeneratingConfiguration: Regenerando la configuración para tener en cuenta la falta de permisos
+  # @source Registering WSL distribution
+  registeringWslDistribution: Registrando la distribución de WSL
+  # @source Removing existing certificates
+  removingExistingCertificates: Eliminando los certificados existentes
+  # @source Removing spinkube operator
+  removingSpinkubeOperator: Eliminando el operador spinkube
+  # @source Removing stale state
+  removingStaleState: Eliminando el estado obsoleto
+  # @source Removing Traefik
+  removingTraefik: Eliminando Traefik
+  # @source Resetting Kubernetes
+  resettingKubernetes: Restableciendo Kubernetes
+  # @source Running provisioning scripts
+  runningProvisioningScripts: Ejecutando scripts de aprovisionamiento
+  # @source Running update-ca-certificates
+  runningUpdateCaCertificates: Ejecutando update-ca-certificates
+  # @source Setting docker context
+  settingDockerContext: Estableciendo el contexto de docker
+  # @source Setting Lima permissions
+  settingLimaPermissions: Estableciendo los permisos de Lima
+  # @source Setting up Docker socket
+  settingUpDockerSocket: Configurando el socket de Docker
+  # @source Setting up virtual ethernet
+  settingUpVirtualEthernet: Configurando la red ethernet virtual
+  # @source Shutting down
+  shuttingDown: Apagando
+  # @source Skipping node checks, flannel is disabled
+  skippingNodeChecksFlannel: Omitiendo las comprobaciones de nodos; flannel está deshabilitado
+  # @source Starting Backend
+  startingBackend: Iniciando el backend
+  # @source Starting buildkit
+  startingBuildkit: Iniciando buildkit
+  # @source Starting container engine
+  startingContainerEngine: Iniciando el motor de contenedores
+  # @source Starting image proxy
+  startingImageProxy: Iniciando el proxy de imágenes
+  # @source Starting k3s
+  startingK3s: Iniciando k3s
+  # @source Starting Kubernetes
+  startingKubernetes: Iniciando Kubernetes
+  # @source Starting proxy
+  startingProxy: Iniciando el proxy
+  # @source Starting {service}
+  startingService: Iniciando {service}
+  # @source Starting virtual machine
+  startingVirtualMachine: Iniciando la máquina virtual
+  # @source Starting WSL environment
+  startingWslEnvironment: Iniciando el entorno WSL
+  # @source Stopping existing instance
+  stoppingExistingInstance: Deteniendo la instancia existente
+  # @source Stopping mock backend
+  stoppingMockBackend: Deteniendo el backend simulado
+  # @source Stopping services
+  stoppingServices: Deteniendo servicios
+  # @source Updating cluster configuration
+  updatingClusterConfiguration: Actualizando la configuración del clúster
+  # @source Updating /etc/hosts
+  updatingEtcHosts: Actualizando /etc/hosts
+  # @source Updating kubeconfig
+  updatingKubeconfig: Actualizando kubeconfig
+  # @source Updating outdated virtual machine
+  updatingOutdatedVm: Actualizando la máquina virtual obsoleta
+  # @source Updating WSL data
+  updatingWslData: Actualizando los datos de WSL
+  # @source Upgrading WSL distribution
+  upgradingWslDistribution: Actualizando la distribución de WSL
+  # @source Waiting for container engine to be ready
+  waitingForContainerEngine: Esperando a que el motor de contenedores esté listo
+  # @source Waiting for Kubernetes API
+  waitingForKubernetesApi: Esperando la API de Kubernetes
+  # @source Waiting for nodes
+  waitingForNodes: Esperando los nodos
+  # @source Waiting for services
+  waitingForServices: Esperando los servicios
+  # @source Writing K3s configuration
+  writingK3sConfiguration: Escribiendo la configuración de K3s
+snapshots:
+  action:
+    # @source Create Snapshot
+    create: Crear instantánea
+  card:
+    action:
+      # @source Delete
+      remove: Eliminar
+      # @source Restore
+      restore: Restaurar
+    # @reason Feminine 'Creada' agrees with 'instantánea' (snapshot).
+    # @source Created on '<b>'{date}'</b>' at '<b>'{time}'</b>'
+    created: Creada el '<b>'{date}'</b>' a las '<b>'{time}'</b>'
+  create:
+    actions:
+      # @source Cancel
+      back: Cancelar
+      # @source Create
+      submit: Crear
+    description:
+      # @source Description
+      label: Descripción
+    # @source Rancher Desktop will be temporarily unavailable while creating a new Snapshot
+    info: Rancher Desktop no estará disponible temporalmente mientras se crea una nueva instantánea
+    name:
+      # @source Snapshot Name
+      label: Nombre de la instantánea
+    # @source Create a new Snapshot
+    title: Crear una nueva instantánea
+  dialog:
+    buttons:
+      # @source Close
+      error: Cerrar
+    creating:
+      actions:
+        # @source Cancel
+        cancel: Cancelar
+      # @source Creating {snapshot}
+      header: Creando {snapshot}
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being created.'<br/>'This may take some time depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart.
+      message: Espere mientras se crea la instantánea '<b>'{snapshot}'</b>'.'<br/>'Esto puede tardar algún tiempo según los recursos de su máquina.'<br/>'Rancher Desktop no estará disponible temporalmente durante esta operación.'<br/><br/>'Una vez completada la instantánea, la máquina virtual se reiniciará.
+    delete:
+      actions:
+        # @source Cancel
+        cancel: Cancelar
+        # @source Delete
+        ok: Eliminar
+      # @source Permanently delete snapshot?
+      header: ¿Eliminar la instantánea de forma permanente?
+      # @reason English source is a literal stub ('text'), not a real sentence; kept unchanged until the source gets real content.
+      # @source Deleting a snapshot cannot be undone.
+      info: La eliminación de una instantánea no se puede deshacer.
+    generic:
+      # @source Snapshot operation in progress
+      header: Operación de instantánea en curso
+      # @source Please wait while the snapshot operation is active.<br/>This may take some time depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart.
+      message: Espere mientras la operación de instantánea está activa.<br/>Esto puede tardar algún tiempo según los recursos de su máquina.<br/>Rancher Desktop no estará disponible temporalmente durante esta operación.<br/><br/>Una vez completado el proceso de instantánea, la máquina virtual se reiniciará.
+    restore:
+      actions:
+        # @source Cancel
+        cancel: Cancelar
+        # @source Restore
+        ok: Restaurar
+      error:
+        # @source Quit Rancher Desktop
+        buttonText: Salir de Rancher Desktop
+        # @source Failed to restore snapshot '<b>'{snapshot}'</b>'.'<br/><br/>'Rancher Desktop has performed a Factory Reset and will now exit. Please try to address the issue that led to this error before restarting Rancher Desktop and attempting to restore the snapshot again.
+        description: No se pudo restaurar la instantánea '<b>'{snapshot}'</b>'.'<br/><br/>'Rancher Desktop ha realizado un restablecimiento de fábrica y se cerrará ahora. Intente resolver el problema que provocó este error antes de reiniciar Rancher Desktop y volver a intentar restaurar la instantánea.
+        # @source Error restoring snapshot
+        header: Error al restaurar la instantánea
+      # @source Restore snapshot?
+      header: ¿Restaurar la instantánea?
+      # @source Restoring this snapshot will replace your current installation, including preferences. If the Preferences window is open, it will be automatically closed and any unsaved changes will be discarded.
+      info: Restaurar esta instantánea reemplazará su instalación actual, incluida la configuración. Si la ventana de Configuración está abierta, se cerrará automáticamente y se descartarán los cambios que no haya guardado.
+    restoring:
+      actions:
+        # @source Cancel
+        cancel: Cancelar
+      # @source Restoring {snapshot}
+      header: Restaurando {snapshot}
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being restored. This may take some time depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active.
+      message: Espere mientras se restaura la instantánea '<b>'{snapshot}'</b>'. Esto puede tardar algún tiempo según los recursos de su máquina.<br/><br/>Rancher Desktop no estará disponible temporalmente durante esta operación. Una vez completada, la máquina virtual se reiniciará con la instantánea {snapshot} activa.
+    # @source Show logs
+    showLogs: Mostrar registros
+  empty:
+    # @source Click on Create Snapshot to get started
+    body: Haga clic en Crear instantánea para comenzar
+    # @source No snapshots found
+    heading: No se encontraron instantáneas
+    # @reason Icon identifier, not user-visible text; kept unchanged.
+    # @source icon-search
+    icon: icon-search
+  info:
+    create:
+      # @source Cancelled creation of {snapshot}
+      cancel: Se canceló la creación de {snapshot}
+      # @source Created '<b>'{snapshot}'</b>'
+      success: Se creó '<b>'{snapshot}'</b>'
+    delete:
+      # @source Delete error: {error}
+      error: 'Error al eliminar: {error}'
+      # @source Deleted '<b>'{snapshot}'</b>'
+      success: Se eliminó '<b>'{snapshot}'</b>'
+    lock:
+      # @source A snapshot lock file has been detected for an unusually long time. If you believe this is an error, you can try to remove the lock file by running <code>rdctl snapshot unlock</code>.
+      info: Se ha detectado un archivo de bloqueo de instantánea durante un tiempo inusualmente largo. Si cree que se trata de un error, puede intentar eliminar el archivo de bloqueo ejecutando <code>rdctl snapshot unlock</code>.
+    restore:
+      # @source Cancelled restoration of {snapshot}
+      cancel: Se canceló la restauración de {snapshot}
+      # @source Restored '<b>'{snapshot}'</b>'
+      success: Se restauró '<b>'{snapshot}'</b>'
+    # @source  at {time}
+    when: ' a las {time}'
+  # @reason 'Snapshot' rendered as 'instantánea', the established Spanish term for VM snapshots; the rdctl 'snapshot' command name stays English.
+  # @source Snapshots
+  title: Instantáneas
+sortableTable:
+  actionAvailability:
+    # @source {actionable} selected
+    selected: '{actionable} seleccionados'
+    # @source Available for {actionable} of the {total} selected
+    some: Disponible para {actionable} de los {total} seleccionados
+  # @source Add
+  add: Agregar
+  # @source Add Filter
+  addFilter: Agregar filtro
+  bulkActions:
+    collapsed:
+      # @source Actions
+      label: Acciones
+  # @source Filter for...
+  filterFor: Filtrar por...
+  # @reason Standalone connector; translated as 'en' assuming the 'filter ... in <column group>' context.
+  # @source in
+  in: en
+  # @source No actions available
+  noActions: No hay acciones disponibles
+  # @source There are no rows which match your search query.
+  noData: No hay filas que coincidan con su búsqueda.
+  # @source There are no rows to show.
+  noRows: No hay filas para mostrar.
+  paging:
+    # @source {pages, plural,
+    # @source =0 {No Items}
+    # @source =1 {{count} {count, plural, =1 {Item} other {Items}}}
+    # @source other {{from} - {to} of {count} Items}}
+    generic: |-
+        {pages, plural,
+        =0 {Sin elementos}
+        =1 {{count} {count, plural, =1 {elemento} other {elementos}}}
+        other {{from} - {to} de {count} elementos}}
+  # @source Reset
+  resetFilters: Restablecer
+  # @source Filter
+  search: Filtrar
+  # @source Select a column
+  selectCol: Seleccionar una columna
+  tableHeader:
+    # @source Group by
+    groupBy: Agrupar por
+    # @source This column cannot be filtered by
+    noFilter: No se puede filtrar por esta columna
+    # @source Show
+    show: Mostrar
+sudoPrompt:
+  # @source Always run without administrative access
+  alwaysRunWithout: Ejecutar siempre sin acceso administrativo
+  # @source OK
+  buttonText: Aceptar
+  # @source This will modify the following paths:
+  explanation: 'Esto modificará las siguientes rutas:'
+  # @source Rancher Desktop requires administrative access ("sudo access") for the following reasons:
+  message: 'Rancher Desktop requiere acceso administrativo ("acceso sudo") por los siguientes motivos:'
+  # @source The prompt will be displayed once this window is closed. Cancelling the prompt or disabling administrative access requires you to switch the docker context to rancher-desktop in order to continue using Rancher Desktop.
+  messageSecondPart: La solicitud se mostrará una vez que se cierre esta ventana. Si cancela la solicitud o deshabilita el acceso administrativo, deberá cambiar el contexto de docker a rancher-desktop para seguir usando Rancher Desktop.
+  reasons:
+    dockerSocket:
+      # @source Provides compatibility with tools that use the docker socket without the ability to use docker contexts.
+      description: Proporciona compatibilidad con herramientas que usan el socket de docker sin la capacidad de usar contextos de docker.
+      # @source Set up default docker socket
+      title: Configurar el socket de docker predeterminado
+    networking:
+      # @source Provides bridged networking so that it is easier to access your containers. If this is not allowed, containers will only be accessible via port forwarding.
+      description: Proporciona red en modo puente para que sea más fácil acceder a sus contenedores. Si no se permite, los contenedores solo serán accesibles mediante el reenvío de puertos.
+      # @source Configure networking
+      title: Configurar la red
+  # @source Administrative Access Required
+  title: Se requiere acceso administrativo
+systemPreferences:
+  # @reason '#' rendered as 'N.º'; Spanish initialisms like CPU do not take a plural 's'.
+  # @source # CPUs
+  cpus: N.º de CPU
+  # @source Memory (GB)
+  memory: Memoria (GB)
+telemetryOptIn:
+  # @reason 'endpoints' kept in English; it is the common term in Spanish technical usage.
+  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
+  fineprint: Envía información de uso anonimizada, informes de errores, etc. para ayudar a mejorar Rancher Desktop. Sus datos no se compartirán con nadie más y no se incluye información sobre los recursos o endpoints específicos que esté desplegando.
+  # @source Allow collection of anonymous statistics to help us improve Rancher Desktop
+  label: Permitir la recopilación de estadísticas anónimas para ayudarnos a mejorar Rancher Desktop
+tray:
+  # @source Container engine: {name}
+  containerEngine: 'Motor de contenedores: {name}'
+  # @source Kubernetes Contexts
+  kubernetesContexts: Contextos de Kubernetes
+  # @source Network status: {status}
+  networkStatus: 'Estado de la red: {status}'
+  # @source None found
+  noneFound: No se encontró ninguno
+  # @source Open cluster dashboard
+  openDashboard: Abrir el panel del clúster
+  # @source Open main window
+  openMainWindow: Abrir la ventana principal
+  # @source Open preferences dialog
+  openPreferences: Abrir el diálogo de configuración
+  # @source Quit Rancher Desktop
+  quitRancherDesktop: Salir de Rancher Desktop
+  state:
+    # @source Kubernetes is disabled
+    disabled: Kubernetes está deshabilitado
+    # @source Kubernetes has encountered an error
+    error: Kubernetes ha encontrado un error
+    # @source Kubernetes is running
+    started: Kubernetes está en ejecución
+    # @source Kubernetes is starting
+    starting: Kubernetes se está iniciando
+    # @source Kubernetes is stopped
+    stopped: Kubernetes está detenido
+    # @source Kubernetes is shutting down
+    stopping: Kubernetes se está deteniendo
+  # @source Rancher Desktop
+  tooltip: Rancher Desktop
+troubleshooting:
+  # @source Enable debug mode
+  debugMode: Habilitar el modo de depuración
+  general:
+    factoryReset:
+      # @source Factory Reset
+      buttonText: Restablecimiento de fábrica
+      # @source Factory Reset will remove all Rancher Desktop Configurations.
+      description: El restablecimiento de fábrica eliminará todas las configuraciones de Rancher Desktop.
+      messageBox:
+        # @source Cancel
+        cancel: Cancelar
+        # @source Keep cached Kubernetes images
+        checkboxLabel: Conservar las imágenes de Kubernetes en caché
+        # @source <p>Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again.</p><p>Are you sure you want to reset everything?</p>
+        detail: <p>Realizar un restablecimiento de fábrica eliminará su clúster y toda la configuración de Rancher Desktop, y cerrará Rancher Desktop. Si desea seguir usando Rancher Desktop, deberá iniciarlo manualmente y realizar de nuevo la configuración inicial.</p><p>¿Está seguro de que desea restablecerlo todo?</p>
+        # @source Perform a factory reset?
+        message: ¿Realizar un restablecimiento de fábrica?
+        # @reason Confirm button shortened to the action verb; the dialog text already says 'de fábrica'.
+        # @source Factory Reset
+        ok: Restablecer
+        # @source Rancher Desktop - Factory Reset
+        title: Rancher Desktop - Restablecimiento de fábrica
+      # @source Factory Reset
+      title: Restablecimiento de fábrica
+    logs:
+      # @source Show Logs
+      buttonText: Mostrar registros
+      # @source Show Rancher Desktop logs
+      description: Mostrar los registros de Rancher Desktop
+      # @source Logs
+      title: Registros
+  kubernetes:
+    resetKubernetes:
+      # @source Reset Kubernetes
+      buttonText: Restablecer Kubernetes
+      # @source Resetting Kubernetes will delete all workloads and configuration.
+      description: Restablecer Kubernetes eliminará todas las cargas de trabajo y la configuración.
+      messageBox:
+        # @source Cancel
+        cancel: Cancelar
+        # @source Delete container images
+        checkboxLabel: Eliminar las imágenes de contenedor
+        # @source Reset Kubernetes?
+        message: ¿Restablecer Kubernetes?
+        # @source Reset
+        ok: Restablecer
+        # @source Rancher Desktop - Reset Kubernetes
+        title: Rancher Desktop - Restablecer Kubernetes
+      # @source Reset Kubernetes
+      title: Restablecer Kubernetes
+  # @source Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
+  needHelp: ¿Sigue teniendo problemas? Inicie una conversación en el canal <b>#rancher-desktop</b> del <a href="https://slack.rancher.io/">Slack de usuarios de Rancher</a> o <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">informe de un problema</a>.
+  # @source Troubleshooting
+  title: Solución de problemas
+unmetPrerequisites:
+  # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
+  action: Asegúrese de que se cumplan todos los requisitos y vuelva a intentarlo. Rancher Desktop se cerrará ahora.
+  # @source OK
+  buttonText: Aceptar
+  # @source Rancher Desktop cannot start because requirements are missing or not configured:
+  message: 'Rancher Desktop no puede iniciarse porque faltan requisitos o no están configurados:'
+  # @source Rancher Desktop is unable to start
+  title: Rancher Desktop no puede iniciarse
+updateStatus:
+  # @source Applying update...
+  applyingUpdate: Aplicando la actualización...
+  # @source An update to version {version} is available
+  available: Hay disponible una actualización a la versión {version}
+  # @source Check for updates automatically
+  checkForUpdates: Buscar actualizaciones automáticamente
+  # @reason Lowercase kept; the source is lowercase because the string is appended inline.
+  # @source downloading... ({percent}%, {speed})
+  downloading: descargando... ({percent}%, {speed})
+  # @source There was an error checking for updates.
+  errorChecking: Se produjo un error al buscar actualizaciones.
+  # @source Release Notes
+  releaseNotes: Notas de la versión
+  # @source Restart Now
+  restartNow: Reiniciar ahora
+  # @source Restart the application to apply the update.
+  restartToApply: Reinicie la aplicación para aplicar la actualización.
+  unsupported:
+    # @source A newer version of Rancher Desktop is available, but not supported on your system.
+    message: Hay disponible una versión más reciente de Rancher Desktop, pero no es compatible con su sistema.
+    # @source For more information please see <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.
+    seeDocumentation: Para obtener más información, consulte <a href="https://docs.rancherdesktop.io/getting-started/installation">la documentación de instalación</a>.
+    # @source Latest Version Not Supported
+    title: La versión más reciente no es compatible
+  # @source Update Available
+  updateAvailable: Actualización disponible
+validation:
+  # @source Cannot decrease "{field}" from {from} to {to}
+  cannotDecrease: No se puede reducir "{field}" de {from} a {to}
+  # @source Cannot enable WebAssembly with classic storage for moby.
+  cannotEnableWasmClassic: No se puede habilitar WebAssembly con el almacenamiento clásico para moby.
+  # @source Cannot switch to classic storage for moby when WebAssembly is enabled.
+  cannotSwitchClassicWasm: No se puede cambiar al almacenamiento clásico para moby cuando WebAssembly está habilitado.
+  # @source Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
+  cannotSwitchMobyClassicWasm: No se puede cambiar al motor de contenedores moby con almacenamiento clásico cuando WebAssembly está habilitado.
+  # @reason Lowercase start kept to match the source, which is a fragment appended to other error text.
+  # @source field "{field}" has duplicate entries: "{duplicates}"
+  duplicateEntries: 'el campo "{field}" tiene entradas duplicadas: "{duplicates}"'
+  # @source Errors in proposed settings:
+  errorsInProposedSettings: 'Errores en la configuración propuesta:'
+  # @source field "{field}" is locked
+  fieldLocked: el campo "{field}" está bloqueado
+  # @source {field}: "{pattern}" does not describe an image reference
+  invalidImageReference: '{field}: "{pattern}" no describe una referencia de imagen'
+  # @source {field}: "{value}" is not a valid mapping
+  invalidMapping: '{field}: "{value}" no es una asignación válida'
+  # @source {field}: "{name}" is an invalid name
+  invalidName: '{field}: "{name}" no es un nombre válido'
+  # @source field "{field}" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "{entries}"
+  invalidNoproxyEntries: 'el campo "{field}" tiene entradas no válidas (deben ser direcciones IP, subredes CIDR o nombres de dominio): "{entries}"'
+  # @source {field}: "{value}" is not a valid page name for Preferences Dialog
+  invalidPageName: '{field}: "{value}" no es un nombre de página válido para el diálogo de Configuración'
+  # @source {field}: tab name "{tabName}" is not a valid tab name for "{page}" Preference page
+  invalidTabName: '{field}: el nombre de pestaña "{tabName}" no es válido para la página de Configuración "{page}"'
+  # @source {field}: "{name}" has invalid tag "{tag}"
+  invalidTag: '{field}: "{name}" tiene la etiqueta no válida "{tag}"'
+  # @source Invalid value for "{field}": <{value}>
+  invalidValue: 'Valor no válido para "{field}": <{value}>'
+  # @source Invalid value for "{field}": <{value}>; must be one of {validValues}
+  invalidValueEnum: 'Valor no válido para "{field}": <{value}>; debe ser uno de {validValues}'
+  # @source Kubernetes version "{version}" not found.
+  kubernetesVersionNotFound: No se encontró la versión de Kubernetes "{version}".
+  # @source {field}: "{name}" has non-string tag "{tag}"
+  nonStringTag: '{field}: "{name}" tiene una etiqueta que no es una cadena: "{tag}"'
+  # @source Changing field "{field}" via the API isn't supported.
+  notSupported: No se admite cambiar el campo "{field}" mediante la API.
+  # @reason 'array' kept in English; it names the literal JSON type in deployment profiles.
+  # @source Error for field ''{field}'': expecting value of type array, got ''{value}''
+  profileExpectedArray: 'Error en el campo ''''{field}'''': se esperaba un valor de tipo array, se obtuvo ''''{value}'''''
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got ''{value}''
+  profileExpectedType: 'Error en el campo ''''{field}'''': se esperaba un valor de tipo {expectedType}, se obtuvo ''''{value}'''''
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got an array {value}
+  profileExpectedTypeGotArray: 'Error en el campo ''''{field}'''': se esperaba un valor de tipo {expectedType}, se obtuvo un array {value}'
+  # @source Proposed field "{field}" should be an object, got <{value}>.
+  proposedShouldBeObject: El campo propuesto "{field}" debería ser un objeto, se obtuvo <{value}>.
+  # @source Setting {field} can only be enabled on aarch64 systems.
+  requiresArm: La opción {field} solo se puede habilitar en sistemas aarch64.
+  # @source Setting {field} can only be changed when virtualMachine.mount.type is "{mountType}".
+  requiresNineP: La opción {field} solo se puede cambiar cuando virtualMachine.mount.type es "{mountType}".
+  # @source Setting {field} can only be enabled when virtual-machine.type is "{vmType}".
+  requiresVz: La opción {field} solo se puede habilitar cuando virtual-machine.type es "{vmType}".
+  # @source Setting {field} can only be set when experimental.container-engine.web-assembly.enabled is set as well.
+  requiresWebAssembly: La opción {field} solo se puede establecer cuando experimental.container-engine.web-assembly.enabled también está establecida.
+  # @source Setting {field} to "{value}" requires that {otherField} is "{required}".
+  settingRequires: Establecer {field} en "{value}" requiere que {otherField} sea "{required}".
+  # @source Setting {field} to "{value}" requires that {otherField} is "{option1}" or "{option2}".
+  settingRequiresEither: Establecer {field} en "{value}" requiere que {otherField} sea "{option1}" o "{option2}".
+  # @source Setting "{field}" should wrap an inner object, but got <{value}>.
+  shouldBeObject: La opción "{field}" debería contener un objeto interno, pero se obtuvo <{value}>.
+  # @source Setting "{field}" should be a simple value, but got <{value}>.
+  shouldBeSimple: La opción "{field}" debería ser un valor simple, pero se obtuvo <{value}>.
+  # @source One or more fields in this tab contain a form validation error
+  tab: Uno o más campos de esta pestaña contienen un error de validación del formulario
+  # @source Setting {field} to "{vmType}" on ARM requires macOS 13.3 (Ventura) or later.
+  vzArmMacOs: Establecer {field} en "{vmType}" en ARM requiere macOS 13.3 (Ventura) o posterior.
+  # @source Setting {field} to "{vmType}" on Intel requires macOS 13.0 (Ventura) or later.
+  vzIntelMacOs: Establecer {field} en "{vmType}" en Intel requiere macOS 13.0 (Ventura) o posterior.
+virtualMachine:
+  mount:
+    type:
+      # @source Mount Type
+      legend: Tipo de montaje
+      options:
+        9p:
+          # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
+          description: Expone el sistema de archivos mediante los dispositivos virtio-9p-pci de QEMU.
+          # @source 9p
+          label: 9p
+          options:
+            cacheMode:
+              # @source Cache Mode
+              legend: Modo de caché
+              options:
+                # @source fscache
+                fscache: fscache
+                # @source loose
+                loose: loose
+                # @source mmap
+                mmap: mmap
+                # @reason Literal 9p cache-mode value; must match the setting, kept in English.
+                # @source none
+                none: none
+              # @source Caching policy to be used
+              tooltip: Política de caché que se utilizará
+            mSizeInKib:
+              # @source Message Size In KiB
+              legend: Tamaño de mensaje en KiB
+              # @source Maximum message size in KiB
+              tooltip: Tamaño máximo de mensaje en KiB
+            protocolVersion:
+              # @source Protocol Version
+              legend: Versión del protocolo
+              options:
+                # @source 9p2000
+                9p2000: 9p2000
+                # @source 9p2000.L
+                9p2000L: 9p2000.L
+                # @source 9p2000.u
+                9p2000u: 9p2000.u
+              # @source 9P protocol version
+              tooltip: Versión del protocolo 9P
+            securityModel:
+              # @source Security Model
+              legend: Modelo de seguridad
+              options:
+                # @source mapped-file
+                mapped-file: mapped-file
+                # @source mapped-xattr
+                mapped-xattr: mapped-xattr
+                # @reason Literal 9p security-model value; kept in English.
+                # @source none
+                none: none
+                # @source passthrough
+                passthrough: passthrough
+              # @source Security model used for the export path
+              tooltip: Modelo de seguridad usado para la ruta de exportación
+        reverse-sshfs:
+          # @source Exposes the filesystem by running an SFTP server.
+          description: Expone el sistema de archivos ejecutando un servidor SFTP.
+          # @source reverse-sshfs
+          label: reverse-sshfs
+        virtiofs:
+          # @reason 'Apple Virtualization' kept as the framework's product name.
+          # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
+          description: Expone el sistema de archivos mediante un dispositivo de directorio compartido del framework Apple Virtualization.
+          # @source virtiofs
+          label: virtiofs
+  proxy:
+    # @source Address
+    address: Dirección
+    # @source Proxy address
+    addressTitle: Dirección del proxy
+    # @source Authentication information
+    authTitle: Información de autenticación
+    # @source Enable the proxy used by rancher-desktop
+    label: Habilitar el proxy usado por rancher-desktop
+    # @source WSL Proxy
+    legend: Proxy de WSL
+    noproxy:
+      errors:
+        # @source Error, item is duplicate.
+        duplicate: 'Error: el elemento está duplicado.'
+      # @source Proxy bypass list
+      legend: Lista de exclusión del proxy
+      # @source IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy
+      placeholder: IP, CIDR, dominio o comodín (*.example.com) para omitir el proxy
+    # @source Password
+    password: Contraseña
+    # @source Port
+    port: Puerto
+    # @source Username
+    username: Nombre de usuario
+  type:
+    # @source Virtual Machine Type
+    legend: Tipo de máquina virtual
+    options:
+      qemu:
+        # @source Use the QEMU emulator.
+        description: Usar el emulador QEMU.
+        # @source QEMU
+        label: QEMU
+      vz:
+        # @reason 'Apple Virtualization' kept as the framework's product name.
+        # @source Use the Apple Virtualization framework.
+        description: Usar el framework Apple Virtualization.
+        # @source VZ
+        label: VZ
+  useRosetta:
+    # @source Enable Rosetta support
+    label: Habilitar la compatibilidad con Rosetta
+    # @source VZ Option
+    legend: Opción de VZ
+volumes:
+  files:
+    # @source Available
+    available: Disponible
+    # @source Error checking volume status
+    checkError: Error al comprobar el estado del volumen
+    # @source Invalid volume name "{name}"
+    invalidVolumeName: 'Nombre de volumen no válido: "{name}"'
+    # @source Error listing files: {error}
+    listError: 'Error al listar los archivos: {error}'
+    # @source Loading volume files...
+    loading: Cargando los archivos del volumen...
+    # @source This volume is empty
+    noFiles: Este volumen está vacío
+    # @source Not Found
+    notFound: No encontrado
+    table:
+      header:
+        # @source Modified
+        modified: Modificado
+        # @source Name
+        name: Nombre
+        # @source Permissions
+        permissions: Permisos
+        # @source Size
+        size: Tamaño
+    # @source Volume Files
+    title: Archivos del volumen
+    # @source Volume "{name}" not found
+    volumeNotFound: No se encontró el volumen "{name}"
+  manage:
+    table:
+      header:
+        # @source Created
+        created: Creado
+        # @source Driver
+        driver: Controlador
+        # @source Mount Point
+        mountpoint: Punto de montaje
+        # @source Volume Name
+        volumeName: Nombre del volumen
+  manager:
+    table:
+      action:
+        # @source Browse Files
+        browse: Explorar archivos
+        # @source Delete
+        delete: Eliminar
+  sortableTables:
+    # @source There are no volumes to show
+    noRows: No hay volúmenes para mostrar
+  # @source Volumes
+  title: Volúmenes
+webAssembly:
+  # @source Please read the documentation before enabling the experimental WebAssembly feature!
+  description: ¡Lea la documentación antes de habilitar la función experimental de WebAssembly!
+  # @source Enabled
+  enabled: Habilitado
+  # @source WebAssembly (Wasm)
+  label: WebAssembly (Wasm)

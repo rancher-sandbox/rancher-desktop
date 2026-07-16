@@ -826,6 +826,8 @@ locale:
   de: Allemand
   # @source English
   en-us: Anglais
+  # @source Spanish
+  es: Espagnol
   # @source French
   fr: Français
   # @source Chinese (Simplified)

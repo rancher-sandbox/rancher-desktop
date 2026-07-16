@@ -8,6 +8,7 @@ This directory holds the YAML translation files for Rancher Desktop.
 |------|---------|
 | `en-us.yaml` | Canonical English strings (source of truth) |
 | `de.yaml` | German translation |
+| `es.yaml` | Spanish translation |
 | `fr.yaml` | French translation |
 | `zh-hans.yaml` | Simplified Chinese translation |
 
