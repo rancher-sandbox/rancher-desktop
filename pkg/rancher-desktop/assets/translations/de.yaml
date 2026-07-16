@@ -888,6 +888,8 @@ locale:
   de: Deutsch
   # @source English
   en-us: Englisch
+  # @source Spanish
+  es: Spanisch
   # @source French
   fr: Französisch
   # @source Chinese (Simplified)

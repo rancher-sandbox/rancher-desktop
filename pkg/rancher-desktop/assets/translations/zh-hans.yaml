@@ -877,6 +877,8 @@ locale:
   # @reason locale name for English
   # @source English
   en-us: 英语
+  # @source Spanish
+  es: 西班牙语
   # @source French
   fr: 法语
   # @reason locale name for Simplified Chinese - using the Chinese name per rules for locale names
