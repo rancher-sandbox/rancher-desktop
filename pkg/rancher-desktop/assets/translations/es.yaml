@@ -840,6 +840,8 @@ locale:
   es: Español
   # @source French
   fr: Francés
+  # @source Japanese
+  ja: Japonés
   # @source Portuguese (Brazilian)
   pt-br: Portugués (Brasil)
   # @source Chinese (Simplified)
