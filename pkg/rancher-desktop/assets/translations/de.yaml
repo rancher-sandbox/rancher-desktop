@@ -892,6 +892,8 @@ locale:
   es: Spanisch
   # @source French
   fr: Französisch
+  # @source Portuguese (Brazilian)
+  pt-br: Portugiesisch (Brasilien)
   # @source Chinese (Simplified)
   zh-hans: Chinesisch (vereinfacht)
 mainMenu:

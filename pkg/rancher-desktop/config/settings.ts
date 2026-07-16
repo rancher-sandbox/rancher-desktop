@@ -57,7 +57,7 @@ export enum Theme {
 }
 
 /** Locales with a bundled translation file; keep in sync with the enum in command-api.yaml. */
-export type Locale = 'de' | 'en-us' | 'es' | 'fr' | 'zh-hans';
+export type Locale = 'de' | 'en-us' | 'es' | 'fr' | 'pt-br' | 'zh-hans';
 
 export class SettingsError extends Error {
   toString() {
