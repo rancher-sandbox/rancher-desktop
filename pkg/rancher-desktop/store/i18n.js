@@ -184,10 +184,8 @@ export const actions = {
       ipcListenersBound = true;
 
       // Listen for settings changes (from preferences UI or rdctl) to sync locale.
-      // 'none' means the language selector is disabled; use the default locale.
       ipcRenderer.on('settings-update', (_, settings) => {
-        const raw = settings?.application?.locale;
-        const locale = (!raw || raw === 'none') ? state.default : raw;
+        const locale = settings?.application?.locale || state.default;
 
         if ( locale !== state.selected ) {
           dispatch('switchTo', locale);
@@ -207,7 +205,7 @@ export const actions = {
   },
 
   async switchTo({ state, commit, dispatch }, locale) {
-    if ( !locale || locale === 'none' ) {
+    if ( !locale ) {
       locale = state.default;
     }
 
