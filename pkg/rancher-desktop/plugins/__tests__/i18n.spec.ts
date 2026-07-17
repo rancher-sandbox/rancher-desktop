@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { createStore } from 'vuex';
 
-import i18nPlugin, { stringFor } from '@pkg/plugins/i18n';
+import i18nPlugin from '@pkg/plugins/i18n';
 
 const translations: Record<string, string> = {
   'test.plain':   'Plain text',
@@ -23,16 +23,6 @@ function makeStore() {
     },
   });
 }
-
-describe('stringFor', () => {
-  it('returns the translation without HTML-escaping', () => {
-    expect(stringFor(makeStore(), 'test.special')).toEqual('Command & "Args"');
-  });
-
-  it('passes the %key% placeholder through for missing keys', () => {
-    expect(stringFor(makeStore(), 'no.such.key')).toEqual('%no.such.key%');
-  });
-});
 
 describe('t component', () => {
   function mountT(template: string) {

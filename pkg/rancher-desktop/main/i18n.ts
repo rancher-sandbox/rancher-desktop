@@ -4,6 +4,7 @@
  */
 
 import { IntlMessageFormat } from 'intl-messageformat';
+import get from 'lodash/get.js';
 
 import mainEvents from '@pkg/main/mainEvents';
 import { availableLocales, loadTranslations } from '@pkg/utils/translationLoader';
@@ -17,19 +18,13 @@ const translations: Record<string, TranslationMap> = { 'en-us': loadTranslations
 const localeChangeCallbacks: (() => void)[] = [];
 
 /**
- * Traverse a nested object by dotted key path.
+ * Look up a dotted key path, returning the value only when it is a string;
+ * a key that resolves to a subtree counts as missing.
  */
 function getByPath(obj: TranslationMap, path: string): string | undefined {
-  let current: unknown = obj;
+  const value = get(obj, path);
 
-  for (const segment of path.split('.')) {
-    if (current == null || typeof current !== 'object') {
-      return undefined;
-    }
-    current = (current as Record<string, unknown>)[segment];
-  }
-
-  return typeof current === 'string' ? current : undefined;
+  return typeof value === 'string' ? value : undefined;
 }
 
 /**
