@@ -170,8 +170,11 @@ export const actions = {
         .map(locale => dispatch('load', locale)),
     );
 
-    // Use the cookie for fast initial render.
-    let selected = this.$cookies.get(LOCALE, { parseJSON: false });
+    // The main process passes the resolved locale as a URL param, so the first
+    // paint is already localized; the cookie is a fallback for a window opened
+    // without one. Later changes arrive via settings-update below.
+    const urlLocale = new URLSearchParams(window.location.search).get('locale');
+    let selected = urlLocale || this.$cookies.get(LOCALE, { parseJSON: false });
 
     if ( !selected ) {
       selected = state.default;
@@ -190,19 +193,6 @@ export const actions = {
           dispatch('switchTo', locale);
         }
       });
-
-      // Read initial settings to sync with the persisted locale.
-      // May briefly flash if the cookie and settings disagree; acceptable because
-      // both are set together during normal operation.
-      ipcRenderer.once('settings-read', (_, settings) => {
-        const raw = settings?.application?.locale;
-        const locale = (!raw || raw === 'none') ? state.default : raw;
-
-        if ( locale !== state.selected ) {
-          dispatch('switchTo', locale);
-        }
-      });
-      ipcRenderer.send('settings-read');
     }
 
     return dispatch('switchTo', selected);
