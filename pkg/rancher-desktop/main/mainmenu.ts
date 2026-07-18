@@ -1,6 +1,7 @@
 import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
 
 import { Help } from '@pkg/config/help';
+import { onLocaleChange, t } from '@pkg/main/i18n';
 import { openPreferences } from '@pkg/window/preferences';
 
 export default function buildApplicationMenu(): void {
@@ -9,6 +10,9 @@ export default function buildApplicationMenu(): void {
 
   Menu.setApplicationMenu(menu);
 }
+
+// Menu labels are translated when the menu is built, so rebuild on locale change.
+onLocaleChange(() => buildApplicationMenu());
 
 function getApplicationMenu(): MenuItem[] {
   switch (process.platform) {
@@ -25,67 +29,68 @@ function getApplicationMenu(): MenuItem[] {
 
 function getEditMenu(isMac: boolean): MenuItem {
   return new MenuItem({
-    label:   '&Edit',
+    label:   t('mainMenu.edit.label'),
     submenu: [
-      { role: 'undo', label: '&Undo' },
-      { role: 'redo', label: '&Redo' },
+      { role: 'undo', label: t('mainMenu.edit.undo') },
+      { role: 'redo', label: t('mainMenu.edit.redo') },
       { type: 'separator' },
-      { role: 'cut', label: 'Cu&t' },
-      { role: 'copy', label: '&Copy' },
-      { role: 'paste', label: '&Paste' },
-      { role: 'delete', label: 'De&lete' },
+      { role: 'cut', label: t('mainMenu.edit.cut') },
+      { role: 'copy', label: t('mainMenu.edit.copy') },
+      { role: 'paste', label: t('mainMenu.edit.paste') },
+      { role: 'delete', label: t('mainMenu.edit.delete') },
       ...(!isMac ? [{ type: 'separator' } as MenuItemConstructorOptions] : []),
-      { role: 'selectAll', label: 'Select &All' },
+      { role: 'selectAll', label: t('mainMenu.edit.selectAll') },
     ],
   });
 }
 
 function getViewMenu(): MenuItem {
   return new MenuItem({
-    label:   '&View',
+    label:   t('mainMenu.view.label'),
     submenu: [
       ...(Electron.app.isPackaged
         ? []
         : [
-          { role: 'reload', label: '&Reload' },
-          { role: 'forceReload', label: '&Force Reload' },
-          { role: 'toggleDevTools', label: 'Toggle &Developer Tools' },
+          { role: 'reload', label: t('mainMenu.view.reload') },
+          { role: 'forceReload', label: t('mainMenu.view.forceReload') },
+          { role: 'toggleDevTools', label: t('mainMenu.view.toggleDevTools') },
           { type: 'separator' },
         ] as const),
       {
-        label:       '&Actual Size',
+        label:       t('mainMenu.view.actualSize'),
         accelerator: 'CmdOrCtrl+0',
         click(_item, focusedWindow) {
           adjustZoomLevel(focusedWindow, 0);
         },
       },
       {
-        label:       'Zoom &In',
+        label:       t('mainMenu.view.zoomIn'),
         accelerator: 'CmdOrCtrl+Plus',
         click(_item, focusedWindow) {
           adjustZoomLevel(focusedWindow, 0.5);
         },
       },
       {
-        label:       'Zoom &Out',
+        label:       t('mainMenu.view.zoomOut'),
         accelerator: 'CmdOrCtrl+-',
         click(_item, focusedWindow) {
           adjustZoomLevel(focusedWindow, -0.5);
         },
       },
       { type: 'separator' },
-      { role: 'togglefullscreen', label: 'Toggle Full &Screen' },
+      { role: 'togglefullscreen', label: t('mainMenu.view.toggleFullScreen') },
     ],
   });
 }
 
 function getHelpMenu(isMac: boolean): MenuItem {
+  const appName = Electron.app.name;
   const helpMenuItems: MenuItemConstructorOptions[] = [
     ...(!isMac
       ? [
         {
           role:  'about',
-          label: `&About ${ Electron.app.name }`,
+          label: t('mainMenu.help.about', { appName }),
           click() {
             Electron.app.showAboutPanel();
           },
@@ -94,25 +99,25 @@ function getHelpMenu(isMac: boolean): MenuItem {
       ]
       : []),
     {
-      label: isMac ? 'Rancher Desktop &Help' : 'Get &Help',
+      label: isMac ? t('mainMenu.help.help', { appName }) : t('mainMenu.help.getHelp'),
       click() {
         Help.openUrl();
       },
     },
     {
-      label: 'File a &Bug',
+      label: t('mainMenu.help.fileABug'),
       click() {
         shell.openExternal('https://github.com/rancher-sandbox/rancher-desktop/issues');
       },
     },
     {
-      label: '&Project Page',
+      label: t('mainMenu.help.projectPage'),
       click() {
         shell.openExternal('https://rancherdesktop.io/');
       },
     },
     {
-      label: '&Discuss',
+      label: t('mainMenu.help.discuss'),
       click() {
         shell.openExternal('https://slack.rancher.io/');
       },
@@ -121,37 +126,47 @@ function getHelpMenu(isMac: boolean): MenuItem {
 
   return new MenuItem({
     role:    'help',
-    label:   '&Help',
+    label:   t('mainMenu.help.label'),
     submenu: helpMenuItems,
   });
 }
 
 function getMacApplicationMenu(): MenuItem[] {
+  const appName = Electron.app.name;
+
   return [
     new MenuItem({
-      label:   Electron.app.name,
+      label:   appName,
       submenu: [
-        { role: 'about' },
+        { role: 'about', label: t('mainMenu.about', { appName }) },
         { type: 'separator' },
         ...getPreferencesMenuItem(),
-        { role: 'services' },
+        { role: 'services', label: t('mainMenu.services') },
         { type: 'separator' },
-        { role: 'hide' },
-        { role: 'hideOthers' },
-        { role: 'unhide' },
+        { role: 'hide', label: t('mainMenu.hide', { appName }) },
+        { role: 'hideOthers', label: t('mainMenu.hideOthers') },
+        { role: 'unhide', label: t('mainMenu.showAll') },
         { type: 'separator' },
-        { role: 'quit' },
+        { role: 'quit', label: t('mainMenu.quit', { appName }) },
       ],
     }),
     new MenuItem({
-      label: 'File',
-      role:  'fileMenu',
+      label:   t('mainMenu.file.label'),
+      submenu: [
+        { role: 'close', label: t('mainMenu.file.close') },
+      ],
     }),
     getEditMenu(true),
     getViewMenu(),
     new MenuItem({
-      label: '&Window',
-      role:  'windowMenu',
+      role:    'windowMenu',
+      label:   t('mainMenu.window.label'),
+      submenu: [
+        { role: 'minimize', label: t('mainMenu.window.minimize') },
+        { role: 'zoom', label: t('mainMenu.window.zoom') },
+        { type: 'separator' },
+        { role: 'front', label: t('mainMenu.window.front') },
+      ],
     }),
     getHelpMenu(true),
   ];
@@ -160,13 +175,13 @@ function getMacApplicationMenu(): MenuItem[] {
 function getWindowsApplicationMenu(): MenuItem[] {
   return [
     new MenuItem({
-      label:   '&File',
+      label:   t('mainMenu.file.label'),
       role:    'fileMenu',
       submenu: [
         ...getPreferencesMenuItem(),
         {
           role:  'quit',
-          label: 'E&xit',
+          label: t('mainMenu.file.exit'),
         },
       ],
     }),
@@ -177,13 +192,12 @@ function getWindowsApplicationMenu(): MenuItem[] {
 }
 
 /**
- * Gets the preferences menu item for all supported platforms
- * @returns MenuItemConstructorOptions: The preferences menu item object
+ * Gets the preferences menu item for all supported platforms.
  */
 function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
   return [
     {
-      label:               'Preferences',
+      label:               t('mainMenu.preferences'),
       visible:             true,
       registerAccelerator: false,
       accelerator:         'CmdOrCtrl+,',

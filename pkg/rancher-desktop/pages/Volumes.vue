@@ -24,7 +24,7 @@
       <template #header-middle>
         <div class="header-middle">
           <div v-if="supportsNamespaces">
-            <label>Namespace</label>
+            <label>{{ t('generic.namespace') }}</label>
             <select
               :value="namespace"
               class="select-namespace"
@@ -102,7 +102,6 @@ interface RowItem extends Volume {
 
 export default defineComponent({
   name:       'Volumes',
-  title:      'Volumes',
   components: { SortableTable, Banner },
   data() {
     return {
@@ -181,10 +180,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.$store.dispatch('page/setHeader', {
-      title:       this.t('volumes.title'),
-      description: '',
-    });
+    this.$store.dispatch('page/setHeader', { titleKey: 'volumes.title' });
 
     ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;

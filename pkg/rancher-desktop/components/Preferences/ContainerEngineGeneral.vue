@@ -5,6 +5,7 @@ import { defineComponent } from 'vue';
 import { mapGetters } from 'vuex';
 
 import EngineSelector from '@pkg/components/EngineSelector.vue';
+import { handleNavigateClick } from '@pkg/components/Preferences/navigateClick';
 import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import RdFieldset from '@pkg/components/form/RdFieldset.vue';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
@@ -38,6 +39,9 @@ export default defineComponent({
     },
   },
   methods: {
+    onWarningClick(event: MouseEvent) {
+      handleNavigateClick(event, this.$root.navigate);
+    },
     onChangeEngine(desiredEngine: ContainerEngine) {
       this.containerEngine = desiredEngine;
       this.$emit('container-engine-change', desiredEngine);
@@ -81,13 +85,12 @@ export default defineComponent({
           v-if="webAssemblyIncompatible"
           #below
         >
-          <banner color="warning">
-            WebAssembly must be enabled for the
-            <a
-              href="#"
-              @click.prevent="$root.navigate('Kubernetes')"
-            >Spin Operator</a>
-            to be installed.
+          <banner
+            color="warning"
+            @click.prevent="onWarningClick"
+          >
+            <!-- v-clean-html: the translated warning embeds a link -->
+            <span v-clean-html="t('preferences.containerEngine.webAssembly.warning')" />
           </banner>
         </template>
       </rd-checkbox>

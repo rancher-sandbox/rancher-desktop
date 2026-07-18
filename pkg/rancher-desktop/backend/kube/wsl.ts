@@ -15,6 +15,7 @@ import BackendHelper, { MANIFEST_CERT_MANAGER, MANIFEST_SPIN_OPERATOR } from '@p
 import * as K8s from '@pkg/backend/k8s';
 import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine } from '@pkg/config/settings';
+import { t } from '@pkg/main/i18n';
 import mainEvents from '@pkg/main/mainEvents';
 import { checkConnectivity } from '@pkg/main/networking';
 import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
@@ -112,7 +113,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     if (semver.gt(existingVersion, desiredVersion)) {
       console.log(`Deleting incompatible Kubernetes state due to downgrade from ${ existingVersion } to ${ desiredVersion }...`);
       await this.vm.progressTracker.action(
-        'Deleting incompatible Kubernetes state',
+        t('progress.deletingIncompatibleState'),
         100,
         this.k3sHelper.deleteKubeState(this.vm));
     }
@@ -153,7 +154,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       }
 
       try {
-        await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+        await this.progressTracker.action(t('progress.checkingK3sImages'), 100, this.k3sHelper.ensureK3sImages(desiredVersion));
 
         return [desiredVersion, false];
       } catch (ex) {
@@ -167,11 +168,11 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
 
           if (isDowngrade) {
             const options: Electron.MessageBoxOptions = {
-              message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose existing Kubernetes workloads. Delete the data?`,
+              message:   t('dialog.confirmMigration.message', { from: desiredVersion.raw, to: newVersion.raw }),
               type:      'question',
-              buttons:   ['Delete Workloads', 'Cancel'],
+              buttons:   [t('dialog.confirmMigration.delete'), t('generic.cancel')],
               defaultId: 1,
-              title:     'Confirming migration',
+              title:     t('dialog.confirmMigration.title'),
               cancelId:  1,
             };
             const result = await showMessageBox(options, true);
@@ -220,7 +221,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     // to start if these are left over.  We need to remove all cgroups named
     // "kubepods" as well as their descendants (which are expected to all be
     // empty).
-    await this.progressTracker.action('Removing stale state', 50,
+    await this.progressTracker.action(t('progress.removingStaleState'), 50,
       this.vm.execCommand('busybox', 'find', '/sys/fs/cgroup', '-name', 'kubepods', '-exec',
         'busybox', 'find', '{}', '-type', 'd', '-delete', ';', '-prune'));
 
@@ -232,7 +233,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     if (!config.kubernetes.options.flannel) {
       await this.vm.execCommand('busybox', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
     }
-    await this.progressTracker.action('Starting k3s', 100, this.vm.startService('k3s'));
+    await this.progressTracker.action(t('progress.startingK3s'), 100, this.vm.startService('k3s'));
 
     if (this.vm.currentAction !== Action.STARTING) {
       // User aborted
@@ -240,7 +241,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     }
 
     await this.progressTracker.action(
-      'Updating kubeconfig',
+      t('progress.updatingKubeconfig'),
       100,
       async() => {
         // Wait for the file to exist first, for slow machines.
@@ -260,14 +261,14 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
       });
 
     await this.progressTracker.action(
-      'Waiting for Kubernetes API',
+      t('progress.waitingForKubernetesApi'),
       100,
       this.k3sHelper.waitForServerReady(() => this.vm.ipAddress, config.kubernetes?.port));
 
     const client = this.client = kubeClient?.() || new KubeClient();
 
     await this.progressTracker.action(
-      'Waiting for services',
+      t('progress.waitingForServices'),
       50,
       async() => {
         await client.waitForServiceWatcher();
@@ -290,13 +291,13 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     // Remove traefik if necessary.
     if (!config.kubernetes.options.traefik) {
       tasks.push(this.progressTracker.action(
-        'Removing Traefik',
+        t('progress.removingTraefik'),
         50,
         this.k3sHelper.uninstallHelmChart(client, 'traefik')));
     }
     if (!this.cfg?.experimental?.kubernetes?.options?.spinkube) {
       tasks.push(this.progressTracker.action(
-        'Removing spinkube operator',
+        t('progress.removingSpinkubeOperator'),
         50,
         Promise.all([
           this.k3sHelper.uninstallHelmChart(this.client, MANIFEST_CERT_MANAGER),
@@ -306,7 +307,7 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
 
     if (config.kubernetes.options.flannel) {
       tasks.push(this.progressTracker.action(
-        'Waiting for nodes',
+        t('progress.waitingForNodes'),
         100,
         client.waitForReadyNodes()));
     }

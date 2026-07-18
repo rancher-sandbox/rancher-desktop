@@ -5,6 +5,7 @@ import { app, dialog } from 'electron';
 import { webRoot, createWindow, getWindow } from '.';
 
 import { Help } from '@pkg/config/help';
+import { onLocaleChange, t } from '@pkg/main/i18n';
 import paths from '@pkg/utils/paths';
 import { CommandOrControl, Shortcuts } from '@pkg/utils/shortcuts';
 import { preferencesNavItems } from '@pkg/window/preferenceConstants';
@@ -16,7 +17,7 @@ let isDirty = false;
  */
 export function openPreferences() {
   const window = createWindow('preferences', `${ webRoot }/index.html#preferences`, {
-    title:           'Rancher Desktop - Preferences',
+    title:           t('preferencesWindow.title'),
     width:           768,
     height:          512,
     autoHideMenuBar: true,
@@ -91,6 +92,12 @@ export function openPreferences() {
     );
   }
 
+  const offLocaleChange = onLocaleChange(() => {
+    window.setTitle(t('preferencesWindow.title'));
+  });
+
+  window.on('closed', offLocaleChange);
+
   window.webContents.on('ipc-message', (_event, channel) => {
     if (channel === 'preferences/load') {
       window.show();
@@ -107,14 +114,14 @@ export function openPreferences() {
     const result = dialog.showMessageBoxSync(
       window,
       {
-        title:    'Rancher Desktop - Close Preferences',
+        title:    t('preferencesWindow.close.title'),
         type:     'warning',
-        message:  'Close preferences without applying?',
-        detail:   'There are preferences with changes that have not been applied. All unsaved preferences will be lost.',
+        message:  t('preferencesWindow.close.message'),
+        detail:   t('preferencesWindow.close.detail'),
         cancelId: cancelPosition,
         buttons:  [
-          'Discard changes',
-          'Cancel',
+          t('preferencesWindow.close.discardChanges'),
+          t('generic.cancel'),
         ],
       });
 

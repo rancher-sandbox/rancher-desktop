@@ -31,7 +31,7 @@ import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCrede
 import { DeploymentProfileError, readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
 import { DiagnosticsManager, DiagnosticsResultCollection } from '@pkg/main/diagnostics/diagnostics';
 import { ExtensionErrorCode, isExtensionError } from '@pkg/main/extensions';
-import { initMainI18n } from '@pkg/main/i18n';
+import { initMainI18n, t } from '@pkg/main/i18n';
 import { ImageEventHandler } from '@pkg/main/imageEvents';
 import { getIpcMainProxy } from '@pkg/main/ipcMain';
 import mainEvents from '@pkg/main/mainEvents';
@@ -1056,7 +1056,7 @@ ipcMainProxy.handle('show-snapshots-confirm-dialog', async(
   const dialog = window.openDialog(
     'SnapshotsDialog',
     {
-      title:   'Snapshots',
+      title:   t('snapshots.title'),
       modal:   true,
       parent:  mainWindow || undefined,
       frame:   true,
@@ -1517,7 +1517,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     const [, errors] = await this.validateSettings(cfg, newSettings);
 
     if (errors.length > 0) {
-      return ['', `Errors in proposed settings:\n${ errors.join('\n') }`];
+      return ['', `${ t('validation.errorsInProposedSettings') }\n${ errors.join('\n') }`];
     }
     const result = await k8smanager?.requiresRestartReasons(newSettings ?? {}) ?? {};
 

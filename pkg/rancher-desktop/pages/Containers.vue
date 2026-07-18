@@ -25,7 +25,7 @@
       <template #header-middle>
         <div class="header-middle">
           <div v-if="supportsNamespaces">
-            <label>Namespace</label>
+            <label>{{ t('generic.namespace') }}</label>
             <select
               class="select-namespace"
               :value="namespace"
@@ -170,7 +170,6 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default defineComponent({
   name:       'Containers',
-  title:      'Containers',
   components: { SortableTable, BadgeState, Banner },
   data() {
     return {
@@ -274,10 +273,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.$store.dispatch('page/setHeader', {
-      title:       this.t('containers.title'),
-      description: '',
-    });
+    this.$store.dispatch('page/setHeader', { titleKey: 'containers.title' });
 
     ipcRenderer.on('settings-read', (event, settings) => {
       this.settings = settings;
@@ -302,27 +298,27 @@ export default defineComponent({
     getContainerActions(container) {
       return [
         {
-          label:      'Info',
+          label:      this.t('containers.manage.table.action.info'),
           action:     'viewInfo',
           enabled:    true,
           bulkable:   false,
         },
         {
-          label:      'Stop',
+          label:      this.t('containers.manage.table.action.stop'),
           action:     'stopContainer',
           enabled:    this.isRunning(container),
           bulkable:   true,
           bulkAction: 'stopContainer',
         },
         {
-          label:      'Restart',
+          label:      this.t('containers.manage.table.action.restart'),
           action:     'restartContainer',
           enabled:    this.isRunning(container),
           bulkable:   true,
           bulkAction: 'restartContainer',
         },
         {
-          label:      'Start',
+          label:      this.t('containers.manage.table.action.start'),
           action:     'startContainer',
           enabled:    this.isStopped(container),
           bulkable:   true,

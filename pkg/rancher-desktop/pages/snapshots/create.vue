@@ -42,7 +42,7 @@ export default defineComponent({
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('snapshots.create.title') },
+      { titleKey: 'snapshots.create.title' },
     );
     (this.$refs.nameInput as any)?.select();
   },

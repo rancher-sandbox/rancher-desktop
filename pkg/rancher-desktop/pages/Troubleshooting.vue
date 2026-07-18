@@ -26,7 +26,7 @@
             :disabled="alwaysDebugging"
             :tooltip="debugModeTooltip"
             :is-locked="debugLocked"
-            label="Enable debug mode"
+            :label="t('troubleshooting.debugMode')"
             @update:value="updateDebug"
           />
         </template>
@@ -93,7 +93,6 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
   name:       'Troubleshooting',
-  title:      'Troubleshooting',
   components: { TroubleshootingLineItem, RdCheckbox },
   data:       () => ({
     state:           ipcRenderer.sendSync('k8s-state'),
@@ -110,7 +109,7 @@ export default {
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('troubleshooting.title') },
+      { titleKey: 'troubleshooting.title' },
     );
     ipcRenderer.on('k8s-check-state', (_, newState) => {
       this.$data.state = newState;

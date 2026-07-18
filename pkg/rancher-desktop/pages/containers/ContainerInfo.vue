@@ -14,26 +14,26 @@
         pty process across tab switches).
       -->
       <tab
-        label="Info"
+        :label="t('containerInfo.info')"
         name="tab-info"
         :weight="3"
         @active="activeTab = 'tab-info'"
       />
       <!-- TODO: hide this tab entirely when not on the Moby engine -->
       <tab
-        label="Stats"
+        :label="t('containerInfo.stats')"
         name="tab-stats"
         :weight="2"
         @active="activeTab = 'tab-stats'"
       />
       <tab
-        label="Logs"
+        :label="t('containerInfo.logs')"
         name="tab-logs"
         :weight="1"
         @active="activeTab = 'tab-logs'"
       />
       <tab
-        label="Shell"
+        :label="t('containerInfo.shell')"
         name="tab-shell"
         :weight="0"
         :disabled="!isRunning"
@@ -48,20 +48,20 @@
           <input
             ref="searchInput"
             v-model="searchTerm"
-            aria-label="Search in logs"
+            :aria-label="t('containerInfo.search.ariaLabel')"
             class="search-input"
             data-testid="search-input"
-            placeholder="Search logs..."
+            :placeholder="t('containerInfo.search.placeholder')"
             type="search"
             @input="onSearchInput"
             @keydown="handleSearchKeydown"
           >
           <button
             :disabled="!searchTerm"
-            aria-label="Previous match"
+            :aria-label="t('containerInfo.search.previousMatch')"
             class="search-btn btn role-tertiary"
             data-testid="search-prev-btn"
-            title="Previous match"
+            :title="t('containerInfo.search.previousMatch')"
             @click="searchPrevious"
           >
             <i
@@ -71,10 +71,10 @@
           </button>
           <button
             :disabled="!searchTerm"
-            aria-label="Next match"
+            :aria-label="t('containerInfo.search.nextMatch')"
             class="search-btn btn role-tertiary"
             data-testid="search-next-btn"
-            title="Next match"
+            :title="t('containerInfo.search.nextMatch')"
             @click="searchNext"
           >
             <i
@@ -84,10 +84,10 @@
           </button>
           <button
             :disabled="!searchTerm"
-            aria-label="Clear search"
+            :aria-label="t('containerInfo.search.clearSearch')"
             class="search-btn btn role-tertiary"
             data-testid="search-clear-btn"
-            title="Clear search"
+            :title="t('containerInfo.search.clearSearch')"
             @click="clearSearch"
           >
             <i
@@ -147,6 +147,7 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 // Router and Store
 const route = useRoute();
 const store = useStore();
+const t = (key: string, args?: Record<string, unknown>) => store.getters['i18n/t'](key, args);
 
 // Template refs with proper typing
 const containerLogs = ref<InstanceType<typeof ContainerLogs> | null>(null);
@@ -194,7 +195,7 @@ const isRunning = computed(() => {
 // Watchers
 watch(containerName, (name) => {
   store.dispatch('page/setHeader', {
-    title:       name || 'Container Info',
+    title:       name || t('containerInfo.fallbackTitle'),
     description: '',
     action:      'ContainerStatusBadge',
   });
@@ -294,7 +295,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  store.dispatch('page/setHeader', { action: null });
+  store.dispatch('page/setAction', { action: '' });
   ipcRenderer.removeListener('settings-update', handleSettingsUpdate);
   ipcRenderer.removeListener('settings-read', handleSettingsRead);
   store.dispatch('container-engine/unsubscribe').catch(console.error);
