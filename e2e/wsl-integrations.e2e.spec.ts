@@ -73,7 +73,11 @@ test.describe('WSL Integrations', () => {
             '  gamma  Stopped  2',
             '',
           ].join('\n'),
-          utf16le: true,
+        },
+        {
+          args:   ['--list', '--running', '--quiet'],
+          mode:   'repeated',
+          stdout: '',
         },
         ...['alpha', 'beta', 'gamma'].flatMap(distro => [
           ...[['bin', 'docker-compose'], ['internal', 'wsl-helper']].flatMap(tool => ([
@@ -207,11 +211,10 @@ test.describe('WSL Integrations', () => {
     await expect(wslPage.wslIntegrations).toBeVisible();
 
     await expect(wslPage.wslIntegrations).toHaveCount(1, { timeout: 10_000 });
-    const wslIntegrationList = wslPage.tabIntegrations.getByTestId('wsl-integration-list');
 
-    expect(wslIntegrationList.getByText('alpha')).not.toBeNull();
-    expect(wslIntegrationList.getByText('beta')).not.toBeNull();
-    expect(wslIntegrationList.getByText('gamma')).not.toBeNull();
+    await expect(wslPage.wslIntegrations.getByText('alpha')).toBeVisible({ timeout: 10_000 });
+    await expect(wslPage.wslIntegrations.getByText('beta')).toBeVisible({ timeout: 10_000 });
+    await expect(wslPage.wslIntegrations.getByText('gamma')).toBeVisible({ timeout: 10_000 });
   });
 
   /*

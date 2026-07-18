@@ -19,7 +19,7 @@ class CheckWSLDistros implements DiagnosticsChecker {
       const { stdout } = await spawnFile(
         'wsl.exe',
         ['--list', '--quiet'],
-        { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf-8', env: { WSL_UTF8: '1' } },
+        { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf-8', env: { ...process.env, WSL_UTF8: '1' } },
       );
       const distros = new Set(stdout.split(/\s+/m));
       const issues = banned.intersection(distros);
