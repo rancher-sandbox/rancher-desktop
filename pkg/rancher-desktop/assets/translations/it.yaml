@@ -1514,8 +1514,6 @@ telemetryOptIn:
   # @reason 'deploy' and 'endpoint' kept in English; established loanwords in Italian dev usage
   # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
   fineprint: Invia informazioni anonime sull'utilizzo, segnalazioni di errori ecc. per contribuire a migliorare Rancher Desktop. I tuoi dati non verranno condivisi con nessun altro e non viene inclusa alcuna informazione sulle risorse o sugli endpoint specifici di cui esegui il deploy.
-  # @source Allow collection of anonymous statistics to help us improve Rancher Desktop
-  label: Consenti la raccolta di statistiche anonime per aiutarci a migliorare Rancher Desktop
 tray:
   # @reason 'container engine' kept in English (established term); the string happens to match the source
   # @source Container engine: {name}

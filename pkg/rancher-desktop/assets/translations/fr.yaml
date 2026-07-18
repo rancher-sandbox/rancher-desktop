@@ -1507,8 +1507,6 @@ systemPreferences:
 telemetryOptIn:
   # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
   fineprint: Envoyer des informations d’utilisation anonymisées, des rapports d’erreur, etc. pour aider à améliorer Rancher Desktop. Vos données ne seront partagées avec personne d’autre, et aucune information sur les ressources ou points de terminaison spécifiques que vous déployez n’est incluse.
-  # @source Allow collection of anonymous statistics to help us improve Rancher Desktop
-  label: Autoriser la collecte de statistiques anonymes pour nous aider à améliorer Rancher Desktop
 tray:
   # @source Container engine: {name}
   containerEngine: 'Moteur de conteneurs : {name}'
