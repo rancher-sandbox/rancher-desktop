@@ -304,6 +304,11 @@ asyncButton:
     # @reason "Starting" — engine startup phase
     # @source Starting&hellip;
     waiting: Starten&hellip;
+blogFeed:
+  # @source Read more
+  readMore: Weiterlesen
+  # @source Recent blog posts
+  title: Aktuelle Blogbeiträge
 containerEngine:
   # @reason German keeps the English "Container Engine" as a loanword (cf. Snapshot, Label, Port); used for the nav entry, this legend, and product.containerEngine.fullName
   # @source Container Engine
@@ -1561,9 +1566,6 @@ systemPreferences:
   cpus: Anzahl CPUs
   # @source Memory (GB)
   memory: Arbeitsspeicher (GB)
-telemetryOptIn:
-  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
-  fineprint: Senden Sie anonymisierte Nutzungsdaten, Fehlerberichte usw., um Rancher Desktop zu verbessern. Ihre Daten werden nicht an Dritte weitergegeben, und es werden keine Informationen über konkrete Ressourcen oder Endpunkte erfasst, die Sie bereitstellen.
 tray:
   # @source Container engine: {name}
   containerEngine: 'Container-Engine: {name}'

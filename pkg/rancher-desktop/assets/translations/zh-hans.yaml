@@ -332,6 +332,12 @@ asyncButton:
     # @reason "Starting…" - in-progress state before upgrade completes
     # @source Starting&hellip;
     waiting: 正在启动&hellip;
+blogFeed:
+  # @reason "阅读全文" (read the full article) is the standard Chinese link label after a post excerpt, and is preferred over a literal "阅读更多"; 4 characters keeps the nowrap link short
+  # @source Read more
+  readMore: 阅读全文
+  # @source Recent blog posts
+  title: 最新博文
 containerEngine:
   # @source Container Engine
   label: 容器引擎
@@ -1543,9 +1549,6 @@ systemPreferences:
   cpus: CPU 数量
   # @source Memory (GB)
   memory: 内存 (GB)
-telemetryOptIn:
-  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
-  fineprint: 发送匿名使用信息、错误报告等，帮助改进 Rancher Desktop。您的数据不会与任何第三方共享，也不会包含您所部署的具体资源或端点信息。
 tray:
   # @source Container engine: {name}
   containerEngine: 容器引擎：{name}

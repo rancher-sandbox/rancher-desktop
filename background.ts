@@ -805,6 +805,21 @@ ipcMainProxy.handle('api-get-credentials', () => mainEvents.invoke('api-get-cred
 
 ipcMainProxy.handle('get-locked-fields', () => settingsImpl.getLockedSettings());
 
+const blogFeedURL = 'https://docs.rancherdesktop.io/blog/rss.xml';
+
+ipcMainProxy.handle('get-blog-feed', async() => {
+  // Fetch in the main process to avoid the renderer's CORS restrictions;
+  // the renderer parses the returned XML.
+  // Time out a stalled request so the renderer's invoke does not hang forever.
+  const response = await Electron.net.fetch(blogFeedURL, { signal: AbortSignal.timeout(10_000) });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch blog feed: ${ response.status } ${ response.statusText }`);
+  }
+
+  return response.text();
+});
+
 function backendIsBusy() {
   return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);
 }

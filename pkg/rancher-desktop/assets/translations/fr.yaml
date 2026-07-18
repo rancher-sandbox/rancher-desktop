@@ -261,6 +261,11 @@ asyncButton:
     success: Mise à niveau
     # @source Starting&hellip;
     waiting: Démarrage&hellip;
+blogFeed:
+  # @source Read more
+  readMore: Lire la suite
+  # @source Recent blog posts
+  title: Articles récents du blog
 containerEngine:
   # @source Container Engine
   label: Moteur de conteneurs
@@ -1511,9 +1516,6 @@ systemPreferences:
   # @reason GB rendered as Go per French unit convention
   # @source Memory (GB)
   memory: Mémoire (Go)
-telemetryOptIn:
-  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
-  fineprint: Envoyer des informations d’utilisation anonymisées, des rapports d’erreur, etc. pour aider à améliorer Rancher Desktop. Vos données ne seront partagées avec personne d’autre, et aucune information sur les ressources ou points de terminaison spécifiques que vous déployez n’est incluse.
 tray:
   # @source Container engine: {name}
   containerEngine: 'Moteur de conteneurs : {name}'

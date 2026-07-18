@@ -261,6 +261,11 @@ asyncButton:
     success: アップグレード中
     # @source Starting&hellip;
     waiting: 開始中&hellip;
+blogFeed:
+  # @source Read more
+  readMore: 続きを読む
+  # @source Recent blog posts
+  title: ブログの最新記事
 containerEngine:
   # @reason Katakana style: Microsoft-style long vowel for -er/-or words (コンテナー、サーバー、ユーザー);
   # @source Container Engine
@@ -1485,9 +1490,6 @@ systemPreferences:
   cpus: CPU 数
   # @source Memory (GB)
   memory: メモリ（GB）
-telemetryOptIn:
-  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
-  fineprint: 匿名化された使用状況情報やエラーレポートなどを送信して、Rancher Desktop の改善に役立てます。データが第三者と共有されることはなく、デプロイしている具体的なリソースやエンドポイントに関する情報は含まれません。
 tray:
   # @source Container engine: {name}
   containerEngine: コンテナーエンジン：{name}

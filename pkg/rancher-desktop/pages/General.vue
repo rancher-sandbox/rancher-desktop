@@ -15,45 +15,27 @@
     <update-status
       :enabled="settings.application.updater.enabled"
       :update-state="updateState"
-      :is-auto-update-locked="autoUpdateLocked"
-      @enabled="onUpdateEnabled"
       @apply="onUpdateApply"
     />
-    <hr>
-    <telemetry-opt-in
-      :telemetry="settings.application.telemetry.enabled"
-      :is-telemetry-locked="telemetryLocked"
-      @update-telemetry="updateTelemetry"
-    />
-    <hr>
-    <div class="network-status">
-      <network-status />
-    </div>
+    <blog-feed />
   </div>
 </template>
 
 <script>
 
-import _ from 'lodash';
-
-import NetworkStatus from '@pkg/components/NetworkStatus.vue';
-import TelemetryOptIn from '@pkg/components/TelemetryOptIn.vue';
+import BlogFeed from '@pkg/components/BlogFeed.vue';
 import UpdateStatus from '@pkg/components/UpdateStatus.vue';
 import { defaultSettings } from '@pkg/config/settings';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
   name:       'General',
-  components: {
-    NetworkStatus, TelemetryOptIn, UpdateStatus,
-  },
+  components: { BlogFeed, UpdateStatus },
   data() {
     return {
-      settings:         defaultSettings,
-      telemetryLocked:  null,
-      autoUpdateLocked: null,
+      settings:    defaultSettings,
       /** @type import('@pkg/main/update').UpdateState | null */
-      updateState:      null,
+      updateState: null,
     };
   },
 
@@ -64,23 +46,19 @@ export default {
         titleKey:       'general.title',
         descriptionKey: 'general.description',
         icon:           'icon icon-rancher-desktop',
+        action:         'AutoUpdateCheckbox',
       },
     );
     ipcRenderer.on('settings-update', this.onSettingsUpdate);
     ipcRenderer.on('update-state', this.onUpdateState);
     ipcRenderer.send('update-state');
-    ipcRenderer.on('settings-read', (event, settings) => {
-      this.$data.settings = settings;
-    });
+    ipcRenderer.on('settings-read', this.onSettingsUpdate);
     ipcRenderer.send('settings-read');
-    ipcRenderer.invoke('get-locked-fields').then((lockedFields) => {
-      this.$data.telemetryLocked = _.get(lockedFields, 'application.telemetry.enabled');
-      this.$data.autoUpdateLocked = _.get(lockedFields, 'application.updater.enabled');
-    });
   },
 
   beforeUnmount() {
     ipcRenderer.off('settings-update', this.onSettingsUpdate);
+    ipcRenderer.off('settings-read', this.onSettingsUpdate);
     ipcRenderer.off('update-state', this.onUpdateState);
   },
 
@@ -88,17 +66,11 @@ export default {
     onSettingsUpdate(event, settings) {
       this.$data.settings = settings;
     },
-    onUpdateEnabled(value) {
-      ipcRenderer.invoke('settings-write', { application: { updater: { enabled: value } } });
-    },
     onUpdateApply() {
       ipcRenderer.send('update-apply');
     },
     onUpdateState(event, state) {
       this.$data.updateState = state;
-    },
-    updateTelemetry(value) {
-      ipcRenderer.invoke('settings-write', { application: { telemetry: { enabled: value } } });
     },
   },
 };
@@ -110,6 +82,9 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+  // Fill the body so the blog feed can claim whatever height is left over.
+  flex: 1;
+  min-height: 0;
 
   ul {
     margin-bottom: 0;
