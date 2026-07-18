@@ -20,7 +20,7 @@
           <i
             v-if="item.experimental"
             v-tooltip="{
-              content: t('prefs.experimental', undefined, true),
+              content: t('prefs.experimental'),
               placement: 'right',
             }"
             :class="`icon icon-flask`"

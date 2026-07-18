@@ -43,7 +43,7 @@ export default defineComponent({
           return {
             label:           this.t(`virtualMachine.type.options.${ x }.label`),
             value:           x,
-            description:     this.t(`virtualMachine.type.options.${ x }.description`, {}, true),
+            description:     this.t(`virtualMachine.type.options.${ x }.description`),
             disabled:        x === VMType.VZ && this.vzDisabled,
             compatiblePrefs: this.getCompatiblePrefs(x),
           };
@@ -73,7 +73,7 @@ export default defineComponent({
       let tooltip = {};
 
       if (disabled) {
-        tooltip = { content: this.t(`prefs.onlyFromVentura_${ this.arch }`, undefined, true) };
+        tooltip = { content: this.t(`prefs.onlyFromVentura_${ this.arch }`) };
       }
 
       return tooltip;

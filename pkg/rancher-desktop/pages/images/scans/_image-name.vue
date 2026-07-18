@@ -114,17 +114,17 @@ export default {
         });
     },
     loadingText() {
-      return this.t('images.scan.loadingText', { image: this.image }, true);
+      return this.t('images.scan.loadingText', { image: this.image });
     },
     errorText() {
-      return this.t('images.scan.errorText', { image: this.image }, true);
+      return this.t('images.scan.errorText', { image: this.image });
     },
   },
 
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('images.scan.title', { image: this.$route.params.image }, true) },
+      { title: this.t('images.scan.title', { image: this.$route.params.image }) },
     );
 
     ipcRenderer.on('ok:images-process-output', (_event, data) => {

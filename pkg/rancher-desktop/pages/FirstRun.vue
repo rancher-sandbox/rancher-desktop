@@ -64,7 +64,7 @@
     <rd-fieldset
       v-if="pathManagementRelevant"
       :legend-text="t('pathManagement.label')"
-      :legend-tooltip="t('pathManagement.tooltip', { }, true)"
+      :legend-tooltip="t('pathManagement.tooltip')"
       :is-locked="pathManagementSelectorLocked"
     >
       <path-management-selector

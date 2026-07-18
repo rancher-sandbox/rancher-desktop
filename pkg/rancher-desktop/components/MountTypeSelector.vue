@@ -55,7 +55,7 @@ export default defineComponent({
           return {
             label:           this.t(`virtualMachine.mount.type.options.${ x }.label`),
             value:           x,
-            description:     this.t(`virtualMachine.mount.type.options.${ x }.description`, {}, true),
+            description:     this.t(`virtualMachine.mount.type.options.${ x }.description`),
             experimental:    x === MountType.NINEP,
             disabled:        x === MountType.VIRTIOFS && this.virtIoFsDisabled,
             compatiblePrefs: this.getCompatiblePrefs(x),
@@ -115,7 +115,7 @@ export default defineComponent({
       let tooltip = {};
 
       if (disabled) {
-        tooltip = { content: this.t(`prefs.onlyWithVZ_${ this.arch }`, undefined, true) };
+        tooltip = { content: this.t(`prefs.onlyWithVZ_${ this.arch }`) };
       }
 
       return tooltip;

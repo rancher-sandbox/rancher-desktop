@@ -60,7 +60,7 @@ export default defineComponent({
       :is-experimental="true"
     >
       <rd-checkbox
-        :label="t('virtualMachine.proxy.label', { }, true)"
+        :label="t('virtualMachine.proxy.label')"
         :value="preferences.experimental.virtualMachine.proxy.enabled"
         :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.enabled')"
         @update:value="onChange('experimental.virtualMachine.proxy.enabled', $event)"
@@ -72,10 +72,10 @@ export default defineComponent({
         <rd-fieldset
           data-test="addressTitle"
           class="wsl-proxy-fieldset"
-          :legend-text="t('virtualMachine.proxy.addressTitle', { }, true)"
+          :legend-text="t('virtualMachine.proxy.addressTitle')"
         >
           <rd-input
-            :placeholder="t('virtualMachine.proxy.address', { }, true)"
+            :placeholder="t('virtualMachine.proxy.address')"
             :disabled="isFieldDisabled"
             :value="preferences.experimental.virtualMachine.proxy.address"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.address')"
@@ -83,7 +83,7 @@ export default defineComponent({
           />
           <rd-input
             type="number"
-            :placeholder="t('virtualMachine.proxy.port', { }, true)"
+            :placeholder="t('virtualMachine.proxy.port')"
             :disabled="isFieldDisabled"
             :value="preferences.experimental.virtualMachine.proxy.port"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.port')"
@@ -92,10 +92,10 @@ export default defineComponent({
         </rd-fieldset>
         <rd-fieldset
           class="wsl-proxy-fieldset"
-          :legend-text="t('virtualMachine.proxy.authTitle', { }, true)"
+          :legend-text="t('virtualMachine.proxy.authTitle')"
         >
           <rd-input
-            :placeholder="t('virtualMachine.proxy.username', { }, true)"
+            :placeholder="t('virtualMachine.proxy.username')"
             :disabled="isFieldDisabled"
             :value="preferences.experimental.virtualMachine.proxy.username"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.username')"
@@ -103,7 +103,7 @@ export default defineComponent({
           />
           <rd-input
             type="password"
-            :placeholder="t('virtualMachine.proxy.password', { }, true)"
+            :placeholder="t('virtualMachine.proxy.password')"
             :disabled="isFieldDisabled"
             :value="preferences.experimental.virtualMachine.proxy.password"
             :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.password')"
@@ -113,11 +113,11 @@ export default defineComponent({
       </div>
       <div class="proxy-col">
         <rd-fieldset
-          :legend-text="t('virtualMachine.proxy.noproxy.legend', { }, true)"
+          :legend-text="t('virtualMachine.proxy.noproxy.legend')"
           :is-locked="isPreferenceLocked('experimental.virtualMachine.proxy.noproxy')"
         >
           <string-list
-            :placeholder="t('virtualMachine.proxy.noproxy.placeholder', { }, true)"
+            :placeholder="t('virtualMachine.proxy.noproxy.placeholder')"
             :readonly="isNoProxyFieldReadOnly"
             :actions-position="'left'"
             :items="preferences.experimental.virtualMachine.proxy.noproxy"

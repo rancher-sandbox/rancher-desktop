@@ -114,7 +114,7 @@ export default defineComponent({
           format: {
             header:            this.t('snapshots.dialog.creating.header', { snapshot: name }),
             showProgressBar:   true,
-            message:           this.t('snapshots.dialog.creating.message', { snapshot: escapeHtml(name) }, true),
+            message:           this.t('snapshots.dialog.creating.message', { snapshot: escapeHtml(name) }),
             snapshotEventType: 'create',
           },
         },

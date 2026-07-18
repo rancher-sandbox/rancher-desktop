@@ -71,7 +71,7 @@ export default defineComponent({
       return this.t('images.add.successText', { action: pastTense });
     },
     errorText(): string {
-      return this.t('images.add.errorText', { action: this.action, image: this.imageToPull }, true);
+      return this.t('images.add.errorText', { action: this.action, image: this.imageToPull });
     },
   },
 

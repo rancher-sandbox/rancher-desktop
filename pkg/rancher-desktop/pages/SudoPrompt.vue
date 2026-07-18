@@ -6,7 +6,7 @@
 <template>
   <div class="contents">
     <h2>{{ t('sudoPrompt.title') }}</h2>
-    <p>{{ t('sudoPrompt.message', { }, true) }}</p>
+    <p>{{ t('sudoPrompt.message') }}</p>
     <ul class="reasons">
       <li
         v-for="(paths, reason) in explanations"

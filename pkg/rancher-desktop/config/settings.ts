@@ -6,7 +6,7 @@ import os from 'os';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
 
-export const CURRENT_SETTINGS_VERSION = 18 as const;
+export const CURRENT_SETTINGS_VERSION = 19 as const;
 
 export enum VMType {
   QEMU = 'qemu',
@@ -84,6 +84,7 @@ export const defaultSettings = {
     autoStart:              false,
     startInBackground:      false,
     hideNotificationIcon:   false,
+    locale:                 'none',
     window:                 { quitOnClose: false },
     theme:                  Theme.SYSTEM,
   },

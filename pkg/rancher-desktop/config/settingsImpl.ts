@@ -517,6 +517,7 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
       _.set(settings, 'containerEngine.mobyStorageDriver', 'auto');
     }
   },
+  // v19 added application.locale (defaults filled by _.defaultsDeep).
 };
 
 function migrateSettingsToCurrentVersion(settings: Record<string, any>): Settings {

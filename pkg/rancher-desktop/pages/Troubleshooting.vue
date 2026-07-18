@@ -76,7 +76,7 @@
       <hr>
       <span
         class="description"
-        v-html="t('troubleshooting.needHelp', { }, true)"
+        v-html="t('troubleshooting.needHelp')"
       />
     </div>
   </div>
@@ -138,7 +138,7 @@ export default {
     async factoryReset() {
       const cancelPosition = 1;
       const message = this.t('troubleshooting.general.factoryReset.messageBox.message');
-      const detail = this.t('troubleshooting.general.factoryReset.messageBox.detail', { }, true);
+      const detail = this.t('troubleshooting.general.factoryReset.messageBox.detail');
 
       const confirm = await ipcRenderer.invoke(
         'show-message-box-rd',

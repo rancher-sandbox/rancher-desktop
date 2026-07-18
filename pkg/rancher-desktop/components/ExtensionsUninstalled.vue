@@ -23,7 +23,6 @@ export default defineComponent({
       return this.t(
         'extensions.view.emptyState.body',
         { extensionId: `<code>${ this.extensionId }</code>` },
-        true,
       );
     },
   },
