@@ -4,7 +4,7 @@ import { availableLocales, t } from '@pkg/main/i18n';
 
 describe('main-process i18n', () => {
   it('translates from the default locale', () => {
-    expect(t('generic.cancel')).toEqual('Cancel');
+    expect(t('product.version')).toEqual('Version');
   });
 
   it('returns a visible %key% placeholder for a missing key', () => {
