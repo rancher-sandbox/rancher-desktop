@@ -48,6 +48,7 @@ import NERDCTL from '@pkg/assets/scripts/nerdctl';
 import NGINX_CONF from '@pkg/assets/scripts/nginx.conf';
 import { ContainerEngine, MountType, VMType } from '@pkg/config/settings';
 import { getServerCredentialsPath, ServerState } from '@pkg/main/credentialServer/httpCredentialHelperServer';
+import { t } from '@pkg/main/i18n';
 import mainEvents from '@pkg/main/mainEvents';
 import { exec as sudo } from '@pkg/sudo-prompt';
 import * as childProcess from '@pkg/utils/childProcess';
@@ -707,7 +708,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
 
       await this.progressTracker.action(
-        'Updating outdated virtual machine',
+        t('progress.updatingOutdatedVm'),
         100,
         this.updateBaseDisk(currentConfig),
       );
@@ -1069,15 +1070,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     };
 
     if (os.platform() === 'darwin') {
-      await this.progressTracker.action('Setting up virtual ethernet', 10, async() => {
+      await this.progressTracker.action(t('progress.settingUpVirtualEthernet'), 10, async() => {
         processCommand(await this.installVMNETTools());
       });
-      await this.progressTracker.action('Setting Lima permissions', 10, async() => {
+      await this.progressTracker.action(t('progress.settingLimaPermissions'), 10, async() => {
         processCommand(await this.ensureRunLimaLocation());
         processCommand(await this.createLimaSudoersFile(randomTag));
       });
     }
-    await this.progressTracker.action('Setting up Docker socket', 10, async() => {
+    await this.progressTracker.action(t('progress.settingUpDockerSocket'), 10, async() => {
       processCommand(await this.configureDockerSocket());
     });
 
@@ -1090,7 +1091,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     if (requirePassword) {
       allowed = await this.progressTracker.action(
-        'Expecting user permission to continue',
+        t('progress.expectingPermission'),
         10,
         this.showSudoReason(explanations));
     }
@@ -1735,13 +1736,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    */
   protected noBridgedNetworkDialog(sharedIP: string) {
     const options: Electron.NotificationConstructorOptions = {
-      title: 'Bridged network did not get an IP address.',
-      body:  `Using shared network address ${ sharedIP }`,
+      title: t('dialog.bridgedNetwork.title'),
+      body:  t('dialog.bridgedNetwork.sharedFallback', { ip: sharedIP }),
       icon:  'info',
     };
 
     if (!sharedIP) {
-      options.body = "Shared network isn't available either. Only network access is via port forwarding to the host.";
+      options.body = t('dialog.bridgedNetwork.noNetwork');
     }
 
     this.emit('show-notification', options);
@@ -1816,17 +1817,17 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     // We need both the lima config + the lima network config to correctly check if we need sudo
     // access; but if it's denied, we need to regenerate both again to account for the change.
-    allowRoot &&= await this.progressTracker.action('Asking for permission to run tasks as administrator', 100, this.installToolsWithSudo());
+    allowRoot &&= await this.progressTracker.action(t('progress.askingPermission'), 100, this.installToolsWithSudo());
 
     if (!allowRoot) {
       // sudo access was denied; re-generate the config.
-      await this.progressTracker.action('Regenerating configuration to account for lack of permissions', 100, Promise.all([
+      await this.progressTracker.action(t('progress.regeneratingConfiguration'), 100, Promise.all([
         this.updateConfig(false),
         this.installCustomLimaNetworkConfig(false),
       ]));
     }
 
-    await this.progressTracker.action('Starting virtual machine', 100, async() => {
+    await this.progressTracker.action(t('progress.startingVirtualMachine'), 100, async() => {
       try {
         const env: NodeJS.ProcessEnv = {};
 
@@ -1861,12 +1862,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     this.currentAction = Action.STARTING;
     this.#adminAccess = config_.application.adminAccess ?? true;
     this.#containerEngineClient = undefined;
-    await this.progressTracker.action('Starting Backend', 10, async() => {
+    await this.progressTracker.action(t('progress.startingBackend'), 10, async() => {
       try {
         this.ensureArchitectureMatch();
         await Promise.all([
-          this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
-          this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(this.#adminAccess)),
+          this.progressTracker.action(t('progress.ensuringVirtualizationSupported'), 50, this.ensureVirtualizationSupported()),
+          this.progressTracker.action(t('progress.updatingClusterConfiguration'), 50, this.updateConfig(this.#adminAccess)),
         ]);
 
         if (this.currentAction !== Action.STARTING) {
@@ -1884,7 +1885,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
           if (orphanError) {
             console.log(`Lima instance is broken (${ orphanError }); cleaning up before restart.`);
-            await this.progressTracker.action('Recovering broken virtual machine', 100,
+            await this.progressTracker.action(t('progress.recoveringBrokenVirtualMachine'), 100,
               this.lima('stop', '--force', MACHINE_NAME));
             vmStatus = await this.status;
           }
@@ -1933,7 +1934,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         }
 
         if ((await this.status)?.status === 'Running') {
-          await this.progressTracker.action('Stopping existing instance', 100, async() => {
+          await this.progressTracker.action(t('progress.stoppingExistingInstance'), 100, async() => {
             await this.kubeBackend.stop();
             if (isDowngrade && isVMAlreadyRunning) {
               // If we're downgrading, stop the VM (and start it again immediately),
@@ -1954,10 +1955,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         }
 
         await Promise.all([
-          this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
-          this.progressTracker.action('Configuring image proxy', 50, this.configureOpenResty(config)),
-          this.progressTracker.action('Configuring container engine', 50, this.configureContainerEngine()),
-          this.progressTracker.action('Configuring logrotate', 50, this.configureLogrotate()),
+          this.progressTracker.action(t('progress.installingCaCertificates'), 50, this.installCACerts()),
+          this.progressTracker.action(t('progress.configuringImageProxy'), 50, this.configureOpenResty(config)),
+          this.progressTracker.action(t('progress.configuringContainerEngine'), 50, this.configureContainerEngine()),
+          this.progressTracker.action(t('progress.configuringLogrotate'), 50, this.configureLogrotate()),
         ]);
 
         if (config.containerEngine.allowedImages.enabled) {
@@ -1987,9 +1988,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         }
 
         const tasks = [
-          this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts()),
-          this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
-          this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
+          this.progressTracker.action(t('progress.installingBuildkit'), 50, this.writeBuildkitScripts()),
+          this.progressTracker.action(t('progress.installingImageScanner'), 50, this.installTrivy()),
+          this.progressTracker.action(t('progress.installingCredentialHelper'), 50, this.installCredentialHelper()),
         ];
         if (kubernetesVersion) {
           tasks.push(this.kubeBackend.install(config, kubernetesVersion, this.#adminAccess));
@@ -2005,7 +2006,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         switch (config.containerEngine.name) {
         case ContainerEngine.MOBY:
           this.#containerEngineClient = new MobyClient(this, `unix://${ path.join(paths.altAppHome, 'docker.sock') }`);
-          await this.progressTracker.action('Setting docker context', 50,
+          await this.progressTracker.action(t('progress.settingDockerContext'), 50,
             dockerDirManager.ensureDockerContextConfigured(
               this.#adminAccess,
               path.join(paths.altAppHome, 'docker.sock')));
@@ -2017,7 +2018,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         }
 
         const actions = [
-          this.progressTracker.action('Waiting for container engine client to be ready', 50,
+          this.progressTracker.action(t('progress.waitingForContainerEngine'), 50,
             this.#containerEngineClient.waitForReady()),
         ];
 
@@ -2044,13 +2045,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   protected async startService(serviceName: string) {
-    await this.progressTracker.action(`Starting ${ serviceName }`, 50, async() => {
+    await this.progressTracker.action(t('progress.startingService', { service: serviceName }), 50, async() => {
       await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', serviceName, 'start');
     });
   }
 
   protected async installCACerts(): Promise<void> {
-    const certs = await this.progressTracker.action('fetching certificates', 56,
+    const certs = await this.progressTracker.action(t('progress.fetchingCertificates'), 56,
       new Promise<(string | Buffer)[]>((resolve) => {
         mainEvents.once('cert-ca-certificates', resolve);
         mainEvents.emit('cert-get-ca-certificates');
@@ -2059,11 +2060,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ca-'));
 
     try {
-      await this.progressTracker.action('removing existing certificates', 50,
+      await this.progressTracker.action(t('progress.removingExistingCertificates'), 50,
         this.execCommand({ root: true }, '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt'));
 
       if (certs && certs.length > 0) {
-        await this.progressTracker.action('bundling certificates', 50, async function() {
+        await this.progressTracker.action(t('progress.bundlingCertificates'), 50, async function() {
           const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
           const archive = tar.pack();
           const archiveFinished = util.promisify(stream.finished)(archive);
@@ -2082,15 +2083,15 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           await archiveFinished;
         });
 
-        await this.progressTracker.action('copying certificates', 50,
+        await this.progressTracker.action(t('progress.copyingCertificates'), 50,
           this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`));
-        await this.progressTracker.action('extracting certificates', 50,
+        await this.progressTracker.action(t('progress.extractingCertificates'), 50,
           this.execCommand({ root: true }, 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/'));
       }
     } finally {
       await fs.promises.rm(workdir, { recursive: true, force: true });
     }
-    await this.progressTracker.action('Running update-ca-certificates', 50,
+    await this.progressTracker.action(t('progress.runningUpdateCaCertificates'), 50,
       this.execCommand({ root: true }, 'update-ca-certificates'));
   }
 
@@ -2141,7 +2142,7 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
     this.currentAction = Action.STOPPING;
     this.#containerEngineClient = undefined;
 
-    await this.progressTracker.action('Stopping services', 10, async() => {
+    await this.progressTracker.action(t('progress.stoppingServices'), 10, async() => {
       try {
         await this.setState(State.STOPPING);
 
@@ -2188,7 +2189,7 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
     try {
       if (await this.isRegistered) {
         await this.progressTracker.action(
-          'Deleting virtual machine',
+          t('progress.deletingVirtualMachine'),
           10,
           this.lima('delete', '--force', MACHINE_NAME));
       }
@@ -2201,7 +2202,7 @@ CREDFWD_URL='http://${ SLIRP.HOST_GATEWAY }:${ stateInfo.port }'
   }
 
   async reset(config: BackendSettings): Promise<void> {
-    await this.progressTracker.action('Resetting Kubernetes', 5, async() => {
+    await this.progressTracker.action(t('progress.resettingKubernetes'), 5, async() => {
       await this.stop();
       // Start the VM, so that we can delete files.
       await this.startVM();

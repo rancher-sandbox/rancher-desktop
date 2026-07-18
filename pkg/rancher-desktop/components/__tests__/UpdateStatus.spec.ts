@@ -4,6 +4,7 @@ import FloatingVue from 'floating-vue';
 
 import type { UpdateState } from '@pkg/main/update';
 import mockModules from '@pkg/utils/testUtils/mockModules';
+import { t as tFn } from '@pkg/utils/testUtils/translations';
 
 mockModules({
   '@pkg/utils/ipcRenderer': {
@@ -21,7 +22,7 @@ function wrap(props: typeof UpdateStatus['$props']) {
   return mount(UpdateStatus, {
     props,
     global: {
-      mocks:   { t: jest.fn() },
+      mocks:   { t: tFn },
       stubs:   {
         T:          { template: '<span> {{ k }} </span>' },
         RdCheckbox: { template: '<input type="checkbox">' },
@@ -95,9 +96,12 @@ describe('UpdateStatus.vue', () => {
         } as UpdateState,
       });
 
-      expect(wrapper.get({ ref: 'updateStatus' }).text().replace(/\s+/g, ' '))
-        .toEqual('An update to version v1.2.3 is available. Restart the application to apply the update.');
+      const statusDiv = wrapper.get({ ref: 'updateStatus' });
 
+      expect(statusDiv.find('p').text())
+        .toEqual('An update to version v1.2.3 is available.');
+      expect(statusDiv.find('.update-notification').text())
+        .toEqual('Restart the application to apply the update.');
       expect(wrapper.get({ ref: 'applyButton' }).attributes()).not.toHaveProperty('disabled');
     });
 

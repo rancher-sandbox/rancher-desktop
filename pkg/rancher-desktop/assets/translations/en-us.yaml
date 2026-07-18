@@ -1,17 +1,102 @@
-##############################
-# Special stuff
-##############################
 generic:
+  cancel: Cancel
+  close: Close
+  apply: Apply
+  forward: Forward
+  namespace: Namespace
+  ok: OK
+  rerun: Rerun
+  search: Search
+  and: ' and '
+  comma: ', '
   loading: Loading&hellip;
 locale:
   en-us: English
-  zh-hans: 简体中文
-  none: (None)
 nav:
   userMenu:
     clusterDashboard: Cluster Dashboard
     preferences: Preferences
+mainMenu:
+  edit:
+    label: '&Edit'
+    undo: '&Undo'
+    redo: '&Redo'
+    cut: Cu&t
+    copy: '&Copy'
+    paste: '&Paste'
+    delete: De&lete
+    selectAll: Select &All
+  view:
+    label: '&View'
+    reload: '&Reload'
+    forceReload: '&Force Reload'
+    toggleDevTools: Toggle &Developer Tools
+    actualSize: '&Actual Size'
+    zoomIn: Zoom &In
+    zoomOut: Zoom &Out
+    toggleFullScreen: Toggle Full &Screen
+  help:
+    label: '&Help'
+    about: '&About {appName}'
+    help: '{appName} &Help'
+    getHelp: Get &Help
+    fileABug: File a &Bug
+    projectPage: '&Project Page'
+    discuss: '&Discuss'
+  file:
+    label: '&File'
+    close: Close
+    exit: E&xit
+  window:
+    label: '&Window'
+    minimize: Minimize
+    zoom: Zoom
+    front: Bring All to Front
+  preferences: Preferences
+  about: About {appName}
+  services: Services
+  hide: Hide {appName}
+  hideOthers: Hide Others
+  showAll: Show All
+  quit: Quit {appName}
+tray:
+  tooltip: Rancher Desktop
+  state:
+    stopped: Kubernetes is stopped
+    starting: Kubernetes is starting
+    started: Kubernetes is running
+    stopping: Kubernetes is shutting down
+    error: Kubernetes has encountered an error
+    disabled: Kubernetes is disabled
+  openMainWindow: Open main window
+  openPreferences: Open preferences dialog
+  openDashboard: Open cluster dashboard
+  kubernetesContexts: Kubernetes Contexts
+  quitRancherDesktop: Quit Rancher Desktop
+  containerEngine: 'Container engine: {name}'
+  networkStatus: 'Network status: {status}'
+  noneFound: None found
+imageEvents:
+  deleteError: |-
+    Error trying to delete image {name} ({id}):
+
+     {error}
+  deleteBatchError: Error trying to delete images {ids}
+  buildTitle: Pick the build directory
+  buildMessage: Please select the Dockerfile to use (could have a different name)
+  scanError: |-
+    Error trying to scan {name}:
+
+     {error}
+  pushError: |-
+    Error trying to push {name}:
+
+     {error}
 product:
+  networkStatusValues:
+    checking: checking...
+    offline: offline
+    online: online
   version: Version
   networkStatus: Network status
   kubernetesVersion: Kubernetes
@@ -19,16 +104,15 @@ product:
     fullName: Container Engine
     abbreviation: CE
   deactivated: deactivated
-##############################
-# Components & Pages
-##############################
-app:
-  name: Rancher Desktop
 firstRun:
   kubernetesVersion:
     legend: Kubernetes Version
     cachedOnly: (cached versions only)
+    otherVersions: Other Versions
+    recommendedVersions: Recommended Versions
   ok: OK
+  enableKubernetes: Enable Kubernetes
+  welcome: Welcome to Rancher Desktop by SUSE
 marketplace:
   title: Extensions
   noResults: No extension found for the search criteria
@@ -44,10 +128,14 @@ marketplace:
     uninstall: Removing...
     upgrade: Upgrading...
   moreInfo: More information
+  installed:
+    table:
+      header:
+        name: Name
+        vendor: Vendor
+        description: Description
 containers:
   title: Containers
-  sortableTables:
-    noRows: There are no containers to show
   manage:
     table:
       header:
@@ -56,10 +144,15 @@ containers:
         image: Image
         ports: Port(s)
         started: Uptime
+      action:
+        info: Info
+        stop: Stop
+        restart: Restart
+        start: Start
+  sortableTables:
+    noRows: There are no containers to show
 volumes:
   title: Volumes
-  sortableTables:
-    noRows: There are no volumes to show
   manage:
     table:
       header:
@@ -72,10 +165,15 @@ volumes:
       action:
         browse: Browse Files
         delete: Delete
+  sortableTables:
+    noRows: There are no volumes to show
   files:
+    available: Available
+    notFound: Not Found
     title: Volume Files
     loading: Loading volume files...
     volumeNotFound: Volume "{name}" not found
+    invalidVolumeName: Invalid volume name "{name}"
     checkError: Error checking volume status
     listError: 'Error listing files: {error}'
     noFiles: This volume is empty
@@ -87,8 +185,6 @@ volumes:
         permissions: Permissions
 images:
   title: Images
-  sortableTables:
-    noRows: There are no images to show
   state:
     imagesUnready: Waiting for image manager to be ready
     unknown: 'Error: Unknown state; please reload.'
@@ -122,16 +218,22 @@ images:
     action:
       build: Build
       pull: Pull
+      gerund:
+        build: Building
+        pull: Pulling
+      infinitive:
+        build: build
+        pull: pull
       pastTense:
         build: Built
         pull: Pulled
-    loadingText: '{action}ing image...'
+    loadingText: '{action} image...'
     successText: '{action} image'
-    errorText: Error trying to { action } ''{ image }'' - see console output for more information
+    errorText: Error trying to { action } ''{ image }'' — see console output for more information
   scan:
     title: Scan details for ''{ image }''
     loadingText: Scanning ''{ image }''
-    errorText: Error trying to scan ''{ image }'' - see console output for more information
+    errorText: Error trying to scan ''{ image }'' — see console output for more information
     results:
       headers:
         severity: Severity
@@ -149,14 +251,37 @@ images:
       description: Description
       primaryUrl: Primary URL
       references: References
+  confirmDelete:
+    confirm: Delete
+    multiple: Delete {count} {count, plural, one {image} other {images}}?
+    single: Delete image {name}:{tag}?
+    title: Confirming image deletion
+  sortableTables:
+    noRows: There are no images to show
 portForwarding:
+  includeKubernetesServices: Include Kubernetes services
   title: Port Forwarding
+  manage:
+    table:
+      header:
+        namespace: Namespace
+        name: Name
+        port: Port
+        listenPort: Local Port
   sortableTables:
     noRows: There are no port forwarding entries to show
 general:
+  navLabel: General
   title: Welcome to Rancher Desktop by SUSE
   description: Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
+  homepage: Homepage
+  issues: Issues
+  projectDiscussions: 'Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack'
+  projectLinks: 'Project Links:'
 application:
+  locale:
+    legendText: Language
+    disclaimer: Community and AI tools provide translations. English is the canonical language. Report translation issues on GitHub.
   behavior:
     autoStart:
       legendText: Startup
@@ -164,7 +289,7 @@ application:
     background:
       legendText: Background
       legendTooltip: |
-          Hide the app window when Rancher Desktop is running in the background. It can be opened via the Notification Icon (if visible) or by running Rancher Desktop from the Applications menu.
+        Hide the app window when Rancher Desktop is running in the background. It can be opened via the Notification Icon (if visible) or by running Rancher Desktop from the Applications menu.
     startInBackground:
       label: Start in the background
     windowQuitOnClose:
@@ -186,18 +311,15 @@ application:
           description: Always use dark mode
   general:
     adminAccess:
-      legendText: Administrative Access
       label: Allow administrative credentials (sudo access)
+      legendText: Administrative Access
       legendTooltip: If checked, {appName} will acquire administrative credentials ("sudo access") when starting. This enables bridged networking and default docker socket support. Takes effect on next start.
     automaticUpdates:
-      legendText: Automatic Updates
       label: Check for updates automatically
+      legendText: Automatic Updates
     statistics:
-      legendText: Statistics
       label: Allow collection of anonymous statistics to help improve {appName}
-  locale:
-    legendText: Language
-    disclaimer: Community and AI tools provide translations. English is the canonical language. Report translation issues on GitHub.
+      legendText: Statistics
 virtualMachine:
   mount:
     type:
@@ -219,8 +341,8 @@ virtualMachine:
                 fscache: fscache
                 mmap: mmap
             mSizeInKib:
-              legend: Memory Size In KiB
-              tooltip: Maximum package size in KiB
+              legend: Message Size In KiB
+              tooltip: Maximum message size in KiB
             protocolVersion:
               legend: Protocol Version
               tooltip: 9P protocol version
@@ -250,9 +372,9 @@ virtualMachine:
     password: Password
     noproxy:
       legend: Proxy bypass list
-      placeholder: IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy
+      placeholder: "IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy"
       errors:
-        duplicate: Error, item is duplicate.
+        duplicate: This item is a duplicate.
   type:
     legend: Virtual Machine Type
     options:
@@ -283,7 +405,7 @@ allowedImages:
   patterns:
     placeholder: Type the image pattern
   errors:
-    duplicate: Error, item is duplicate.
+    duplicate: This item is a duplicate.
   enable: Enable
   alert: The image name needs to match one of the patterns defined in the Allowed Images preference tab.
 pathManagement:
@@ -302,6 +424,14 @@ sudoPrompt:
   messageSecondPart: The prompt will be displayed once this window is closed. Cancelling the prompt or disabling administrative access requires you to switch the docker context to rancher-desktop in order to continue using Rancher Desktop.
   explanation: 'This will modify the following paths:'
   buttonText: OK
+  alwaysRunWithout: Always run without administrative access
+  reasons:
+    dockerSocket:
+      description: Provides compatibility with tools that use the docker socket without the ability to use docker contexts.
+      title: Set up default docker socket
+    networking:
+      description: Provides bridged networking so that it is easier to access your containers. If this is not allowed, containers will only be accessible via port forwarding.
+      title: Configure networking
 unmetPrerequisites:
   title: Rancher Desktop is unable to start
   message: 'Rancher Desktop cannot start because requirements are missing or not configured:'
@@ -392,7 +522,7 @@ asyncButton:
   snapshot:
     action: Snapshot Now
     waiting: Snapshotting&hellip;
-    success: Snapshot Creating
+    success: Creating Snapshot
   uninstall:
     action: Uninstall
     success: Uninstalled
@@ -405,6 +535,13 @@ asyncButton:
     action: Upgrade
     success: Upgrading
     waiting: Starting&hellip;
+labelSelect:
+  noOptions:
+    empty: No options
+    noMatch: No matching options
+  pagination:
+    counts: '{count} / {totalCount} items'
+    more: Load More...
 prefs:
   experimental: Experimental
   onlyFromVentura_x64: This setting requires macOS 13.0 (Ventura) or later.
@@ -423,10 +560,10 @@ sortableTable:
   noActions: No actions available
   paging:
     generic: |-
-        {pages, plural,
-        =0 {No Items}
-        =1 {{count} {count, plural, =1 {Item} other {Items}}}
-        other {{from} - {to} of {count} Items}}
+      {pages, plural,
+      =0 {No Items}
+      =1 {{count} {count, plural, =1 {Item} other {Items}}}
+      other {{from} - {to} of {count} Items}}
   search: Filter
   in: in
   addFilter: Add Filter
@@ -435,7 +572,7 @@ sortableTable:
   resetFilters: Reset
   add: Add
   tableHeader:
-    noFilter: This column cannot be filtered by
+    noFilter: This column cannot be filtered
     groupBy: Group by
     show: Show
 validation:
@@ -444,11 +581,12 @@ validation:
   cannotSwitchClassicWasm: Cannot switch to classic storage for moby when WebAssembly is enabled.
   cannotSwitchMobyClassicWasm: Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
   duplicateEntries: 'field "{field}" has duplicate entries: "{duplicates}"'
+  errorsInProposedSettings: 'Errors in proposed settings:'
   fieldLocked: field "{field}" is locked
   invalidImageReference: '{field}: "{pattern}" does not describe an image reference'
   invalidMapping: '{field}: "{value}" is not a valid mapping'
-  invalidName: '{field}: "{name}" is an invalid name'
   invalidNoproxyEntries: 'field "{field}" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "{entries}"'
+  invalidName: '{field}: "{name}" is an invalid name'
   invalidPageName: '{field}: "{value}" is not a valid page name for Preferences Dialog'
   invalidTabName: '{field}: tab name "{tabName}" is not a valid tab name for "{page}" Preference page'
   invalidTag: '{field}: "{name}" has invalid tag "{tag}"'
@@ -457,6 +595,9 @@ validation:
   kubernetesVersionNotFound: Kubernetes version "{version}" not found.
   nonStringTag: '{field}: "{name}" has non-string tag "{tag}"'
   notSupported: Changing field "{field}" via the API isn't supported.
+  profileExpectedArray: "Error for field ''{field}'': expecting value of type array, got ''{value}''"
+  profileExpectedType: "Error for field ''{field}'': expecting value of type {expectedType}, got ''{value}''"
+  profileExpectedTypeGotArray: "Error for field ''{field}'': expecting value of type {expectedType}, got an array {value}"
   proposedShouldBeObject: Proposed field "{field}" should be an object, got <{value}>.
   requiresArm: Setting {field} can only be enabled on aarch64 systems.
   requiresNineP: Setting {field} can only be changed when virtualMachine.mount.type is "{mountType}".
@@ -466,6 +607,7 @@ validation:
   settingRequiresEither: Setting {field} to "{value}" requires that {otherField} is "{option1}" or "{option2}".
   shouldBeObject: Setting "{field}" should wrap an inner object, but got <{value}>.
   shouldBeSimple: Setting "{field}" should be a simple value, but got <{value}>.
+  tab: One or more fields in this tab contain a form validation error
   vzArmMacOs: Setting {field} to "{vmType}" on ARM requires macOS 13.3 (Ventura) or later.
   vzIntelMacOs: Setting {field} to "{vmType}" on Intel requires macOS 13.0 (Ventura) or later.
 action:
@@ -506,7 +648,7 @@ snapshots:
         buttonText: Quit Rancher Desktop
     delete:
       header: Permanently delete snapshot?
-      info: text
+      info: Deleting a snapshot cannot be undone.
       actions:
         ok: Delete
         cancel: Cancel
@@ -539,9 +681,6 @@ snapshots:
       error: 'Delete error: {error}'
     lock:
       info: A snapshot lock file has been detected for an unusually long time. If you believe this is an error, you can try to remove the lock file by running <code>rdctl snapshot unlock</code>.
-##############################
-### Troubleshooting Page
-##############################
 troubleshooting:
   title: Troubleshooting
   kubernetes:
@@ -572,10 +711,10 @@ troubleshooting:
         ok: Factory Reset
         cancel: Cancel
   needHelp: Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
-##############################
-### Diagnostics Page
-##############################
+  debugMode: Enable debug mode
+  debugModeLockedTooltip: Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
 diagnostics:
+  title: Diagnostics
   results:
     muted:
       icon: icon-search
@@ -585,9 +724,14 @@ diagnostics:
       icon: icon-checkmark
       heading: No problems detected
       body: Rancher Desktop appears to be functioning correctly.
-##############################
-### Extensions Page
-##############################
+  failedCount: '{count} failed plus {muted} muted'
+  lastRun: 'Last run:'
+  never: (Never)
+  noFixes: (No fixes available)
+  showMuted: Show Muted
+  tableHeaders:
+    mute: Mute
+    name: Name
 extensions:
   icon: icon-extension
   installed:
@@ -604,10 +748,23 @@ extensions:
     emptyState:
       heading: Extension removed
       body: '{extensionId} was removed. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.'
-##############################
-### Preferences Page
-##############################
 preferences:
+  nav:
+    application: Application
+    virtualMachine: Virtual Machine
+    wsl: WSL
+    containerEngine: Container Engine
+    kubernetes: Kubernetes
+  tabs:
+    general: General
+    behavior: Behavior
+    environment: Environment
+    hardware: Hardware
+    volumes: Volumes
+    emulation: Emulation
+    integrations: Integrations
+    proxy: Proxy
+    allowedImages: Allowed Images
   actions:
     banner:
       reset: Kubernetes will reset after applying changes.
@@ -619,9 +776,250 @@ preferences:
   incompatibleTypeWarningPostSelected: to be selected.
   incompatibleTypeWarningPostDisabled: to be unselected.
   incompatiblePrefWarningOr: or
-##############################
-### Integrations Page
-##############################
+  containerEngine:
+    webAssembly:
+      # Translators: preserve the <a> tag and its data-navigate attribute exactly.
+      # The application code uses data-navigate to handle click navigation.
+      warning: WebAssembly must be enabled for the <a href="#" data-navigate="Kubernetes">Spin Operator</a> to be installed.
+  error:
+    body: Reload Preferences to try again.
+    heading: Unable to fetch preferences
+    reload: Reload preferences
+  header: Preferences
+  resetDialog:
+    apply: Apply and reset
+    detail: These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.
+    message: Apply preferences and reset Kubernetes?
+    title: Rancher Desktop - Reset Kubernetes
 integrations:
   windows:
     description: Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros
+containerInfo:
+  fallbackTitle: Container Info
+  info: Info
+  logs: Logs
+  shell: Shell
+  stats: Stats
+  search:
+    ariaLabel: Search in logs
+    clearSearch: Clear search
+    nextMatch: Next match
+    placeholder: Search logs...
+    previousMatch: Previous match
+containerInspect:
+  loading: Loading container details…
+  error:
+    loadFailed: Failed to load container details.
+    unknown: An unknown error has occurred
+  # @context Placeholder for a section of the container Info tab with no entries
+  none: None
+  summary:
+    name: Name
+    id: ID
+    image: Image
+    ipAddress: IP Address
+    created: Created
+    started: Started
+  sections:
+    mounts: Mounts
+    environment: Environment
+    commandArgs: Command & Args
+    capabilities: Capabilities
+    ports: Ports
+    labels: Labels
+  mounts:
+    type: Type
+    source: Source
+    destination: Destination
+    # @meaning Column header for the read/write access mode of a mount
+    rw: R/W
+    # @meaning Mount is writable (read-write)
+    readWrite: RW
+    # @meaning Mount is read-only
+    readOnly: RO
+  command:
+    entrypoint: Entrypoint
+    command: Command
+    args: Args
+  capabilities:
+    # @context Linux capabilities added to or dropped from the container
+    added: Added
+    dropped: Dropped
+containerStats:
+  notRunning: Stats are only available for running containers.
+  mobyOnly: Stats are currently only available for the Docker (Moby) engine.
+  # @context Label of the dropdown selecting the stats refresh interval
+  refresh: Refresh
+  interval:
+    seconds: '{seconds} s'
+    minutes: '{minutes} min'
+  charts:
+    cpu: CPU %
+    memory: Memory
+    network: Network I/O (bytes/s)
+    blockIO: Block I/O (bytes/s)
+  series:
+    # @context Chart legend, memory chart
+    used: Used
+    limit: Limit
+    # @meaning Network receive / transmit
+    rx: RX
+    tx: TX
+    # @context Chart legend, block I/O chart
+    read: Read
+    write: Write
+  processes: Processes
+  noProcesses: No processes found.
+# @no-translate — product name (title of the Rancher cluster dashboard window)
+dashboard:
+  windowTitle: Rancher Dashboard
+deploymentProfile:
+  noVersion: 'Invalid deployment file {path}: no version specified. Add a version field to make it valid (current version is {version}).'
+  noVersionRegistry: 'Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).'
+denyRoot:
+  message: Rancher Desktop cannot be run with root privileges. Please run again as a regular user.
+  title: Cannot run as Root
+dialog:
+  bridgedNetwork:
+    noNetwork: Shared network isn't available either. Only network access is via port forwarding to the host.
+    sharedFallback: Using shared network address {ip}
+    title: Bridged network did not get an IP address.
+  confirmMigration:
+    delete: Delete Workloads
+    message: Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
+    title: Confirming migration
+  invalidK8sVersion:
+    detail: Falling back to recommended minimum upgrade version of {version}
+    message: Requested Kubernetes version ''{version}'' is not a supported version.
+    title: Invalid Kubernetes Version
+  networkFailure:
+    detail: Please acquire a version in the range {range} and install in ''{path}''
+    message: Can't download a compatible version of kubectl in offline-mode
+    title: Network failure
+kubernetesError:
+  context: 'Context:'
+  lastCommand: 'Last command run:'
+  title: '{appName} Error'
+  # Translators: preserve the <a> tag and its data-action attribute exactly.
+  # The application code uses data-action to handle click events.
+  logLines: 'Some recent <a href="#" data-action="showLogs">logfile</a> lines:'
+kubernetesPrefs:
+  kubernetes:
+    label: Enable Kubernetes
+    legendText: Kubernetes
+  options:
+    legendText: Options
+    spinkube: Install Spin Operator
+    # Translators: preserve the <a> tag and its data-navigate attribute exactly.
+    # The application code uses data-navigate to handle click navigation.
+    spinkubeWarning: 'Spin Operator requires <a href="#" data-navigate="Container Engine,general">WebAssembly</a> to be enabled.'
+    traefik: Enable Traefik
+  port:
+    legendText: Kubernetes Port
+  version:
+    legendText: Kubernetes version
+    legendTextCached: Kubernetes version (cached versions only)
+    otherVersions: Other Versions
+    recommendedVersions: Recommended Versions
+preferencesWindow:
+  close:
+    detail: There are preferences with changes that have not been applied. All unsaved preferences will be lost.
+    discardChanges: Discard changes
+    message: Close preferences without applying?
+    title: Rancher Desktop - Close Preferences
+  title: Rancher Desktop - Preferences
+progress:
+  askingPermission: Asking for permission to run tasks as administrator
+  bundlingCertificates: Bundling certificates
+  checkingK3sImages: Checking k3s images
+  configuringContainerEngine: Configuring container engine
+  configuringImageProxy: Configuring image proxy
+  configuringLogrotate: Configuring logrotate
+  containerEngineComponents: Container engine components
+  copyingCertificates: Copying certificates
+  deletingIncompatibleState: Deleting incompatible Kubernetes state
+  deletingKubernetes: Deleting Kubernetes
+  deletingVirtualMachine: Deleting virtual machine
+  dnsConfiguration: DNS configuration
+  downloadingKubernetesComponents: Downloading Kubernetes components
+  ensuringCompatibleKubectl: Ensuring compatible kubectl
+  ensuringVirtualizationSupported: Ensuring virtualization is supported
+  expectingPermission: Expecting user permission to continue
+  extractingCertificates: Extracting certificates
+  fetchingCertificates: Fetching certificates
+  initializingRancherDesktop: Initializing Rancher Desktop
+  initializingWslData: Initializing WSL data
+  installingBuildkit: Installing Buildkit
+  installingCaCertificates: Installing CA certificates
+  installingContainerEngine: Installing container engine
+  installingCredentialHelper: Installing credential helper
+  installingDockerCredentialHelper: Installing the docker-credential helper
+  installingHelpers: Installing helpers
+  installingImageScanner: Installing image scanner
+  installingK3s: Installing k3s
+  installingKubernetes: Installing Kubernetes
+  kubernetesComponents: Kubernetes components
+  kubernetesDockerCompatibility: Kubernetes dockerd compatibility
+  mountingWslData: Mounting WSL data
+  preparingToStart: Preparing to start
+  proxyConfigSetup: Proxy Config Setup
+  rancherDesktopGuestAgent: Rancher Desktop guest agent
+  recoveringBrokenVirtualMachine: Recovering broken virtual machine
+  regeneratingConfiguration: Regenerating configuration to account for lack of permissions
+  registeringWslDistribution: Registering WSL distribution
+  removingExistingCertificates: Removing existing certificates
+  removingSpinkubeOperator: Removing spinkube operator
+  removingStaleState: Removing stale state
+  removingTraefik: Removing Traefik
+  resettingKubernetes: Resetting Kubernetes
+  runningProvisioningScripts: Running provisioning scripts
+  runningUpdateCaCertificates: Running update-ca-certificates
+  settingDockerContext: Setting docker context
+  settingLimaPermissions: Setting Lima permissions
+  settingUpDockerSocket: Setting up Docker socket
+  settingUpVirtualEthernet: Setting up virtual ethernet
+  shuttingDown: Shutting down
+  skippingNodeChecksFlannel: Skipping node checks, flannel is disabled
+  startingBackend: Starting Backend
+  startingBuildkit: Starting buildkit
+  startingContainerEngine: Starting container engine
+  startingImageProxy: Starting image proxy
+  startingK3s: Starting k3s
+  startingKubernetes: Starting Kubernetes
+  startingProxy: Starting proxy
+  startingService: Starting {service}
+  startingVirtualMachine: Starting virtual machine
+  startingWslEnvironment: Starting WSL environment
+  stoppingExistingInstance: Stopping existing instance
+  stoppingMockBackend: Stopping mock backend
+  stoppingServices: Stopping services
+  updatingClusterConfiguration: Updating cluster configuration
+  updatingEtcHosts: Updating /etc/hosts
+  updatingKubeconfig: Updating kubeconfig
+  updatingOutdatedVm: Updating outdated virtual machine
+  updatingWslData: Updating WSL data
+  upgradingWslDistribution: Upgrading WSL distribution
+  waitingForContainerEngine: Waiting for container engine to be ready
+  waitingForKubernetesApi: Waiting for Kubernetes API
+  waitingForNodes: Waiting for nodes
+  waitingForServices: Waiting for services
+  writingK3sConfiguration: Writing K3s configuration
+systemPreferences:
+  cpus: '# CPUs'
+  memory: Memory (GB)
+telemetryOptIn:
+  fineprint: Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
+updateStatus:
+  applyingUpdate: Applying update...
+  available: An update to version {version} is available
+  checkForUpdates: Check for updates automatically
+  downloading: downloading... ({percent}%, {speed})
+  errorChecking: There was an error checking for updates.
+  releaseNotes: Release Notes
+  restartNow: Restart Now
+  restartToApply: Restart the application to apply the update.
+  unsupported:
+    message: A newer version of Rancher Desktop is available, but not supported on your system.
+    seeDocumentation: 'For more information please see <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.'
+    title: Latest Version Not Supported
+  updateAvailable: Update Available

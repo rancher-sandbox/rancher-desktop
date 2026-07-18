@@ -72,17 +72,17 @@ export default defineComponent({
     <template #tabs>
       <tab
         v-if="isPlatformDarwin"
-        label="Emulation"
+        label-key="preferences.tabs.emulation"
         name="emulation"
         :weight="1"
       />
       <tab
-        label="Volumes"
+        label-key="preferences.tabs.volumes"
         name="volumes"
         :weight="3"
       />
       <tab
-        label="Hardware"
+        label-key="preferences.tabs.hardware"
         name="hardware"
         :weight="4"
       />

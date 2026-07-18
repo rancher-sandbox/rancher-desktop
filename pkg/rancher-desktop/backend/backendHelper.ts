@@ -15,6 +15,7 @@ import { LockedFieldError } from '@pkg/config/commandLineOptions';
 import { ContainerEngine, Settings } from '@pkg/config/settings';
 import * as settingsImpl from '@pkg/config/settingsImpl';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
+import { t } from '@pkg/main/i18n';
 import mainEvents from '@pkg/main/mainEvents';
 import { minimumUpgradeVersion, SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import Logging from '@pkg/utils/logging';
@@ -173,7 +174,7 @@ export default class BackendHelper {
     const [, errors] = sv.validateSettings(cfg as Settings, { kubernetes: { version: newVersion.raw } }, settingsImpl.getLockedSettings());
 
     if (errors.length > 0) {
-      if (errors.some(err => /field ".*" is locked/.exec(err))) {
+      if (sv.hasLockedFieldError) {
         throw new LockedFieldError(`Error in deployment profiles:\n${ errors.join('\n') }`);
       } else {
         throw new Error(`Validation errors for requested version ${ newVersion }: ${ errors.join('\n') }`);
@@ -190,7 +191,7 @@ export default class BackendHelper {
     const currentConfigVersionString = cfg?.kubernetes?.version;
     let storedVersion: semver.SemVer | null;
     let matchedVersion: SemanticVersionEntry | undefined;
-    const invalidK8sVersionMainMessage = `Requested kubernetes version '${ currentConfigVersionString }' is not a supported version.`;
+    const invalidK8sVersionMainMessage = t('dialog.invalidK8sVersion.message', { version: currentConfigVersionString });
     const sv = new SettingsValidator();
     const lockedSettings = settingsImpl.getLockedSettings();
     const versionIsLocked = lockedSettings.kubernetes?.version ?? false;
@@ -245,7 +246,7 @@ export default class BackendHelper {
         throw new LockedFieldError(`Locked kubernetes version '${ currentConfigVersionString }' isn't a valid version.`);
       }
       const message = invalidK8sVersionMainMessage;
-      const detail = `Falling back to recommended minimum upgrade version of ${ upgradeVersion.version.version }`;
+      const detail = t('dialog.invalidK8sVersion.detail', { version: upgradeVersion.version.version });
 
       if (noModalDialogs) {
         console.log(`${ message } ${ detail }`);
@@ -254,8 +255,8 @@ export default class BackendHelper {
           message,
           detail,
           type:    'warning',
-          buttons: ['OK'],
-          title:   'Invalid Kubernetes Version',
+          buttons: [t('generic.ok')],
+          title:   t('dialog.invalidK8sVersion.title'),
         };
 
         await showMessageBox(options, true);

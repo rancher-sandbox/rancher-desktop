@@ -22,6 +22,7 @@ import * as K8s from '@pkg/backend/k8s';
 import { KubeClient } from '@pkg/backend/kube/client';
 import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
 import { ContainerEngine } from '@pkg/config/settings';
+import { t } from '@pkg/main/i18n';
 import mainEvents from '@pkg/main/mainEvents';
 import { isUnixError } from '@pkg/typings/unix.interface';
 import DownloadProgressListener from '@pkg/utils/DownloadProgressListener';
@@ -1183,11 +1184,11 @@ export default class K3sHelper extends events.EventEmitter {
         const homeDirName = os.platform().startsWith('win') ? (findHomeDir() ?? '%HOME%') : '~';
         const kuberlrCacheDirName = `${ os.platform() }-${ process.env.M1 ? 'arm64' : 'amd64' }`;
         const options: Electron.MessageBoxOptions = {
-          message: "Can't download a compatible version of kubectl in offline-mode",
-          detail:  `Please acquire a version in the range ${ major }.${ lowMinor } - ${ major }.${ highMinor } and install in '${ path.join(homeDirName, '.kuberlr', kuberlrCacheDirName) }'`,
+          message: t('dialog.networkFailure.message'),
+          detail:  t('dialog.networkFailure.detail', { range: `${ major }.${ lowMinor } - ${ major }.${ highMinor }`, path: path.join(homeDirName, '.kuberlr', kuberlrCacheDirName) }),
           type:    'error',
-          buttons: ['OK'],
-          title:   'Network failure',
+          buttons: [t('generic.ok')],
+          title:   t('dialog.networkFailure.title'),
         };
 
         await showMessageBox(options, true);

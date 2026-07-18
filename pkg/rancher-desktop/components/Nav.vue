@@ -10,7 +10,7 @@
           :class="{ 'rd-link-active': isRouteActive(item.route) }"
           :to="item.route"
         >
-          {{ routes[item.route].name }}
+          {{ routeLabel(item.route) }}
           <badge-state
             v-if="item.error"
             color="bg-error"
@@ -60,8 +60,6 @@
 </template>
 
 <script lang="ts">
-import os from 'os';
-
 import { BadgeState } from '@rancher/components';
 import { PropType, defineComponent } from 'vue';
 import { RouteRecordPublic } from 'vue-router';
@@ -117,16 +115,22 @@ export default defineComponent({
   },
   data() {
     return {
-      // Generate a route (path) to route entry mapping, so that we can pick out
-      // their names based on the paths given.
       routes: this.$router.getRoutes().reduce((paths: Record<string, RouteRecordPublic>, route) => {
         paths[route.path] = route;
-        if (route.name === 'Supporting Utilities' && os.platform() === 'win32') {
-          route.name = 'WSL Integrations';
-        }
 
         return paths;
       }, {}),
+      routeLabelKeys: {
+        '/General':         'general.navLabel',
+        '/Containers':      'containers.title',
+        '/Volumes':         'volumes.title',
+        '/PortForwarding':  'portForwarding.title',
+        '/Images':          'images.title',
+        '/Snapshots':       'snapshots.title',
+        '/Troubleshooting': 'troubleshooting.title',
+        '/Diagnostics':     'diagnostics.title',
+        '/Extensions':      'marketplace.title',
+      },
     };
   },
   computed: {
@@ -139,6 +143,11 @@ export default defineComponent({
     },
   },
   methods: {
+    routeLabel(route: string): string {
+      const key = this.routeLabelKeys[route];
+
+      return key ? this.t(key) : this.routes[route]?.name ?? route;
+    },
     extensionRoute({ id, metadata }: { id: string, metadata: any }) {
       const { ui: { 'dashboard-tab': { root, src } } } = metadata;
 
