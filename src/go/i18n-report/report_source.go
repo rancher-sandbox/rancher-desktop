@@ -89,7 +89,7 @@ func annotateSource(w io.Writer, root, locale string, force bool) error {
 		flattenNodeWithComments("", localeRoot, entries)
 		drifted := computeDrifted(enKeys, collectSources(entries), entries)
 		if len(drifted) > 0 {
-			fmt.Fprintf(w, "%d drifted keys in %s would lose their drift marker:\n", len(drifted), locale)
+			fmt.Fprintf(w, "%d drifted %s in %s would lose their drift marker:\n", len(drifted), plural(len(drifted), "key"), locale)
 			for _, k := range drifted {
 				fmt.Fprintf(w, "  %s\n", k)
 			}

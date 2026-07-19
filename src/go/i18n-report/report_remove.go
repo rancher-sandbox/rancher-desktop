@@ -56,7 +56,7 @@ func runRemove(args []string) error {
 		}
 		if removed > 0 {
 			relPath, _ := filepath.Rel(root, path)
-			fmt.Fprintf(os.Stderr, "Removed %d keys from %s\n", removed, relPath)
+			fmt.Fprintf(os.Stderr, "Removed %d %s from %s\n", removed, plural(removed, "key"), relPath)
 		}
 	}
 
@@ -101,7 +101,7 @@ func removeStaleKeys(root string) error {
 			return err
 		}
 		relPath, _ := filepath.Rel(root, path)
-		fmt.Fprintf(os.Stderr, "Removed %d stale keys from %s\n", removed, relPath)
+		fmt.Fprintf(os.Stderr, "Removed %d stale %s from %s\n", removed, plural(removed, "key"), relPath)
 	}
 
 	return nil

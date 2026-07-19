@@ -404,7 +404,7 @@ func reportValidateQuiet(root, locale string) error {
 		return err
 	}
 	if len(errs) > 0 {
-		return fmt.Errorf("%d validation errors", len(errs))
+		return fmt.Errorf("%d validation %s", len(errs), plural(len(errs), "error"))
 	}
 	return nil
 }

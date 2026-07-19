@@ -178,7 +178,7 @@ func reportTranslate(w io.Writer, root, locale, mode, format string, batch, batc
 		return nil
 	}
 
-	label := fmt.Sprintf("Found %d keys %s %s", len(pairs), modeLabel, locale)
+	label := fmt.Sprintf("Found %d %s %s %s", len(pairs), plural(len(pairs), "key"), modeLabel, locale)
 	if batches > 0 {
 		label += fmt.Sprintf(" (batch %d of %d)", batch, batches)
 	}

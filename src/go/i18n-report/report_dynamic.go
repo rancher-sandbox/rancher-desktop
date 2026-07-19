@@ -92,11 +92,11 @@ func reportDynamic(w io.Writer, root, format string) error {
 		return nil
 	}
 
-	fmt.Fprintf(w, "Found %d dynamic key patterns:\n\n", len(entries))
+	fmt.Fprintf(w, "Found %d dynamic key %s:\n\n", len(entries), plural(len(entries), "pattern"))
 	for _, e := range entries {
 		fmt.Fprintf(w, "  %s\n", e.Pattern)
 		fmt.Fprintf(w, "    source:  %s\n", e.Source)
-		fmt.Fprintf(w, "    matches: %d keys\n", len(e.Matches))
+		fmt.Fprintf(w, "    matches: %d %s\n", len(e.Matches), plural(len(e.Matches), "key"))
 		for _, k := range e.Matches {
 			fmt.Fprintf(w, "      %s\n", k)
 		}

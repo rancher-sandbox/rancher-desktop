@@ -25,8 +25,19 @@ func validateFormat(format string) error {
 	return nil
 }
 
-// outputStrings prints a list of strings in text or JSON format.
-func outputStrings(w io.Writer, items []string, format, label string) error {
+// plural returns noun for a count of one and its regular plural (noun+"s")
+// otherwise, so a formatted count reads naturally: "1 key", "0 keys", "2 keys".
+func plural(n int, noun string) string {
+	if n == 1 {
+		return noun
+	}
+	return noun + "s"
+}
+
+// outputStrings prints a list of strings in text or JSON format. In text mode
+// the header pluralizes noun to match the count and appends suffix, a trailing
+// phrase such as " in de" (empty for none).
+func outputStrings(w io.Writer, items []string, format, noun, suffix string) error {
 	if format == formatJSON {
 		if items == nil {
 			items = []string{}
@@ -37,11 +48,11 @@ func outputStrings(w io.Writer, items []string, format, label string) error {
 	}
 
 	if len(items) == 0 {
-		fmt.Fprintf(w, "No %s found.\n", label)
+		fmt.Fprintf(w, "No %s%s found.\n", plural(0, noun), suffix)
 		return nil
 	}
 
-	fmt.Fprintf(w, "Found %d %s:\n", len(items), label)
+	fmt.Fprintf(w, "Found %d %s%s:\n", len(items), plural(len(items), noun), suffix)
 	for _, item := range items {
 		fmt.Fprintf(w, "  %s\n", item)
 	}

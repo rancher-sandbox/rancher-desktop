@@ -47,5 +47,5 @@ func reportStale(root, locale, format string) error {
 
 	stale := computeStale(enKeys, localeKeys)
 
-	return outputStrings(os.Stdout, stale, format, "stale keys in "+locale)
+	return outputStrings(os.Stdout, stale, format, "stale key", " in "+locale)
 }

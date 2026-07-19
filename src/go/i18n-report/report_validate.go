@@ -165,11 +165,11 @@ func reportValidate(w io.Writer, root, locale string) error {
 		return nil
 	}
 
-	fmt.Fprintf(w, "Found %d validation errors in %s:\n", len(errors), locale)
+	fmt.Fprintf(w, "Found %d validation %s in %s:\n", len(errors), plural(len(errors), "error"), locale)
 	for _, e := range errors {
 		fmt.Fprintf(w, "  [%s] %s: %s\n", e.Check, e.Key, e.Message)
 	}
-	return findingsError(fmt.Sprintf("validation failed with %d errors", len(errors)))
+	return findingsError(fmt.Sprintf("validation failed with %d %s", len(errors), plural(len(errors), "error")))
 }
 
 // containsICU reports whether a value has any ICU syntax worth parsing: a
