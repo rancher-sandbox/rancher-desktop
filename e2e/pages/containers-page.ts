@@ -72,4 +72,31 @@ export class ContainersPage {
   async waitForTableToLoad() {
     await this.table.waitFor({ state: 'visible' });
   }
+
+  getGroupRow(groupName: string) {
+    return this.table.locator(`tr.group-row[data-testid="container-group-${ groupName }"]`);
+  }
+
+  async waitForGroupToAppear(groupName: string, timeout = 30_000) {
+    await expect(this.getGroupRow(groupName)).toBeVisible({ timeout });
+  }
+
+  getGroupCheckbox(groupName: string) {
+    return this.getGroupRow(groupName).locator('.group-select-checkbox');
+  }
+
+  async selectGroup(groupName: string) {
+    const checkbox = this.getGroupCheckbox(groupName);
+
+    await checkbox.click();
+    await expect(this.getGroupRow(groupName).locator('input[type="checkbox"]')).toBeChecked();
+  }
+
+  async clickBulkStop() {
+    await this.page.getByRole('button', { name: 'Stop' }).first().click();
+  }
+
+  async clickBulkDelete() {
+    await this.page.getByRole('button', { name: 'Delete' }).first().click();
+  }
 }

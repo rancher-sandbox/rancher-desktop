@@ -21,6 +21,7 @@
       :loading="containers === null"
       group-by="projectGroup"
       :group-sort="['projectGroup']"
+      @selection="onSelectionChange"
     >
       <template #header-middle>
         <div class="header-middle">
@@ -110,9 +111,18 @@
         <tr
           class="group-row"
           :aria-expanded="!collapsed[group.ref]"
+          :data-testid="`container-group-${group.ref}`"
         >
           <td :colspan="headers.length + 1">
             <div class="group-tab">
+              <Checkbox
+                class="group-select-checkbox"
+                data-testid="container-group-select"
+                :value="isGroupSelected(group)"
+                :indeterminate="isGroupIndeterminate(group)"
+                @update:value="setGroupSelected(group, $event)"
+                @click.stop
+              />
               <i
                 data-title="Toggle Expand"
                 :class="{
@@ -133,7 +143,7 @@
 </template>
 
 <script>
-import { BadgeState, Banner } from '@rancher/components';
+import { BadgeState, Banner, Checkbox } from '@rancher/components';
 import dayjs from 'dayjs';
 import { shell } from 'electron';
 import merge from 'lodash/merge';
@@ -171,7 +181,7 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 export default defineComponent({
   name:       'Containers',
   title:      'Containers',
-  components: { SortableTable, BadgeState, Banner },
+  components: { SortableTable, BadgeState, Banner, Checkbox },
   data() {
     return {
       /** @type import('@pkg/config/settings').Settings | undefined */
@@ -180,6 +190,8 @@ export default defineComponent({
       execError:                  null,
       /** @type Record<string, boolean> */
       collapsed:                   {},
+      /** @type RowItem[] */
+      selectedRows:                [],
       /**
        * This timer is used to retry subscribing to events until the backend is
        * ready enough to update the vuex store.
@@ -429,8 +441,9 @@ export default defineComponent({
      * Execute a command against some containers
      * @param command {string} The command to run
      * @param _ids {Container | Container[]} The containers to affect
+     * @param extraArgs {string[]} Extra CLI flags to insert before the container ids
      */
-    async execCommand(command, _ids) {
+    async execCommand(command, _ids, extraArgs = []) {
       try {
         const ids = Array.isArray(_ids) ? _ids.map(c => c.id) : [_ids.id];
         const options = { cwd: '/' };
@@ -440,7 +453,7 @@ export default defineComponent({
           options.namespace = this.namespace;
         }
 
-        const { stderr, stdout } = await window.ddClient.docker.cli.exec(command, [...ids], options);
+        const { stderr, stdout } = await window.ddClient.docker.cli.exec(command, [...extraArgs, ...ids], options);
 
         if (stderr) {
           throw new Error(stderr);
@@ -531,6 +544,46 @@ export default defineComponent({
       this.collapsed[group] = !this.collapsed[group];
     },
 
+    /**
+     * SortableTable wraps each row in displayRows() as { row, key, ... };
+     * unwrap back to the actual container RowItems.
+     * @param group {{ ref: string, rows: { row: RowItem }[] }}
+     * @returns {RowItem[]}
+     */
+    groupContainers(group) {
+      return group.rows.map(r => r.row);
+    },
+    onSelectionChange(rows) {
+      this.selectedRows = rows;
+    },
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
+    isGroupSelected(group) {
+      const containers = this.groupContainers(group);
+
+      return containers.length > 0 && containers.every(c => this.selectedRows.includes(c));
+    },
+    /** @param group {{ ref: string, rows: { row: RowItem }[] }} */
+    isGroupIndeterminate(group) {
+      const containers = this.groupContainers(group);
+      const selectedCount = containers.filter(c => this.selectedRows.includes(c)).length;
+
+      return selectedCount > 0 && selectedCount < containers.length;
+    },
+    /**
+     * @param group {{ ref: string, rows: { row: RowItem }[] }}
+     * @param selected {boolean}
+     */
+    setGroupSelected(group, selected) {
+      const containers = this.groupContainers(group);
+      const table = this.$refs.sortableTableRef;
+
+      if (selected) {
+        table.update(containers, []);
+      } else {
+        table.update([], containers);
+      }
+    },
+
     clearError() {
       this.execError = null;
       switch (this.error?.source) {
@@ -559,8 +612,11 @@ export default defineComponent({
 
   .group-row {
     .group-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-weight: bold;
-      .icon {
+      > .icon {
         cursor: pointer;
       }
     }
