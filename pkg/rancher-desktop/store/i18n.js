@@ -1,7 +1,9 @@
 import { IntlMessageFormat } from 'intl-messageformat';
 
+import packageJson from '../../../package.json' with { type: 'json' };
+
 import { LOCALE } from '@pkg/config/cookies';
-import { getProduct, getVendor } from '@pkg/config/private-label';
+import { getVendor } from '@pkg/config/private-label';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { get } from '@pkg/utils/object';
 import { availableLocales, loadTranslations } from '@pkg/utils/translationLoader';
@@ -86,7 +88,7 @@ export const getters = {
       // Inject things like appName so they're always available in any translation
       const moreArgs = {
         vendor:  getVendor(),
-        appName: getProduct(),
+        appName: packageJson.productName,
         ...args,
       };
 

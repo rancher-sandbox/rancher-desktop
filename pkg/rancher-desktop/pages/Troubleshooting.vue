@@ -26,7 +26,7 @@
             :disabled="alwaysDebugging"
             :tooltip="debugModeTooltip"
             :is-locked="debugLocked"
-            label="Enable debug mode"
+            :label="t('troubleshooting.debugMode')"
             @update:value="updateDebug"
           />
         </template>
@@ -74,9 +74,10 @@
     </div>
     <div class="need-help">
       <hr>
+      <!-- v-clean-html: the translated string embeds links -->
       <span
+        v-clean-html="t('troubleshooting.needHelp')"
         class="description"
-        v-html="t('troubleshooting.needHelp')"
       />
     </div>
   </div>
@@ -93,7 +94,6 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 export default {
   name:       'Troubleshooting',
-  title:      'Troubleshooting',
   components: { TroubleshootingLineItem, RdCheckbox },
   data:       () => ({
     state:           ipcRenderer.sendSync('k8s-state'),
@@ -104,13 +104,13 @@ export default {
   }),
   computed: {
     debugModeTooltip() {
-      return this.alwaysDebugging ? 'Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.' : '';
+      return this.alwaysDebugging ? this.t('troubleshooting.debugModeLockedTooltip') : '';
     },
   },
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('troubleshooting.title') },
+      { titleKey: 'troubleshooting.title' },
     );
     ipcRenderer.on('k8s-check-state', (_, newState) => {
       this.$data.state = newState;

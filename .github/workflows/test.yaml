@@ -20,6 +20,8 @@ jobs:
       run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
     - run: make -C bats lint
     - run: yarn test
+    - name: i18n checks
+      run: go run ./src/go/i18n-report check --locale=all
   lint:
     strategy:
       matrix:

@@ -32,7 +32,7 @@ export default {
         @update:value="toggleTelemetry"
       />
       <p class="fineprint">
-        Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
+        {{ t('telemetryOptIn.fineprint') }}
       </p>
     </div>
   </div>

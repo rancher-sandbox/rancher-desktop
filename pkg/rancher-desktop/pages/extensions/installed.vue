@@ -45,23 +45,23 @@ export default defineComponent({
         },
         {
           name:  'title',
-          label: 'Name',
+          label: this.t('marketplace.installed.table.header.name'),
           sort:  ['title', 'id'],
         },
         {
           name:  'vendor',
-          label: 'Vendor',
+          label: this.t('marketplace.installed.table.header.vendor'),
           sort:  ['vendor', 'title', 'id'],
           width: 160,
         },
         {
           name:  'description',
-          label: 'Description',
+          label: this.t('marketplace.installed.table.header.description'),
           sort:  ['description', 'title', 'id'],
         },
         {
           name:  'moreInfo',
-          label: 'More information',
+          label: this.t('marketplace.moreInfo'),
           width: 150,
         },
         {

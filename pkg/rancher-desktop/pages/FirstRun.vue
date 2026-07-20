@@ -1,10 +1,10 @@
 <template>
   <div class="first-run-container">
     <h2 data-test="k8s-settings-header">
-      Welcome to Rancher Desktop by SUSE
+      {{ t('firstRun.welcome') }}
     </h2>
     <rd-checkbox
-      label="Enable Kubernetes"
+      :label="t('firstRun.enableKubernetes')"
       :value="hasVersions && settings.kubernetes.enabled"
       :is-locked="kubernetesLocked"
       :disabled="!hasVersions"
@@ -25,7 +25,7 @@
             -->
         <optgroup
           v-if="recommendedVersions.length > 0"
-          label="Recommended Versions"
+          :label="t('firstRun.kubernetesVersion.recommendedVersions')"
         >
           <option
             v-for="item in recommendedVersions"
@@ -38,7 +38,7 @@
         </optgroup>
         <optgroup
           v-if="nonRecommendedVersions.length > 0"
-          label="Other Versions"
+          :label="t('firstRun.kubernetesVersion.otherVersions')"
         >
           <option
             v-for="item in nonRecommendedVersions"

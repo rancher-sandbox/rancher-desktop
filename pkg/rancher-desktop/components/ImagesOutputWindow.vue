@@ -57,13 +57,10 @@ export default defineComponent({
     imageManagerProcessFinishedWithFailure() {
       return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
-    actionCapitalized(): string {
-      const action = this.action;
-
-      return `${ action?.charAt(0).toUpperCase() }${ action.slice(1) }`;
-    },
     loadingText(): string {
-      return this.t('images.add.loadingText', { action: this.actionCapitalized });
+      const gerund = this.t(`images.add.action.gerund.${ this.action }`);
+
+      return this.t('images.add.loadingText', { action: gerund });
     },
     successText() {
       const pastTense = this.t(`images.add.action.pastTense.${ this.action }`);
@@ -71,7 +68,9 @@ export default defineComponent({
       return this.t('images.add.successText', { action: pastTense });
     },
     errorText(): string {
-      return this.t('images.add.errorText', { action: this.action, image: this.imageToPull });
+      const verb = this.t(`images.add.action.infinitive.${ this.action }`);
+
+      return this.t('images.add.errorText', { action: verb, image: this.imageToPull });
     },
   },
 

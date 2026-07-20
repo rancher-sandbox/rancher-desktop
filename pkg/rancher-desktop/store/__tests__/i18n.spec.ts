@@ -31,6 +31,7 @@ const en = {
   plural:  '{count, plural, one {# item} other {# items}}',
   invalid: 'Unbalanced {brace',
   special: 'Command & "Args"',
+  product: 'Made by {appName}',
 };
 const de = {
   simple: 'Einfacher Text',
@@ -65,6 +66,10 @@ describe('i18n store getters', () => {
 
   it('interpolates arguments', () => {
     expect(t('greet', { name: 'Jan' })).toEqual('Hallo Jan');
+  });
+
+  it('injects the product name for {appName}', () => {
+    expect(t('product')).toEqual('Made by Rancher Desktop');
   });
 
   it('degrades to the raw pattern when an argument is missing', () => {

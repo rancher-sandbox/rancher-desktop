@@ -15,6 +15,8 @@ export default defineComponent({
     };
   },
   computed: {
+    // The relative time renders in the default (English) locale and the tooltip in the OS locale,
+    // not the selected application locale; wire both to the app locale when locale coverage grows.
     friendlyTimeLastRun(): string {
       // Because the currentTime is updated only every second it's possible for the last-time-run to have
       // happened after the current-time.
@@ -22,7 +24,7 @@ export default defineComponent({
       // older currentTime the same as timeLastRun.
 
       if (this.timeLastRun.valueOf() === 0) {
-        return '(Never)';
+        return this.t('diagnostics.never');
       }
       if (this.currentTime.valueOf() >= this.timeLastRun.valueOf()) {
         return this.currentTime.to(dayjs(this.timeLastRun));
@@ -57,10 +59,10 @@ export default defineComponent({
       @click="onClick"
     >
       <span class="icon icon-refresh icon-diagnostics" />
-      Rerun
+      {{ t('generic.rerun') }}
     </button>
     <div class="diagnostics-status-history">
-      Last run: <span
+      {{ t('diagnostics.lastRun') }} <span
         class="elapsed-timespan"
         :title="timeLastRunTooltip"
       >{{ friendlyTimeLastRun }}</span>

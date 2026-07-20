@@ -25,6 +25,7 @@ import ProgressTracker from './progressTracker';
 
 import K3sHelper from '@pkg/backend/k3sHelper';
 import { Settings } from '@pkg/config/settings';
+import { t } from '@pkg/main/i18n';
 import { ChildProcess } from '@pkg/utils/childProcess';
 import Logging, { Log } from '@pkg/utils/logging';
 import { RecursivePartial } from '@pkg/utils/typeUtils';
@@ -78,7 +79,7 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
   async stop(): Promise<void> {
     console.log('Stopping mock backend...');
     this.setState(State.STOPPING);
-    await this.progressTracker.action('Stopping mock backend', 0,
+    await this.progressTracker.action(t('progress.stoppingMockBackend'), 0,
       util.promisify(setTimeout)(1_000));
     this.setState(State.STOPPED);
     console.log('Mock backend stopped.');
