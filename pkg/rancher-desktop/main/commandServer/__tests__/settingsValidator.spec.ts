@@ -470,7 +470,7 @@ describe('SettingsValidator', () => {
       const [needToUpdate, errors] = subject.validateSettings({
         ...cfg,
         application: { ...cfg.application, locale: 'en-us' },
-      }, { application: { locale: 'none' } });
+      }, { application: { locale: 'de' } });
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: true,
@@ -480,7 +480,7 @@ describe('SettingsValidator', () => {
 
     it('should accept no-op changes', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg,
-        { application: { locale: 'none' } });
+        { application: { locale: 'en-us' } });
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,

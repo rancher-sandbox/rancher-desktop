@@ -11,7 +11,15 @@ generic:
   comma: ', '
   loading: Loading&hellip;
 locale:
+  de: German
   en-us: English
+  es: Spanish
+  fr: French
+  it: Italian
+  ja: Japanese
+  ko: Korean
+  pt-br: Portuguese (Brazilian)
+  zh-hans: Chinese (Simplified)
 nav:
   userMenu:
     clusterDashboard: Cluster Dashboard

@@ -131,9 +131,7 @@ export function onLocaleChange(callback: () => void): () => void {
 export async function initMainI18n(): Promise<void> {
   try {
     const settings = await mainEvents.invoke('settings-fetch');
-    // 'none' means the language selector is disabled; use English.
-    const raw = settings?.application?.locale;
-    const locale = (!raw || raw === 'none') ? 'en-us' : raw;
+    const locale = settings?.application?.locale || 'en-us';
 
     if (locale !== currentLocale && loadLocale(locale)) {
       currentLocale = locale;
@@ -144,8 +142,7 @@ export async function initMainI18n(): Promise<void> {
   }
 
   mainEvents.on('settings-update', (settings) => {
-    const raw = settings?.application?.locale;
-    const locale = (!raw || raw === 'none') ? 'en-us' : raw;
+    const locale = settings?.application?.locale || 'en-us';
 
     if (locale !== currentLocale) {
       if (!loadLocale(locale)) {

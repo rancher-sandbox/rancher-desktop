@@ -56,6 +56,9 @@ export enum Theme {
   DARK = 'dark',
 }
 
+/** Locales with a bundled translation file; keep in sync with the enum in command-api.yaml. */
+export type Locale = 'de' | 'en-us' | 'es' | 'fr' | 'it' | 'ja' | 'ko' | 'pt-br' | 'zh-hans';
+
 export class SettingsError extends Error {
   toString() {
     // This is needed on linux. Without it, we get a randomish replacement
@@ -84,7 +87,7 @@ export const defaultSettings = {
     autoStart:              false,
     startInBackground:      false,
     hideNotificationIcon:   false,
-    locale:                 'none',
+    locale:                 'en-us' as Locale,
     window:                 { quitOnClose: false },
     theme:                  Theme.SYSTEM,
   },

@@ -1,0 +1,1841 @@
+action:
+  # @source Refresh
+  refresh: 새로 고침
+allowedImages:
+  # @source The image name needs to match one of the patterns defined in the Allowed Images preference tab.
+  alert: 이미지 이름은 허용된 이미지 환경설정 탭에 정의된 패턴 중 하나와 일치해야 합니다.
+  # @source Enable
+  enable: 활성화
+  errors:
+    # @source This item is a duplicate.
+    duplicate: 중복된 항목입니다.
+  # @source Allowed Image Patterns
+  label: 허용된 이미지 패턴
+  patterns:
+    # @source Type the image pattern
+    placeholder: 이미지 패턴 입력
+application:
+  behavior:
+    autoStart:
+      # @source Automatically start at login
+      label: 로그인 시 자동으로 시작
+      # @source Startup
+      legendText: 시작
+    background:
+      # @source Background
+      legendText: 백그라운드
+      # @source Hide the app window when Rancher Desktop is running in the background. It can be opened via the Notification Icon (if visible) or by running Rancher Desktop from the Applications menu.
+      # @source
+      legendTooltip: |
+          Rancher Desktop이 백그라운드에서 실행 중일 때 앱 창을 숨깁니다. 알림 아이콘(표시되는 경우)을 통해 열거나 응용 프로그램 메뉴에서 Rancher Desktop을 실행하여 열 수 있습니다.
+    notificationIcon:
+      # @source Hide Notification Icon
+      label: 알림 아이콘 숨기기
+      # @source Notification Icon
+      legendText: 알림 아이콘
+    startInBackground:
+      # @source Start in the background
+      label: 백그라운드에서 시작
+    theme:
+      # @reason Microsoft-style rendering of Appearance; 테마 would also work but the source says Appearance, not Theme
+      # @source Appearance
+      legendText: 모양
+      options:
+        dark:
+          # @source Always use dark mode
+          description: 항상 다크 모드 사용
+          # @source Dark
+          label: 다크
+        light:
+          # @source Always use light mode
+          description: 항상 라이트 모드 사용
+          # @source Light
+          label: 라이트
+        system:
+          # @source Follow the operating system setting
+          description: 운영 체제 설정을 따름
+          # @source System
+          label: 시스템
+    windowQuitOnClose:
+      # @source Quit when closing application window
+      label: 애플리케이션 창을 닫을 때 종료
+  general:
+    adminAccess:
+      # @source Allow administrative credentials (sudo access)
+      label: 관리자 자격 증명 허용(sudo 액세스)
+      # @source Administrative Access
+      legendText: 관리자 액세스
+      # @source If checked, {appName} will acquire administrative credentials ("sudo access") when starting. This enables bridged networking and default docker socket support. Takes effect on next start.
+      legendTooltip: 이 옵션을 선택하면 {appName}이(가) 시작할 때 관리자 자격 증명("sudo 액세스")을 획득합니다. 이를 통해 브리지 네트워킹과 기본 docker 소켓 지원이 활성화됩니다. 다음 시작 시 적용됩니다.
+    automaticUpdates:
+      # @source Check for updates automatically
+      label: 자동으로 업데이트 확인
+      # @source Automatic Updates
+      legendText: 자동 업데이트
+    statistics:
+      # @source Allow collection of anonymous statistics to help improve {appName}
+      label: '{appName} 개선에 도움이 되도록 익명 통계 수집 허용'
+      # @source Statistics
+      legendText: 통계
+  locale:
+    # @source Community and AI tools provide translations. English is the canonical language. Report translation issues on GitHub.
+    disclaimer: 번역은 커뮤니티와 AI 도구가 제공합니다. 영어가 기준 언어입니다. 번역 문제는 GitHub에서 신고해 주십시오.
+    # @source Language
+    legendText: 언어
+asyncButton:
+  activate:
+    # @source Activate
+    action: 활성화
+    # @source Activated
+    success: 활성화됨
+    # @source Activating&hellip;
+    waiting: 활성화 중&hellip;
+  apply:
+    # @source Apply
+    action: 적용
+    # @source Applied
+    success: 적용됨
+    # @source Applying&hellip;
+    waiting: 적용 중&hellip;
+  continue:
+    # @source Continue
+    action: 계속
+    # @source Saved
+    success: 저장됨
+    # @source Saving&hellip;
+    waiting: 저장 중&hellip;
+  copy:
+    # @source Click to Copy
+    action: 클릭하여 복사
+    # @source Copied!
+    success: 복사됨!
+  create:
+    # @source Create
+    action: 생성
+    # @source Created
+    success: 생성됨
+    # @source Creating&hellip;
+    waiting: 생성 중&hellip;
+  deactivate:
+    # @source Deactivate
+    action: 비활성화
+    # @source Deactivated
+    success: 비활성화됨
+    # @source Deactivating&hellip;
+    waiting: 비활성화 중&hellip;
+  default:
+    # @source Action
+    action: 작업
+    # @source Error
+    error: 오류
+    # @source Success
+    success: 성공
+    # @source Waiting
+    waiting: 대기 중
+  delete:
+    # @source Delete
+    action: 삭제
+    # @source Deleted
+    success: 삭제됨
+    # @source Deleting&hellip;
+    waiting: 삭제 중&hellip;
+  disable:
+    # @source Disable
+    action: 비활성화
+    # @source Disabled
+    success: 비활성화됨
+    # @source Disabling&hellip;
+    waiting: 비활성화 중&hellip;
+  done:
+    # @source Done
+    action: 완료
+    # @source Saved
+    success: 저장됨
+    # @source Saving&hellip;
+    waiting: 저장 중&hellip;
+  download:
+    # @source Download
+    action: 다운로드
+    # @reason Source success state is the ongoing form Saving; translated faithfully
+    # @source Saving
+    success: 저장 중
+    # @source Downloading&hellip;
+    waiting: 다운로드 중&hellip;
+  edit:
+    # @source Save
+    action: 저장
+    # @source Saved
+    success: 저장됨
+    # @source Saving&hellip;
+    waiting: 저장 중&hellip;
+  enable:
+    # @source Enable
+    action: 활성화
+    # @source Enabled
+    success: 활성화됨
+    # @source Enabling&hellip;
+    waiting: 활성화 중&hellip;
+  finish:
+    # @source Finish
+    action: 마침
+    # @source Finished
+    success: 완료됨
+    # @source Finishing&hellip;
+    waiting: 완료 중&hellip;
+  import:
+    # @source Import
+    action: 가져오기
+    # @source Imported
+    success: 가져옴
+    # @source Importing&hellip;
+    waiting: 가져오는 중&hellip;
+  install:
+    # @source Install
+    action: 설치
+    # @reason Source success state is the ongoing form Installing; translated faithfully
+    # @source Installing
+    success: 설치 중
+    # @source Starting&hellip;
+    waiting: 시작 중&hellip;
+  refresh:
+    # @source
+    action: ''
+    # @reason Icon name fragment; component builds CSS class icon-{value}
+    # @source refresh
+    actionIcon: refresh
+    # @source
+    error: ''
+    # @reason Icon name fragment; component builds CSS class icon-{value}
+    # @source error
+    errorIcon: error
+    # @source
+    success: ''
+    # @reason Icon name fragment; component builds CSS class icon-{value}
+    # @source checkmark
+    successIcon: checkmark
+    # @source
+    waiting: ''
+    # @reason Icon name fragment; component builds CSS class icon-{value}
+    # @source refresh
+    waitingIcon: refresh
+  remove:
+    # @source Remove
+    action: 제거
+    # @source Removed
+    success: 제거됨
+    # @source Removing&hellip;
+    waiting: 제거 중&hellip;
+  restore:
+    # @source Restore
+    action: 복원
+    # @source Restored
+    success: 복원됨
+    # @source Restoring&hellip;
+    waiting: 복원 중&hellip;
+  snapshot:
+    # @source Snapshot Now
+    action: 지금 스냅샷 생성
+    # @reason Source success state is the ongoing form Creating Snapshot; translated faithfully
+    # @source Creating Snapshot
+    success: 스냅샷 생성 중
+    # @source Snapshotting&hellip;
+    waiting: 스냅샷 생성 중&hellip;
+  uninstall:
+    # @source Uninstall
+    action: 제거
+    # @source Uninstalled
+    success: 제거됨
+    # @source Uninstalling&hellip;
+    waiting: 제거 중&hellip;
+  update:
+    # @source Update
+    action: 업데이트
+    # @source Updated
+    success: 업데이트됨
+    # @source Updating&hellip;
+    waiting: 업데이트 중&hellip;
+  upgrade:
+    # @source Upgrade
+    action: 업그레이드
+    # @reason Source success state is the ongoing form Upgrading; translated faithfully
+    # @source Upgrading
+    success: 업그레이드 중
+    # @source Starting&hellip;
+    waiting: 시작 중&hellip;
+containerEngine:
+  # @source Container Engine
+  label: 컨테이너 엔진
+  options:
+    containerd:
+      # @source Namespaces for container images; use with nerdctl.
+      description: 컨테이너 이미지 네임스페이스를 지원합니다. nerdctl과 함께 사용합니다.
+      # @reason Product name of the containerd runtime
+      # @source containerd
+      label: containerd
+    moby:
+      # @source Docker API; use with Docker CLI.
+      description: Docker API를 제공합니다. Docker CLI와 함께 사용합니다.
+      # @reason Product names (dockerd binary, Moby project)
+      # @source dockerd (moby)
+      label: dockerd (moby)
+containerInfo:
+  # @source Container Info
+  fallbackTitle: 컨테이너 정보
+  # @source Info
+  info: 정보
+  # @source Logs
+  logs: 로그
+  search:
+    # @source Search in logs
+    ariaLabel: 로그 내 검색
+    # @source Clear search
+    clearSearch: 검색 지우기
+    # @source Next match
+    nextMatch: 다음 일치 항목
+    # @source Search logs...
+    placeholder: 로그 검색...
+    # @source Previous match
+    previousMatch: 이전 일치 항목
+  # @source Shell
+  shell: 셸
+  # @source Stats
+  stats: 통계
+containerInspect:
+  capabilities:
+    # @source Added
+    added: 추가됨
+    # @source Dropped
+    dropped: 제거됨
+  command:
+    # @source Args
+    args: 인수
+    # @source Command
+    command: 명령
+    # @source Entrypoint
+    entrypoint: 엔트리포인트
+  error:
+    # @source Failed to load container details.
+    loadFailed: 컨테이너 세부 정보를 불러오지 못했습니다.
+    # @source An unknown error has occurred
+    unknown: 알 수 없는 오류가 발생했습니다
+  # @source Loading container details…
+  loading: 컨테이너 세부 정보를 불러오는 중…
+  mounts:
+    # @source Destination
+    destination: 대상
+    # @reason Standard read-only abbreviation; kept in English as in common Korean dev UIs
+    # @source RO
+    readOnly: RO
+    # @reason Standard read-write abbreviation; kept in English as in common Korean dev UIs
+    # @source RW
+    readWrite: RW
+    # @reason Column-header abbreviation; kept in English as in common Korean dev UIs
+    # @source R/W
+    rw: R/W
+    # @source Source
+    source: 소스
+    # @source Type
+    type: 유형
+  # @source None
+  none: 없음
+  sections:
+    # @reason Linux kernel term with no established Korean rendering; transliterations vary, so kept in English
+    # @source Capabilities
+    capabilities: Capabilities
+    # @source Command & Args
+    commandArgs: 명령 및 인수
+    # @source Environment
+    environment: 환경
+    # @source Labels
+    labels: 레이블
+    # @source Mounts
+    mounts: 마운트
+    # @source Ports
+    ports: 포트
+  summary:
+    # @source Created
+    created: 생성됨
+    # @reason Standard identifier abbreviation; kept in English as in common Korean dev UIs
+    # @source ID
+    id: ID
+    # @source Image
+    image: 이미지
+    # @source IP Address
+    ipAddress: IP 주소
+    # @source Name
+    name: 이름
+    # @source Started
+    started: 시작됨
+containerStats:
+  charts:
+    # @source Block I/O (bytes/s)
+    blockIO: 블록 I/O(바이트/초)
+    # @reason Chart legend; CPU is the standard term in Korean UIs
+    # @source CPU %
+    cpu: CPU %
+    # @source Memory
+    memory: 메모리
+    # @source Network I/O (bytes/s)
+    network: 네트워크 I/O(바이트/초)
+  interval:
+    # @source {minutes} min
+    minutes: '{minutes}분'
+    # @source {seconds} s
+    seconds: '{seconds}초'
+  # @source Stats are currently only available for the Docker (Moby) engine.
+  mobyOnly: 통계는 현재 Docker(Moby) 엔진에서만 사용할 수 있습니다.
+  # @source No processes found.
+  noProcesses: 프로세스를 찾을 수 없습니다.
+  # @source Stats are only available for running containers.
+  notRunning: 통계는 실행 중인 컨테이너에서만 사용할 수 있습니다.
+  # @source Processes
+  processes: 프로세스
+  # @source Refresh
+  refresh: 새로 고침
+  series:
+    # @source Limit
+    limit: 제한
+    # @source Read
+    read: 읽기
+    # @reason Standard network receive abbreviation; kept in English as in common Korean dev UIs
+    # @source RX
+    rx: RX
+    # @reason Standard network transmit abbreviation; kept in English as in common Korean dev UIs
+    # @source TX
+    tx: TX
+    # @source Used
+    used: 사용량
+    # @source Write
+    write: 쓰기
+containers:
+  manage:
+    table:
+      action:
+        # @source Info
+        info: 정보
+        # @source Restart
+        restart: 다시 시작
+        # @source Start
+        start: 시작
+        # @source Stop
+        stop: 중지
+      header:
+        # @source Name
+        containerName: 이름
+        # @source Image
+        image: 이미지
+        # @source Port(s)
+        ports: 포트
+        # @source Uptime
+        started: 가동 시간
+        # @source State
+        state: 상태
+  sortableTables:
+    # @source There are no containers to show
+    noRows: 표시할 컨테이너가 없습니다
+  # @source Containers
+  title: 컨테이너
+dashboard:
+  # @reason Product name; kept in English
+  # @source Rancher Dashboard
+  windowTitle: Rancher Dashboard
+denyRoot:
+  # @source Rancher Desktop cannot be run with root privileges. Please run again as a regular user.
+  message: Rancher Desktop은 root 권한으로 실행할 수 없습니다. 일반 사용자로 다시 실행하십시오.
+  # @source Cannot run as Root
+  title: root로 실행할 수 없음
+deploymentProfile:
+  # @source Invalid deployment file {path}: no version specified. Add a version field to make it valid (current version is {version}).
+  noVersion: '잘못된 배포 파일 {path}: 버전이 지정되지 않았습니다. 유효하도록 version 필드를 추가하십시오(현재 버전은 {version}입니다).'
+  # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
+  noVersionRegistry: '잘못된 배포: {path}에 버전이 지정되지 않았습니다. 유효하도록 version 필드를 추가하십시오(현재 버전은 {version}입니다).'
+diagnostics:
+  # @source {count} failed plus {muted} muted
+  failedCount: '{count}개 실패 및 {muted}개 무시됨'
+  # @source Last run:
+  lastRun: '마지막 실행:'
+  # @source (No fixes available)
+  noFixes: (사용 가능한 수정 없음)
+  results:
+    muted:
+      # @source Try showing muted diagnostics.
+      body: 무시된 진단을 표시해 보십시오.
+      # @source No results found
+      heading: 결과를 찾을 수 없음
+      # @reason Icon identifier (CSS class), not translatable text
+      # @source icon-search
+      icon: icon-search
+    success:
+      # @source Rancher Desktop appears to be functioning correctly.
+      body: Rancher Desktop이 정상적으로 작동하고 있는 것으로 보입니다.
+      # @source No problems detected
+      heading: 문제가 감지되지 않음
+      # @reason Icon identifier (CSS class), not translatable text
+      # @source icon-checkmark
+      icon: icon-checkmark
+  # @source Show Muted
+  showMuted: 무시된 항목 표시
+  tableHeaders:
+    # @reason Mute here means silencing a diagnostic check; 음소거 is audio-only in Korean, so 무시 (ignore) as in common dev tools
+    # @source Mute
+    mute: 무시
+    # @source Name
+    name: 이름
+  # @source Diagnostics
+  title: 진단
+dialog:
+  bridgedNetwork:
+    # @source Shared network isn't available either. Only network access is via port forwarding to the host.
+    noNetwork: 공유 네트워크도 사용할 수 없습니다. 호스트로의 포트 포워딩을 통해서만 네트워크에 액세스할 수 있습니다.
+    # @source Using shared network address {ip}
+    sharedFallback: 공유 네트워크 주소 {ip}을(를) 사용합니다
+    # @source Bridged network did not get an IP address.
+    title: 브리지 네트워크가 IP 주소를 받지 못했습니다.
+  confirmMigration:
+    # @source Delete Workloads
+    delete: 워크로드 삭제
+    # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
+    message: '{from}에서 {to}(으)로 다운그레이드하면 기존 Kubernetes 워크로드가 손실됩니다. 데이터를 삭제하시겠습니까?'
+    # @source Confirming migration
+    title: 마이그레이션 확인
+  invalidK8sVersion:
+    # @source Falling back to recommended minimum upgrade version of {version}
+    detail: 권장 최소 업그레이드 버전인 {version}(으)로 대체합니다
+    # @source Requested Kubernetes version ''{version}'' is not a supported version.
+    message: 요청한 Kubernetes 버전 ''{version}''은(는) 지원되는 버전이 아닙니다.
+    # @source Invalid Kubernetes Version
+    title: 잘못된 Kubernetes 버전
+  networkFailure:
+    # @source Please acquire a version in the range {range} and install in ''{path}''
+    detail: '{range} 범위의 버전을 받아 ''''{path}''''에 설치하십시오'
+    # @source Can't download a compatible version of kubectl in offline-mode
+    message: 오프라인 모드에서는 호환되는 버전의 kubectl을 다운로드할 수 없습니다
+    # @source Network failure
+    title: 네트워크 오류
+extensions:
+  # @reason Icon identifier (CSS class), not translatable text
+  # @source icon-extension
+  icon: icon-extension
+  installed:
+    emptyState:
+      # @source It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
+      body: 아직 설치된 확장이 없는 것 같습니다. 확장 카탈로그를 둘러보고 시작해 보십시오.
+      button:
+        # @source Browse Extensions
+        text: 확장 찾아보기
+      # @source No extensions installed
+      heading: 설치된 확장 없음
+      # @reason Icon identifier (CSS class), not translatable text
+      # @source icon-extension
+      icon: icon-extension
+    list:
+      # @source Remove
+      uninstall: 제거
+      # @source Upgrade
+      upgrade: 업그레이드
+  view:
+    emptyState:
+      # @source {extensionId} was removed. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.
+      body: '{extensionId}이(가) 제거되었습니다. 확장을 다시 설치하거나 Rancher Desktop 사용 환경을 개선할 다른 확장을 찾아보려면 확장 카탈로그를 방문하십시오.'
+      # @source Extension removed
+      heading: 확장 제거됨
+firstRun:
+  # @source Enable Kubernetes
+  enableKubernetes: Kubernetes 활성화
+  kubernetesVersion:
+    # @source (cached versions only)
+    cachedOnly: (캐시된 버전만)
+    # @source Kubernetes Version
+    legend: Kubernetes 버전
+    # @source Other Versions
+    otherVersions: 기타 버전
+    # @source Recommended Versions
+    recommendedVersions: 권장 버전
+  # @source OK
+  ok: 확인
+  # @source Welcome to Rancher Desktop by SUSE
+  welcome: SUSE의 Rancher Desktop에 오신 것을 환영합니다
+general:
+  # @source Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
+  description: Rancher Desktop은 데스크톱 애플리케이션을 통해 Kubernetes와 이미지 관리를 제공합니다.
+  # @source Homepage
+  homepage: 홈페이지
+  # @source Issues
+  issues: 이슈
+  # @source General
+  navLabel: 일반
+  # @source Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack
+  projectDiscussions: '프로젝트 토론: <a href="https://slack.rancher.io/">Rancher Users</a> Slack의 <b>#rancher-desktop</b> 채널'
+  # @source Project Links:
+  projectLinks: '프로젝트 링크:'
+  # @source Welcome to Rancher Desktop by SUSE
+  title: SUSE의 Rancher Desktop에 오신 것을 환영합니다
+generic:
+  # @reason Korean conjunction 및 keeps the surrounding spaces of the source joiner
+  # @source  and 
+  and: ' 및 '
+  # @source Apply
+  apply: 적용
+  # @source Cancel
+  cancel: 취소
+  # @source Close
+  close: 닫기
+  # @reason List separator; Korean uses the same comma and space
+  # @source , 
+  comma: ', '
+  # @reason Button on the Port Forwarding page; matches the established 포트 포워딩 terminology
+  # @source Forward
+  forward: 포워딩
+  # @source Loading&hellip;
+  loading: 불러오는 중&hellip;
+  # @source Namespace
+  namespace: 네임스페이스
+  # @source OK
+  ok: 확인
+  # @source Rerun
+  rerun: 다시 실행
+  # @source Search
+  search: 검색
+imageEvents:
+  # @source Please select the Dockerfile to use (could have a different name)
+  buildMessage: 사용할 Dockerfile을 선택하십시오(이름이 다를 수 있습니다)
+  # @source Pick the build directory
+  buildTitle: 빌드 디렉터리 선택
+  # @source Error trying to delete images {ids}
+  deleteBatchError: 이미지 {ids}을(를) 삭제하는 중 오류가 발생했습니다
+  # @source Error trying to delete image {name} ({id}):
+  # @source
+  # @source  {error}
+  deleteError: |-
+      이미지 {name}({id})을(를) 삭제하는 중 오류가 발생했습니다:
+
+       {error}
+  # @source Error trying to push {name}:
+  # @source
+  # @source  {error}
+  pushError: |-
+      {name}을(를) 푸시하는 중 오류가 발생했습니다:
+
+       {error}
+  # @source Error trying to scan {name}:
+  # @source
+  # @source  {error}
+  scanError: |-
+      {name}을(를) 스캔하는 중 오류가 발생했습니다:
+
+       {error}
+images:
+  action:
+    # @source Add Image
+    add: 이미지 추가
+  add:
+    action:
+      # @source Build
+      build: 빌드
+      gerund:
+        # @reason Composed into images.add.loadingText, whose Korean template must supply the verb ending (e.g. 이미지를 {action}하는 중); bare noun keeps the composition grammatical
+        # @source Building
+        build: 빌드
+        # @reason Composed into images.add.loadingText, whose Korean template must supply the verb ending; 풀 follows kubernetes.io Korean usage (이미지 풀)
+        # @source Pulling
+        pull: 풀
+      infinitive:
+        # @reason Composed into images.add.errorText, whose Korean template must supply the verb ending (e.g. {action}하는 중 오류); bare noun keeps the composition grammatical
+        # @source build
+        build: 빌드
+        # @reason noun form; composed into other strings, Korean does not inflect for tense here
+        # @source pull
+        pull: 풀
+      pastTense:
+        # @reason noun form; composed as '이미지 {action} 완료' in successText
+        # @source Built
+        build: 빌드
+        # @reason noun form; composed as '이미지 {action} 완료' in successText
+        # @source Pulled
+        pull: 풀
+      # @source Pull
+      pull: 풀
+    # @reason rephrased so the action noun (풀/빌드) composes grammatically
+    # @source Error trying to { action } ''{ image }'' — see console output for more information
+    errorText: '''''{ image }'''' 이미지 { action } 중 오류가 발생했습니다. 자세한 내용은 콘솔 출력을 확인하십시오.'
+    # @reason rephrased around noun-form action; gerund keys must also be noun forms (풀/빌드)
+    # @source {action} image...
+    loadingText: 이미지 {action} 중...
+    # @reason rephrased around noun-form action from pastTense keys
+    # @source {action} image
+    successText: 이미지 {action} 완료
+    # @source Add Image
+    title: 이미지 추가
+  confirmDelete:
+    # @source Delete
+    confirm: 삭제
+    # @reason reordered for Korean word order; plural branches identical since Korean nouns do not inflect
+    # @source Delete {count} {count, plural, one {image} other {images}}?
+    multiple: '{count, plural, one {이미지} other {이미지}} {count}개를 삭제하시겠습니까?'
+    # @source Delete image {name}:{tag}?
+    single: '{name}:{tag} 이미지를 삭제하시겠습니까?'
+    # @source Confirming image deletion
+    title: 이미지 삭제 확인
+  manager:
+    # @source Close Output to Continue
+    close: 계속하려면 출력 닫기
+    input:
+      build:
+        # @source Build
+        button: 빌드
+        # @source Name of image to build:
+        label: '빌드할 이미지 이름:'
+        # @reason Example image reference; OCI image names are always Latin script
+        # @source registry.example.com/namespace/image:tag
+        placeholder: registry.example.com/namespace/image:tag
+      pull:
+        # @source Pull
+        button: 풀
+        # @reason verbified loanword to stay consistent with the 풀 action/button label
+        # @source Name of image to pull:
+        label: '풀할 이미지 이름:'
+        # @reason Example image reference; OCI image names are always Latin script
+        # @source registry.example.com/namespace/image
+        placeholder: registry.example.com/namespace/image
+    table:
+      action:
+        # @source Delete
+        delete: 삭제
+        # @source Push
+        push: 푸시
+        # @source Scan...
+        scan: 스캔...
+      header:
+        # @source Image ID
+        imageId: 이미지 ID
+        # @source Image
+        imageName: 이미지
+        # @source Size
+        size: 크기
+        # @source Tag
+        tag: 태그
+      # @source All images
+      label: 모든 이미지
+    # @source Image Output
+    title: 이미지 출력
+  scan:
+    details:
+      # @source Description
+      description: 설명
+      # @source Primary URL
+      primaryUrl: 기본 URL
+      # @source References
+      references: 참조
+    # @source Error trying to scan ''{ image }'' — see console output for more information
+    errorText: '''''{ image }'''' 스캔 중 오류가 발생했습니다. 자세한 내용은 콘솔 출력을 확인하십시오.'
+    labels:
+      # @reason Korean has no letter case; standard severity terms used instead of all-caps
+      # @source CRITICAL
+      critical: 심각
+      # @source HIGH
+      high: 높음
+      # @source Issues Found
+      issuesFound: 발견된 문제
+      # @source LOW
+      low: 낮음
+      # @source MEDIUM
+      medium: 중간
+    # @source Scanning ''{ image }''
+    loadingText: '''''{ image }'''' 스캔 중'
+    results:
+      headers:
+        # @reason column shows the fixed package version (Trivy 'Fixed Version')
+        # @source Fixed
+        fixed: 수정 버전
+        # @source Installed
+        installed: 설치 버전
+        # @source Package
+        package: 패키지
+        # @source Severity
+        severity: 심각도
+        # @source Vulnerability ID
+        vulnerabilityId: 취약점 ID
+    # @source Scan details for ''{ image }''
+    title: '''''{ image }'''' 스캔 상세 정보'
+  sortableTables:
+    # @source There are no images to show
+    noRows: 표시할 이미지가 없습니다
+  state:
+    # @source Waiting for image manager to be ready
+    imagesUnready: 이미지 관리자가 준비될 때까지 기다리는 중
+    # @source Error: Unknown state; please reload.
+    unknown: '오류: 알 수 없는 상태입니다. 다시 로드하십시오.'
+  # @source Images
+  title: 이미지
+integrations:
+  windows:
+    # @source Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros
+    description: Rancher Desktop의 Kubernetes 구성과 Docker 소켓을 WSL(Windows Subsystem for Linux) 배포판에 노출합니다
+kubernetesError:
+  # @source Context:
+  context: '컨텍스트:'
+  # @source Last command run:
+  lastCommand: '마지막으로 실행한 명령:'
+  # @source Some recent <a href="#" data-action="showLogs">logfile</a> lines:
+  logLines: '최근 <a href="#" data-action="showLogs">로그 파일</a> 내용 일부:'
+  # @source {appName} Error
+  title: '{appName} 오류'
+kubernetesPrefs:
+  kubernetes:
+    # @source Enable Kubernetes
+    label: Kubernetes 사용
+    # @reason Product name; Kubernetes stays in Latin script throughout this file
+    # @source Kubernetes
+    legendText: Kubernetes
+  options:
+    # @source Options
+    legendText: 옵션
+    # @source Install Spin Operator
+    spinkube: Spin Operator 설치
+    # @source Spin Operator requires <a href="#" data-navigate="Container Engine,general">WebAssembly</a> to be enabled.
+    spinkubeWarning: Spin Operator를 사용하려면 <a href="#" data-navigate="Container Engine,general">WebAssembly</a>가 활성화되어 있어야 합니다.
+    # @source Enable Traefik
+    traefik: Traefik 사용
+  port:
+    # @source Kubernetes Port
+    legendText: Kubernetes 포트
+  version:
+    # @source Kubernetes version
+    legendText: Kubernetes 버전
+    # @source Kubernetes version (cached versions only)
+    legendTextCached: Kubernetes 버전(캐시된 버전만)
+    # @source Other Versions
+    otherVersions: 기타 버전
+    # @source Recommended Versions
+    recommendedVersions: 권장 버전
+labelSelect:
+  noOptions:
+    # @source No options
+    empty: 옵션 없음
+    # @source No matching options
+    noMatch: 일치하는 옵션 없음
+  pagination:
+    # @source {count} / {totalCount} items
+    counts: '{count} / {totalCount}개 항목'
+    # @source Load More...
+    more: 더 보기...
+locale:
+  # @source German
+  de: 독일어
+  # @source English
+  en-us: 영어
+  # @source Spanish
+  es: 스페인어
+  # @source French
+  fr: 프랑스어
+  # @source Italian
+  it: 이탈리아어
+  # @source Japanese
+  ja: 일본어
+  # @source Korean
+  ko: 한국어
+  # @source Portuguese (Brazilian)
+  pt-br: 포르투갈어(브라질)
+  # @source Chinese (Simplified)
+  zh-hans: 중국어(간체)
+mainMenu:
+  # @source About {appName}
+  about: '{appName} 정보'
+  edit:
+    # @source &Copy
+    copy: 복사(&C)
+    # @source Cu&t
+    cut: 잘라내기(&T)
+    # @source De&lete
+    delete: 삭제(&L)
+    # @source &Edit
+    label: 편집(&E)
+    # @source &Paste
+    paste: 붙여넣기(&P)
+    # @source &Redo
+    redo: 다시 실행(&R)
+    # @source Select &All
+    selectAll: 모두 선택(&A)
+    # @source &Undo
+    undo: 실행 취소(&U)
+  file:
+    # @source Close
+    close: 닫기
+    # @source E&xit
+    exit: 종료(&X)
+    # @source &File
+    label: 파일(&F)
+  help:
+    # @source &About {appName}
+    about: '{appName} 정보(&A)'
+    # @source &Discuss
+    discuss: 토론(&D)
+    # @source File a &Bug
+    fileABug: 버그 신고(&B)
+    # @source Get &Help
+    getHelp: 도움말 보기(&H)
+    # @source {appName} &Help
+    help: '{appName} 도움말(&H)'
+    # @source &Help
+    label: 도움말(&H)
+    # @source &Project Page
+    projectPage: 프로젝트 페이지(&P)
+  # @reason macOS Korean app-menu convention (가리기/기타 가리기/모두 보기)
+  # @source Hide {appName}
+  hide: '{appName} 가리기'
+  # @source Hide Others
+  hideOthers: 기타 가리기
+  # @source Preferences
+  preferences: 환경설정
+  # @source Quit {appName}
+  quit: '{appName} 종료'
+  # @source Services
+  services: 서비스
+  # @source Show All
+  showAll: 모두 보기
+  view:
+    # @source &Actual Size
+    actualSize: 실제 크기(&A)
+    # @source &Force Reload
+    forceReload: 강제 새로 고침(&F)
+    # @source &View
+    label: 보기(&V)
+    # @source &Reload
+    reload: 새로 고침(&R)
+    # @source Toggle &Developer Tools
+    toggleDevTools: 개발자 도구 전환(&D)
+    # @source Toggle Full &Screen
+    toggleFullScreen: 전체 화면 전환(&S)
+    # @source Zoom &In
+    zoomIn: 확대(&I)
+    # @source Zoom &Out
+    zoomOut: 축소(&O)
+  window:
+    # @source Bring All to Front
+    front: 모두 앞으로 가져오기
+    # @source &Window
+    label: 창(&W)
+    # @source Minimize
+    minimize: 최소화
+    # @source Zoom
+    zoom: 확대/축소
+marketplace:
+  installed:
+    table:
+      header:
+        # @source Description
+        description: 설명
+        # @source Name
+        name: 이름
+        # @source Vendor
+        vendor: 공급업체
+  labels:
+    # @source Install
+    install: 설치
+    # @source Remove
+    uninstall: 제거
+    # @source Upgrade
+    upgrade: 업그레이드
+  loading:
+    # @source Installing...
+    install: 설치 중...
+    # @source Removing...
+    uninstall: 제거 중...
+    # @source Upgrading...
+    upgrade: 업그레이드 중...
+  # @source More information
+  moreInfo: 자세한 정보
+  # @source No extension found for the search criteria
+  noResults: 검색 조건과 일치하는 확장 프로그램이 없습니다
+  tabs:
+    # @source Catalog
+    catalog: 카탈로그
+    # @source Installed
+    installed: 설치됨
+  # @source Extensions
+  title: 확장 프로그램
+nav:
+  userMenu:
+    # @source Cluster Dashboard
+    clusterDashboard: 클러스터 대시보드
+    # @source Preferences
+    preferences: 환경설정
+pathManagement:
+  # @source Configure PATH
+  label: PATH 구성
+  options:
+    manual:
+      # @source Rancher Desktop does not change your PATH configuration; add <code>$HOME/.rd/bin</code> to your path manually.
+      description: Rancher Desktop은 PATH 구성을 변경하지 않습니다. <code>$HOME/.rd/bin</code>을 PATH에 직접 추가하십시오.
+      # @source Manual
+      label: 수동
+    rcFiles:
+      # @source Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.
+      description: Rancher Desktop이 셸 프로필을 대신 수정합니다. 변경 사항을 적용하려면 열려 있는 셸을 다시 시작하십시오.
+      # @source Automatic
+      label: 자동
+  # @source Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, <code>$HOME/.rd/bin</code> must be in your PATH.
+  tooltip: Rancher Desktop에는 kubectl, nerdctl, helm, docker와 같은 도구가 포함되어 있습니다. 이러한 도구를 사용하려면 <code>$HOME/.rd/bin</code>이 PATH에 있어야 합니다.
+portForwarding:
+  # @source Include Kubernetes services
+  includeKubernetesServices: Kubernetes 서비스 포함
+  manage:
+    table:
+      header:
+        # @source Local Port
+        listenPort: 로컬 포트
+        # @source Name
+        name: 이름
+        # @source Namespace
+        namespace: 네임스페이스
+        # @source Port
+        port: 포트
+  sortableTables:
+    # @source There are no port forwarding entries to show
+    noRows: 표시할 포트 포워딩 항목이 없습니다
+  # @source Port Forwarding
+  title: 포트 포워딩
+preferences:
+  actions:
+    banner:
+      # @source There's a problem with the preferences selection.
+      error: 환경설정 선택에 문제가 있습니다.
+      # @source Kubernetes will reset after applying changes.
+      reset: 변경 사항을 적용하면 Kubernetes가 재설정됩니다.
+      # @source Kubernetes will restart after applying changes.
+      restart: 변경 사항을 적용하면 Kubernetes가 다시 시작됩니다.
+  containerEngine:
+    webAssembly:
+      # @source WebAssembly must be enabled for the <a href="#" data-navigate="Kubernetes">Spin Operator</a> to be installed.
+      warning: <a href="#" data-navigate="Kubernetes">Spin Operator</a>를 설치하려면 WebAssembly가 활성화되어 있어야 합니다.
+  error:
+    # @source Reload Preferences to try again.
+    body: 환경설정을 다시 로드하여 다시 시도하십시오.
+    # @source Unable to fetch preferences
+    heading: 환경설정을 가져올 수 없습니다
+    # @source Reload preferences
+    reload: 환경설정 다시 로드
+  # @source Preferences
+  header: 환경설정
+  # @source or
+  incompatiblePrefWarningOr: 또는
+  # @reason sentence fragment composed after variable pref names; 이(가) covers both particle forms
+  # @source to be unselected.
+  incompatibleTypeWarningPostDisabled: 이(가) 선택 해제되어 있어야 합니다.
+  # @reason sentence fragment composed after variable pref names; 이(가) covers both particle forms
+  # @source to be selected.
+  incompatibleTypeWarningPostSelected: 이(가) 선택되어 있어야 합니다.
+  # @reason fragment restructured so the composed sentence reads naturally in Korean SOV order
+  # @source The option requires
+  incompatibleTypeWarningPre: 이 옵션을 사용하려면
+  locked:
+    # @source Locked due to organization's policy
+    tooltip: 조직의 정책에 따라 잠겨 있습니다
+  nav:
+    # @source Application
+    application: 애플리케이션
+    # @source Container Engine
+    containerEngine: 컨테이너 엔진
+    # @reason Product name; Kubernetes stays in Latin script throughout this file
+    # @source Kubernetes
+    kubernetes: Kubernetes
+    # @source Virtual Machine
+    virtualMachine: 가상 머신
+    # @reason Product acronym (Windows Subsystem for Linux)
+    # @source WSL
+    wsl: WSL
+  resetDialog:
+    # @source Apply and reset
+    apply: 적용 및 재설정
+    # @source These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.
+    detail: 이 변경 사항은 Kubernetes 클러스터를 재설정하며, 워크로드와 컨테이너 이미지가 손실됩니다.
+    # @source Apply preferences and reset Kubernetes?
+    message: 환경설정을 적용하고 Kubernetes를 재설정하시겠습니까?
+    # @source Rancher Desktop - Reset Kubernetes
+    title: Rancher Desktop - Kubernetes 재설정
+  tabs:
+    # @source Allowed Images
+    allowedImages: 허용된 이미지
+    # @source Behavior
+    behavior: 동작
+    # @source Emulation
+    emulation: 에뮬레이션
+    # @source Environment
+    environment: 환경
+    # @source General
+    general: 일반
+    # @source Hardware
+    hardware: 하드웨어
+    # @source Integrations
+    integrations: 통합
+    # @source Proxy
+    proxy: 프록시
+    # @source Volumes
+    volumes: 볼륨
+preferencesWindow:
+  close:
+    # @source There are preferences with changes that have not been applied. All unsaved preferences will be lost.
+    detail: 적용되지 않은 변경 사항이 있는 환경설정이 있습니다. 저장하지 않은 환경설정은 모두 손실됩니다.
+    # @source Discard changes
+    discardChanges: 변경 사항 버리기
+    # @source Close preferences without applying?
+    message: 적용하지 않고 환경설정을 닫으시겠습니까?
+    # @source Rancher Desktop - Close Preferences
+    title: Rancher Desktop - 환경설정 닫기
+  # @source Rancher Desktop - Preferences
+  title: Rancher Desktop - 환경설정
+prefs:
+  # @source Experimental
+  experimental: 실험적
+  # @source This setting requires macOS 13.3 (Ventura) or later.
+  onlyFromVentura_arm64: 이 설정을 사용하려면 macOS 13.3(Ventura) 이상이 필요합니다.
+  # @source This setting requires macOS 13.0 (Ventura) or later.
+  onlyFromVentura_x64: 이 설정을 사용하려면 macOS 13.0(Ventura) 이상이 필요합니다.
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.3 (Ventura) or later.
+  onlyWithVZ_arm64: 이 설정을 사용하려면 VZ 에뮬레이션 모드가 필요합니다. VZ는 macOS 13.3(Ventura) 이상에서만 사용할 수 있습니다.
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.0 (Ventura) or later.
+  onlyWithVZ_x64: 이 설정을 사용하려면 VZ 에뮬레이션 모드가 필요합니다. VZ는 macOS 13.0(Ventura) 이상에서만 사용할 수 있습니다.
+product:
+  containerEngine:
+    # @reason Compact status-bar label with no Korean abbreviation for 컨테이너 엔진; the tooltip shows the translated full name
+    # @source CE
+    abbreviation: CE
+    # @source Container Engine
+    fullName: 컨테이너 엔진
+  # @source deactivated
+  deactivated: 비활성화됨
+  # @reason Product name used as status-bar label
+  # @source Kubernetes
+  kubernetesVersion: Kubernetes
+  # @source Network status
+  networkStatus: 네트워크 상태
+  networkStatusValues:
+    # @source checking...
+    checking: 확인 중...
+    # @source offline
+    offline: 오프라인
+    # @source online
+    online: 온라인
+  # @source Version
+  version: 버전
+progress:
+  # @source Asking for permission to run tasks as administrator
+  askingPermission: 관리자 권한으로 작업을 실행하기 위한 권한 요청 중
+  # @source Bundling certificates
+  bundlingCertificates: 인증서 번들 생성 중
+  # @source Checking k3s images
+  checkingK3sImages: k3s 이미지 확인 중
+  # @source Configuring container engine
+  configuringContainerEngine: 컨테이너 엔진 구성 중
+  # @source Configuring image proxy
+  configuringImageProxy: 이미지 프록시 구성 중
+  # @source Configuring logrotate
+  configuringLogrotate: logrotate 구성 중
+  # @source Container engine components
+  containerEngineComponents: 컨테이너 엔진 구성 요소
+  # @source Copying certificates
+  copyingCertificates: 인증서 복사 중
+  # @source Deleting incompatible Kubernetes state
+  deletingIncompatibleState: 호환되지 않는 Kubernetes 상태 삭제 중
+  # @source Deleting Kubernetes
+  deletingKubernetes: Kubernetes 삭제 중
+  # @source Deleting virtual machine
+  deletingVirtualMachine: 가상 머신 삭제 중
+  # @source DNS configuration
+  dnsConfiguration: DNS 구성
+  # @source Ensuring compatible kubectl
+  ensuringCompatibleKubectl: 호환되는 kubectl 확인 중
+  # @source Ensuring virtualization is supported
+  ensuringVirtualizationSupported: 가상화 지원 여부 확인 중
+  # @source Expecting user permission to continue
+  expectingPermission: 계속하기 위한 사용자 권한 대기 중
+  # @source Extracting certificates
+  extractingCertificates: 인증서 추출 중
+  # @source Fetching certificates
+  fetchingCertificates: 인증서 가져오는 중
+  # @source Initializing Rancher Desktop
+  initializingRancherDesktop: Rancher Desktop 초기화 중
+  # @source Initializing WSL data
+  initializingWslData: WSL 데이터 초기화 중
+  # @source Installing Buildkit
+  installingBuildkit: Buildkit 설치 중
+  # @source Installing CA certificates
+  installingCaCertificates: CA 인증서 설치 중
+  # @source Installing container engine
+  installingContainerEngine: 컨테이너 엔진 설치 중
+  # @source Installing credential helper
+  installingCredentialHelper: 자격 증명 도우미 설치 중
+  # @source Installing the docker-credential helper
+  installingDockerCredentialHelper: docker-credential 도우미 설치 중
+  # @source Installing helpers
+  installingHelpers: 도우미 설치 중
+  # @source Installing image scanner
+  installingImageScanner: 이미지 스캐너 설치 중
+  # @source Installing k3s
+  installingK3s: k3s 설치 중
+  # @source Installing Kubernetes
+  installingKubernetes: Kubernetes 설치 중
+  # @source Kubernetes components
+  kubernetesComponents: Kubernetes 구성 요소
+  # @source Kubernetes dockerd compatibility
+  kubernetesDockerCompatibility: Kubernetes dockerd 호환성
+  # @source Mounting WSL data
+  mountingWslData: WSL 데이터 마운트 중
+  # @source Preparing to start
+  preparingToStart: 시작 준비 중
+  # @source Proxy Config Setup
+  proxyConfigSetup: 프록시 구성 설정
+  # @source Rancher Desktop guest agent
+  rancherDesktopGuestAgent: Rancher Desktop 게스트 에이전트
+  # @source Regenerating configuration to account for lack of permissions
+  regeneratingConfiguration: 권한 부족을 반영하여 구성 다시 생성 중
+  # @source Registering WSL distribution
+  registeringWslDistribution: WSL 배포판 등록 중
+  # @source Removing existing certificates
+  removingExistingCertificates: 기존 인증서 제거 중
+  # @source Removing spinkube operator
+  removingSpinkubeOperator: spinkube 오퍼레이터 제거 중
+  # @source Removing stale state
+  removingStaleState: 오래된 상태 제거 중
+  # @source Removing Traefik
+  removingTraefik: Traefik 제거 중
+  # @source Resetting Kubernetes
+  resettingKubernetes: Kubernetes 재설정 중
+  # @source Running provisioning scripts
+  runningProvisioningScripts: 프로비저닝 스크립트 실행 중
+  # @source Running update-ca-certificates
+  runningUpdateCaCertificates: update-ca-certificates 실행 중
+  # @source Setting docker context
+  settingDockerContext: docker 컨텍스트 설정 중
+  # @source Setting Lima permissions
+  settingLimaPermissions: Lima 권한 설정 중
+  # @source Setting up Docker socket
+  settingUpDockerSocket: Docker 소켓 설정 중
+  # @source Setting up virtual ethernet
+  settingUpVirtualEthernet: 가상 이더넷 설정 중
+  # @source Shutting down
+  shuttingDown: 종료 중
+  # @source Skipping node checks, flannel is disabled
+  skippingNodeChecksFlannel: flannel이 비활성화되어 노드 검사를 건너뛰는 중
+  # @source Starting Backend
+  startingBackend: 백엔드 시작 중
+  # @source Starting buildkit
+  startingBuildkit: buildkit 시작 중
+  # @source Starting container engine
+  startingContainerEngine: 컨테이너 엔진 시작 중
+  # @source Starting image proxy
+  startingImageProxy: 이미지 프록시 시작 중
+  # @source Starting k3s
+  startingK3s: k3s 시작 중
+  # @source Starting Kubernetes
+  startingKubernetes: Kubernetes 시작 중
+  # @source Starting proxy
+  startingProxy: 프록시 시작 중
+  # @source Starting {service}
+  startingService: '{service} 시작 중'
+  # @source Starting virtual machine
+  startingVirtualMachine: 가상 머신 시작 중
+  # @source Starting WSL environment
+  startingWslEnvironment: WSL 환경 시작 중
+  # @source Stopping existing instance
+  stoppingExistingInstance: 기존 인스턴스 중지 중
+  # @source Stopping mock backend
+  stoppingMockBackend: 모의 백엔드 중지 중
+  # @source Stopping services
+  stoppingServices: 서비스 중지 중
+  # @source Updating cluster configuration
+  updatingClusterConfiguration: 클러스터 구성 업데이트 중
+  # @source Updating /etc/hosts
+  updatingEtcHosts: /etc/hosts 업데이트 중
+  # @source Updating kubeconfig
+  updatingKubeconfig: kubeconfig 업데이트 중
+  # @source Updating outdated virtual machine
+  updatingOutdatedVm: 오래된 가상 머신 업데이트 중
+  # @source Updating WSL data
+  updatingWslData: WSL 데이터 업데이트 중
+  # @source Upgrading WSL distribution
+  upgradingWslDistribution: WSL 배포판 업그레이드 중
+  # @source Waiting for container engine to be ready
+  waitingForContainerEngine: 컨테이너 엔진이 준비될 때까지 대기 중
+  # @source Waiting for Kubernetes API
+  waitingForKubernetesApi: Kubernetes API 대기 중
+  # @source Waiting for nodes
+  waitingForNodes: 노드 대기 중
+  # @source Waiting for services
+  waitingForServices: 서비스 대기 중
+  # @source Writing K3s configuration
+  writingK3sConfiguration: K3s 구성 작성 중
+snapshots:
+  action:
+    # @source Create Snapshot
+    create: 스냅샷 생성
+  card:
+    action:
+      # @source Delete
+      remove: 삭제
+      # @source Restore
+      restore: 복원
+    # @source Created on '<b>'{date}'</b>' at '<b>'{time}'</b>'
+    created: '''<b>''{date}''</b>'' ''<b>''{time}''</b>''에 생성됨'
+  create:
+    actions:
+      # @source Cancel
+      back: 취소
+      # @source Create
+      submit: 생성
+    description:
+      # @source Description
+      label: 설명
+    # @source Rancher Desktop will be temporarily unavailable while creating a new Snapshot
+    info: 새 스냅샷을 생성하는 동안 Rancher Desktop을 일시적으로 사용할 수 없습니다
+    name:
+      # @source Snapshot Name
+      label: 스냅샷 이름
+    # @source Create a new Snapshot
+    title: 새 스냅샷 생성
+  dialog:
+    buttons:
+      # @source Close
+      error: 닫기
+    creating:
+      actions:
+        # @source Cancel
+        cancel: 취소
+      # @source Creating {snapshot}
+      header: '{snapshot} 생성 중'
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being created.'<br/>'This may take some time depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart.
+      message: 스냅샷 '<b>'{snapshot}'</b>'을(를) 생성하는 동안 잠시 기다려 주십시오.'<br/>'컴퓨터 리소스에 따라 시간이 다소 걸릴 수 있습니다.'<br/>'이 작업이 진행되는 동안 Rancher Desktop을 일시적으로 사용할 수 없습니다.'<br/><br/>'스냅샷 생성이 완료되면 VM이 다시 시작됩니다.
+    delete:
+      actions:
+        # @source Cancel
+        cancel: 취소
+        # @source Delete
+        ok: 삭제
+      # @source Permanently delete snapshot?
+      header: 스냅샷을 영구적으로 삭제하시겠습니까?
+      # @source Deleting a snapshot cannot be undone.
+      info: 삭제한 스냅샷은 되돌릴 수 없습니다.
+    generic:
+      # @source Snapshot operation in progress
+      header: 스냅샷 작업 진행 중
+      # @source Please wait while the snapshot operation is active.<br/>This may take some time depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart.
+      message: 스냅샷 작업이 진행되는 동안 잠시 기다려 주십시오.<br/>컴퓨터 리소스에 따라 시간이 다소 걸릴 수 있습니다.<br/>이 작업이 진행되는 동안 Rancher Desktop을 일시적으로 사용할 수 없습니다.<br/><br/>스냅샷 작업이 완료되면 VM이 다시 시작됩니다.
+    restore:
+      actions:
+        # @source Cancel
+        cancel: 취소
+        # @source Restore
+        ok: 복원
+      error:
+        # @source Quit Rancher Desktop
+        buttonText: Rancher Desktop 종료
+        # @source Failed to restore snapshot '<b>'{snapshot}'</b>'.'<br/><br/>'Rancher Desktop has performed a Factory Reset and will now exit. Please try to address the issue that led to this error before restarting Rancher Desktop and attempting to restore the snapshot again.
+        description: 스냅샷 '<b>'{snapshot}'</b>' 복원에 실패했습니다.'<br/><br/>'Rancher Desktop이 공장 초기화를 수행했으며 이제 종료됩니다. Rancher Desktop을 다시 시작하여 스냅샷 복원을 다시 시도하기 전에 이 오류를 일으킨 문제를 해결해 주십시오.
+        # @source Error restoring snapshot
+        header: 스냅샷 복원 오류
+      # @source Restore snapshot?
+      header: 스냅샷을 복원하시겠습니까?
+      # @source Restoring this snapshot will replace your current installation, including preferences. If the Preferences window is open, it will be automatically closed and any unsaved changes will be discarded.
+      info: 이 스냅샷을 복원하면 환경설정을 포함한 현재 설치 상태가 대체됩니다. 환경설정 창이 열려 있는 경우 자동으로 닫히며 저장하지 않은 변경 사항은 모두 삭제됩니다.
+    restoring:
+      actions:
+        # @source Cancel
+        cancel: 취소
+      # @source Restoring {snapshot}
+      header: '{snapshot} 복원 중'
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being restored. This may take some time depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active.
+      message: 스냅샷 '<b>'{snapshot}'</b>'을(를) 복원하는 동안 잠시 기다려 주십시오. 컴퓨터 리소스에 따라 시간이 다소 걸릴 수 있습니다.<br/><br/>이 작업이 진행되는 동안 Rancher Desktop을 일시적으로 사용할 수 없습니다. 완료되면 {snapshot} 스냅샷이 활성화된 상태로 VM이 다시 시작됩니다.
+    # @source Show logs
+    showLogs: 로그 보기
+  empty:
+    # @source Click on Create Snapshot to get started
+    body: 시작하려면 스냅샷 생성을 클릭하십시오
+    # @source No snapshots found
+    heading: 스냅샷 없음
+    # @reason icon identifier passed to the EmptyState component, not user-visible text; kept unchanged
+    # @source icon-search
+    icon: icon-search
+  info:
+    create:
+      # @source Cancelled creation of {snapshot}
+      cancel: '{snapshot} 생성이 취소됨'
+      # @source Created '<b>'{snapshot}'</b>'
+      success: '''<b>''{snapshot}''</b>'' 생성됨'
+    delete:
+      # @source Delete error: {error}
+      error: '삭제 오류: {error}'
+      # @source Deleted '<b>'{snapshot}'</b>'
+      success: '''<b>''{snapshot}''</b>'' 삭제됨'
+    lock:
+      # @source A snapshot lock file has been detected for an unusually long time. If you believe this is an error, you can try to remove the lock file by running <code>rdctl snapshot unlock</code>.
+      info: 스냅샷 잠금 파일이 비정상적으로 오랫동안 감지되었습니다. 오류라고 판단되는 경우 <code>rdctl snapshot unlock</code>을 실행하여 잠금 파일을 제거해 볼 수 있습니다.
+    restore:
+      # @source Cancelled restoration of {snapshot}
+      cancel: '{snapshot} 복원이 취소됨'
+      # @source Restored '<b>'{snapshot}'</b>'
+      success: '''<b>''{snapshot}''</b>'' 복원됨'
+    # @reason code appends this after a finished message (Snapshots.vue); a Korean particle suffix like '{time}에' would be ungrammatical there, so the time is rendered parenthetically
+    # @source  at {time}
+    when: ' ({time})'
+  # @source Snapshots
+  title: 스냅샷
+sortableTable:
+  actionAvailability:
+    # @source {actionable} selected
+    selected: '{actionable}개 선택됨'
+    # @source Available for {actionable} of the {total} selected
+    some: 선택한 {total}개 중 {actionable}개에 사용 가능
+  # @source Add
+  add: 추가
+  # @source Add Filter
+  addFilter: 필터 추가
+  bulkActions:
+    collapsed:
+      # @source Actions
+      label: 작업
+  # @source Filter for...
+  filterFor: 필터링할 값...
+  # @reason composed in code between filter value and column name ('"x" in Name' chip, and as a label before the column dropdown); a bare Korean postposition cannot precede the column, so rendered as the label '열:'
+  # @source in
+  in: '열:'
+  # @source No actions available
+  noActions: 사용 가능한 작업 없음
+  # @source There are no rows which match your search query.
+  noData: 검색 조건과 일치하는 행이 없습니다.
+  # @source There are no rows to show.
+  noRows: 표시할 행이 없습니다.
+  paging:
+    # @reason placeholders reordered inside the 'other' branch for Korean word order; counter suffix '개' attaches to {count} without a space
+    # @source {pages, plural,
+    # @source =0 {No Items}
+    # @source =1 {{count} {count, plural, =1 {Item} other {Items}}}
+    # @source other {{from} - {to} of {count} Items}}
+    generic: |-
+        {pages, plural,
+        =0 {항목 없음}
+        =1 {{count}{count, plural, =1 {개 항목} other {개 항목}}}
+        other {전체 {count}개 항목 중 {from} - {to}}}
+  # @source Reset
+  resetFilters: 초기화
+  # @source Filter
+  search: 필터
+  # @source Select a column
+  selectCol: 열 선택
+  tableHeader:
+    # @source Group by
+    groupBy: 그룹화 기준
+    # @source This column cannot be filtered
+    noFilter: 이 열은 필터링에 사용할 수 없습니다
+    # @source Show
+    show: 표시
+sudoPrompt:
+  # @source Always run without administrative access
+  alwaysRunWithout: 항상 관리자 권한 없이 실행
+  # @source OK
+  buttonText: 확인
+  # @source This will modify the following paths:
+  explanation: '다음 경로가 수정됩니다:'
+  # @source Rancher Desktop requires administrative access ("sudo access") for the following reasons:
+  message: 'Rancher Desktop에는 다음과 같은 이유로 관리자 권한("sudo 권한")이 필요합니다:'
+  # @source The prompt will be displayed once this window is closed. Cancelling the prompt or disabling administrative access requires you to switch the docker context to rancher-desktop in order to continue using Rancher Desktop.
+  messageSecondPart: 이 창을 닫으면 권한 요청 프롬프트가 표시됩니다. 프롬프트를 취소하거나 관리자 권한을 사용하지 않도록 설정하면, Rancher Desktop을 계속 사용하기 위해 docker 컨텍스트를 rancher-desktop으로 전환해야 합니다.
+  reasons:
+    dockerSocket:
+      # @source Provides compatibility with tools that use the docker socket without the ability to use docker contexts.
+      description: docker 컨텍스트를 사용할 수 없고 docker 소켓을 사용하는 도구와의 호환성을 제공합니다.
+      # @source Set up default docker socket
+      title: 기본 docker 소켓 설정
+    networking:
+      # @source Provides bridged networking so that it is easier to access your containers. If this is not allowed, containers will only be accessible via port forwarding.
+      description: 컨테이너에 더 쉽게 접근할 수 있도록 브리지 네트워킹을 제공합니다. 허용하지 않으면 포트 포워딩을 통해서만 컨테이너에 접근할 수 있습니다.
+      # @source Configure networking
+      title: 네트워킹 구성
+  # @source Administrative Access Required
+  title: 관리자 권한 필요
+systemPreferences:
+  # @source # CPUs
+  cpus: CPU 수
+  # @source Memory (GB)
+  memory: 메모리(GB)
+telemetryOptIn:
+  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
+  fineprint: Rancher Desktop 개선에 도움이 되도록 익명화된 사용 정보, 오류 보고서 등을 전송합니다. 데이터는 다른 누구와도 공유되지 않으며, 배포하는 특정 리소스나 엔드포인트에 대한 정보는 포함되지 않습니다.
+tray:
+  # @source Container engine: {name}
+  containerEngine: '컨테이너 엔진: {name}'
+  # @source Kubernetes Contexts
+  kubernetesContexts: Kubernetes 컨텍스트
+  # @source Network status: {status}
+  networkStatus: '네트워크 상태: {status}'
+  # @source None found
+  noneFound: 없음
+  # @source Open cluster dashboard
+  openDashboard: 클러스터 대시보드 열기
+  # @source Open main window
+  openMainWindow: 메인 창 열기
+  # @source Open preferences dialog
+  openPreferences: 환경설정 열기
+  # @source Quit Rancher Desktop
+  quitRancherDesktop: Rancher Desktop 종료
+  state:
+    # @source Kubernetes is disabled
+    disabled: Kubernetes 비활성화됨
+    # @source Kubernetes has encountered an error
+    error: Kubernetes 오류 발생
+    # @source Kubernetes is running
+    started: Kubernetes 실행 중
+    # @source Kubernetes is starting
+    starting: Kubernetes 시작 중
+    # @source Kubernetes is stopped
+    stopped: Kubernetes 중지됨
+    # @source Kubernetes is shutting down
+    stopping: Kubernetes 종료 중
+  # @reason Product name
+  # @source Rancher Desktop
+  tooltip: Rancher Desktop
+troubleshooting:
+  # @source Enable debug mode
+  debugMode: 디버그 모드 활성화
+  general:
+    factoryReset:
+      # @source Factory Reset
+      buttonText: 공장 초기화
+      # @source Factory Reset will remove all Rancher Desktop Configurations.
+      description: 공장 초기화는 모든 Rancher Desktop 구성을 제거합니다.
+      messageBox:
+        # @source Cancel
+        cancel: 취소
+        # @source Keep cached Kubernetes images
+        checkboxLabel: 캐시된 Kubernetes 이미지 유지
+        # @source <p>Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again.</p><p>Are you sure you want to reset everything?</p>
+        detail: <p>공장 초기화를 수행하면 클러스터와 모든 Rancher Desktop 설정이 제거되고 Rancher Desktop이 종료됩니다. Rancher Desktop을 계속 사용하려면 수동으로 다시 시작하여 초기 설정을 다시 진행해야 합니다.</p><p>정말 모든 것을 초기화하시겠습니까?</p>
+        # @source Perform a factory reset?
+        message: 공장 초기화를 수행하시겠습니까?
+        # @source Factory Reset
+        ok: 공장 초기화
+        # @source Rancher Desktop - Factory Reset
+        title: Rancher Desktop - 공장 초기화
+      # @source Factory Reset
+      title: 공장 초기화
+    logs:
+      # @source Show Logs
+      buttonText: 로그 보기
+      # @source Show Rancher Desktop logs
+      description: Rancher Desktop 로그 표시
+      # @source Logs
+      title: 로그
+  kubernetes:
+    resetKubernetes:
+      # @source Reset Kubernetes
+      buttonText: Kubernetes 초기화
+      # @source Resetting Kubernetes will delete all workloads and configuration.
+      description: Kubernetes를 초기화하면 모든 워크로드와 구성이 삭제됩니다.
+      messageBox:
+        # @source Cancel
+        cancel: 취소
+        # @source Delete container images
+        checkboxLabel: 컨테이너 이미지 삭제
+        # @source Reset Kubernetes?
+        message: Kubernetes를 초기화하시겠습니까?
+        # @source Reset
+        ok: 초기화
+        # @source Rancher Desktop - Reset Kubernetes
+        title: Rancher Desktop - Kubernetes 초기화
+      # @source Reset Kubernetes
+      title: Kubernetes 초기화
+  # @source Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
+  needHelp: 여전히 문제가 해결되지 않는 경우 <a href="https://slack.rancher.io/">Rancher Users Slack</a>의 <b>#rancher-desktop</b> 채널에서 토론을 시작하거나 <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">이슈를 보고</a>해 주십시오.
+  # @source Troubleshooting
+  title: 문제 해결
+unmetPrerequisites:
+  # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
+  action: 모든 요구 사항이 충족되었는지 확인한 후 다시 시도하십시오. Rancher Desktop이 이제 종료됩니다.
+  # @source OK
+  buttonText: 확인
+  # @source Rancher Desktop cannot start because requirements are missing or not configured:
+  message: '요구 사항이 누락되었거나 구성되지 않아 Rancher Desktop을 시작할 수 없습니다:'
+  # @source Rancher Desktop is unable to start
+  title: Rancher Desktop을 시작할 수 없음
+updateStatus:
+  # @source Applying update...
+  applyingUpdate: 업데이트 적용 중...
+  # @source An update to version {version} is available
+  available: 버전 {version} 업데이트를 사용할 수 있습니다
+  # @source Check for updates automatically
+  checkForUpdates: 자동으로 업데이트 확인
+  # @source downloading... ({percent}%, {speed})
+  downloading: 다운로드 중... ({percent}%, {speed})
+  # @source There was an error checking for updates.
+  errorChecking: 업데이트를 확인하는 동안 오류가 발생했습니다.
+  # @source Release Notes
+  releaseNotes: 릴리스 노트
+  # @source Restart Now
+  restartNow: 지금 다시 시작
+  # @source Restart the application to apply the update.
+  restartToApply: 업데이트를 적용하려면 애플리케이션을 다시 시작하십시오.
+  unsupported:
+    # @source A newer version of Rancher Desktop is available, but not supported on your system.
+    message: 최신 버전의 Rancher Desktop을 사용할 수 있지만 현재 시스템에서는 지원되지 않습니다.
+    # @source For more information please see <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.
+    seeDocumentation: 자세한 내용은 <a href="https://docs.rancherdesktop.io/getting-started/installation">설치 설명서</a>를 참조하십시오.
+    # @source Latest Version Not Supported
+    title: 최신 버전이 지원되지 않음
+  # @source Update Available
+  updateAvailable: 업데이트 사용 가능
+validation:
+  # @source Cannot decrease "{field}" from {from} to {to}
+  cannotDecrease: '"{field}"을(를) {from}에서 {to}(으)로 줄일 수 없습니다'
+  # @source Cannot enable WebAssembly with classic storage for moby.
+  cannotEnableWasmClassic: moby에서 classic 스토리지를 사용하는 경우 WebAssembly를 활성화할 수 없습니다.
+  # @source Cannot switch to classic storage for moby when WebAssembly is enabled.
+  cannotSwitchClassicWasm: WebAssembly가 활성화된 상태에서는 moby의 classic 스토리지로 전환할 수 없습니다.
+  # @source Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
+  cannotSwitchMobyClassicWasm: WebAssembly가 활성화된 상태에서는 classic 스토리지를 사용하는 moby 컨테이너 엔진으로 전환할 수 없습니다.
+  # @source field "{field}" has duplicate entries: "{duplicates}"
+  duplicateEntries: '"{field}" 필드에 중복된 항목이 있습니다: "{duplicates}"'
+  # @source Errors in proposed settings:
+  errorsInProposedSettings: '제안된 설정에 오류가 있습니다:'
+  # @source field "{field}" is locked
+  fieldLocked: '"{field}" 필드는 잠겨 있습니다'
+  # @source {field}: "{pattern}" does not describe an image reference
+  invalidImageReference: '{field}: "{pattern}"은(는) 이미지 참조를 나타내지 않습니다'
+  # @source {field}: "{value}" is not a valid mapping
+  invalidMapping: '{field}: "{value}"은(는) 유효한 매핑이 아닙니다'
+  # @source {field}: "{name}" is an invalid name
+  invalidName: '{field}: "{name}"은(는) 유효하지 않은 이름입니다'
+  # @source field "{field}" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "{entries}"
+  invalidNoproxyEntries: '"{field}" 필드에 유효하지 않은 항목이 있습니다(IP 주소, CIDR 서브넷 또는 도메인 이름이어야 합니다): "{entries}"'
+  # @source {field}: "{value}" is not a valid page name for Preferences Dialog
+  invalidPageName: '{field}: "{value}"은(는) 환경설정 대화 상자의 유효한 페이지 이름이 아닙니다'
+  # @source {field}: tab name "{tabName}" is not a valid tab name for "{page}" Preference page
+  invalidTabName: '{field}: 탭 이름 "{tabName}"은(는) "{page}" 환경설정 페이지의 유효한 탭 이름이 아닙니다'
+  # @source {field}: "{name}" has invalid tag "{tag}"
+  invalidTag: '{field}: "{name}"에 유효하지 않은 태그 "{tag}"이(가) 있습니다'
+  # @source Invalid value for "{field}": <{value}>
+  invalidValue: '"{field}"의 값이 유효하지 않습니다: <{value}>'
+  # @source Invalid value for "{field}": <{value}>; must be one of {validValues}
+  invalidValueEnum: '"{field}"의 값이 유효하지 않습니다: <{value}>; {validValues} 중 하나여야 합니다'
+  # @source Kubernetes version "{version}" not found.
+  kubernetesVersionNotFound: Kubernetes 버전 "{version}"을(를) 찾을 수 없습니다.
+  # @source {field}: "{name}" has non-string tag "{tag}"
+  nonStringTag: '{field}: "{name}"에 문자열이 아닌 태그 "{tag}"이(가) 있습니다'
+  # @source Changing field "{field}" via the API isn't supported.
+  notSupported: API를 통한 "{field}" 필드 변경은 지원되지 않습니다.
+  # @source Error for field ''{field}'': expecting value of type array, got ''{value}''
+  profileExpectedArray: '''''{field}'''' 필드 오류: 배열 타입 값이 필요하지만 ''''{value}''''을(를) 받았습니다'
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got ''{value}''
+  profileExpectedType: '''''{field}'''' 필드 오류: {expectedType} 타입 값이 필요하지만 ''''{value}''''을(를) 받았습니다'
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got an array {value}
+  profileExpectedTypeGotArray: '''''{field}'''' 필드 오류: {expectedType} 타입 값이 필요하지만 배열 {value}을(를) 받았습니다'
+  # @source Proposed field "{field}" should be an object, got <{value}>.
+  proposedShouldBeObject: 제안된 필드 "{field}"은(는) 객체여야 하지만 <{value}>을(를) 받았습니다.
+  # @source Setting {field} can only be enabled on aarch64 systems.
+  requiresArm: '{field} 설정은 aarch64 시스템에서만 활성화할 수 있습니다.'
+  # @source Setting {field} can only be changed when virtualMachine.mount.type is "{mountType}".
+  requiresNineP: '{field} 설정은 virtualMachine.mount.type이 "{mountType}"인 경우에만 변경할 수 있습니다.'
+  # @source Setting {field} can only be enabled when virtual-machine.type is "{vmType}".
+  requiresVz: '{field} 설정은 virtual-machine.type이 "{vmType}"인 경우에만 활성화할 수 있습니다.'
+  # @source Setting {field} can only be set when experimental.container-engine.web-assembly.enabled is set as well.
+  requiresWebAssembly: '{field} 설정은 experimental.container-engine.web-assembly.enabled도 함께 설정된 경우에만 설정할 수 있습니다.'
+  # @source Setting {field} to "{value}" requires that {otherField} is "{required}".
+  settingRequires: '{field}을(를) "{value}"(으)로 설정하려면 {otherField}이(가) "{required}"이어야 합니다.'
+  # @source Setting {field} to "{value}" requires that {otherField} is "{option1}" or "{option2}".
+  settingRequiresEither: '{field}을(를) "{value}"(으)로 설정하려면 {otherField}이(가) "{option1}" 또는 "{option2}"이어야 합니다.'
+  # @source Setting "{field}" should wrap an inner object, but got <{value}>.
+  shouldBeObject: '"{field}" 설정은 내부 객체를 감싸야 하지만 <{value}>을(를) 받았습니다.'
+  # @source Setting "{field}" should be a simple value, but got <{value}>.
+  shouldBeSimple: '"{field}" 설정은 단순 값이어야 하지만 <{value}>을(를) 받았습니다.'
+  # @source One or more fields in this tab contain a form validation error
+  tab: 이 탭의 하나 이상의 필드에 양식 유효성 검사 오류가 있습니다
+  # @source Setting {field} to "{vmType}" on ARM requires macOS 13.3 (Ventura) or later.
+  vzArmMacOs: ARM에서 {field}을(를) "{vmType}"(으)로 설정하려면 macOS 13.3(Ventura) 이상이 필요합니다.
+  # @source Setting {field} to "{vmType}" on Intel requires macOS 13.0 (Ventura) or later.
+  vzIntelMacOs: Intel에서 {field}을(를) "{vmType}"(으)로 설정하려면 macOS 13.0(Ventura) 이상이 필요합니다.
+virtualMachine:
+  mount:
+    type:
+      # @source Mount Type
+      legend: 마운트 유형
+      options:
+        9p:
+          # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
+          description: QEMU의 virtio-9p-pci 장치를 사용하여 파일시스템을 노출합니다.
+          # @reason Literal mount type value
+          # @source 9p
+          label: 9p
+          options:
+            cacheMode:
+              # @source Cache Mode
+              legend: 캐시 모드
+              options:
+                # @reason Literal 9p cache-mode value
+                # @source fscache
+                fscache: fscache
+                # @reason Literal 9p cache-mode value
+                # @source loose
+                loose: loose
+                # @reason Literal 9p cache-mode value
+                # @source mmap
+                mmap: mmap
+                # @reason Literal 9p cache-mode value
+                # @source none
+                none: none
+              # @source Caching policy to be used
+              tooltip: 사용할 캐싱 정책
+            mSizeInKib:
+              # @source Message Size In KiB
+              legend: 메시지 크기(KiB)
+              # @source Maximum message size in KiB
+              tooltip: 최대 메시지 크기(KiB)
+            protocolVersion:
+              # @source Protocol Version
+              legend: 프로토콜 버전
+              options:
+                # @reason Literal 9p protocol version value
+                # @source 9p2000
+                9p2000: 9p2000
+                # @reason Literal 9p protocol version value
+                # @source 9p2000.L
+                9p2000L: 9p2000.L
+                # @reason Literal 9p protocol version value
+                # @source 9p2000.u
+                9p2000u: 9p2000.u
+              # @source 9P protocol version
+              tooltip: 9P 프로토콜 버전
+            securityModel:
+              # @source Security Model
+              legend: 보안 모델
+              options:
+                # @reason Literal 9p security-model value
+                # @source mapped-file
+                mapped-file: mapped-file
+                # @reason Literal 9p security-model value
+                # @source mapped-xattr
+                mapped-xattr: mapped-xattr
+                # @reason Literal 9p security-model value
+                # @source none
+                none: none
+                # @reason Literal 9p security-model value
+                # @source passthrough
+                passthrough: passthrough
+              # @source Security model used for the export path
+              tooltip: 내보내기 경로에 사용되는 보안 모델
+        reverse-sshfs:
+          # @source Exposes the filesystem by running an SFTP server.
+          description: SFTP 서버를 실행하여 파일시스템을 노출합니다.
+          # @reason Literal mount type value
+          # @source reverse-sshfs
+          label: reverse-sshfs
+        virtiofs:
+          # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
+          description: Apple Virtualization 프레임워크의 공유 디렉터리 장치를 사용하여 파일시스템을 노출합니다.
+          # @reason Literal mount type value
+          # @source virtiofs
+          label: virtiofs
+  proxy:
+    # @source Address
+    address: 주소
+    # @source Proxy address
+    addressTitle: 프록시 주소
+    # @source Authentication information
+    authTitle: 인증 정보
+    # @source Enable the proxy used by rancher-desktop
+    label: rancher-desktop에서 사용하는 프록시 활성화
+    # @source WSL Proxy
+    legend: WSL 프록시
+    noproxy:
+      errors:
+        # @source This item is a duplicate.
+        duplicate: 중복된 항목입니다.
+      # @source Proxy bypass list
+      legend: 프록시 우회 목록
+      # @source IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy
+      placeholder: 프록시를 우회할 IP, CIDR, 도메인 또는 와일드카드(*.example.com)
+    # @source Password
+    password: 암호
+    # @source Port
+    port: 포트
+    # @source Username
+    username: 사용자 이름
+  type:
+    # @source Virtual Machine Type
+    legend: 가상 머신 유형
+    options:
+      qemu:
+        # @source Use the QEMU emulator.
+        description: QEMU 에뮬레이터를 사용합니다.
+        # @reason Product name (QEMU emulator)
+        # @source QEMU
+        label: QEMU
+      vz:
+        # @source Use the Apple Virtualization framework.
+        description: Apple Virtualization 프레임워크를 사용합니다.
+        # @reason Apple Virtualization.framework identifier
+        # @source VZ
+        label: VZ
+  useRosetta:
+    # @source Enable Rosetta support
+    label: Rosetta 지원 활성화
+    # @source VZ Option
+    legend: VZ 옵션
+volumes:
+  files:
+    # @source Available
+    available: 사용 가능
+    # @source Error checking volume status
+    checkError: 볼륨 상태 확인 오류
+    # @source Invalid volume name "{name}"
+    invalidVolumeName: 유효하지 않은 볼륨 이름 "{name}"
+    # @source Error listing files: {error}
+    listError: '파일 목록을 가져오는 중 오류 발생: {error}'
+    # @source Loading volume files...
+    loading: 볼륨 파일을 불러오는 중...
+    # @source This volume is empty
+    noFiles: 이 볼륨은 비어 있습니다
+    # @source Not Found
+    notFound: 찾을 수 없음
+    table:
+      header:
+        # @source Modified
+        modified: 수정일
+        # @source Name
+        name: 이름
+        # @source Permissions
+        permissions: 권한
+        # @source Size
+        size: 크기
+    # @source Volume Files
+    title: 볼륨 파일
+    # @source Volume "{name}" not found
+    volumeNotFound: 볼륨 "{name}"을(를) 찾을 수 없습니다
+  manage:
+    table:
+      header:
+        # @source Created
+        created: 생성일
+        # @source Driver
+        driver: 드라이버
+        # @source Mount Point
+        mountpoint: 마운트 지점
+        # @source Volume Name
+        volumeName: 볼륨 이름
+  manager:
+    table:
+      action:
+        # @source Browse Files
+        browse: 파일 찾아보기
+        # @source Delete
+        delete: 삭제
+  sortableTables:
+    # @source There are no volumes to show
+    noRows: 표시할 볼륨이 없습니다
+  # @source Volumes
+  title: 볼륨
+webAssembly:
+  # @source Please read the documentation before enabling the experimental WebAssembly feature!
+  description: 실험적인 WebAssembly 기능을 활성화하기 전에 설명서를 읽어 주십시오!
+  # @source Enabled
+  enabled: 활성화
+  # @reason Technology name; WebAssembly stays in Latin script throughout this file
+  # @source WebAssembly (Wasm)
+  label: WebAssembly (Wasm)

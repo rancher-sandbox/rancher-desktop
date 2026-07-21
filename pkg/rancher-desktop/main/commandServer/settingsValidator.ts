@@ -101,7 +101,7 @@ export default class SettingsValidator {
         autoStart:              this.checkBoolean,
         startInBackground:      this.checkBoolean,
         hideNotificationIcon:   this.checkBoolean,
-        locale:                 this.checkEnum('none', ...availableLocales),
+        locale:                 this.checkEnum(...availableLocales),
         window:                 { quitOnClose: this.checkBoolean },
         theme:                  this.checkEnum('system', 'light', 'dark'),
       },
