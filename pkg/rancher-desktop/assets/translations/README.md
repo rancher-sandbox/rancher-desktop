@@ -55,6 +55,27 @@ The `v-t` directive always renders innerHTML (or sets an attribute with
 A missing key renders as a visible `%some.key%` placeholder in every
 process; run `i18n-report undefined` to find such references.
 
+## Writing source strings
+
+en-us.yaml is the source every locale translates from, so its phrasing sets the
+ceiling on translation quality.
+
+- **Name the subject.** A subjectless passive like "Locked due to organization's
+  policy" gives a gendered language nothing to agree with, so each translator
+  invents a referent and they disagree. Spanish and French were left with a bare
+  participle agreeing with nothing.
+- **Keep a sentence in one key.** `images.add` assembles one from `{action}` plus
+  its `gerund`/`infinitive`/`pastTense` sub-keys, which forces English word order
+  onto every language; German and Brazilian Portuguese had to rephrase around it.
+- **Headings are noun phrases.** English tolerates a fragment like "From the
+  blog" because the layout supplies the missing noun. Chinese, Japanese, and
+  Korean headings have no such affordance, so a fragment forces every translator
+  to invent a head noun, and invention is where locales diverge.
+
+Changing an en-us value after locales exist invalidates their `@source`
+snapshots and forces a drift pass across every locale, so phrasing is far
+cheaper to get right before the string ships.
+
 ## YAML comment conventions
 
 Add these comments directly above the key they describe.
