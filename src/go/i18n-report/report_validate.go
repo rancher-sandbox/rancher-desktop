@@ -119,14 +119,22 @@ func validateLocale(root, locale string) ([]validationError, error) {
 	// deliberate with a @reason (or @override) comment; without one it is
 	// indistinguishable from a missed translation.
 	for key, e := range entries {
-		if _, inEn := enKeys[key]; !inEn {
+		enValue, inEn := enKeys[key]
+		if !inEn {
 			continue // stale key, reported by stale check
 		}
 		if e.value == "" {
 			continue // an empty source stays empty; nothing to explain
 		}
-		if storedSource, hasSource := meta[key]; !hasSource || e.value != storedSource {
-			continue // no snapshot (reported above), or translated, or drifted
+		storedSource, hasSource := meta[key]
+		if !hasSource || e.value != storedSource {
+			continue // no snapshot (reported above), or translated
+		}
+		if storedSource != enValue {
+			// The snapshot is stale, so "identical to source" would misdescribe
+			// a value that matches superseded English. drift owns the case, and
+			// a default check run skips drift unless --strict is set.
+			continue
 		}
 		if e.override || commentHasReason(e.comment) {
 			continue

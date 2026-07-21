@@ -49,6 +49,7 @@ func TestOutputStringsTextPluralizes(t *testing.T) {
 		want         string
 	}{
 		{"zero", nil, "unused key", "", "No unused keys found.\n"},
+		{"zero suffix", nil, "stale key", " in de", "No stale keys found in de.\n"},
 		{"one", []string{"a.b"}, "unused key", "", "Found 1 unused key:\n  a.b\n"},
 		{"many", []string{"a.b", "c.d"}, "unused key", "", "Found 2 unused keys:\n  a.b\n  c.d\n"},
 		{"suffix", []string{"a.b"}, "stale key", " in de", "Found 1 stale key in de:\n  a.b\n"},

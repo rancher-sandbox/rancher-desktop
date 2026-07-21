@@ -48,7 +48,9 @@ func outputStrings(w io.Writer, items []string, format, noun, suffix string) err
 	}
 
 	if len(items) == 0 {
-		fmt.Fprintf(w, "No %s%s found.\n", plural(0, noun), suffix)
+		// suffix trails "found" here, unlike the header below: "No stale keys
+		// found in de" reads naturally where "No stale keys in de found" does not.
+		fmt.Fprintf(w, "No %s found%s.\n", plural(0, noun), suffix)
 		return nil
 	}
 
