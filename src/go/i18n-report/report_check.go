@@ -23,8 +23,8 @@ import (
 // gate (unused + undefined keys). With --locale it also verifies the locale
 // registration surfaces and runs the per-locale checks; --locale=all covers
 // every translation file on disk. --strict adds the completeness checks
-// (no missing, no drifted keys) for periodic and pre-release runs, while
-// PR CI uses the default structural set.
+// (no missing, no drifted keys). No configured job passes it; PR CI runs
+// the default structural set.
 func runCheck(args []string) error {
 	fs := flag.NewFlagSet("check", flag.ExitOnError)
 	locale := fs.String("locale", "", "Target locale, or 'all' (omit for the source-only gate)")

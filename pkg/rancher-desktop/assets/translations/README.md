@@ -211,9 +211,9 @@ needed.
 
 CI runs `i18n-report check --locale=all` on every pull request: the
 source gate (unused and undefined keys), the locale registration
-checks, and each locale's structural checks. Periodic and pre-release
-runs add `--strict`, which also requires complete translations (no
-missing or drifted keys). Findings exit 1; operational errors exit 2.
+checks, and each locale's structural checks. Run `--strict` by hand before
+a release to also require complete translations (no missing or drifted
+keys); no configured job adds it. Findings exit 1; operational errors exit 2.
 
 ## Locale switching
 

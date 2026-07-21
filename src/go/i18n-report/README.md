@@ -335,9 +335,10 @@ i18n-report check --locale=de --strict
 i18n-report check --locale=all
 ```
 
-`--strict` adds the completeness checks — no missing keys, no drifted
-keys — for periodic and pre-release runs, while PR CI uses the default
-structural set. Passing `--strict` without `--locale` is an error.
+`--strict` adds the completeness checks (no missing keys, no drifted
+keys). PR CI runs the default structural set and no configured job passes
+`--strict`, so run it by hand before a release. Passing `--strict` without
+`--locale` is an error.
 
 The registration checks verify that the locale enum in `command-api.yaml`,
 `settingsValidator.ts`, its spec, and the `locale.*` display-name keys in
