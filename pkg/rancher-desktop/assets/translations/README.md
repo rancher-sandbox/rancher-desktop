@@ -64,10 +64,18 @@ Add these comments directly above the key they describe.
 | `@context` | en-us.yaml | Where in the UI the string appears |
 | `@meaning` | en-us.yaml | Domain-specific meaning when English is ambiguous |
 | `@no-translate` | en-us.yaml | Terms that should stay in English by default |
-| `@reason` | locale files | Why a particular translation was chosen |
+| `@reason` | locale files | Why a wording was chosen, or why English was kept |
 
-A translation left identical to its English source must carry a `@reason`
-(or `@override`) comment; `validate` flags unmarked identical values.
+`@reason` carries two meanings. It records why a wording was chosen, and it
+marks a value left identical to its English source as a deliberate keep
+rather than a missed translation. When the `@source` snapshot still matches
+current English, `validate` flags an unmarked identical value and accepts
+either `@reason` or `@override`; a stale snapshot belongs to `drift`.
+
+`merge` preserves a `@reason` across a value change and strips only
+`@override`, so a note written for an earlier wording can outlive it and
+still satisfy the identical-value check. Re-read the note whenever you
+change the value it describes.
 
 ### Examples in en-us.yaml
 
@@ -122,7 +130,7 @@ A Go CLI at `src/go/i18n-report/` for translation maintenance. See
 | `check` | source checks, plus per-locale checks with `--locale` |
 | `source` | Record each translated key's English source as a `@source` comment |
 | `drift` | Detect translated keys whose English source changed |
-| `validate` | Structural checks: placeholders, tags, metadata, overrides |
+| `validate` | Structural checks: placeholders, tags, metadata, overrides, deliberate identity |
 
 Run from the repository root:
 

@@ -282,6 +282,10 @@ export default class SettingsValidator {
         errors.push(this.notSupported(fqname));
       }
       if (changeNeededHere) {
+        // At the root prefix is empty, so `${ prefix }.${ k }` would yield a
+        // leading dot, and lodash resolves that against `lockedSettings['']`
+        // instead of the lock. No test covers this today, because `version` is
+        // the only root-level leaf and its validator never reports a change.
         const isLocked = _.get(this.lockedSettings, fqname);
 
         if (isLocked) {

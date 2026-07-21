@@ -392,12 +392,15 @@ func TestValidateIdenticalNeedsReason(t *testing.T) {
 	write("en-us", `title: Volumes
 farewell: Bye
 empty: ""
+renamed: Current
 secret:
   types:
     kubernetes.io/basic-auth: Opaque
 `)
 	// Identical values that are deliberate (@reason or @override), translated
-	// values, and empty values produce no findings.
+	// values, and empty values produce no findings. The check also skips a
+	// value whose @source has drifted from the current English, which the
+	// drift check owns, and a key absent from en-us, which the stale check owns.
 	write("annotated", `# @reason standard term in this language
 # @source Volumes
 title: Volumes
@@ -405,6 +408,10 @@ title: Volumes
 farewell: Tschüss
 # @source
 empty: ""
+# @source Superseded
+renamed: Current
+# @source Gone
+withdrawn: Gone
 secret:
   types:
     # @override
@@ -433,7 +440,7 @@ secret:
 		}
 		var keys []string
 		for _, e := range errs {
-			if e.Check == "identical" {
+			if e.Check == catIdentical {
 				keys = append(keys, e.Key)
 			}
 		}

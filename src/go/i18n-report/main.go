@@ -91,7 +91,8 @@ Subcommands:
   check         Source gate (unused + undefined); per-locale checks with --locale
   source        Record the English source text on each translated key
   drift         Detect translated keys whose English source has changed
-  validate      Structural checks: placeholders, tags, sources, overrides
+  validate      Structural checks: placeholders, tags, sources, overrides,
+                deliberate identity
 
 Run "i18n-report <subcommand> -h" for subcommand-specific flags.`)
 }

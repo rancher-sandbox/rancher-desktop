@@ -61,6 +61,12 @@ A translation left identical to its English source must carry a `@reason`
 (or `@override`): `validate` flags unmarked identical values, since they
 are indistinguishable from missed translations.
 
+`merge` preserves a `@reason` even when it replaces the value, and strips
+only `@override`. So a note written for an earlier wording can outlive it
+and still satisfy that check. Re-read the note whenever you change the
+value it describes. Clearing one takes a hand edit, because `merge` only
+ever overwrites a comment with another `@reason` or `@override` line.
+
 ### `@override`
 
 Marks a translation as intentionally different from what an automated

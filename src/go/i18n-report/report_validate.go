@@ -61,11 +61,6 @@ func validateLocale(root, locale string) ([]validationError, error) {
 	if err != nil {
 		return nil, err
 	}
-	localeKeys, err := loadYAMLFlat(localePath)
-	if err != nil {
-		return nil, err
-	}
-
 	doc, err := loadYAMLDocument(localePath)
 	if err != nil {
 		return nil, err
@@ -81,10 +76,11 @@ func validateLocale(root, locale string) ([]validationError, error) {
 
 	// Check placeholder parity, ICU structure, and tag parity.
 	for key, enValue := range enKeys {
-		localeValue, exists := localeKeys[key]
+		localeEntry, exists := entries[key]
 		if !exists {
 			continue
 		}
+		localeValue := localeEntry.value
 		if errs := checkICU(key, enValue, localeValue); len(errs) > 0 {
 			errors = append(errors, errs...)
 		}
@@ -106,7 +102,7 @@ func validateLocale(root, locale string) ([]validationError, error) {
 
 	// Check that every translated key carries a @source snapshot. A @source
 	// cannot be orphaned from its translation, since it lives on the key.
-	for key := range localeKeys {
+	for key := range entries {
 		if _, inEn := enKeys[key]; !inEn {
 			continue // stale key, reported by stale check
 		}
@@ -130,7 +126,7 @@ func validateLocale(root, locale string) ([]validationError, error) {
 			continue // an empty source stays empty; nothing to explain
 		}
 		if storedSource, hasSource := meta[key]; !hasSource || e.value != storedSource {
-			continue // no snapshot or drifted, reported by other checks
+			continue // no snapshot (reported above), or translated, or drifted
 		}
 		if e.override || commentHasReason(e.comment) {
 			continue

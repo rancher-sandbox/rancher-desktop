@@ -322,7 +322,8 @@ func crossValidateSpec(specContent string, knownLocales map[string]bool) []strin
 // reportCheckLocale runs the per-locale checks:
 //   - locale file present
 //   - no stale keys
-//   - validate passes (placeholders, ICU structure, tags, metadata)
+//   - validate passes (placeholders, ICU structure, tags, metadata,
+//     deliberate identity)
 //
 // With strict, the locale must also be complete:
 //   - no missing keys
