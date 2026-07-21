@@ -1069,9 +1069,9 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: L'opzione richiede che
   locked:
-    # @reason Added the subject 'Impostazione' to fix gender agreement; 'criteri' is the standard Italian rendering of 'policy'.
-    # @source Locked due to organization's policy
-    tooltip: Impostazione bloccata dai criteri dell'organizzazione
+    # @reason 'criteri' is the standard Italian rendering of an administrative 'policy', consistent with 'Criterio di caching' elsewhere in this file.
+    # @source This setting is locked by organization policy.
+    tooltip: Questa impostazione è bloccata dai criteri dell'organizzazione.
   nav:
     # @source Application
     application: Applicazione
@@ -1240,8 +1240,8 @@ progress:
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Guest agent di Rancher Desktop
   # @reason 'Ripristino' (restoring to working order) rather than 'Recupero', which this section already uses for 'Fetching'.
-  # @source Recovering broken virtual machine
-  recoveringBrokenVirtualMachine: Ripristino della macchina virtuale danneggiata
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: Ripristino della macchina virtuale
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Rigenerazione della configurazione per tenere conto della mancanza di autorizzazioni
   # @source Registering WSL distribution
@@ -1558,9 +1558,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Abilita la modalità di debug
-  # @reason Added the subject 'l'impostazione'; Italian cannot render subjectless 'Cannot be modified' without a gender-agreeing participle. Follows the same fix as preferences locked.tooltip.
-  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
-  debugModeLockedTooltip: Impossibile modificare l'impostazione perché è definita la variabile d'ambiente RD_DEBUG_ENABLED.
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: La modalità di debug non può essere modificata perché è definita la variabile d'ambiente RD_DEBUG_ENABLED.
   general:
     factoryReset:
       # @source Factory Reset

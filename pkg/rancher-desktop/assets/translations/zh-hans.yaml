@@ -1085,8 +1085,8 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: 该选项要求
   locked:
-    # @source Locked due to organization's policy
-    tooltip: 已被组织策略锁定
+    # @source This setting is locked by organization policy.
+    tooltip: 此设置已被组织策略锁定。
   nav:
     # @source Application
     application: 应用程序
@@ -1252,8 +1252,8 @@ progress:
   proxyConfigSetup: 代理配置设置
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop 来宾代理
-  # @source Recovering broken virtual machine
-  recoveringBrokenVirtualMachine: 正在恢复损坏的虚拟机
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: 正在恢复虚拟机
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 正在重新生成配置以适应权限不足的情况
   # @source Registering WSL distribution
@@ -1582,8 +1582,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: 启用调试模式
-  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
-  debugModeLockedTooltip: 无法修改，因为已设置 RD_DEBUG_ENABLED 环境变量。
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: 调试模式无法修改，因为已设置 RD_DEBUG_ENABLED 环境变量。
   general:
     factoryReset:
       # @source Factory Reset

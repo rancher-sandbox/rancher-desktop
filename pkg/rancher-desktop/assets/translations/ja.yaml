@@ -1046,8 +1046,8 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: このオプションには
   locked:
-    # @source Locked due to organization's policy
-    tooltip: 組織のポリシーによりロックされています
+    # @source This setting is locked by organization policy.
+    tooltip: この設定は組織のポリシーによりロックされています。
   nav:
     # @source Application
     application: アプリケーション
@@ -1208,8 +1208,8 @@ progress:
   proxyConfigSetup: プロキシ設定のセットアップ
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop ゲストエージェント
-  # @source Recovering broken virtual machine
-  recoveringBrokenVirtualMachine: 破損した仮想マシンを復旧しています
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: 仮想マシンを復旧しています
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 権限がないため設定を再生成しています
   # @source Registering WSL distribution
@@ -1525,8 +1525,8 @@ troubleshooting:
   # @source Enable debug mode
   debugMode: デバッグモードを有効にする
   # @reason RD_DEBUG_ENABLED is an environment variable name, kept verbatim.
-  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
-  debugModeLockedTooltip: RD_DEBUG_ENABLED 環境変数が設定されているため、変更できません。
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: RD_DEBUG_ENABLED 環境変数が設定されているため、デバッグモードは変更できません。
   general:
     factoryReset:
       # @reason ファクトリーリセット is the common katakana rendering of Factory Reset; used consistently.

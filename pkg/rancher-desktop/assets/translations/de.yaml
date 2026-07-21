@@ -1097,8 +1097,8 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: Diese Option erfordert, dass
   locked:
-    # @source Locked due to organization's policy
-    tooltip: Gesperrt aufgrund der Unternehmensrichtlinie
+    # @source This setting is locked by organization policy.
+    tooltip: Diese Einstellung ist durch eine Unternehmensrichtlinie gesperrt.
   nav:
     # @source Application
     application: Anwendung
@@ -1272,8 +1272,8 @@ progress:
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop-Gast-Agent
   # @reason 'repariert' not 'wiederhergestellt'; this file reserves 'Wiederherstellen' for snapshot restore
-  # @source Recovering broken virtual machine
-  recoveringBrokenVirtualMachine: Defekte virtuelle Maschine wird repariert
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: Virtuelle Maschine wird repariert
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Konfiguration wird aufgrund fehlender Berechtigungen neu generiert
   # @source Registering WSL distribution
@@ -1600,8 +1600,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Debug-Modus aktivieren
-  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
-  debugModeLockedTooltip: Kann nicht geändert werden, da die Umgebungsvariable RD_DEBUG_ENABLED gesetzt ist.
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: Der Debug-Modus kann nicht geändert werden, da die Umgebungsvariable RD_DEBUG_ENABLED gesetzt ist.
   general:
     factoryReset:
       # @source Factory Reset

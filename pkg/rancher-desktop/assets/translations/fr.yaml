@@ -1067,8 +1067,8 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: Cette option nécessite que
   locked:
-    # @source Locked due to organization's policy
-    tooltip: Verrouillé par la politique de l'organisation
+    # @source This setting is locked by organization policy.
+    tooltip: Ce paramètre est verrouillé par la politique de l'organisation.
   nav:
     # @reason 'Application' is the same word in French
     # @source Application
@@ -1234,8 +1234,8 @@ progress:
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Agent invité de Rancher Desktop
   # @reason "recovering" rendered as « réparation »: the step repairs a VM stuck in Lima's Broken state, whereas « récupération » would read as retrieval.
-  # @source Recovering broken virtual machine
-  recoveringBrokenVirtualMachine: Réparation de la machine virtuelle défectueuse
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: Réparation de la machine virtuelle
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Régénération de la configuration pour tenir compte de l'absence d'autorisations
   # @source Registering WSL distribution
@@ -1550,9 +1550,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Activer le mode débogage
-  # @reason Masculine agreement (modifié): the tooltip describes « le mode débogage » toggle.
-  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
-  debugModeLockedTooltip: Ne peut pas être modifié car la variable d'environnement RD_DEBUG_ENABLED est définie.
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: Le mode débogage ne peut pas être modifié car la variable d'environnement RD_DEBUG_ENABLED est définie.
   general:
     factoryReset:
       # @source Factory Reset

@@ -720,7 +720,7 @@ troubleshooting:
         cancel: Cancel
   needHelp: Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
   debugMode: Enable debug mode
-  debugModeLockedTooltip: Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
 diagnostics:
   title: Diagnostics
   results:
@@ -779,7 +779,7 @@ preferences:
       restart: Kubernetes will restart after applying changes.
       error: There's a problem with the preferences selection.
   locked:
-    tooltip: Locked due to organization's policy
+    tooltip: This setting is locked by organization policy.
   incompatibleTypeWarningPre: The option requires
   incompatibleTypeWarningPostSelected: to be selected.
   incompatibleTypeWarningPostDisabled: to be unselected.
@@ -972,7 +972,7 @@ progress:
   preparingToStart: Preparing to start
   proxyConfigSetup: Proxy Config Setup
   rancherDesktopGuestAgent: Rancher Desktop guest agent
-  recoveringBrokenVirtualMachine: Recovering broken virtual machine
+  recoveringBrokenVirtualMachine: Recovering virtual machine
   regeneratingConfiguration: Regenerating configuration to account for lack of permissions
   registeringWslDistribution: Registering WSL distribution
   removingExistingCertificates: Removing existing certificates
