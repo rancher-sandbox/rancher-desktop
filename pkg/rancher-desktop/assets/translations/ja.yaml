@@ -667,8 +667,8 @@ images:
         pull: プル
       # @source Pull
       pull: プル
-    # @reason Restructured for Japanese word order: image before verb, error clause and console hint as full sentences per the file's scan.errorText.
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
+    # @reason Restructured for Japanese word order: image before verb.
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
     errorText: '''''{ image }'''' を{ action }しようとしてエラーが発生しました。詳細はコンソール出力を確認してください。'
     # @reason Japanese puts the verb last; the template conjugates the action noun, composing to イメージをビルドしています... like the file's other progressive messages.
     # @source {action} image...
@@ -737,7 +737,7 @@ images:
       primaryUrl: プライマリ URL
       # @source References
       references: 参考情報
-    # @source Error trying to scan ''{ image }'' — see console output for more information
+    # @source Error trying to scan ''{ image }''. See console output for more information.
     errorText: '''''{ image }'''' のスキャン中にエラーが発生しました。詳細はコンソール出力を確認してください。'
     labels:
       # @reason Vulnerability severity scale rendered as 致命的/高/中/低, the common Japanese mapping for CRITICAL/HIGH/MEDIUM/LOW in security scanners.

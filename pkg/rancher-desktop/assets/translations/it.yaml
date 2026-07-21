@@ -679,8 +679,8 @@ images:
       # @source Pull
       pull: Pull
     # @reason { action } is used as a noun ('l'operazione di pull'); an Italian infinitive after 'trying to' would not compose with the loanword verbs.
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: Errore durante l'operazione di { action } su ''{ image }'' - consulta l'output della console per maggiori informazioni
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Errore durante l'operazione di { action } su ''{ image }''. Consulta l'output della console per maggiori informazioni.
     # @reason Restructured: Italian has no progressive suffix, so the gerund value acts as a noun and 'in corso' carries the ongoing sense, as in scan.loadingText.
     # @source {action} image...
     loadingText: '{action} dell''immagine in corso...'
@@ -751,8 +751,8 @@ images:
       primaryUrl: URL principale
       # @source References
       references: Riferimenti
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: Errore durante la scansione di ''{ image }'' - consulta l'output della console per maggiori informazioni
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Errore durante la scansione di ''{ image }''. Consulta l'output della console per maggiori informazioni.
     labels:
       # @reason Severity labels use feminine forms, agreeing with 'gravità'.
       # @source CRITICAL

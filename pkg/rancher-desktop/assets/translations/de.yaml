@@ -718,9 +718,9 @@ images:
       # @reason tab label on the Add Image page; matches its submit button images.manager.input.pull.button 'Abrufen'
       # @source Pull
       pull: Abrufen
-    # @reason Restructured to the "Fehler beim ... von" pattern already used by images.scan.errorText; en dash matches file convention
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: Fehler beim { action } von ''{ image }'' – siehe Konsolenausgabe für weitere Informationen
+    # @reason Restructured to the "Fehler beim ... von" pattern already used by images.scan.errorText
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Fehler beim { action } von ''{ image }''. Siehe Konsolenausgabe für weitere Informationen.
     # @reason Restructured as passive; composes to "Image wird erstellt..." / "Image wird abgerufen..."
     # @source {action} image...
     loadingText: Image wird {action}...
@@ -793,8 +793,8 @@ images:
       primaryUrl: Primäre URL
       # @source References
       references: Referenzen
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: Fehler beim Scannen von ''{ image }'' – siehe Konsolenausgabe für weitere Informationen
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Fehler beim Scannen von ''{ image }''. Siehe Konsolenausgabe für weitere Informationen.
     labels:
       # @source CRITICAL
       critical: KRITISCH

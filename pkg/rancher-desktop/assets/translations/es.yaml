@@ -668,8 +668,8 @@ images:
       # @reason Infinitive so it composes with images.add.errorText ("Error al intentar {action}..."); "descargar" is the common Spanish for pulling an image.
       # @source Pull
       pull: Descargar
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: Error al intentar { action } ''{ image }'' - consulte la salida de la consola para obtener más información
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Error al intentar { action } ''{ image }''. Consulte la salida de la consola para obtener más información.
     # @reason No article before "imagen", matching the terse en-us style; composes as "Construyendo imagen..." / "Descargando imagen...".
     # @source {action} image...
     loadingText: '{action} imagen...'
@@ -738,8 +738,8 @@ images:
       primaryUrl: URL principal
       # @source References
       references: Referencias
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: Error al intentar analizar ''{ image }'' - consulte la salida de la consola para obtener más información
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Error al intentar analizar ''{ image }''. Consulte la salida de la consola para obtener más información.
     labels:
       # @reason Severity labels take feminine forms, agreeing with "gravedad".
       # @source CRITICAL

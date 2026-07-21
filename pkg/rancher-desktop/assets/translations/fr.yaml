@@ -676,8 +676,8 @@ images:
       # @source Pull
       pull: Télécharger
     # @reason Guillemets replace the ICU-escaped apostrophes, matching images.scan.errorText; « en tentant de » takes the infinitive { action }.
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: Erreur en tentant de { action } « { image } » - consultez la sortie de la console pour plus d'informations
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Erreur en tentant de { action } « { image } ». Consultez la sortie de la console pour plus d'informations.
     # @reason Restructured: {action} receives an action noun (Construction/Téléchargement); « en cours » conveys the progressive aspect, as in the previous translation.
     # @source {action} image...
     loadingText: '{action} de l''image en cours...'
@@ -749,8 +749,8 @@ images:
       primaryUrl: URL principale
       # @source References
       references: Références
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: Erreur lors de l'analyse de « { image } » - consultez la sortie de la console pour plus d'informations
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Erreur lors de l'analyse de « { image } ». Consultez la sortie de la console pour plus d'informations.
     labels:
       # @source CRITICAL
       critical: CRITIQUE

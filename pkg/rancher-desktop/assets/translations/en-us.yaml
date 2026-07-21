@@ -237,11 +237,11 @@ images:
         pull: Pulled
     loadingText: '{action} image...'
     successText: '{action} image'
-    errorText: Error trying to { action } ''{ image }'' — see console output for more information
+    errorText: Error trying to { action } ''{ image }''. See console output for more information.
   scan:
     title: Scan details for ''{ image }''
     loadingText: Scanning ''{ image }''
-    errorText: Error trying to scan ''{ image }'' — see console output for more information
+    errorText: Error trying to scan ''{ image }''. See console output for more information.
     results:
       headers:
         severity: Severity

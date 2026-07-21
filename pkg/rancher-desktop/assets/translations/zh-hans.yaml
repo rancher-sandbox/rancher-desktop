@@ -712,8 +712,8 @@ images:
       # @source Pull
       pull: 拉取
     # @reason dropped the space before { action } since the substituted verb is now Chinese; parallels images.scan.errorText 尝试扫描
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: 尝试{ action } ''{ image }'' 时出错 - 详情请查看控制台输出
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: 尝试{ action } ''{ image }'' 时出错。详情请查看控制台输出。
     # @reason 正在 moved into the gerund values; composed text 正在构建镜像... matches the previous translation
     # @source {action} image...
     loadingText: '{action}镜像...'
@@ -783,8 +783,8 @@ images:
       primaryUrl: 主要 URL
       # @source References
       references: 参考
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: 尝试扫描 ''{ image }'' 时出错 - 详情请查看控制台输出
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: 尝试扫描 ''{ image }'' 时出错。详情请查看控制台输出。
     labels:
       # @source CRITICAL
       critical: 严重

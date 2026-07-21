@@ -659,7 +659,7 @@ images:
       # @source Pull
       pull: 풀
     # @reason rephrased so the action noun (풀/빌드) composes grammatically
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
     errorText: '''''{ image }'''' 이미지 { action } 중 오류가 발생했습니다. 자세한 내용은 콘솔 출력을 확인하십시오.'
     # @reason rephrased around noun-form action; gerund keys must also be noun forms (풀/빌드)
     # @source {action} image...
@@ -729,7 +729,7 @@ images:
       primaryUrl: 기본 URL
       # @source References
       references: 참조
-    # @source Error trying to scan ''{ image }'' — see console output for more information
+    # @source Error trying to scan ''{ image }''. See console output for more information.
     errorText: '''''{ image }'''' 스캔 중 오류가 발생했습니다. 자세한 내용은 콘솔 출력을 확인하십시오.'
     labels:
       # @reason Korean has no letter case; standard severity terms used instead of all-caps

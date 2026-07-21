@@ -677,8 +677,8 @@ images:
       # @source Pull
       pull: Pull
     # @reason { action } receives the pt-br infinitive (construir/baixar), so "ao tentar" composes directly without the old "executar" wrapper
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: Erro ao tentar { action } ''{ image }'' - consulte a saída do console para mais informações
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Erro ao tentar { action } ''{ image }''. Consulte a saída do console para mais informações.
     # @reason {action} receives the pt-br gerund (Construindo/Baixando), which starts the sentence, so the gerund values are capitalized
     # @source {action} image...
     loadingText: '{action} imagem...'
@@ -749,8 +749,8 @@ images:
       primaryUrl: URL principal
       # @source References
       references: Referências
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: Erro ao tentar escanear ''{ image }'' - consulte a saída do console para mais informações
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Erro ao tentar escanear ''{ image }''. Consulte a saída do console para mais informações.
     labels:
       # @reason Severity labels use the feminine form, agreeing with "vulnerabilidade"/"severidade"
       # @source CRITICAL
