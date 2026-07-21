@@ -522,6 +522,9 @@ diagnostics:
   failedCount: '{count} 项失败，{muted} 项已静音'
   # @source Last run:
   lastRun: 上次运行：
+  # @reason "从未" is an adverb and cannot stand alone in Chinese; the verb 运行 echoes the adjacent "上次运行：" label
+  # @source (Never)
+  never: （从未运行）
   # @source (No fixes available)
   noFixes: （无可用修复）
   results:
@@ -1203,6 +1206,8 @@ progress:
   deletingVirtualMachine: 正在删除虚拟机
   # @source DNS configuration
   dnsConfiguration: DNS 配置
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: 正在下载 Kubernetes 组件
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: 正在确保 kubectl 兼容
   # @source Ensuring virtualization is supported
@@ -1247,6 +1252,8 @@ progress:
   proxyConfigSetup: 代理配置设置
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop 来宾代理
+  # @source Recovering broken virtual machine
+  recoveringBrokenVirtualMachine: 正在恢复损坏的虚拟机
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 正在重新生成配置以适应权限不足的情况
   # @source Registering WSL distribution
@@ -1575,6 +1582,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: 启用调试模式
+  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: 无法修改，因为已设置 RD_DEBUG_ENABLED 环境变量。
   general:
     factoryReset:
       # @source Factory Reset

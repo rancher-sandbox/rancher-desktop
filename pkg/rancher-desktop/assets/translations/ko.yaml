@@ -454,6 +454,9 @@ diagnostics:
   failedCount: '{count}개 실패 및 {muted}개 무시됨'
   # @source Last run:
   lastRun: '마지막 실행:'
+  # @reason A bare adverb cannot stand alone as a Korean label; expanded to "never run" so it reads as a value after 마지막 실행:
+  # @source (Never)
+  never: (실행된 적 없음)
   # @source (No fixes available)
   noFixes: (사용 가능한 수정 없음)
   results:
@@ -1143,6 +1146,8 @@ progress:
   deletingVirtualMachine: 가상 머신 삭제 중
   # @source DNS configuration
   dnsConfiguration: DNS 구성
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Kubernetes 구성 요소 다운로드 중
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: 호환되는 kubectl 확인 중
   # @source Ensuring virtualization is supported
@@ -1187,6 +1192,8 @@ progress:
   proxyConfigSetup: 프록시 구성 설정
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop 게스트 에이전트
+  # @source Recovering broken virtual machine
+  recoveringBrokenVirtualMachine: 손상된 가상 머신 복구 중
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 권한 부족을 반영하여 구성 다시 생성 중
   # @source Registering WSL distribution
@@ -1496,6 +1503,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: 디버그 모드 활성화
+  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: RD_DEBUG_ENABLED 환경 변수가 설정되어 있어 수정할 수 없습니다.
   general:
     factoryReset:
       # @source Factory Reset

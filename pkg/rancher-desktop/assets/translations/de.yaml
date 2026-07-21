@@ -513,6 +513,8 @@ diagnostics:
   failedCount: '{count} fehlgeschlagen plus {muted} stummgeschaltet'
   # @source Last run:
   lastRun: 'Letzter Lauf:'
+  # @source (Never)
+  never: (Nie)
   # @source (No fixes available)
   noFixes: (Keine Korrekturen verfügbar)
   results:
@@ -1223,6 +1225,8 @@ progress:
   deletingVirtualMachine: Virtuelle Maschine wird gelöscht
   # @source DNS configuration
   dnsConfiguration: DNS-Konfiguration
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Kubernetes-Komponenten werden heruntergeladen
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: Kompatibles kubectl wird sichergestellt
   # @source Ensuring virtualization is supported
@@ -1267,6 +1271,9 @@ progress:
   proxyConfigSetup: Proxy-Konfiguration wird eingerichtet
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop-Gast-Agent
+  # @reason 'repariert' not 'wiederhergestellt'; this file reserves 'Wiederherstellen' for snapshot restore
+  # @source Recovering broken virtual machine
+  recoveringBrokenVirtualMachine: Defekte virtuelle Maschine wird repariert
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Konfiguration wird aufgrund fehlender Berechtigungen neu generiert
   # @source Registering WSL distribution
@@ -1593,6 +1600,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Debug-Modus aktivieren
+  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: Kann nicht geändert werden, da die Umgebungsvariable RD_DEBUG_ENABLED gesetzt ist.
   general:
     factoryReset:
       # @source Factory Reset

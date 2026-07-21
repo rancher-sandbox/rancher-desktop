@@ -457,6 +457,9 @@ diagnostics:
   failedCount: '{count}件が失敗、さらに{muted}件がミュートされています'
   # @source Last run:
   lastRun: 最終実行：
+  # @reason English "Never" is elliptical for "never run"; Japanese needs the verb, so 未実行 (not yet run). Full-width parentheses match diagnostics.noFixes.
+  # @source (Never)
+  never: （未実行）
   # @source (No fixes available)
   noFixes: （利用可能な修正はありません）
   results:
@@ -1158,6 +1161,8 @@ progress:
   deletingVirtualMachine: 仮想マシンを削除しています
   # @source DNS configuration
   dnsConfiguration: DNS 設定
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Kubernetes コンポーネントをダウンロードしています
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: 互換性のある kubectl を準備しています
   # @source Ensuring virtualization is supported
@@ -1203,6 +1208,8 @@ progress:
   proxyConfigSetup: プロキシ設定のセットアップ
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop ゲストエージェント
+  # @source Recovering broken virtual machine
+  recoveringBrokenVirtualMachine: 破損した仮想マシンを復旧しています
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 権限がないため設定を再生成しています
   # @source Registering WSL distribution
@@ -1517,6 +1524,9 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: デバッグモードを有効にする
+  # @reason RD_DEBUG_ENABLED is an environment variable name, kept verbatim.
+  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: RD_DEBUG_ENABLED 環境変数が設定されているため、変更できません。
   general:
     factoryReset:
       # @reason ファクトリーリセット is the common katakana rendering of Factory Reset; used consistently.

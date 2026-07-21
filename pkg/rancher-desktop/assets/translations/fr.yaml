@@ -468,6 +468,8 @@ diagnostics:
   failedCount: '{count} en échec et {muted} ignorés'
   # @source Last run:
   lastRun: 'Dernière exécution :'
+  # @source (Never)
+  never: (Jamais)
   # @source (No fixes available)
   noFixes: (Aucun correctif disponible)
   results:
@@ -1183,6 +1185,8 @@ progress:
   deletingVirtualMachine: Suppression de la machine virtuelle
   # @source DNS configuration
   dnsConfiguration: Configuration DNS
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Téléchargement des composants Kubernetes
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: Vérification de la compatibilité de kubectl
   # @source Ensuring virtualization is supported
@@ -1229,6 +1233,9 @@ progress:
   proxyConfigSetup: Mise en place de la configuration du proxy
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Agent invité de Rancher Desktop
+  # @reason "recovering" rendered as « réparation »: the step repairs a VM stuck in Lima's Broken state, whereas « récupération » would read as retrieval.
+  # @source Recovering broken virtual machine
+  recoveringBrokenVirtualMachine: Réparation de la machine virtuelle défectueuse
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Régénération de la configuration pour tenir compte de l'absence d'autorisations
   # @source Registering WSL distribution
@@ -1543,6 +1550,9 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Activer le mode débogage
+  # @reason Masculine agreement (modifié): the tooltip describes « le mode débogage » toggle.
+  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: Ne peut pas être modifié car la variable d'environnement RD_DEBUG_ENABLED est définie.
   general:
     factoryReset:
       # @source Factory Reset

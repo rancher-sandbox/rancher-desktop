@@ -464,6 +464,8 @@ diagnostics:
   failedCount: '{count} com falha, mais {muted} silenciados'
   # @source Last run:
   lastRun: 'Última execução:'
+  # @source (Never)
+  never: (Nunca)
   # @source (No fixes available)
   noFixes: (Nenhuma correção disponível)
   results:
@@ -1182,6 +1184,8 @@ progress:
   deletingVirtualMachine: Excluindo a máquina virtual
   # @source DNS configuration
   dnsConfiguration: Configuração de DNS
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Baixando componentes do Kubernetes
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: Garantindo um kubectl compatível
   # @source Ensuring virtualization is supported
@@ -1228,6 +1232,9 @@ progress:
   proxyConfigSetup: Configuração do proxy
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Agente convidado do Rancher Desktop
+  # @reason 'com problemas' rather than 'corrompida/quebrada': the source tracks Lima's 'Broken' status (orphaned driver/host agent after an unclean shutdown), not a damaged disk
+  # @source Recovering broken virtual machine
+  recoveringBrokenVirtualMachine: Recuperando máquina virtual com problemas
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Regenerando a configuração devido à falta de permissões
   # @source Registering WSL distribution
@@ -1542,6 +1549,9 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Ativar modo de depuração
+  # @reason The English subject is implicit; masculine 'alterado' agrees with 'o modo de depuração', the control this tooltip is attached to
+  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: Não pode ser alterado porque a variável de ambiente RD_DEBUG_ENABLED está definida.
   general:
     factoryReset:
       # @source Factory Reset

@@ -465,6 +465,8 @@ diagnostics:
   failedCount: '{count} falliti più {muted} silenziati'
   # @source Last run:
   lastRun: 'Ultima esecuzione:'
+  # @source (Never)
+  never: (Mai)
   # @source (No fixes available)
   noFixes: (Nessuna correzione disponibile)
   results:
@@ -1189,6 +1191,8 @@ progress:
   deletingVirtualMachine: Eliminazione della macchina virtuale
   # @source DNS configuration
   dnsConfiguration: Configurazione DNS
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Scaricamento dei componenti di Kubernetes
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: Verifica della compatibilità di kubectl
   # @source Ensuring virtualization is supported
@@ -1235,6 +1239,9 @@ progress:
   # @reason 'guest agent' kept English: it names the rancher-desktop-guestagent component.
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Guest agent di Rancher Desktop
+  # @reason 'Ripristino' (restoring to working order) rather than 'Recupero', which this section already uses for 'Fetching'.
+  # @source Recovering broken virtual machine
+  recoveringBrokenVirtualMachine: Ripristino della macchina virtuale danneggiata
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Rigenerazione della configurazione per tenere conto della mancanza di autorizzazioni
   # @source Registering WSL distribution
@@ -1551,6 +1558,9 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Abilita la modalità di debug
+  # @reason Added the subject 'l'impostazione'; Italian cannot render subjectless 'Cannot be modified' without a gender-agreeing participle. Follows the same fix as preferences locked.tooltip.
+  # @source Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: Impossibile modificare l'impostazione perché è definita la variabile d'ambiente RD_DEBUG_ENABLED.
   general:
     factoryReset:
       # @source Factory Reset
