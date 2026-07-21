@@ -68,18 +68,27 @@ mainMenu:
   showAll: Show All
   quit: Quit {appName}
 tray:
+  # @no-translate Rancher Desktop
   tooltip: Rancher Desktop
   state:
+    # @no-translate Kubernetes
     stopped: Kubernetes is stopped
+    # @no-translate Kubernetes
     starting: Kubernetes is starting
+    # @no-translate Kubernetes
     started: Kubernetes is running
+    # @no-translate Kubernetes
     stopping: Kubernetes is shutting down
+    # @no-translate Kubernetes
     error: Kubernetes has encountered an error
+    # @no-translate Kubernetes
     disabled: Kubernetes is disabled
   openMainWindow: Open main window
   openPreferences: Open preferences dialog
   openDashboard: Open cluster dashboard
+  # @no-translate Kubernetes
   kubernetesContexts: Kubernetes Contexts
+  # @no-translate Rancher Desktop
   quitRancherDesktop: Quit Rancher Desktop
   containerEngine: 'Container engine: {name}'
   networkStatus: 'Network status: {status}'
@@ -91,6 +100,7 @@ imageEvents:
      {error}
   deleteBatchError: Error trying to delete images {ids}
   buildTitle: Pick the build directory
+  # @no-translate Dockerfile
   buildMessage: Please select the Dockerfile to use (could have a different name)
   scanError: |-
     Error trying to scan {name}:
@@ -107,6 +117,7 @@ product:
     online: online
   version: Version
   networkStatus: Network status
+  # @no-translate Kubernetes
   kubernetesVersion: Kubernetes
   containerEngine:
     fullName: Container Engine
@@ -114,12 +125,15 @@ product:
   deactivated: deactivated
 firstRun:
   kubernetesVersion:
+    # @no-translate Kubernetes
     legend: Kubernetes Version
     cachedOnly: (cached versions only)
     otherVersions: Other Versions
     recommendedVersions: Recommended Versions
   ok: OK
+  # @no-translate Kubernetes
   enableKubernetes: Enable Kubernetes
+  # @no-translate Rancher Desktop, SUSE
   welcome: Welcome to Rancher Desktop by SUSE
 marketplace:
   title: Extensions
@@ -267,6 +281,7 @@ images:
   sortableTables:
     noRows: There are no images to show
 portForwarding:
+  # @no-translate Kubernetes
   includeKubernetesServices: Include Kubernetes services
   title: Port Forwarding
   manage:
@@ -280,7 +295,9 @@ portForwarding:
     noRows: There are no port forwarding entries to show
 general:
   navLabel: General
+  # @no-translate Rancher Desktop, SUSE
   title: Welcome to Rancher Desktop by SUSE
+  # @no-translate Rancher Desktop, Kubernetes
   description: Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
   homepage: Homepage
   issues: Issues
@@ -338,6 +355,7 @@ virtualMachine:
           description: Exposes the filesystem by running an SFTP server.
         9p:
           label: 9p
+          # @no-translate QEMU
           description: Exposes the filesystem by using QEMU's virtio-9p-pci devices.
           options:
             cacheMode:
@@ -367,9 +385,11 @@ virtualMachine:
                 mapped-file: mapped-file
                 none: none
         virtiofs:
+          # @no-translate virtiofs
           label: virtiofs
           description: Exposes the filesystem by using an Apple Virtualization framework shared directory device.
   proxy:
+    # @no-translate WSL
     legend: WSL Proxy
     label: Enable the proxy used by rancher-desktop
     addressTitle: Proxy address
@@ -387,7 +407,9 @@ virtualMachine:
     legend: Virtual Machine Type
     options:
       qemu:
+        # @no-translate QEMU
         label: QEMU
+        # @no-translate QEMU
         description: Use the QEMU emulator.
       vz:
         label: VZ
@@ -399,14 +421,20 @@ containerEngine:
   label: Container Engine
   options:
     moby:
+      # @no-translate dockerd, moby
       label: dockerd (moby)
+      # @no-translate Docker
       description: Docker API; use with Docker CLI.
     containerd:
+      # @no-translate containerd
       label: containerd
+      # @no-translate nerdctl
       description: Namespaces for container images; use with nerdctl.
 webAssembly:
+  # @no-translate WebAssembly, Wasm
   label: WebAssembly (Wasm)
   enabled: Enabled
+  # @no-translate WebAssembly
   description: Please read the documentation before enabling the experimental WebAssembly feature!
 allowedImages:
   label: Allowed Image Patterns
@@ -418,31 +446,41 @@ allowedImages:
   alert: The image name needs to match one of the patterns defined in the Allowed Images preference tab.
 pathManagement:
   label: Configure PATH
+  # @no-translate Rancher Desktop, kubectl, nerdctl, helm, docker
   tooltip: Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, <code>$HOME/.rd/bin</code> must be in your PATH.
   options:
     rcFiles:
       label: Automatic
+      # @no-translate Rancher Desktop
       description: Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.
     manual:
       label: Manual
+      # @no-translate Rancher Desktop
       description: Rancher Desktop does not change your PATH configuration; add <code>$HOME/.rd/bin</code> to your path manually.
 sudoPrompt:
   title: Administrative Access Required
+  # @no-translate Rancher Desktop
   message: 'Rancher Desktop requires administrative access ("sudo access") for the following reasons:'
+  # @no-translate Rancher Desktop, docker, rancher-desktop
   messageSecondPart: The prompt will be displayed once this window is closed. Cancelling the prompt or disabling administrative access requires you to switch the docker context to rancher-desktop in order to continue using Rancher Desktop.
   explanation: 'This will modify the following paths:'
   buttonText: OK
   alwaysRunWithout: Always run without administrative access
   reasons:
     dockerSocket:
+      # @no-translate docker
       description: Provides compatibility with tools that use the docker socket without the ability to use docker contexts.
+      # @no-translate docker
       title: Set up default docker socket
     networking:
       description: Provides bridged networking so that it is easier to access your containers. If this is not allowed, containers will only be accessible via port forwarding.
       title: Configure networking
 unmetPrerequisites:
+  # @no-translate Rancher Desktop
   title: Rancher Desktop is unable to start
+  # @no-translate Rancher Desktop
   message: 'Rancher Desktop cannot start because requirements are missing or not configured:'
+  # @no-translate Rancher Desktop
   action: Please ensure all requirements are met and try again. Rancher Desktop will now close.
   buttonText: OK
 asyncButton:
@@ -585,8 +623,11 @@ sortableTable:
     show: Show
 validation:
   cannotDecrease: Cannot decrease "{field}" from {from} to {to}
+  # @no-translate WebAssembly, moby
   cannotEnableWasmClassic: Cannot enable WebAssembly with classic storage for moby.
+  # @no-translate WebAssembly, moby
   cannotSwitchClassicWasm: Cannot switch to classic storage for moby when WebAssembly is enabled.
+  # @no-translate WebAssembly, moby
   cannotSwitchMobyClassicWasm: Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
   duplicateEntries: 'field "{field}" has duplicate entries: "{duplicates}"'
   errorsInProposedSettings: 'Errors in proposed settings:'
@@ -600,6 +641,7 @@ validation:
   invalidTag: '{field}: "{name}" has invalid tag "{tag}"'
   invalidValue: 'Invalid value for "{field}": <{value}>'
   invalidValueEnum: 'Invalid value for "{field}": <{value}>; must be one of {validValues}'
+  # @no-translate Kubernetes
   kubernetesVersionNotFound: Kubernetes version "{version}" not found.
   nonStringTag: '{field}: "{name}" has non-string tag "{tag}"'
   notSupported: Changing field "{field}" via the API isn't supported.
@@ -638,6 +680,7 @@ snapshots:
     actions:
       submit: Create
       back: Cancel
+    # @no-translate Rancher Desktop
     info: Rancher Desktop will be temporarily unavailable while creating a new Snapshot
   empty:
     icon: icon-search
@@ -652,7 +695,9 @@ snapshots:
         cancel: Cancel
       error:
         header: Error restoring snapshot
+        # @no-translate Rancher Desktop
         description: Failed to restore snapshot '<b>'{snapshot}'</b>'.'<br/><br/>'Rancher Desktop has performed a Factory Reset and will now exit. Please try to address the issue that led to this error before restarting Rancher Desktop and attempting to restore the snapshot again.
+        # @no-translate Rancher Desktop
         buttonText: Quit Rancher Desktop
     delete:
       header: Permanently delete snapshot?
@@ -662,11 +707,13 @@ snapshots:
         cancel: Cancel
     restoring:
       header: Restoring {snapshot}
+      # @no-translate Rancher Desktop
       message: Please wait while snapshot '<b>'{snapshot}'</b>' is being restored. This may take some time depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active.
       actions:
         cancel: Cancel
     creating:
       header: Creating {snapshot}
+      # @no-translate Rancher Desktop
       message: Please wait while snapshot '<b>'{snapshot}'</b>' is being created.'<br/>'This may take some time depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart.
       actions:
         cancel: Cancel
@@ -674,6 +721,7 @@ snapshots:
       error: Close
     generic:
       header: Snapshot operation in progress
+      # @no-translate Rancher Desktop
       message: Please wait while the snapshot operation is active.<br/>This may take some time depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart.
     showLogs: Show logs
   info:
@@ -693,11 +741,16 @@ troubleshooting:
   title: Troubleshooting
   kubernetes:
     resetKubernetes:
+      # @no-translate Kubernetes
       title: Reset Kubernetes
+      # @no-translate Kubernetes
       description: Resetting Kubernetes will delete all workloads and configuration.
+      # @no-translate Kubernetes
       buttonText: Reset Kubernetes
       messageBox:
+        # @no-translate Rancher Desktop, Kubernetes
         title: Rancher Desktop - Reset Kubernetes
+        # @no-translate Kubernetes
         message: Reset Kubernetes?
         checkboxLabel: Delete container images
         ok: Reset
@@ -705,16 +758,21 @@ troubleshooting:
   general:
     logs:
       title: Logs
+      # @no-translate Rancher Desktop
       description: Show Rancher Desktop logs
       buttonText: Show Logs
     factoryReset:
       title: Factory Reset
+      # @no-translate Rancher Desktop
       description: Factory Reset will remove all Rancher Desktop Configurations.
       buttonText: Factory Reset
       messageBox:
+        # @no-translate Rancher Desktop
         title: Rancher Desktop - Factory Reset
         message: Perform a factory reset?
+        # @no-translate Rancher Desktop
         detail: <p>Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again.</p><p>Are you sure you want to reset everything?</p>
+        # @no-translate Kubernetes
         checkboxLabel: Keep cached Kubernetes images
         ok: Factory Reset
         cancel: Cancel
@@ -731,6 +789,7 @@ diagnostics:
     success:
       icon: icon-checkmark
       heading: No problems detected
+      # @no-translate Rancher Desktop
       body: Rancher Desktop appears to be functioning correctly.
   failedCount: '{count} failed plus {muted} muted'
   lastRun: 'Last run:'
@@ -755,13 +814,16 @@ extensions:
   view:
     emptyState:
       heading: Extension removed
+      # @no-translate Rancher Desktop
       body: '{extensionId} was removed. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.'
 preferences:
   nav:
     application: Application
     virtualMachine: Virtual Machine
+    # @no-translate WSL
     wsl: WSL
     containerEngine: Container Engine
+    # @no-translate Kubernetes
     kubernetes: Kubernetes
   tabs:
     general: General
@@ -775,7 +837,9 @@ preferences:
     allowedImages: Allowed Images
   actions:
     banner:
+      # @no-translate Kubernetes
       reset: Kubernetes will reset after applying changes.
+      # @no-translate Kubernetes
       restart: Kubernetes will restart after applying changes.
       error: There's a problem with the preferences selection.
   locked:
@@ -786,6 +850,7 @@ preferences:
   incompatiblePrefWarningOr: or
   containerEngine:
     webAssembly:
+      # @no-translate WebAssembly, Kubernetes, Spin
       # Translators: preserve the <a> tag and its data-navigate attribute exactly.
       # The application code uses data-navigate to handle click navigation.
       warning: WebAssembly must be enabled for the <a href="#" data-navigate="Kubernetes">Spin Operator</a> to be installed.
@@ -796,11 +861,15 @@ preferences:
   header: Preferences
   resetDialog:
     apply: Apply and reset
+    # @no-translate Kubernetes
     detail: These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.
+    # @no-translate Kubernetes
     message: Apply preferences and reset Kubernetes?
+    # @no-translate Rancher Desktop, Kubernetes
     title: Rancher Desktop - Reset Kubernetes
 integrations:
   windows:
+    # @no-translate Rancher Desktop, Kubernetes, WSL, Docker
     description: Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros
 containerInfo:
   fallbackTitle: Container Info
@@ -855,6 +924,7 @@ containerInspect:
     dropped: Dropped
 containerStats:
   notRunning: Stats are only available for running containers.
+  # @no-translate Docker, Moby
   mobyOnly: Stats are currently only available for the Docker (Moby) engine.
   # @context Label of the dropdown selecting the stats refresh interval
   refresh: Refresh
@@ -885,6 +955,7 @@ deploymentProfile:
   noVersion: 'Invalid deployment file {path}: no version specified. Add a version field to make it valid (current version is {version}).'
   noVersionRegistry: 'Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).'
 denyRoot:
+  # @no-translate Rancher Desktop
   message: Rancher Desktop cannot be run with root privileges. Please run again as a regular user.
   title: Cannot run as Root
 dialog:
@@ -894,14 +965,18 @@ dialog:
     title: Bridged network did not get an IP address.
   confirmMigration:
     delete: Delete Workloads
+    # @no-translate Kubernetes
     message: Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     title: Confirming migration
   invalidK8sVersion:
     detail: Falling back to recommended minimum upgrade version of {version}
+    # @no-translate Kubernetes
     message: Requested Kubernetes version ''{version}'' is not a supported version.
+    # @no-translate Kubernetes
     title: Invalid Kubernetes Version
   networkFailure:
     detail: Please acquire a version in the range {range} and install in ''{path}''
+    # @no-translate kubectl
     message: Can't download a compatible version of kubectl in offline-mode
     title: Network failure
 kubernetesError:
@@ -913,19 +988,27 @@ kubernetesError:
   logLines: 'Some recent <a href="#" data-action="showLogs">logfile</a> lines:'
 kubernetesPrefs:
   kubernetes:
+    # @no-translate Kubernetes
     label: Enable Kubernetes
+    # @no-translate Kubernetes
     legendText: Kubernetes
   options:
     legendText: Options
+    # @no-translate Spin
     spinkube: Install Spin Operator
+    # @no-translate WebAssembly, Spin
     # Translators: preserve the <a> tag and its data-navigate attribute exactly.
     # The application code uses data-navigate to handle click navigation.
     spinkubeWarning: 'Spin Operator requires <a href="#" data-navigate="Container Engine,general">WebAssembly</a> to be enabled.'
+    # @no-translate Traefik
     traefik: Enable Traefik
   port:
+    # @no-translate Kubernetes
     legendText: Kubernetes Port
   version:
+    # @no-translate Kubernetes
     legendText: Kubernetes version
+    # @no-translate Kubernetes
     legendTextCached: Kubernetes version (cached versions only)
     otherVersions: Other Versions
     recommendedVersions: Recommended Versions
@@ -934,80 +1017,115 @@ preferencesWindow:
     detail: There are preferences with changes that have not been applied. All unsaved preferences will be lost.
     discardChanges: Discard changes
     message: Close preferences without applying?
+    # @no-translate Rancher Desktop
     title: Rancher Desktop - Close Preferences
+  # @no-translate Rancher Desktop
   title: Rancher Desktop - Preferences
 progress:
   askingPermission: Asking for permission to run tasks as administrator
   bundlingCertificates: Bundling certificates
+  # @no-translate k3s
   checkingK3sImages: Checking k3s images
   configuringContainerEngine: Configuring container engine
   configuringImageProxy: Configuring image proxy
   configuringLogrotate: Configuring logrotate
   containerEngineComponents: Container engine components
   copyingCertificates: Copying certificates
+  # @no-translate Kubernetes
   deletingIncompatibleState: Deleting incompatible Kubernetes state
+  # @no-translate Kubernetes
   deletingKubernetes: Deleting Kubernetes
   deletingVirtualMachine: Deleting virtual machine
   dnsConfiguration: DNS configuration
+  # @no-translate Kubernetes
   downloadingKubernetesComponents: Downloading Kubernetes components
+  # @no-translate kubectl
   ensuringCompatibleKubectl: Ensuring compatible kubectl
   ensuringVirtualizationSupported: Ensuring virtualization is supported
   expectingPermission: Expecting user permission to continue
   extractingCertificates: Extracting certificates
   fetchingCertificates: Fetching certificates
+  # @no-translate Rancher Desktop
   initializingRancherDesktop: Initializing Rancher Desktop
+  # @no-translate WSL
   initializingWslData: Initializing WSL data
+  # @no-translate Buildkit
   installingBuildkit: Installing Buildkit
   installingCaCertificates: Installing CA certificates
   installingContainerEngine: Installing container engine
   installingCredentialHelper: Installing credential helper
+  # @no-translate docker-credential
   installingDockerCredentialHelper: Installing the docker-credential helper
   installingHelpers: Installing helpers
   installingImageScanner: Installing image scanner
+  # @no-translate k3s
   installingK3s: Installing k3s
+  # @no-translate Kubernetes
   installingKubernetes: Installing Kubernetes
+  # @no-translate Kubernetes
   kubernetesComponents: Kubernetes components
+  # @no-translate Kubernetes, dockerd
   kubernetesDockerCompatibility: Kubernetes dockerd compatibility
+  # @no-translate WSL
   mountingWslData: Mounting WSL data
   preparingToStart: Preparing to start
   proxyConfigSetup: Proxy Config Setup
+  # @no-translate Rancher Desktop
   rancherDesktopGuestAgent: Rancher Desktop guest agent
   recoveringBrokenVirtualMachine: Recovering virtual machine
   regeneratingConfiguration: Regenerating configuration to account for lack of permissions
+  # @no-translate WSL
   registeringWslDistribution: Registering WSL distribution
   removingExistingCertificates: Removing existing certificates
+  # @no-translate spinkube
   removingSpinkubeOperator: Removing spinkube operator
   removingStaleState: Removing stale state
+  # @no-translate Traefik
   removingTraefik: Removing Traefik
+  # @no-translate Kubernetes
   resettingKubernetes: Resetting Kubernetes
   runningProvisioningScripts: Running provisioning scripts
+  # @no-translate update-ca-certificates
   runningUpdateCaCertificates: Running update-ca-certificates
+  # @no-translate docker
   settingDockerContext: Setting docker context
+  # @no-translate Lima
   settingLimaPermissions: Setting Lima permissions
+  # @no-translate Docker
   settingUpDockerSocket: Setting up Docker socket
   settingUpVirtualEthernet: Setting up virtual ethernet
   shuttingDown: Shutting down
+  # @no-translate flannel
   skippingNodeChecksFlannel: Skipping node checks, flannel is disabled
   startingBackend: Starting Backend
+  # @no-translate buildkit
   startingBuildkit: Starting buildkit
   startingContainerEngine: Starting container engine
   startingImageProxy: Starting image proxy
+  # @no-translate k3s
   startingK3s: Starting k3s
+  # @no-translate Kubernetes
   startingKubernetes: Starting Kubernetes
   startingProxy: Starting proxy
   startingService: Starting {service}
   startingVirtualMachine: Starting virtual machine
+  # @no-translate WSL
   startingWslEnvironment: Starting WSL environment
   stoppingExistingInstance: Stopping existing instance
   stoppingMockBackend: Stopping mock backend
   stoppingServices: Stopping services
   updatingClusterConfiguration: Updating cluster configuration
+  # @no-translate /etc/hosts
   updatingEtcHosts: Updating /etc/hosts
+  # @no-translate kubeconfig
   updatingKubeconfig: Updating kubeconfig
   updatingOutdatedVm: Updating outdated virtual machine
+  # @no-translate WSL
   updatingWslData: Updating WSL data
+  # @no-translate WSL
   upgradingWslDistribution: Upgrading WSL distribution
   waitingForContainerEngine: Waiting for container engine to be ready
+  # @no-translate Kubernetes
   waitingForKubernetesApi: Waiting for Kubernetes API
   waitingForNodes: Waiting for nodes
   waitingForServices: Waiting for services
@@ -1016,6 +1134,7 @@ systemPreferences:
   cpus: '# CPUs'
   memory: Memory (GB)
 telemetryOptIn:
+  # @no-translate Rancher Desktop
   fineprint: Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
 updateStatus:
   applyingUpdate: Applying update...
@@ -1027,6 +1146,7 @@ updateStatus:
   restartNow: Restart Now
   restartToApply: Restart the application to apply the update.
   unsupported:
+    # @no-translate Rancher Desktop
     message: A newer version of Rancher Desktop is available, but not supported on your system.
     seeDocumentation: 'For more information please see <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.'
     title: Latest Version Not Supported
