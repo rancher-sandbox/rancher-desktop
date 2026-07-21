@@ -7,6 +7,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -374,5 +375,89 @@ func TestValidateLocaleEndToEnd(t *testing.T) {
 	}
 	if got[catPlaceholder] != 1 || got[catSource] != 1 {
 		t.Fatalf("bad locale: want 1 placeholder + 1 source, got %v: %v", got, errs)
+	}
+}
+
+func TestValidateIdenticalNeedsReason(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Dir(translationsPath(root, "en-us.yaml")), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write := func(locale, content string) {
+		t.Helper()
+		if err := os.WriteFile(translationsPath(root, locale+".yaml"), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("en-us", `title: Volumes
+farewell: Bye
+empty: ""
+renamed: Current
+moved: Updated
+secret:
+  types:
+    kubernetes.io/basic-auth: Opaque
+`)
+	// Identical values that are deliberate (@reason or @override), translated
+	// values, and empty values produce no findings. The check also skips two
+	// kinds of key the drift check owns, whose @source no longer matches the
+	// current English: one already retranslated, one still matching its stale
+	// snapshot. A key absent from en-us belongs to the stale check. Removing the
+	// !inEn guard leaves this fixture green: the stale-snapshot comparison
+	// skips the key too.
+	write("annotated", `# @reason standard term in this language
+# @source Volumes
+title: Volumes
+# @source Bye
+farewell: Tschüss
+# @source
+empty: ""
+# @source Superseded
+renamed: Current
+# @source Original
+moved: Original
+# @source Gone
+withdrawn: Gone
+secret:
+  types:
+    # @override
+    # @source Opaque
+    kubernetes.io/basic-auth: Opaque
+`)
+	// Identical values with only a @source are flagged, including keys whose
+	// segments need quoting in the dotted representation.
+	write("bare", `# @source Volumes
+title: Volumes
+# @source Bye
+farewell: Tschüss
+# @source
+empty: ""
+secret:
+  types:
+    # @source Opaque
+    kubernetes.io/basic-auth: Opaque
+`)
+
+	identical := func(locale string) []string {
+		t.Helper()
+		errs, err := validateLocale(root, locale)
+		if err != nil {
+			t.Fatalf("%s locale: unexpected err %v", locale, err)
+		}
+		var keys []string
+		for _, e := range errs {
+			if e.Check == catIdentical {
+				keys = append(keys, e.Key)
+			}
+		}
+		return keys
+	}
+
+	if keys := identical("annotated"); len(keys) != 0 {
+		t.Errorf("annotated locale: want no identical findings, got %v", keys)
+	}
+	want := []string{`secret.types."kubernetes.io/basic-auth"`, "title"}
+	if keys := identical("bare"); !slices.Equal(keys, want) {
+		t.Errorf("bare locale: want identical findings %v, got %v", want, keys)
 	}
 }

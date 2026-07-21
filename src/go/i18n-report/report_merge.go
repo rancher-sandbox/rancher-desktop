@@ -133,7 +133,7 @@ func reportMerge(w io.Writer, root, locale string, files []string, dryRun bool, 
 		}
 	}
 	if len(unknown) > 0 {
-		return fmt.Errorf("input contains %d keys not in en-us.yaml: %s", len(unknown), strings.Join(unknown, ", "))
+		return fmt.Errorf("input contains %d %s not in en-us.yaml: %s", len(unknown), plural(len(unknown), "key"), strings.Join(unknown, ", "))
 	}
 
 	// Apply new entries to the tree, respecting mode.
@@ -185,7 +185,7 @@ func reportMerge(w io.Writer, root, locale string, files []string, dryRun bool, 
 			fmt.Fprintf(os.Stderr, ", %d skipped (@override)", skipped)
 		}
 		if warned > 0 {
-			fmt.Fprintf(os.Stderr, ", %d @override warnings", warned)
+			fmt.Fprintf(os.Stderr, ", %d @override %s", warned, plural(warned, "warning"))
 		}
 		fmt.Fprintf(os.Stderr, ", %d total\n", total)
 		return nil
@@ -221,12 +221,12 @@ func reportMerge(w io.Writer, root, locale string, files []string, dryRun bool, 
 		return fmt.Errorf("writing %s: %w", localePath, err)
 	}
 
-	fmt.Fprintf(os.Stderr, "Merged %d new keys into %s (%d overwritten", added, localePath, overwritten)
+	fmt.Fprintf(os.Stderr, "Merged %d new %s into %s (%d overwritten", added, plural(added, "key"), localePath, overwritten)
 	if skipped > 0 {
 		fmt.Fprintf(os.Stderr, ", %d skipped", skipped)
 	}
 	if warned > 0 {
-		fmt.Fprintf(os.Stderr, ", %d @override warnings", warned)
+		fmt.Fprintf(os.Stderr, ", %d @override %s", warned, plural(warned, "warning"))
 	}
 	fmt.Fprintf(os.Stderr, ", %d total)\n", total)
 	return nil

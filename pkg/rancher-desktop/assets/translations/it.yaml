@@ -465,6 +465,8 @@ diagnostics:
   failedCount: '{count} falliti più {muted} silenziati'
   # @source Last run:
   lastRun: 'Ultima esecuzione:'
+  # @source (Never)
+  never: (Mai)
   # @source (No fixes available)
   noFixes: (Nessuna correzione disponibile)
   results:
@@ -677,8 +679,8 @@ images:
       # @source Pull
       pull: Pull
     # @reason { action } is used as a noun ('l'operazione di pull'); an Italian infinitive after 'trying to' would not compose with the loanword verbs.
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: Errore durante l'operazione di { action } su ''{ image }'' - consulta l'output della console per maggiori informazioni
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Errore durante l'operazione di { action } su ''{ image }''. Consulta l'output della console per maggiori informazioni.
     # @reason Restructured: Italian has no progressive suffix, so the gerund value acts as a noun and 'in corso' carries the ongoing sense, as in scan.loadingText.
     # @source {action} image...
     loadingText: '{action} dell''immagine in corso...'
@@ -749,8 +751,8 @@ images:
       primaryUrl: URL principale
       # @source References
       references: Riferimenti
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: Errore durante la scansione di ''{ image }'' - consulta l'output della console per maggiori informazioni
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Errore durante la scansione di ''{ image }''. Consulta l'output della console per maggiori informazioni.
     labels:
       # @reason Severity labels use feminine forms, agreeing with 'gravità'.
       # @source CRITICAL
@@ -1067,9 +1069,9 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: L'opzione richiede che
   locked:
-    # @reason Added the subject 'Impostazione' to fix gender agreement; 'criteri' is the standard Italian rendering of 'policy'.
-    # @source Locked due to organization's policy
-    tooltip: Impostazione bloccata dai criteri dell'organizzazione
+    # @reason 'criteri' is the standard Italian rendering of an administrative 'policy', consistent with 'Criterio di caching' elsewhere in this file.
+    # @source This setting is locked by organization policy.
+    tooltip: Questa impostazione è bloccata dai criteri dell'organizzazione.
   nav:
     # @source Application
     application: Applicazione
@@ -1189,6 +1191,8 @@ progress:
   deletingVirtualMachine: Eliminazione della macchina virtuale
   # @source DNS configuration
   dnsConfiguration: Configurazione DNS
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Scaricamento dei componenti di Kubernetes
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: Verifica della compatibilità di kubectl
   # @source Ensuring virtualization is supported
@@ -1235,6 +1239,9 @@ progress:
   # @reason 'guest agent' kept English: it names the rancher-desktop-guestagent component.
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Guest agent di Rancher Desktop
+  # @reason 'Ripristino' (restoring to working order) rather than 'Recupero', which this section already uses for 'Fetching'.
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: Ripristino della macchina virtuale
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Rigenerazione della configurazione per tenere conto della mancanza di autorizzazioni
   # @source Registering WSL distribution
@@ -1551,6 +1558,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Abilita la modalità di debug
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: La modalità di debug non può essere modificata perché è definita la variabile d'ambiente RD_DEBUG_ENABLED.
   general:
     factoryReset:
       # @source Factory Reset

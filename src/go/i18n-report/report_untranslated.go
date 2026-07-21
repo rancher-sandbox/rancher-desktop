@@ -84,7 +84,7 @@ func reportUntranslated(w io.Writer, root, format string, includeDescriptions bo
 		return nil
 	}
 
-	fmt.Fprintf(w, "Found %d potential untranslated strings:\n\n", len(hits))
+	fmt.Fprintf(w, "Found %d potential untranslated %s:\n\n", len(hits), plural(len(hits), "string"))
 	for _, h := range hits {
 		fmt.Fprintf(w, "  %s:%d\n    %s\n\n", h.File, h.Line, h.Context)
 	}

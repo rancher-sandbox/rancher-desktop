@@ -282,13 +282,17 @@ export default class SettingsValidator {
         errors.push(this.notSupported(fqname));
       }
       if (changeNeededHere) {
-        const isLocked = _.get(this.lockedSettings, `${ prefix }.${ k }`);
+        // At the root prefix is empty, so `${ prefix }.${ k }` would yield a
+        // leading dot, and lodash resolves that against `lockedSettings['']`
+        // instead of the lock. No test covers this today, because `version` is
+        // the only root-level leaf and its validator never reports a change.
+        const isLocked = _.get(this.lockedSettings, fqname);
 
         if (isLocked) {
           // A delayed error condition, raised only if we try to change a field in a locked object.
           // Callers check hasLockedFieldError to detect this condition without
           // parsing the translated error message.
-          errors.push(t('validation.fieldLocked', { field: `${ prefix }.${ k }` }));
+          errors.push(t('validation.fieldLocked', { field: fqname }));
           this.isFatal = true;
           this.hasLockedFieldError = true;
         } else {

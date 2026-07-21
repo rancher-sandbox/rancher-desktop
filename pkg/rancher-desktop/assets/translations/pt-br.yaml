@@ -464,6 +464,8 @@ diagnostics:
   failedCount: '{count} com falha, mais {muted} silenciados'
   # @source Last run:
   lastRun: 'Última execução:'
+  # @source (Never)
+  never: (Nunca)
   # @source (No fixes available)
   noFixes: (Nenhuma correção disponível)
   results:
@@ -675,8 +677,8 @@ images:
       # @source Pull
       pull: Pull
     # @reason { action } receives the pt-br infinitive (construir/baixar), so "ao tentar" composes directly without the old "executar" wrapper
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: Erro ao tentar { action } ''{ image }'' - consulte a saída do console para mais informações
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Erro ao tentar { action } ''{ image }''. Consulte a saída do console para mais informações.
     # @reason {action} receives the pt-br gerund (Construindo/Baixando), which starts the sentence, so the gerund values are capitalized
     # @source {action} image...
     loadingText: '{action} imagem...'
@@ -747,8 +749,8 @@ images:
       primaryUrl: URL principal
       # @source References
       references: Referências
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: Erro ao tentar escanear ''{ image }'' - consulte a saída do console para mais informações
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Erro ao tentar escanear ''{ image }''. Consulte a saída do console para mais informações.
     labels:
       # @reason Severity labels use the feminine form, agreeing with "vulnerabilidade"/"severidade"
       # @source CRITICAL
@@ -1061,8 +1063,8 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: A opção requer que
   locked:
-    # @source Locked due to organization's policy
-    tooltip: Bloqueado pela política da organização
+    # @source This setting is locked by organization policy.
+    tooltip: Esta configuração está bloqueada pela política da organização.
   nav:
     # @source Application
     application: Aplicativo
@@ -1182,6 +1184,8 @@ progress:
   deletingVirtualMachine: Excluindo a máquina virtual
   # @source DNS configuration
   dnsConfiguration: Configuração de DNS
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Baixando componentes do Kubernetes
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: Garantindo um kubectl compatível
   # @source Ensuring virtualization is supported
@@ -1228,6 +1232,8 @@ progress:
   proxyConfigSetup: Configuração do proxy
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Agente convidado do Rancher Desktop
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: Recuperando máquina virtual
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Regenerando a configuração devido à falta de permissões
   # @source Registering WSL distribution
@@ -1542,6 +1548,9 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Ativar modo de depuração
+  # @reason Masculine 'alterado' agrees with the now-explicit subject 'O modo de depuração'; the term matches troubleshooting.debugMode
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: O modo de depuração não pode ser alterado porque a variável de ambiente RD_DEBUG_ENABLED está definida.
   general:
     factoryReset:
       # @source Factory Reset

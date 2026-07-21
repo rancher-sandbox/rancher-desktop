@@ -152,22 +152,34 @@ func flattenNodeWithComments(prefix string, node *yaml.Node, result map[string]m
 // overrideMarker is the comment line that protects a hand-tuned translation.
 const overrideMarker = "# @override"
 
-// lineIsOverrideMarker reports whether a single comment line is the @override
-// marker: the bare marker or the marker followed by a note.
-func lineIsOverrideMarker(line string) bool {
+// reasonMarker is the comment line that documents a translation choice.
+const reasonMarker = "# @reason"
+
+// lineIsMarker reports whether a comment line matches marker, either bare or
+// followed by a space and a note.
+func lineIsMarker(line, marker string) bool {
 	trimmed := strings.TrimSpace(line)
-	return trimmed == overrideMarker || strings.HasPrefix(trimmed, overrideMarker+" ")
+	return trimmed == marker || strings.HasPrefix(trimmed, marker+" ")
 }
 
-// commentHasOverride returns true if any line of a comment is the @override marker.
-func commentHasOverride(comment string) bool {
+// commentHasMarker returns true if any line of a comment matches marker.
+func commentHasMarker(comment, marker string) bool {
 	for _, line := range strings.Split(comment, "\n") {
-		if lineIsOverrideMarker(line) {
+		if lineIsMarker(line, marker) {
 			return true
 		}
 	}
 	return false
 }
+
+// lineIsOverrideMarker reports whether a comment line is the @override marker.
+func lineIsOverrideMarker(line string) bool { return lineIsMarker(line, overrideMarker) }
+
+// commentHasOverride returns true if any line of a comment is the @override marker.
+func commentHasOverride(comment string) bool { return commentHasMarker(comment, overrideMarker) }
+
+// commentHasReason returns true if any line of a comment is the @reason marker.
+func commentHasReason(comment string) bool { return commentHasMarker(comment, reasonMarker) }
 
 // nodeHasOverride returns true if a leaf key's HeadComment contains @override.
 func nodeHasOverride(root *yaml.Node, dottedKey string) bool {
@@ -338,6 +350,8 @@ func nodeSetLeaf(root *yaml.Node, dottedKey, value, comment string) error {
 				} else if valNode.Value != value {
 					// The value is machine-replaced; a retained @override
 					// marker would falsely claim it is still hand-tuned.
+					// A @reason survives. Only its author can tell whether
+					// it still applies, so review it by hand after a merge.
 					current.Content[keyIdx].HeadComment = stripOverrideMarker(current.Content[keyIdx].HeadComment)
 				}
 				// Update leaf value. Style is irrelevant; serializeYAMLNode

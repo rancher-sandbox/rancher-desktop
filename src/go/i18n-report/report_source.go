@@ -89,13 +89,15 @@ func annotateSource(w io.Writer, root, locale string, force bool) error {
 		flattenNodeWithComments("", localeRoot, entries)
 		drifted := computeDrifted(enKeys, collectSources(entries), entries)
 		if len(drifted) > 0 {
-			fmt.Fprintf(w, "%d drifted keys in %s would lose their drift marker:\n", len(drifted), locale)
+			fmt.Fprintf(w, "%d drifted %s in %s would lose the drift %s:\n",
+				len(drifted), plural(len(drifted), "key"), locale, plural(len(drifted), "marker"))
 			for _, k := range drifted {
 				fmt.Fprintf(w, "  %s\n", k)
 			}
 			fmt.Fprintf(os.Stderr, "Retranslate the drift (translate --mode=drift then merge --mode=drift) "+
 				"or pass --force to overwrite the @source markers anyway.\n")
-			return findingsError(fmt.Sprintf("refusing to erase %d outstanding drift markers in %s", len(drifted), locale))
+			return findingsError(fmt.Sprintf("refusing to erase %d outstanding drift %s in %s",
+				len(drifted), plural(len(drifted), "marker"), locale))
 		}
 	}
 

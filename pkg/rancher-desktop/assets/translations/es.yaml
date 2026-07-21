@@ -459,6 +459,8 @@ diagnostics:
   failedCount: '{count} fallidos más {muted} silenciados'
   # @source Last run:
   lastRun: 'Última ejecución:'
+  # @source (Never)
+  never: (Nunca)
   # @source (No fixes available)
   noFixes: (No hay correcciones disponibles)
   results:
@@ -666,8 +668,8 @@ images:
       # @reason Infinitive so it composes with images.add.errorText ("Error al intentar {action}..."); "descargar" is the common Spanish for pulling an image.
       # @source Pull
       pull: Descargar
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: Error al intentar { action } ''{ image }'' - consulte la salida de la consola para obtener más información
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Error al intentar { action } ''{ image }''. Consulte la salida de la consola para obtener más información.
     # @reason No article before "imagen", matching the terse en-us style; composes as "Construyendo imagen..." / "Descargando imagen...".
     # @source {action} image...
     loadingText: '{action} imagen...'
@@ -736,8 +738,8 @@ images:
       primaryUrl: URL principal
       # @source References
       references: Referencias
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: Error al intentar analizar ''{ image }'' - consulte la salida de la consola para obtener más información
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Error al intentar analizar ''{ image }''. Consulte la salida de la consola para obtener más información.
     labels:
       # @reason Severity labels take feminine forms, agreeing with "gravedad".
       # @source CRITICAL
@@ -1048,8 +1050,9 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: La opción requiere que
   locked:
-    # @source Locked due to organization's policy
-    tooltip: Bloqueado por la política de la organización
+    # @reason "Esta opción" is the file's rendering of "This setting" (see prefs.onlyFromVentura_*) and stays neutral across the input, select, checkbox and fieldset controls that share this tooltip; "Este campo" would misread next to a checkbox or fieldset.
+    # @source This setting is locked by organization policy.
+    tooltip: Esta opción está bloqueada por la política de la organización.
   nav:
     # @source Application
     application: Aplicación
@@ -1166,6 +1169,8 @@ progress:
   deletingVirtualMachine: Eliminando la máquina virtual
   # @source DNS configuration
   dnsConfiguration: Configuración de DNS
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Descargando los componentes de Kubernetes
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: Comprobando que kubectl sea compatible
   # @source Ensuring virtualization is supported
@@ -1212,6 +1217,8 @@ progress:
   proxyConfigSetup: Configuración del proxy
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Agente invitado de Rancher Desktop
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: Recuperando la máquina virtual
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Regenerando la configuración para tener en cuenta la falta de permisos
   # @source Registering WSL distribution
@@ -1524,6 +1531,9 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Habilitar el modo de depuración
+  # @reason "definida" is the idiomatic Spanish predicate for an environment variable being set; the file's "establecida" is reserved for settings fields.
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: El modo de depuración no se puede modificar porque la variable de entorno RD_DEBUG_ENABLED está definida.
   general:
     factoryReset:
       # @source Factory Reset

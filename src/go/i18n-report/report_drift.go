@@ -94,7 +94,7 @@ func reportDrift(w io.Writer, root, locale string) error {
 	sort.Strings(missingSource)
 
 	if len(drifted) > 0 {
-		fmt.Fprintf(w, "Found %d drifted keys in %s:\n", len(drifted), locale)
+		fmt.Fprintf(w, "Found %d drifted %s in %s:\n", len(drifted), plural(len(drifted), "key"), locale)
 		for _, d := range drifted {
 			suffix := ""
 			if d.Override {
@@ -105,7 +105,7 @@ func reportDrift(w io.Writer, root, locale string) error {
 	}
 
 	if len(missingSource) > 0 {
-		fmt.Fprintf(w, "\n%d keys missing @source:\n", len(missingSource))
+		fmt.Fprintf(w, "\n%d %s missing @source:\n", len(missingSource), plural(len(missingSource), "key"))
 		for _, key := range missingSource {
 			fmt.Fprintf(w, "  %s\n", key)
 		}

@@ -513,6 +513,8 @@ diagnostics:
   failedCount: '{count} fehlgeschlagen plus {muted} stummgeschaltet'
   # @source Last run:
   lastRun: 'Letzter Lauf:'
+  # @source (Never)
+  never: (Nie)
   # @source (No fixes available)
   noFixes: (Keine Korrekturen verfügbar)
   results:
@@ -716,9 +718,9 @@ images:
       # @reason tab label on the Add Image page; matches its submit button images.manager.input.pull.button 'Abrufen'
       # @source Pull
       pull: Abrufen
-    # @reason Restructured to the "Fehler beim ... von" pattern already used by images.scan.errorText; en dash matches file convention
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: Fehler beim { action } von ''{ image }'' – siehe Konsolenausgabe für weitere Informationen
+    # @reason Restructured to the "Fehler beim ... von" pattern already used by images.scan.errorText
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Fehler beim { action } von ''{ image }''. Siehe Konsolenausgabe für weitere Informationen.
     # @reason Restructured as passive; composes to "Image wird erstellt..." / "Image wird abgerufen..."
     # @source {action} image...
     loadingText: Image wird {action}...
@@ -791,8 +793,8 @@ images:
       primaryUrl: Primäre URL
       # @source References
       references: Referenzen
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: Fehler beim Scannen von ''{ image }'' – siehe Konsolenausgabe für weitere Informationen
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Fehler beim Scannen von ''{ image }''. Siehe Konsolenausgabe für weitere Informationen.
     labels:
       # @source CRITICAL
       critical: KRITISCH
@@ -1095,8 +1097,8 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: Diese Option erfordert, dass
   locked:
-    # @source Locked due to organization's policy
-    tooltip: Gesperrt aufgrund der Unternehmensrichtlinie
+    # @source This setting is locked by organization policy.
+    tooltip: Diese Einstellung ist durch eine Unternehmensrichtlinie gesperrt.
   nav:
     # @source Application
     application: Anwendung
@@ -1223,6 +1225,8 @@ progress:
   deletingVirtualMachine: Virtuelle Maschine wird gelöscht
   # @source DNS configuration
   dnsConfiguration: DNS-Konfiguration
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Kubernetes-Komponenten werden heruntergeladen
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: Kompatibles kubectl wird sichergestellt
   # @source Ensuring virtualization is supported
@@ -1267,6 +1271,9 @@ progress:
   proxyConfigSetup: Proxy-Konfiguration wird eingerichtet
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop-Gast-Agent
+  # @reason 'repariert' not 'wiederhergestellt'; this file reserves 'Wiederherstellen' for snapshot restore
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: Virtuelle Maschine wird repariert
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: Konfiguration wird aufgrund fehlender Berechtigungen neu generiert
   # @source Registering WSL distribution
@@ -1593,6 +1600,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: Debug-Modus aktivieren
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: Der Debug-Modus kann nicht geändert werden, da die Umgebungsvariable RD_DEBUG_ENABLED gesetzt ist.
   general:
     factoryReset:
       # @source Factory Reset

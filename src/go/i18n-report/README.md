@@ -57,6 +57,16 @@ product.networkStatus.online: Online
 The `merge` command preserves `@reason` comments on existing keys and
 attaches them to new keys when present in the input.
 
+A translation left identical to its English source must carry a `@reason`
+(or `@override`): `validate` flags unmarked identical values, since they
+are indistinguishable from missed translations.
+
+`merge` preserves a `@reason` even when it replaces the value, and strips
+only `@override`. So a note written for an earlier wording can outlive it
+and still satisfy that check. Re-read the note whenever you change the
+value it describes. Clearing one takes a hand edit, because `merge` only
+ever overwrites a comment with another `@reason` or `@override` line.
+
 ### `@override`
 
 Marks a translation as intentionally different from what an automated
@@ -283,6 +293,8 @@ Checks include:
 - `data-*` attribute preservation (runtime handlers depend on these)
 - `@override` placement (leaf keys only)
 - `@source` coverage (every translated key carries a `@source`)
+- Deliberate identity (a translation identical to a current `@source` carries
+  a `@reason` or `@override`; a stale snapshot is left to `drift`)
 
 ### drift
 
@@ -323,9 +335,10 @@ i18n-report check --locale=de --strict
 i18n-report check --locale=all
 ```
 
-`--strict` adds the completeness checks — no missing keys, no drifted
-keys — for periodic and pre-release runs, while PR CI uses the default
-structural set. Passing `--strict` without `--locale` is an error.
+`--strict` adds the completeness checks (no missing keys, no drifted
+keys). PR CI runs the default structural set and no configured job passes
+`--strict`, so run it by hand before a release. Passing `--strict` without
+`--locale` is an error.
 
 The registration checks verify that the locale enum in `command-api.yaml`,
 `settingsValidator.ts`, its spec, and the `locale.*` display-name keys in

@@ -41,6 +41,7 @@ const (
 	catTag         = "tag"
 	catICU         = "icu"
 	catICUSyntax   = "icu-syntax"
+	catIdentical   = "identical"
 )
 
 // validationError represents a single validation issue.
@@ -60,29 +61,26 @@ func validateLocale(root, locale string) ([]validationError, error) {
 	if err != nil {
 		return nil, err
 	}
-	localeKeys, err := loadYAMLFlat(localePath)
-	if err != nil {
-		return nil, err
-	}
-
 	doc, err := loadYAMLDocument(localePath)
 	if err != nil {
 		return nil, err
 	}
 
-	meta, err := loadSources(root, locale)
+	entries, err := loadYAMLWithComments(localePath)
 	if err != nil {
 		return nil, err
 	}
+	meta := collectSources(entries)
 
 	var errors []validationError
 
 	// Check placeholder parity, ICU structure, and tag parity.
 	for key, enValue := range enKeys {
-		localeValue, exists := localeKeys[key]
+		localeEntry, exists := entries[key]
 		if !exists {
 			continue
 		}
+		localeValue := localeEntry.value
 		if errs := checkICU(key, enValue, localeValue); len(errs) > 0 {
 			errors = append(errors, errs...)
 		}
@@ -104,7 +102,7 @@ func validateLocale(root, locale string) ([]validationError, error) {
 
 	// Check that every translated key carries a @source snapshot. A @source
 	// cannot be orphaned from its translation, since it lives on the key.
-	for key := range localeKeys {
+	for key := range entries {
 		if _, inEn := enKeys[key]; !inEn {
 			continue // stale key, reported by stale check
 		}
@@ -115,6 +113,37 @@ func validateLocale(root, locale string) ([]validationError, error) {
 				Message: "translated key has no @source",
 			})
 		}
+	}
+
+	// A translation left identical to its English source must be marked as
+	// deliberate with a @reason (or @override) comment; without one it is
+	// indistinguishable from a missed translation.
+	for key, e := range entries {
+		enValue, inEn := enKeys[key]
+		if !inEn {
+			continue // stale key, reported by stale check
+		}
+		if e.value == "" {
+			continue // an empty source stays empty; nothing to explain
+		}
+		storedSource, hasSource := meta[key]
+		if !hasSource || e.value != storedSource {
+			continue // no snapshot (reported above), or translated
+		}
+		if storedSource != enValue {
+			// The snapshot is stale, so "identical to source" would misdescribe
+			// a value that matches superseded English. drift owns the case, and
+			// a default check run skips drift unless --strict is set.
+			continue
+		}
+		if e.override || commentHasReason(e.comment) {
+			continue
+		}
+		errors = append(errors, validationError{
+			Key:     key,
+			Check:   catIdentical,
+			Message: "translation identical to source without @reason",
+		})
 	}
 
 	// Sort errors by key for stable output.
@@ -140,11 +169,11 @@ func reportValidate(w io.Writer, root, locale string) error {
 		return nil
 	}
 
-	fmt.Fprintf(w, "Found %d validation errors in %s:\n", len(errors), locale)
+	fmt.Fprintf(w, "Found %d validation %s in %s:\n", len(errors), plural(len(errors), "error"), locale)
 	for _, e := range errors {
 		fmt.Fprintf(w, "  [%s] %s: %s\n", e.Check, e.Key, e.Message)
 	}
-	return findingsError(fmt.Sprintf("validation failed with %d errors", len(errors)))
+	return findingsError(fmt.Sprintf("validation failed with %d %s", len(errors), plural(len(errors), "error")))
 }
 
 // containsICU reports whether a value has any ICU syntax worth parsing: a

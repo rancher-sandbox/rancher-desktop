@@ -40,5 +40,5 @@ func reportUnused(root, format string) error {
 
 	unused := computeUnused(keys, refs)
 
-	return outputStrings(os.Stdout, unused, format, "unused keys")
+	return outputStrings(os.Stdout, unused, format, "unused key", "")
 }

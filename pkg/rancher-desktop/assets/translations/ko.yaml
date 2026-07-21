@@ -454,6 +454,9 @@ diagnostics:
   failedCount: '{count}개 실패 및 {muted}개 무시됨'
   # @source Last run:
   lastRun: '마지막 실행:'
+  # @reason A bare adverb cannot stand alone as a Korean label; expanded to "never run" so it reads as a value after 마지막 실행:
+  # @source (Never)
+  never: (실행된 적 없음)
   # @source (No fixes available)
   noFixes: (사용 가능한 수정 없음)
   results:
@@ -656,7 +659,7 @@ images:
       # @source Pull
       pull: 풀
     # @reason rephrased so the action noun (풀/빌드) composes grammatically
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
     errorText: '''''{ image }'''' 이미지 { action } 중 오류가 발생했습니다. 자세한 내용은 콘솔 출력을 확인하십시오.'
     # @reason rephrased around noun-form action; gerund keys must also be noun forms (풀/빌드)
     # @source {action} image...
@@ -726,7 +729,7 @@ images:
       primaryUrl: 기본 URL
       # @source References
       references: 참조
-    # @source Error trying to scan ''{ image }'' — see console output for more information
+    # @source Error trying to scan ''{ image }''. See console output for more information.
     errorText: '''''{ image }'''' 스캔 중 오류가 발생했습니다. 자세한 내용은 콘솔 출력을 확인하십시오.'
     labels:
       # @reason Korean has no letter case; standard severity terms used instead of all-caps
@@ -1029,8 +1032,8 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: 이 옵션을 사용하려면
   locked:
-    # @source Locked due to organization's policy
-    tooltip: 조직의 정책에 따라 잠겨 있습니다
+    # @source This setting is locked by organization policy.
+    tooltip: 이 설정은 조직의 정책에 따라 잠겨 있습니다.
   nav:
     # @source Application
     application: 애플리케이션
@@ -1143,6 +1146,8 @@ progress:
   deletingVirtualMachine: 가상 머신 삭제 중
   # @source DNS configuration
   dnsConfiguration: DNS 구성
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Kubernetes 구성 요소 다운로드 중
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: 호환되는 kubectl 확인 중
   # @source Ensuring virtualization is supported
@@ -1187,6 +1192,8 @@ progress:
   proxyConfigSetup: 프록시 구성 설정
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop 게스트 에이전트
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: 가상 머신 복구 중
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 권한 부족을 반영하여 구성 다시 생성 중
   # @source Registering WSL distribution
@@ -1496,6 +1503,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: 디버그 모드 활성화
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: 디버그 모드는 RD_DEBUG_ENABLED 환경 변수가 설정되어 있어 수정할 수 없습니다.
   general:
     factoryReset:
       # @source Factory Reset

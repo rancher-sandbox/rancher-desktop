@@ -55,6 +55,27 @@ The `v-t` directive always renders innerHTML (or sets an attribute with
 A missing key renders as a visible `%some.key%` placeholder in every
 process; run `i18n-report undefined` to find such references.
 
+## Writing source strings
+
+en-us.yaml is the source every locale translates from, so its phrasing sets the
+ceiling on translation quality.
+
+- **Name the subject.** A subjectless passive like "Locked due to organization's
+  policy" gives a gendered language nothing to agree with, so each translator
+  invents a referent and they disagree. Spanish and French were left with a bare
+  participle agreeing with nothing.
+- **Keep a sentence in one key.** `images.add` assembles one from `{action}` plus
+  its `gerund`/`infinitive`/`pastTense` sub-keys, which forces English word order
+  onto every language; German and Brazilian Portuguese had to rephrase around it.
+- **Headings are noun phrases.** English tolerates a fragment like "From the
+  blog" because the layout supplies the missing noun. Chinese, Japanese, and
+  Korean headings have no such affordance, so a fragment forces every translator
+  to invent a head noun, and invention is where locales diverge.
+
+Changing an en-us value after locales exist invalidates their `@source`
+snapshots and forces a drift pass across every locale, so phrasing is far
+cheaper to get right before the string ships.
+
 ## YAML comment conventions
 
 Add these comments directly above the key they describe.
@@ -64,7 +85,18 @@ Add these comments directly above the key they describe.
 | `@context` | en-us.yaml | Where in the UI the string appears |
 | `@meaning` | en-us.yaml | Domain-specific meaning when English is ambiguous |
 | `@no-translate` | en-us.yaml | Terms that should stay in English by default |
-| `@reason` | locale files | Why a particular translation was chosen |
+| `@reason` | locale files | Why a wording was chosen, or why English was kept |
+
+`@reason` carries two meanings. It records why a wording was chosen, and it
+marks a value left identical to its English source as a deliberate keep
+rather than a missed translation. When the `@source` snapshot still matches
+current English, `validate` flags an unmarked identical value and accepts
+either `@reason` or `@override`; a stale snapshot belongs to `drift`.
+
+`merge` preserves a `@reason` across a value change and strips only
+`@override`, so a note written for an earlier wording can outlive it and
+still satisfy the identical-value check. Re-read the note whenever you
+change the value it describes.
 
 ### Examples in en-us.yaml
 
@@ -119,7 +151,7 @@ A Go CLI at `src/go/i18n-report/` for translation maintenance. See
 | `check` | source checks, plus per-locale checks with `--locale` |
 | `source` | Record each translated key's English source as a `@source` comment |
 | `drift` | Detect translated keys whose English source changed |
-| `validate` | Structural checks: placeholders, tags, metadata, overrides |
+| `validate` | Structural checks: placeholders, tags, metadata, overrides, deliberate identity |
 
 Run from the repository root:
 
@@ -140,13 +172,20 @@ Without file arguments, it reads from stdin.
 ## Adding a new language
 
 1. Create an empty locale file `{code}.yaml` in this directory.
-2. Register the locale code in four places: en-us.yaml locale names,
-   `command-api.yaml` enum, `settingsValidator.ts` `checkEnum`, and
-   `settingsValidator.spec.ts` error string.
-3. Run `yarn postinstall` to regenerate Go CLI code from the API spec.
-4. Run `go tool i18n-report translate --locale={code}` to get keys
+2. Register the locale code in three places: the `locale.` display names
+   in en-us.yaml, the `application.locale` enum in `command-api.yaml`,
+   and the `Locale` type in `config/settings.ts`. The settings validator
+   builds its enum from the translation files at build time and needs no
+   edit.
+3. Add the new locale's display name to every other locale file,
+   translated into that file's language: `merge` a one-entry
+   `locale.{code}` translation into each.
+4. Run `yarn postinstall` to regenerate Go CLI code from the API spec.
+5. Run `go tool i18n-report translate --locale={code}` to get keys
    that need translation; translate them and merge with
    `go tool i18n-report merge --locale={code}`.
+6. Run `go tool i18n-report check --locale=all` to verify the
+   registration.
 
 Webpack discovers new YAML files automatically — no other code changes are
 needed.
@@ -163,14 +202,18 @@ needed.
    ```
 3. Run `i18n-report translate --locale=<code>` to find keys that need
    translation, then merge the results with `i18n-report merge`.
-4. Run `i18n-report untranslated` to find hardcoded English strings in
+4. Review `validate --locale=<code>` findings. An `[identical]` finding
+   is a translation that matches a current `@source` without a `@reason`:
+   either translate the key or mark the keep with a `@reason`, then
+   merge with `merge --mode=improve`.
+5. Run `i18n-report untranslated` to find hardcoded English strings in
    Vue/TS files that should be externalized.
 
 CI runs `i18n-report check --locale=all` on every pull request: the
 source gate (unused and undefined keys), the locale registration
-checks, and each locale's structural checks. Periodic and pre-release
-runs add `--strict`, which also requires complete translations (no
-missing or drifted keys). Findings exit 1; operational errors exit 2.
+checks, and each locale's structural checks. Run `--strict` by hand before
+a release to also require complete translations (no missing or drifted
+keys); no configured job adds it. Findings exit 1; operational errors exit 2.
 
 ## Locale switching
 
@@ -206,10 +249,11 @@ leaking callbacks.
 
 ### i18n-report tool
 
-- **Registration cross-validation is string-based** for
-  settingsValidator.ts and its spec test. Generating those registrations
-  from the translation file list would make drift impossible; revisit
-  when the next locale is added.
+- **The `Locale` type in `config/settings.ts` is synced by hand.**
+  `check` cross-validates the `command-api.yaml` enum and the
+  validator's dynamic `...availableLocales` pattern against the
+  translation files, but nothing checks the TypeScript union; a
+  forgotten entry surfaces only where a locale literal meets the type.
 
 ### Scanner gaps
 

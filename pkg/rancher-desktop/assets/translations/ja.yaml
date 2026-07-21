@@ -457,6 +457,9 @@ diagnostics:
   failedCount: '{count}件が失敗、さらに{muted}件がミュートされています'
   # @source Last run:
   lastRun: 最終実行：
+  # @reason English "Never" is elliptical for "never run"; Japanese needs the verb, so 未実行 (not yet run). Full-width parentheses match diagnostics.noFixes.
+  # @source (Never)
+  never: （未実行）
   # @source (No fixes available)
   noFixes: （利用可能な修正はありません）
   results:
@@ -664,8 +667,8 @@ images:
         pull: プル
       # @source Pull
       pull: プル
-    # @reason Restructured for Japanese word order: image before verb, error clause and console hint as full sentences per the file's scan.errorText.
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
+    # @reason Restructured for Japanese word order: image before verb.
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
     errorText: '''''{ image }'''' を{ action }しようとしてエラーが発生しました。詳細はコンソール出力を確認してください。'
     # @reason Japanese puts the verb last; the template conjugates the action noun, composing to イメージをビルドしています... like the file's other progressive messages.
     # @source {action} image...
@@ -734,7 +737,7 @@ images:
       primaryUrl: プライマリ URL
       # @source References
       references: 参考情報
-    # @source Error trying to scan ''{ image }'' — see console output for more information
+    # @source Error trying to scan ''{ image }''. See console output for more information.
     errorText: '''''{ image }'''' のスキャン中にエラーが発生しました。詳細はコンソール出力を確認してください。'
     labels:
       # @reason Vulnerability severity scale rendered as 致命的/高/中/低, the common Japanese mapping for CRITICAL/HIGH/MEDIUM/LOW in security scanners.
@@ -1043,8 +1046,8 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: このオプションには
   locked:
-    # @source Locked due to organization's policy
-    tooltip: 組織のポリシーによりロックされています
+    # @source This setting is locked by organization policy.
+    tooltip: この設定は組織のポリシーによりロックされています。
   nav:
     # @source Application
     application: アプリケーション
@@ -1158,6 +1161,8 @@ progress:
   deletingVirtualMachine: 仮想マシンを削除しています
   # @source DNS configuration
   dnsConfiguration: DNS 設定
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Kubernetes コンポーネントをダウンロードしています
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: 互換性のある kubectl を準備しています
   # @source Ensuring virtualization is supported
@@ -1203,6 +1208,8 @@ progress:
   proxyConfigSetup: プロキシ設定のセットアップ
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop ゲストエージェント
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: 仮想マシンを復旧しています
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 権限がないため設定を再生成しています
   # @source Registering WSL distribution
@@ -1517,6 +1524,9 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: デバッグモードを有効にする
+  # @reason RD_DEBUG_ENABLED is an environment variable name, kept verbatim.
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: RD_DEBUG_ENABLED 環境変数が設定されているため、デバッグモードは変更できません。
   general:
     factoryReset:
       # @reason ファクトリーリセット is the common katakana rendering of Factory Reset; used consistently.

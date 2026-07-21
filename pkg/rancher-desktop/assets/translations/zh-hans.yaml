@@ -522,6 +522,9 @@ diagnostics:
   failedCount: '{count} 项失败，{muted} 项已静音'
   # @source Last run:
   lastRun: 上次运行：
+  # @reason "从未" is an adverb and cannot stand alone in Chinese; the verb 运行 echoes the adjacent "上次运行：" label
+  # @source (Never)
+  never: （从未运行）
   # @source (No fixes available)
   noFixes: （无可用修复）
   results:
@@ -709,8 +712,8 @@ images:
       # @source Pull
       pull: 拉取
     # @reason dropped the space before { action } since the substituted verb is now Chinese; parallels images.scan.errorText 尝试扫描
-    # @source Error trying to { action } ''{ image }'' — see console output for more information
-    errorText: 尝试{ action } ''{ image }'' 时出错 - 详情请查看控制台输出
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: 尝试{ action } ''{ image }'' 时出错。详情请查看控制台输出。
     # @reason 正在 moved into the gerund values; composed text 正在构建镜像... matches the previous translation
     # @source {action} image...
     loadingText: '{action}镜像...'
@@ -780,8 +783,8 @@ images:
       primaryUrl: 主要 URL
       # @source References
       references: 参考
-    # @source Error trying to scan ''{ image }'' — see console output for more information
-    errorText: 尝试扫描 ''{ image }'' 时出错 - 详情请查看控制台输出
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: 尝试扫描 ''{ image }'' 时出错。详情请查看控制台输出。
     labels:
       # @source CRITICAL
       critical: 严重
@@ -1082,8 +1085,8 @@ preferences:
   # @source The option requires
   incompatibleTypeWarningPre: 该选项要求
   locked:
-    # @source Locked due to organization's policy
-    tooltip: 已被组织策略锁定
+    # @source This setting is locked by organization policy.
+    tooltip: 此设置已被组织策略锁定。
   nav:
     # @source Application
     application: 应用程序
@@ -1203,6 +1206,8 @@ progress:
   deletingVirtualMachine: 正在删除虚拟机
   # @source DNS configuration
   dnsConfiguration: DNS 配置
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: 正在下载 Kubernetes 组件
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: 正在确保 kubectl 兼容
   # @source Ensuring virtualization is supported
@@ -1247,6 +1252,8 @@ progress:
   proxyConfigSetup: 代理配置设置
   # @source Rancher Desktop guest agent
   rancherDesktopGuestAgent: Rancher Desktop 来宾代理
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: 正在恢复虚拟机
   # @source Regenerating configuration to account for lack of permissions
   regeneratingConfiguration: 正在重新生成配置以适应权限不足的情况
   # @source Registering WSL distribution
@@ -1575,6 +1582,8 @@ tray:
 troubleshooting:
   # @source Enable debug mode
   debugMode: 启用调试模式
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: 调试模式无法修改，因为已设置 RD_DEBUG_ENABLED 环境变量。
   general:
     factoryReset:
       # @source Factory Reset

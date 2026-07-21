@@ -53,7 +53,7 @@ func reportUndefined(w io.Writer, root, format string) error {
 	} else if len(undefined) == 0 {
 		fmt.Fprintln(w, "No undefined keys found.")
 	} else {
-		fmt.Fprintf(w, "Found %d undefined keys (referenced in code, missing from en-us.yaml):\n", len(undefined))
+		fmt.Fprintf(w, "Found %d undefined %s (referenced in code, missing from en-us.yaml):\n", len(undefined), plural(len(undefined), "key"))
 		for _, k := range sortedKeys(undefined) {
 			fmt.Fprintf(w, "  %s\n", k)
 			for _, ref := range undefined[k] {
@@ -63,7 +63,7 @@ func reportUndefined(w io.Writer, root, format string) error {
 	}
 
 	if len(undefined) > 0 {
-		return findingsError(fmt.Sprintf("%d undefined keys found", len(undefined)))
+		return findingsError(fmt.Sprintf("%d undefined %s found", len(undefined), plural(len(undefined), "key")))
 	}
 	return nil
 }
