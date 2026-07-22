@@ -261,6 +261,12 @@ asyncButton:
     success: Upgrade in corso
     # @source Starting&hellip;
     waiting: Avvio&hellip;
+blogFeed:
+  # @reason Idiomatic Italian for a blog's read-more link; shorter than the literal "Leggi di più", which matters because the link trails the summary on the same line.
+  # @source Read more
+  readMore: Leggi tutto
+  # @source Recent blog posts
+  title: Articoli recenti dal blog
 containerEngine:
   # @source Container Engine
   label: Motore container
@@ -1517,10 +1523,6 @@ systemPreferences:
   cpus: N. di CPU
   # @source Memory (GB)
   memory: Memoria (GB)
-telemetryOptIn:
-  # @reason 'deploy' and 'endpoint' kept in English; established loanwords in Italian dev usage
-  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
-  fineprint: Invia informazioni anonime sull'utilizzo, segnalazioni di errori ecc. per contribuire a migliorare Rancher Desktop. I tuoi dati non verranno condivisi con nessun altro e non viene inclusa alcuna informazione sulle risorse o sugli endpoint specifici di cui esegui il deploy.
 tray:
   # @reason 'container engine' kept in English (established term); the string happens to match the source
   # @source Container engine: {name}

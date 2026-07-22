@@ -23,11 +23,7 @@ function wrap(props: typeof UpdateStatus['$props']) {
     props,
     global: {
       mocks:   { t: tFn },
-      stubs:   {
-        T:          { template: '<span> {{ k }} </span>' },
-        RdCheckbox: { template: '<input type="checkbox">' },
-        Version:    { template: '<span />' },
-      },
+      stubs:   { T: { template: '<span> {{ k }} </span>' } },
     },
     plugins: [FloatingVue],
   });

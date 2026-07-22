@@ -805,6 +805,59 @@ ipcMainProxy.handle('api-get-credentials', () => mainEvents.invoke('api-get-cred
 
 ipcMainProxy.handle('get-locked-fields', () => settingsImpl.getLockedSettings());
 
+const blogFeedURL = 'https://docs.rancherdesktop.io/blog/rss.xml';
+// The feed runs well under a megabyte, so 4 MiB leaves headroom.
+const blogFeedSizeLimit = 4 * 1024 * 1024;
+// The General page refetches on every visit, so cache the feed. Expire it
+// hourly so an instance left running for days still sees new posts.
+const blogFeedCacheLifetime = 60 * 60 * 1000;
+let blogFeedCache: { expires: number, feed: string } | undefined;
+
+ipcMainProxy.handle('get-blog-feed', async() => {
+  if (blogFeedCache && Date.now() < blogFeedCache.expires) {
+    return blogFeedCache.feed;
+  }
+
+  // Fetch in the main process to avoid the renderer's CORS restrictions;
+  // the renderer parses the returned XML.
+  // Time out a stalled request so the renderer's invoke does not hang forever.
+  const response = await Electron.net.fetch(blogFeedURL, { signal: AbortSignal.timeout(10_000) });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`Failed to fetch blog feed: ${ response.status } ${ response.statusText }`);
+  }
+
+  // The timeout bounds how long the response may stream, but not how much
+  // arrives in that time. Fail on an oversized feed, because a truncated
+  // document would not parse.
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+
+    if (done) {
+      break;
+    }
+
+    size += value.byteLength;
+    if (size > blogFeedSizeLimit) {
+      await reader.cancel();
+      throw new Error(`Blog feed exceeds ${ blogFeedSizeLimit } bytes`);
+    }
+
+    chunks.push(value);
+  }
+
+  const feed = Buffer.concat(chunks).toString('utf8');
+
+  // Only successes land here, so a failed fetch retries on the next visit.
+  blogFeedCache = { expires: Date.now() + blogFeedCacheLifetime, feed };
+
+  return feed;
+});
+
 function backendIsBusy() {
   return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);
 }

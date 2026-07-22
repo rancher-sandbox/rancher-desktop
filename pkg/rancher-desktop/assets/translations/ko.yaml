@@ -262,6 +262,11 @@ asyncButton:
     success: 업그레이드 중
     # @source Starting&hellip;
     waiting: 시작 중&hellip;
+blogFeed:
+  # @source Read more
+  readMore: 더 보기
+  # @source Recent blog posts
+  title: 블로그 최신 글
 containerEngine:
   # @source Container Engine
   label: 컨테이너 엔진
@@ -1464,9 +1469,6 @@ systemPreferences:
   cpus: CPU 수
   # @source Memory (GB)
   memory: 메모리(GB)
-telemetryOptIn:
-  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
-  fineprint: Rancher Desktop 개선에 도움이 되도록 익명화된 사용 정보, 오류 보고서 등을 전송합니다. 데이터는 다른 누구와도 공유되지 않으며, 배포하는 특정 리소스나 엔드포인트에 대한 정보는 포함되지 않습니다.
 tray:
   # @source Container engine: {name}
   containerEngine: '컨테이너 엔진: {name}'

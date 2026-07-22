@@ -128,6 +128,8 @@ export interface IpcMainEvents {
  */
 export interface IpcMainInvokeEvents {
   'get-locked-fields':         () => import('@pkg/config/settings').LockedSettingsType;
+  /** Fetch the raw RSS XML of the Rancher Desktop blog. */
+  'get-blog-feed':             () => string;
   'settings-write':            (arg: RecursivePartial<import('@pkg/config/settings').Settings>) => void;
   'transient-settings-fetch':  () => import('@pkg/config/transientSettings').TransientSettings;
   'transient-settings-update': (arg: RecursivePartial<import('@pkg/config/transientSettings').TransientSettings>) => void;

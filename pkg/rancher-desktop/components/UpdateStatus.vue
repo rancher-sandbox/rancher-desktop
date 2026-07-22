@@ -1,82 +1,64 @@
 <template>
-  <div>
-    <div class="version">
-      <version />
-      <rd-checkbox
-        v-if="updatePossible"
-        v-model:value="updatesEnabled"
-        class="updatesEnabled"
-        :label="t('updateStatus.checkForUpdates')"
-        :is-locked="autoUpdateLocked"
-      />
-    </div>
-    <card
-      v-if="hasUpdate"
-      ref="updateInfo"
-      :show-highlight-border="false"
-    >
-      <template #title>
-        <div class="type-title">
-          <h3>{{ t('updateStatus.updateAvailable') }}</h3>
-        </div>
-      </template>
-      <template #body>
-        <div ref="updateStatus">
-          <p>
-            {{ statusMessage }}
-          </p>
-          <p
-            v-if="updateReady"
-            class="update-notification"
+  <div class="update-status">
+    <template v-if="hasUpdate">
+      <h3>{{ t('updateStatus.updateAvailable') }}</h3>
+      <card
+        ref="updateInfo"
+        :show-highlight-border="false"
+      >
+        <template #body>
+          <div ref="updateStatus">
+            <p>
+              {{ statusMessage }}
+            </p>
+            <p
+              v-if="updateReady"
+              class="update-notification"
+            >
+              {{ t('updateStatus.restartToApply') }}
+            </p>
+          </div>
+          <details
+            v-if="detailsMessage"
+            class="release-notes"
           >
-            {{ t('updateStatus.restartToApply') }}
+            <summary>{{ t('updateStatus.releaseNotes') }}</summary>
+            <div
+              ref="releaseNotes"
+              v-html="detailsMessage"
+            />
+          </details>
+        </template>
+        <template #actions>
+          <button
+            v-if="updateReady"
+            ref="applyButton"
+            class="btn role-secondary"
+            :disabled="applying"
+            @click="applyUpdate"
+          >
+            {{ applyMessage }}
+          </button>
+          <span v-else />
+        </template>
+      </card>
+    </template>
+    <template v-else-if="unsupportedUpdateAvailable">
+      <h3>{{ t('updateStatus.unsupported.title') }}</h3>
+      <card :show-highlight-border="false">
+        <template #body>
+          <p>
+            {{ t('updateStatus.unsupported.message') }}
           </p>
-        </div>
-        <details
-          v-if="detailsMessage"
-          class="release-notes"
-        >
-          <summary>{{ t('updateStatus.releaseNotes') }}</summary>
-          <div
-            ref="releaseNotes"
-            v-html="detailsMessage"
-          />
-        </details>
-      </template>
-      <template #actions>
-        <button
-          v-if="updateReady"
-          ref="applyButton"
-          class="btn role-secondary"
-          :disabled="applying"
-          @click="applyUpdate"
-        >
-          {{ applyMessage }}
-        </button>
-        <span v-else />
-      </template>
-    </card>
-    <card
-      v-else-if="unsupportedUpdateAvailable"
-      :show-highlight-border="false"
-    >
-      <template #title>
-        <div class="type-title">
-          <h3>{{ t('updateStatus.unsupported.title') }}</h3>
-        </div>
-      </template>
-      <template #body>
-        <p>
-          {{ t('updateStatus.unsupported.message') }}
-        </p>
-        <br>
-        <!-- v-clean-html: the translated string embeds a link -->
-        <p v-clean-html="t('updateStatus.unsupported.seeDocumentation')" />
-      </template>
-      <template #actions>
-        <div />
-      </template>
-    </card>
+          <br>
+          <!-- v-clean-html: the translated string embeds a link -->
+          <p v-clean-html="t('updateStatus.unsupported.seeDocumentation')" />
+        </template>
+        <template #actions>
+          <div />
+        </template>
+      </card>
+    </template>
   </div>
 </template>
 
@@ -86,8 +68,6 @@ import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { defineComponent } from 'vue';
 
-import Version from '@pkg/components/Version.vue';
-import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import { UpdateState } from '@pkg/main/update';
 
 import type { PropType } from 'vue';
@@ -96,9 +76,7 @@ const { Card } = (Components as any).default ?? Components;
 
 export default defineComponent({
   name:       'update-status',
-  components: {
-    Version, Card, RdCheckbox,
-  },
+  components: { Card },
 
   props: {
     enabled: {
@@ -113,10 +91,6 @@ export default defineComponent({
       type:    String,
       default: undefined,
     },
-    isAutoUpdateLocked: {
-      type:    Boolean,
-      default: false,
-    },
   },
 
   data() {
@@ -124,23 +98,8 @@ export default defineComponent({
   },
 
   computed: {
-    updatesEnabled: {
-      get(): boolean {
-        return this.enabled;
-      },
-      set(value: boolean) {
-        // We emit an event, but _don't_ set the prop here; we let the containing
-        // page update our prop instead.
-        this.$emit('enabled', value);
-      },
-    },
-
-    updatePossible(): boolean {
-      return !!this.updateState?.configured;
-    },
-
     hasUpdate(): boolean {
-      return this.updatesEnabled && !!this.updateState?.available;
+      return this.enabled && !!this.updateState?.available;
     },
 
     updateReady(): boolean {
@@ -197,10 +156,6 @@ export default defineComponent({
     unsupportedUpdateAvailable(): boolean {
       return !this.hasUpdate && !!this.updateState?.info?.unsupportedUpdateAvailable;
     },
-
-    autoUpdateLocked(): boolean {
-      return this.isAutoUpdateLocked;
-    },
   },
 
   methods: {
@@ -214,10 +169,53 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-  .version {
+  // Shrink so long release notes scroll inside the card, not push the blog off.
+  .update-status {
     display: flex;
-    justify-content: space-between
+    flex-direction: column;
+    min-height: 0;
+
+    // Match the blog feed's heading above its box.
+    h3 {
+      margin-bottom: 0.75rem;
+    }
   }
+
+  // Keep the card tall enough to read the notes once they are open.
+  .update-status:has(.release-notes[open]) {
+    min-height: 14rem;
+  }
+
+  :deep(.card-container) {
+    // Drop the Card's grid margin so the box aligns with the blog box.
+    margin-left: 0;
+    margin-right: 0;
+    // Fill and shrink past the Card's 100px minimum, so the body scrolls.
+    flex: 1;
+    min-height: 0;
+  }
+
+  // Hide the empty title and <hr> the Card draws with no title slot.
+  :deep(.card-title),
+  :deep(.card-wrap > hr) {
+    display: none;
+  }
+
+  // card-wrap is a plain block here; make it a column so the body can scroll.
+  :deep(.card-wrap) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  // Scroll long notes inside the card; anchor to the top (the Card centres it).
+  :deep(.card-body) {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    justify-content: flex-start;
+  }
+
   .update-notification {
     font-weight: 900;
   }

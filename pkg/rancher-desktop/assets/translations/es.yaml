@@ -260,6 +260,11 @@ asyncButton:
     success: Actualizando
     # @source Starting&hellip;
     waiting: Iniciando&hellip;
+blogFeed:
+  # @source Read more
+  readMore: Leer más
+  # @source Recent blog posts
+  title: Publicaciones recientes del blog
 containerEngine:
   # @source Container Engine
   label: Motor de contenedores
@@ -1491,10 +1496,6 @@ systemPreferences:
   cpus: N.º de CPU
   # @source Memory (GB)
   memory: Memoria (GB)
-telemetryOptIn:
-  # @reason 'endpoints' kept in English; it is the common term in Spanish technical usage.
-  # @source Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
-  fineprint: Envía información de uso anonimizada, informes de errores, etc. para ayudar a mejorar Rancher Desktop. Sus datos no se compartirán con nadie más y no se incluye información sobre los recursos o endpoints específicos que esté desplegando.
 tray:
   # @source Container engine: {name}
   containerEngine: 'Motor de contenedores: {name}'

@@ -948,6 +948,9 @@ containerStats:
     write: Write
   processes: Processes
   noProcesses: No processes found.
+blogFeed:
+  readMore: Read more
+  title: Recent blog posts
 # @no-translate — product name (title of the Rancher cluster dashboard window)
 dashboard:
   windowTitle: Rancher Dashboard
@@ -1133,9 +1136,6 @@ progress:
 systemPreferences:
   cpus: '# CPUs'
   memory: Memory (GB)
-telemetryOptIn:
-  # @no-translate Rancher Desktop
-  fineprint: Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
 updateStatus:
   applyingUpdate: Applying update...
   available: An update to version {version} is available
