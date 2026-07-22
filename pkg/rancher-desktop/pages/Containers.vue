@@ -107,22 +107,27 @@
           </div>
         </td>
       </template>
-      <template #group-row="{ group }">
+      <template #group-row="{ group, fullColspan }">
         <tr
           class="group-row"
           :aria-expanded="!collapsed[group.ref]"
           :data-testid="`container-group-${group.ref}`"
         >
-          <td :colspan="headers.length + 1">
+          <td
+            class="row-check"
+            align="middle"
+          >
+            <Checkbox
+              class="group-select-checkbox"
+              data-testid="container-group-select"
+              :value="isGroupSelected(group)"
+              :indeterminate="isGroupIndeterminate(group)"
+              @update:value="setGroupSelected(group, $event)"
+              @click.stop
+            />
+          </td>
+          <td :colspan="fullColspan - 1">
             <div class="group-tab">
-              <Checkbox
-                class="group-select-checkbox"
-                data-testid="container-group-select"
-                :value="isGroupSelected(group)"
-                :indeterminate="isGroupIndeterminate(group)"
-                @update:value="setGroupSelected(group, $event)"
-                @click.stop
-              />
               <i
                 data-title="Toggle Expand"
                 :class="{
