@@ -241,7 +241,9 @@ export default defineComponent({
       if (!this.containers) {
         return [];
       }
-      return Object.values(this.containers)
+      const ids = new Set();
+
+      const result = Object.values(this.containers)
         .filter(container => {
           // Filter out containers from the 'kube-system' namespace
           return this.supportsNamespaces || container.labels['io.kubernetes.pod.namespace'] !== 'kube-system';
@@ -255,26 +257,49 @@ export default defineComponent({
           // Both or running, or neither.
           return a.state.localeCompare(b.state) || a.id.localeCompare(b.id);
         })
-        .map(container => merge({}, container, {
-          uptime:           container.started && dayjs(container.started).toNow(true),
-          availableActions: this.getContainerActions(container),
-          stopContainer:    (args) => {
-            this.execCommand('stop', this.containerCommandTarget(container, args));
-          },
-          restartContainer:   (args) => {
-            this.execCommand('restart', this.containerCommandTarget(container, args));
-          },
-          startContainer:   (args) => {
-            this.execCommand('start', this.containerCommandTarget(container, args));
-          },
-          deleteContainer:   (args) => {
-            this.execCommand('rm', this.containerCommandTarget(container, args));
-          },
-          viewInfo: () => {
-            this.viewInfo(container);
-          },
-          portList: this.getPortList(container),
-        }));
+        .map(container => {
+          ids.add(container.id);
+
+          // Reuse the same wrapper object across recomputes (keyed by
+          // container id) instead of merging into a new {} every time.
+          // SortableTable's row selection tracks rows by object identity, and
+          // this computed re-runs on any container update anywhere on the
+          // daemon (docker events aren't scoped to our own containers), so a
+          // fresh object per recompute would silently drop the selection.
+          const row = merge(this._rowCache[container.id] ?? {}, container, {
+            uptime:           container.started && dayjs(container.started).toNow(true),
+            availableActions: this.getContainerActions(container),
+            stopContainer:    (args) => {
+              this.execCommand('stop', this.containerCommandTarget(container, args));
+            },
+            restartContainer:   (args) => {
+              this.execCommand('restart', this.containerCommandTarget(container, args));
+            },
+            startContainer:   (args) => {
+              this.execCommand('start', this.containerCommandTarget(container, args));
+            },
+            deleteContainer:   (args) => {
+              this.execCommand('rm', this.containerCommandTarget(container, args));
+            },
+            viewInfo: () => {
+              this.viewInfo(container);
+            },
+            portList: this.getPortList(container),
+          });
+
+          this._rowCache[container.id] = row;
+
+          return row;
+        });
+
+      // Drop cache entries for containers that no longer exist.
+      for (const id of Object.keys(this._rowCache)) {
+        if (!ids.has(id)) {
+          delete this._rowCache[id];
+        }
+      }
+
+      return result;
     },
     errorMessage() {
       if (this.execError) {
@@ -289,6 +314,11 @@ export default defineComponent({
       }
       return null;
     },
+  },
+  created() {
+    // Deliberately not part of data(): this must stay a plain (non-reactive)
+    // object, since `rows` both reads and writes it on every recompute.
+    this._rowCache = {};
   },
   mounted() {
     this.$store.dispatch('page/setHeader', {

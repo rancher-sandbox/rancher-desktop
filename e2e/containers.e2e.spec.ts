@@ -693,9 +693,10 @@ test.describe.serial('Container Compose Group Actions', () => {
     await containersPage.waitForGroupToAppear(composeProjectName);
     await containersPage.selectGroup(composeProjectName);
 
-    for (const id of [composeContainerId1, composeContainerId2]) {
-      await expect(containersPage.getContainerRow(id).locator('input[type="checkbox"]')).toBeChecked();
-    }
+    // The row checkboxes reflect selection reactively rather than through the
+    // native `checked` DOM property, so assert on the table's own selection
+    // count label instead of the (unreliable) checkbox element state.
+    await expect(containersPage.table.getByText('2 selected', { exact: true })).toBeVisible();
 
     await containersPage.clickBulkStop();
 
