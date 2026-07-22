@@ -97,3 +97,58 @@ describe('i18n store getters', () => {
     expect(exists('no.such.key')).toBe(false);
   });
 });
+
+describe('availableLocales getter', () => {
+  const availableLocales = (state: unknown) => (i18n.getters as any).availableLocales(state);
+
+  // Codes whose alphabetical order differs from their labels', as in the real
+  // locale set: by code ja < ko < pt-br, by label Português < 한국어 < 日本語.
+  function scriptState(selected: string | null) {
+    return {
+      default:      'en-us',
+      selected,
+      available:    ['ja', 'ko', 'pt-br'],
+      translations: {
+        'en-us': {
+          locale: {
+            ja: 'Japanese', ko: 'Korean', 'pt-br': 'Portuguese (Brazilian)',
+          },
+        },
+        ja:      { locale: { ja: '日本語' } },
+        ko:      { locale: { ko: '한국어' } },
+        'pt-br': { locale: { 'pt-br': 'Português (Brasil)' } },
+      },
+    };
+  }
+
+  // German collates Ä with A, Swedish sorts it after Z.
+  function collationState(selected: string) {
+    return {
+      default:      'en-us',
+      selected,
+      available:    ['de', 'sv'],
+      translations: {
+        'en-us': { locale: { de: 'Zebra', sv: 'Äpfel' } },
+        de:      { locale: { de: 'Zebra' } },
+        sv:      { locale: { sv: 'Äpfel' } },
+      },
+    };
+  }
+
+  it('orders locales by label rather than by locale code', () => {
+    expect(Object.keys(availableLocales(scriptState('en-us')))).toEqual(['pt-br', 'ko', 'ja']);
+  });
+
+  it('collates in the selected locale', () => {
+    expect(Object.keys(availableLocales(collationState('de')))).toEqual(['sv', 'de']);
+    expect(Object.keys(availableLocales(collationState('sv')))).toEqual(['de', 'sv']);
+  });
+
+  it('collates with the default locale before a selection is made', () => {
+    expect(Object.keys(availableLocales(scriptState(null)))).toEqual(['pt-br', 'ko', 'ja']);
+  });
+
+  it('collates with the default locale when the selection is not a bundled locale', () => {
+    expect(Object.keys(availableLocales(scriptState('none')))).toEqual(['pt-br', 'ko', 'ja']);
+  });
+});

@@ -25,21 +25,28 @@ export const state = function() {
 
 export const getters = {
   availableLocales(state) {
-    const out = {};
-
-    for ( const locale of state.available ) {
+    const labelled = state.available.map((locale) => {
       const nativeName = get(state.translations[locale], `locale.${ locale }`);
       const translatedName = get(state.translations[state.selected], `locale.${ locale }`) ??
                           get(state.translations[state.default], `locale.${ locale }`);
 
       if ( !nativeName || !translatedName || nativeName === translatedName ) {
-        out[locale] = nativeName ?? translatedName ?? locale;
-      } else {
-        out[locale] = `${ nativeName } (${ translatedName })`;
+        return [locale, nativeName ?? translatedName ?? locale];
       }
-    }
 
-    return out;
+      return [locale, `${ nativeName } (${ translatedName })`];
+    });
+
+    // Sort by the label the user reads, collated in the selected locale.
+    // Fall back to the default when the selection is not a bundled locale,
+    // because Intl.Collator rejects an unknown tag. The selection is null
+    // until init runs, and older settings can carry 'none'.
+    const collationLocale = state.available.includes(state.selected) ? state.selected : state.default;
+    const collator = new Intl.Collator(collationLocale);
+
+    labelled.sort(([, a], [, b]) => collator.compare(a, b));
+
+    return Object.fromEntries(labelled);
   },
 
   t: state => (key, args) => {
