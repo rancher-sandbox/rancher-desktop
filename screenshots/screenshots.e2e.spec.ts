@@ -515,26 +515,29 @@ test.describe.serial('Main App Test', () => {
         await expect(e2ePreferences.virtualMachine.mountType).toBeVisible();
         await prefScreenshot.take('virtualMachine', 'tabVolumes');
 
-        await e2ePreferences.virtualMachine.ninep.click();
-        await expect(e2ePreferences.virtualMachine.ninep).toBeChecked();
-        await page.waitForTimeout(afterCheckedTimeout);
-        await prefScreenshot.take('virtualMachine', 'tabVolumes_9P');
+        // 9p requires QEMU, which is the default on Linux.  macOS defaults to
+        // VZ, so its 9p screenshot is captured after switching to QEMU below.
+        if (!isMac) {
+          await e2ePreferences.virtualMachine.ninep.click();
+          await expect(e2ePreferences.virtualMachine.ninep).toBeChecked();
+          await page.waitForTimeout(afterCheckedTimeout);
+          await prefScreenshot.take('virtualMachine', 'tabVolumes_9P');
+        }
       });
 
       test.describe('Mac only tests', () => {
         test.skip(!isMac, 'Mac only test');
 
-        test('EmulationTab', async() => {
+        test('EmulationTab-vz', async() => {
           await e2ePreferences.virtualMachine.tabEmulation.click();
           await expect(e2ePreferences.virtualMachine.vmType).toBeVisible();
-          await prefScreenshot.take('virtualMachine', 'tabEmulation');
 
-          // If applicable, switch to VZ so we can use virtiofs.
+          // Ensure VZ (the default) is selected so virtiofs is available next.
           if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
-            await page.waitForTimeout(afterCheckedTimeout);
-            await expect(e2ePreferences.virtualMachine.vz).toBeVisible();
             await e2ePreferences.virtualMachine.vz.click({ position: { x: 10, y: 10 } });
             await expect(e2ePreferences.virtualMachine.vz).toBeChecked();
+            await page.waitForTimeout(afterCheckedTimeout);
+            await prefScreenshot.take('virtualMachine', 'tabEmulation_vz');
           }
         });
 
@@ -548,11 +551,25 @@ test.describe.serial('Main App Test', () => {
           }
         });
 
-        test('EmulationTab-vz', async() => {
+        test('VolumesTab-9p', async() => {
+          // 9p is only valid with QEMU, so switch the VM type before selecting it.
           await e2ePreferences.virtualMachine.tabEmulation.click();
-          if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
-            await prefScreenshot.take('virtualMachine', 'tabEmulation_vz');
-          }
+          await e2ePreferences.virtualMachine.qemu.click({ position: { x: 10, y: 10 } });
+          await expect(e2ePreferences.virtualMachine.qemu).toBeChecked();
+
+          await e2ePreferences.virtualMachine.tabVolumes.click();
+          await e2ePreferences.virtualMachine.ninep.click();
+          await expect(e2ePreferences.virtualMachine.ninep).toBeChecked();
+          await page.waitForTimeout(afterCheckedTimeout);
+          await prefScreenshot.take('virtualMachine', 'tabVolumes_9P');
+        });
+
+        test('EmulationTab', async() => {
+          // QEMU is still selected from the previous test; the docs embed this
+          // as the QEMU emulation screenshot.
+          await e2ePreferences.virtualMachine.tabEmulation.click();
+          await expect(e2ePreferences.virtualMachine.qemu).toBeChecked();
+          await prefScreenshot.take('virtualMachine', 'tabEmulation');
         });
       });
     });
