@@ -17,19 +17,18 @@ import babelConfig from '@/babel.config.cjs';
 import packageJson from '@/package.json' with { type: 'json' };
 
 /**
- * Resolve the way the bundle will at runtime: a subpath can be exported to
- * `import` but not to `require`, so `require.resolve` would reject specifiers
- * Node accepts.  `import.meta.resolve` only maps the specifier to a URL and
- * reports a missing file for an absent package alone, so stat the target too.
- *
- * This catches a missing or renamed file, not every specifier Node will reject.
- * We run under tsx, whose resolver still walks a directory to its `index.js`
- * where the ESM loader raises ERR_UNSUPPORTED_DIR_IMPORT.  Telling that apart
- * from an `exports` map pointing somewhere else means resolving the map
- * ourselves, which is not worth it while no dependency imports a directory.
+ * Determine whether a specifier is likely to be resolvable at run time.  This
+ * also catches missing files; however, it is possible that it may allow imports
+ * that Node will reject at run time.
  */
 function canResolve(specifier: string): boolean {
   try {
+    // Because a `package.json` can declare conditional imports [1] that vary
+    // between `import` and `require`, we must use `import.meta.resolve` to do the
+    // resolution instead of `require.resolve`.  However, `import.meta.resolve`
+    // only determines the path, not whether the file exists; we therefore must
+    // also do a `stat` to make sure that is valid.
+    // [1]: https://nodejs.org/api/packages.html#conditional-exports
     return fs.statSync(fileURLToPath(import.meta.resolve(specifier))).isFile();
   } catch {
     return false;
@@ -38,12 +37,12 @@ function canResolve(specifier: string): boolean {
 
 /**
  * Spell out the file a subpath import refers to, because Node's ESM loader does
- * no extension resolution.  Packages that publish an `exports` map resolve
+ * not do extension resolution.  Packages that publish an `exports` map resolve
  * their own subpaths, so try the request unchanged as well.  A request that
  * resolves no way at all would fail once packaged, so fail the build instead.
  */
 function externalSpecifier(request: string): string {
-  const candidates = path.extname(request) ? [request] : [`${ request }.js`, request];
+  const candidates = [`${ request }.js`, request];
 
   for (const candidate of candidates) {
     if (canResolve(candidate)) {
@@ -54,26 +53,30 @@ function externalSpecifier(request: string): string {
 }
 
 /**
- * Keep runtime dependencies out of the bundle.  A string external only matches
- * the request as a whole, so a subpath import such as
- * `electron-updater/out/MacUpdater` misses the package name and gets bundled.
- * Bundling a runtime dependency is worse than wasteful: its own `require()` of
- * another external becomes an ESM namespace import, which carries only the named
- * exports Node can find by static analysis.  fs-extra assembles its exports in a
- * loop, so electron-updater called an undefined `readFile` and auto-update died.
+ * externalsEntry returns a function for webpack's `externals` configuration [1]
+ * to avoid bundling our listed dependencies.  This is needed as we sometimes
+ * import files by reaching into the package directly, instead of simply
+ * importing the top-level entry point, likely because the desired exports are
+ * not available at the top level; for example, `electron-updater/out/MacUpdater`.
+ * Bundling those dependencies causes issues as it is done via static analysis,
+ * and `electron-updater` does `require('fs-extra')` which produces dynamic
+ * exports that could not be detected via that static analysis.
  *
- * `module-import` leaves a dynamic import dynamic, where plain `module` hoists it
- * to the top of the bundle; @napi-rs/xattr ships no Windows binding, so it must
- * stay behind its `import()`.
+ * @param dependencies The npm packages to avoid bundling.
+ *
+ * [1]: https://webpack.js.org/configuration/externals/#function
  */
-function externalsEntry(dependencies: Record<string, string>) {
-  return ({ request }: { request?: string }, callback: (error?: null, result?: string) => void) => {
+function externalsEntry(dependencies: Set<string>) {
+  return ({ request }: webpack.ExternalItemFunctionData, callback: (error?: null, result?: webpack.ExternalItemValue) => void) => {
     const packageName = /^(?:@[^/]+\/)?[^/]+/.exec(request ?? '')?.[0];
 
-    if (!packageName || !Object.hasOwn(dependencies, packageName)) {
+    if (!packageName || !dependencies.has(packageName)) {
       return callback();
     }
 
+    // `module-import` leaves a dynamic import dynamic, where plain `module`
+    // hoists it to the top of the bundle; @napi-rs/xattr ships no Windows
+    // binding, so it must stay behind its `import()`.
     return callback(null, `module-import ${ externalSpecifier(request ?? '') }`);
   };
 }
@@ -134,8 +137,11 @@ export default {
    * electron-builder ships optional dependencies too, and background.ts loads
    * one of them (posix-node) on Linux.
    */
-  get runtimeDependencies(): Record<string, string> {
-    return { ...this.packageMeta.dependencies, ...this.packageMeta.optionalDependencies };
+  get runtimeDependencies(): Set<string> {
+    return new Set([
+      ...Object.keys(this.packageMeta.dependencies),
+      ...Object.keys(this.packageMeta.optionalDependencies),
+    ]);
   },
 
   /**
