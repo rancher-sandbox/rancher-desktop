@@ -88,6 +88,26 @@ test.describe.serial('Containers Tests', () => {
     await expect(containerLogsPage.loadingIndicator).not.toBeVisible();
   });
 
+  test('should keep the terminal fitted after zooming out', async() => {
+    const containerLogsPage = new ContainerLogsPage(page);
+
+    await containerLogsPage.waitForLogsToLoad();
+    expect(await containerLogsPage.getTerminalRows()).toBeGreaterThan(5);
+
+    // Zooming out must not collapse the terminal to a single row (#10543).
+    await electronApp.evaluate(({ BrowserWindow }, zoomLevel) => {
+      BrowserWindow.getAllWindows()[0]?.webContents.setZoomLevel(zoomLevel);
+    }, -2);
+
+    try {
+      await expect.poll(() => containerLogsPage.getTerminalRows()).toBeGreaterThan(5);
+    } finally {
+      await electronApp.evaluate(({ BrowserWindow }) => {
+        BrowserWindow.getAllWindows()[0]?.webContents.setZoomLevel(0);
+      });
+    }
+  });
+
   test('should show container information', async() => {
     const containerLogsPage = new ContainerLogsPage(page);
 
