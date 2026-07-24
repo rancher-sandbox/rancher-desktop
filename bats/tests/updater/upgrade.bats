@@ -19,6 +19,15 @@ local_setup_file() {
     # Not a `.log`: the application deletes every log file it does not own.
     export UPDATE_SERVER_LOG="$PATH_LOGS/update-server.txt"
 
+    # electron-updater stages the download in the directory that
+    # updaterCacheDirName names: a "-updater" sibling of the app cache when
+    # packaged, the cache itself under `yarn dev`.
+    if using_dev_mode; then
+        export UPDATE_PENDING_DIR="$PATH_CACHE/pending"
+    else
+        export UPDATE_PENDING_DIR="${PATH_CACHE}-updater/pending"
+    fi
+
     if is_linux; then
         skip 'the updater only downloads on Linux when the app runs from an AppImage'
     fi
@@ -87,6 +96,13 @@ assert_update_log_contains() { # <pattern>
     # update.log is expected, and installs nothing.
 }
 
+@test 'the update is staged where factory reset looks for it' {
+    # `rdctl factory-reset` derives this path from the app cache directory, so a
+    # layout change in electron-updater leaves the download behind.
+    assert_update_log_contains " has been downloaded to ${UPDATE_PENDING_DIR}/"
+    assert_exists "$UPDATE_PENDING_DIR"
+}
+
 @test 'the updater resolved its bundled dependencies' {
     # `(0 , o.readFile) is not a function`: electron-updater got bundled into the
     # main process, and its own imports lost the exports Node cannot see.
@@ -99,4 +115,14 @@ assert_update_log_contains() { # <pattern>
 
 @test 'shut down' {
     rdctl shutdown
+}
+
+@test 'factory reset deletes the staged update' {
+    if using_dev_mode; then
+        skip 'the dev update config stages inside the app cache, which the reset keeps'
+    fi
+    # Not the `factory_reset` helper: it deletes the staged update itself, and
+    # would hide a reset that leaves it behind.
+    rdctl reset --factory
+    assert_not_exists "$UPDATE_PENDING_DIR"
 }
