@@ -3,6 +3,8 @@
  */
 
 import childProcess from 'node:child_process';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'path';
 import util from 'util';
 
@@ -13,6 +15,68 @@ import webpack from 'webpack';
 
 import babelConfig from '@/babel.config.cjs';
 import packageJson from '@/package.json' with { type: 'json' };
+
+/**
+ * Determine whether a specifier is likely to be resolvable at run time.  This
+ * also catches missing files; however, it is possible that it may allow imports
+ * that Node will reject at run time.
+ */
+function canResolve(specifier: string): boolean {
+  try {
+    // Because a `package.json` can declare conditional imports [1] that vary
+    // between `import` and `require`, we must use `import.meta.resolve` to do the
+    // resolution instead of `require.resolve`.  However, `import.meta.resolve`
+    // only determines the path, not whether the file exists; we therefore must
+    // also do a `stat` to make sure that is valid.
+    // [1]: https://nodejs.org/api/packages.html#conditional-exports
+    return fs.statSync(fileURLToPath(import.meta.resolve(specifier))).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Spell out the file a subpath import refers to, because Node's ESM loader does
+ * not do extension resolution.  Packages that publish an `exports` map resolve
+ * their own subpaths, so try the request unchanged as well.  A request that
+ * resolves no way at all would fail once packaged, so fail the build instead.
+ */
+function externalSpecifier(request: string): string {
+  const candidates = [`${ request }.js`, request];
+  const resolved = candidates.find(canResolve);
+
+  if (!resolved) {
+    throw new Error(`Cannot resolve external "${ request }"; Node will not resolve it at runtime either.`);
+  }
+
+  return resolved;
+}
+
+/**
+ * externalsEntry returns a function for webpack's `externals` configuration [1]
+ * to avoid bundling our listed dependencies.  This is needed as we sometimes
+ * import files by reaching into the package directly, instead of simply
+ * importing the top-level entry point, likely because the desired exports are
+ * not available at the top level; for example, `electron-updater/out/MacUpdater`.
+ * Bundling those dependencies causes issues as it is done via static analysis,
+ * and `electron-updater` does `require('fs-extra')` which produces dynamic
+ * exports that could not be detected via that static analysis.
+ *
+ * @param dependencies The npm packages to avoid bundling.
+ *
+ * [1]: https://webpack.js.org/configuration/externals/#function
+ */
+function externalsEntry(dependencies: Set<string>) {
+  return ({ request }: webpack.ExternalItemFunctionData, callback: (error?: null, result?: webpack.ExternalItemValue) => void) => {
+    const packageName = /^(?:@[^/]+\/)?[^/]+/.exec(request ?? '')?.[0];
+
+    if (!packageName || !dependencies.has(packageName)) {
+      return callback();
+    }
+
+    return callback(null, externalSpecifier(request ?? ''));
+  };
+}
 
 /**
  * A promise that is resolved when the child exits.
@@ -63,6 +127,18 @@ export default {
   /** The package.json metadata. */
   get packageMeta() {
     return packageJson;
+  },
+
+  /**
+   * Packages resolved from node_modules at runtime rather than bundled.
+   * electron-builder ships optional dependencies too, and background.ts loads
+   * one of them (posix-node) on Linux.
+   */
+  get runtimeDependencies(): Set<string> {
+    return new Set([
+      ...Object.keys(this.packageMeta.dependencies),
+      ...Object.keys(this.packageMeta.optionalDependencies),
+    ]);
   },
 
   /**
@@ -208,11 +284,15 @@ export default {
           __dirname:  false,
           __filename: false,
         },
-        entry:       { background: path.resolve(this.rootDir, 'background') },
-        experiments: { outputModule: true },
-        externals:   [...Object.keys(this.packageMeta.dependencies)],
-        devtool:     this.isDevelopment ? 'source-map' : false,
-        resolve:     {
+        entry:         { background: path.resolve(this.rootDir, 'background') },
+        experiments:   { outputModule: true },
+        // `module-import` leaves a dynamic import dynamic, where plain `module`
+        // hoists it to the top of the bundle; @napi-rs/xattr ships no Windows
+        // binding, so it must stay behind its `import()`.
+        externalsType: 'module-import',
+        externals:     [externalsEntry(this.runtimeDependencies)],
+        devtool:       this.isDevelopment ? 'source-map' : false,
+        resolve:       {
           alias:      { '@pkg': path.resolve(this.rootDir, 'pkg', 'rancher-desktop') },
           extensions: ['.ts', '.js', '.json', '.node'],
           modules:    ['node_modules'],
@@ -283,10 +363,17 @@ export default {
           library:  { type: 'commonjs2' },
           path:     path.join(this.rootDir, 'resources'),
         },
-        experiments: { outputModule: false },
+        experiments:   { outputModule: false },
+        externalsType: 'commonjs2',
       };
 
       const result = _.merge({}, await this.webpackConfig, overrides);
+
+      // The preload script is loaded into a sandboxed renderer, from outside the
+      // asar, so it can resolve neither npm packages nor the app's node_modules.
+      // Bundle everything.  Assigned after the merge because lodash merges
+      // arrays element-wise, which would keep the main process's entry.
+      result.externals = [];
       const rules = (result.module?.rules ?? []).filter(
         (rule): rule is webpack.RuleSetRule => !!rule && typeof rule === 'object',
       );

@@ -5,7 +5,57 @@ import semver from 'semver';
 
 import buildUtils from '../build-utils';
 
+import type webpack from 'webpack';
+
 describe('build-utils', () => {
+  describe('externals', () => {
+    /** Ask a config's externals handler how it would treat a request. */
+    async function classify(config: Promise<webpack.Configuration>, request: string): Promise<string | undefined> {
+      const [handler] = (await config).externals as any[];
+
+      return new Promise((resolve) => {
+        handler({ request }, (_error: unknown, result?: string) => resolve(result));
+      });
+    }
+
+    it.each([
+      // Bare dependencies keep their own resolution.
+      ['electron-updater', 'electron-updater'],
+      ['@napi-rs/xattr', '@napi-rs/xattr'],
+      // Subpaths need the extension spelled out for Node's ESM loader.
+      ['electron-updater/out/MacUpdater', 'electron-updater/out/MacUpdater.js'],
+      ['lodash/merge', 'lodash/merge.js'],
+      ['lodash/isEqual.js', 'lodash/isEqual.js'],
+      // Optional dependencies ship with the app, so they are external too.
+      ['posix-node', 'posix-node'],
+      // Everything else is bundled.
+      ['@pkg/utils/logging', undefined],
+      ['./relative', undefined],
+    ])('externalizes %s', async(request, expected) => {
+      await expect(classify(buildUtils.webpackConfig, request)).resolves.toBe(expected);
+    });
+
+    it('externalizes the main process as module-import, so dynamic imports stay dynamic', async() => {
+      await expect(buildUtils.webpackConfig.then(config => config.externalsType)).resolves.toBe('module-import');
+    });
+
+    it('should bundle everything into the preload script', async() => {
+      // A sandboxed renderer loading it from outside the asar cannot resolve anything.
+      const config = await buildUtils.webpackPreloadConfig;
+
+      expect(config.externals).toEqual([]);
+      expect(config.externalsType).toBe('commonjs2');
+    });
+
+    it.each([
+      'lodash/no-such-module',
+      'electron-updater/out/DoesNotExist.js',
+    ])('rejects %s, which would only fail once packaged', async(request) => {
+      await expect(classify(buildUtils.webpackConfig, request))
+        .rejects.toThrow(`Cannot resolve external "${ request }"`);
+    });
+  });
+
   describe('docsUrl', () => {
     it.each([
       ['1.9.0', 'https://docs.rancherdesktop.io/1.9'],
