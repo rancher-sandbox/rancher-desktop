@@ -1599,16 +1599,20 @@ updateStatus:
   available: バージョン {version} への更新が利用可能です
   # @source Check for updates automatically
   checkForUpdates: 更新を自動的に確認する
+  # @source The download of version {version} failed.
+  downloadFailed: バージョン {version} のダウンロードに失敗しました。
   # @source downloading... ({percent}%, {speed})
   downloading: ダウンロード中...（{percent}%、{speed}）
-  # @source There was an error checking for updates.
-  errorChecking: 更新の確認中にエラーが発生しました。
   # @source Release Notes
   releaseNotes: リリースノート
   # @source Restart Now
   restartNow: 今すぐ再起動
   # @source Restart the application to apply the update.
   restartToApply: 更新を適用するには、アプリケーションを再起動してください。
+  # @source Retry
+  retry: 再試行
+  # @source Retrying...
+  retrying: 再試行しています...
   unsupported:
     # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: Rancher Desktop の新しいバージョンが利用可能ですが、お使いのシステムではサポートされていません。

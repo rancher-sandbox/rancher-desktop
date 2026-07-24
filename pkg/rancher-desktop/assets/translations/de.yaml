@@ -1672,16 +1672,21 @@ updateStatus:
   available: Ein Update auf Version {version} ist verfügbar
   # @source Check for updates automatically
   checkForUpdates: Automatisch nach Updates suchen
+  # @reason Passive verb clause instead of the noun 'Download'; de.yaml uses the verb 'heruntergeladen' everywhere (updateStatus.downloading, asyncButton.download.waiting)
+  # @source The download of version {version} failed.
+  downloadFailed: Version {version} konnte nicht heruntergeladen werden.
   # @source downloading... ({percent}%, {speed})
   downloading: Wird heruntergeladen... ({percent}%, {speed})
-  # @source There was an error checking for updates.
-  errorChecking: Beim Prüfen auf Updates ist ein Fehler aufgetreten.
   # @source Release Notes
   releaseNotes: Versionshinweise
   # @source Restart Now
   restartNow: Jetzt neu starten
   # @source Restart the application to apply the update.
   restartToApply: Starten Sie die Anwendung neu, um das Update anzuwenden.
+  # @source Retry
+  retry: Erneut versuchen
+  # @source Retrying...
+  retrying: Wird erneut versucht...
   unsupported:
     # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: Eine neuere Version von Rancher Desktop ist verfügbar, wird aber auf Ihrem System nicht unterstützt.

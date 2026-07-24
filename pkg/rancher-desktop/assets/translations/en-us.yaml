@@ -1140,11 +1140,13 @@ updateStatus:
   applyingUpdate: Applying update...
   available: An update to version {version} is available
   checkForUpdates: Check for updates automatically
+  downloadFailed: The download of version {version} failed.
   downloading: downloading... ({percent}%, {speed})
-  errorChecking: There was an error checking for updates.
   releaseNotes: Release Notes
   restartNow: Restart Now
   restartToApply: Restart the application to apply the update.
+  retry: Retry
+  retrying: Retrying...
   unsupported:
     # @no-translate Rancher Desktop
     message: A newer version of Rancher Desktop is available, but not supported on your system.

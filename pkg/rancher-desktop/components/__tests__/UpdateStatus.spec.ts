@@ -60,28 +60,84 @@ describe('UpdateStatus.vue', () => {
   });
 
   describe('update status', () => {
-    it('displays error correctly', () => {
+    it('reports a download that failed', () => {
       const wrapper = wrap({
         enabled:     true,
         updateState: {
-          available: true, error: new Error('hello'), downloaded: true,
+          available: true, downloaded: false, error: new Error('hello'), info: { version: 'v1.2.3' },
         } as UpdateState,
       });
 
       expect(wrapper.get({ ref: 'updateStatus' }).text())
-        .toEqual('There was an error checking for updates.');
+        .toEqual('The download of version v1.2.3 failed.');
       expect(wrapper.element.querySelector('.update-notification'))
         .toBeFalsy();
+      expect(wrapper.findComponent({ ref: 'applyButton' }).exists()).toBeFalsy();
     });
 
-    it('hides when there is nothing to display', () => {
+    it('still offers to install an update that was downloaded before an error', () => {
       const wrapper = wrap({
         enabled:     true,
-        updateState: { available: true } as UpdateState,
+        updateState: {
+          available: true, downloaded: true, error: new Error('hello'), info: { version: 'v1.2.3' },
+        } as UpdateState,
       });
 
-      expect(wrapper.get({ ref: 'updateStatus' }).text())
-        .toEqual('');
+      const statusDiv = wrapper.get({ ref: 'updateStatus' });
+
+      expect(statusDiv.find('p').text())
+        .toEqual('An update to version v1.2.3 is available.');
+      expect(statusDiv.find('.update-notification').text())
+        .toEqual('Restart the application to apply the update.');
+      expect(wrapper.get({ ref: 'applyButton' }).attributes()).not.toHaveProperty('disabled');
+      expect(wrapper.findComponent({ ref: 'retryButton' }).exists()).toBeFalsy();
+    });
+
+    it('offers to retry a download that failed', async() => {
+      const failed = {
+        available: true, downloaded: false, error: new Error('hello'), info: { version: 'v1.2.3' },
+      } as UpdateState;
+      const wrapper = wrap({ enabled: true, updateState: failed });
+
+      await wrapper.get({ ref: 'retryButton' }).trigger('click');
+
+      expect(wrapper.emitted('retry')).toHaveLength(1);
+      expect(wrapper.get({ ref: 'retryButton' }).attributes()).toHaveProperty('disabled');
+      expect(wrapper.get({ ref: 'retryButton' }).text()).toEqual('Retrying...');
+
+      // The retry failed too, so the user has to be able to try once more.
+      await wrapper.setProps({ updateState: { ...failed, error: new Error('again') } });
+
+      expect(wrapper.get({ ref: 'retryButton' }).attributes()).not.toHaveProperty('disabled');
+      expect(wrapper.get({ ref: 'retryButton' }).text()).toEqual('Retry');
+    });
+
+    it('lets the user try again when applying an update fails', async() => {
+      const ready = {
+        available: true, downloaded: true, info: { version: 'v1.2.3' },
+      } as UpdateState;
+      const wrapper = wrap({ enabled: true, updateState: ready });
+
+      await wrapper.get({ ref: 'applyButton' }).trigger('click');
+
+      expect(wrapper.get({ ref: 'applyButton' }).attributes()).toHaveProperty('disabled');
+
+      // The install failed, so the button has to come back; the update is still
+      // on disk and a restart is still the way to apply it.
+      await wrapper.setProps({ updateState: { ...ready, error: new Error('install failed') } });
+
+      expect(wrapper.get({ ref: 'applyButton' }).attributes()).not.toHaveProperty('disabled');
+    });
+
+    it('offers no retry when there is no error', () => {
+      const wrapper = wrap({
+        enabled:     true,
+        updateState: {
+          available: true, downloaded: false, info: { version: 'v1.2.3' },
+        } as UpdateState,
+      });
+
+      expect(wrapper.findComponent({ ref: 'retryButton' }).exists()).toBeFalsy();
     });
 
     it('shows when an update is available', () => {

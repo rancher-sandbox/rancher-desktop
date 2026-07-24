@@ -58,8 +58,17 @@ const logStub = {
   log: jest.fn(), error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn(), debugE: jest.fn(),
 };
 
+/** The IPC handlers the update module registers, by channel. */
+const ipcMainHandlers: Record<string, () => void> = {};
+
 mockModules({
-  electron:                                  { ipcMain: { on: jest.fn() } },
+  electron:                                  {
+    ipcMain: {
+      on: jest.fn((channel: string, handler: () => void) => {
+        ipcMainHandlers[channel] = handler;
+      }),
+    },
+  },
   'electron-updater/out/MacUpdater':         { MacUpdater: FakeUpdater },
   'electron-updater/out/AppImageUpdater':    { AppImageUpdater: FakeUpdater },
   'electron-updater/out/ElectronAppAdapter': { ElectronAppAdapter: FakeElectronAppAdapter },
@@ -117,7 +126,10 @@ describe('setupUpdate state machine', () => {
   });
 
   beforeEach(() => {
-    // Reset to a clean slate: error cleared, no staged version, updater re-armed.
+    // Reset to a clean slate: install latch released, error cleared, no staged
+    // version, updater re-armed. The error clears the install latch a prior
+    // test may have left set; checking-for-update then clears the error.
+    updater.emit('error', new Error('reset'));
     updater.emit('checking-for-update');
     updater.emit('update-not-available', makeInfo('v0.0.0'));
     updater.autoDownload = true;
@@ -208,7 +220,7 @@ describe('setupUpdate state machine', () => {
     expect(lastState().progress).toBeUndefined();
   });
 
-  it('reports an updater error and clears the downloaded flag', () => {
+  it('reports an updater error but keeps a staged update installable', () => {
     const info = makeInfo('v1.22.3');
 
     updater.emit('checking-for-update');
@@ -217,12 +229,68 @@ describe('setupUpdate state machine', () => {
 
     expect(lastState().downloaded).toBe(true);
 
+    const error = new Error('the network is down');
+
+    updater.emit('error', error);
+
+    // The update is on disk, so it can still be installed; only the failure of
+    // whatever ran next is news.
+    expect(lastState().downloaded).toBe(true);
+    expect(lastState().error).toBe(error);
+  });
+
+  it('keeps a staged update on offer when a later check fails', () => {
+    const info = makeInfo('v1.22.3');
+
+    updater.emit('checking-for-update');
+    updater.emit('update-available', info);
+    updater.emit('update-downloaded', info);
+    setHasQueuedUpdate.mockClear();
+
+    // The check never got far enough to retract the offer, so the update the
+    // previous one found is still installable.
+    updater.emit('checking-for-update');
+    updater.emit('error', new Error('the network is down'));
+
+    // Without `available` the renderer hides the whole card, taking the
+    // Restart Now button with it.
+    expect(lastState()).toMatchObject({ available: true, downloaded: true });
+    // The on-disk flag decides whether the next launch installs or re-downloads.
+    expect(setHasQueuedUpdate).toHaveBeenLastCalledWith(true);
+  });
+
+  it('reports a failed download as not downloaded', () => {
+    updater.emit('checking-for-update');
+    updater.emit('update-available', makeInfo('v1.22.3'));
+    updater.emit('download-progress', {
+      total: 4, delta: 2, transferred: 2, percent: 50, bytesPerSecond: 2048,
+    });
+
     const error = new Error('download failed');
 
     updater.emit('error', error);
 
-    expect(lastState().downloaded).toBe(false);
-    expect(lastState().error).toBe(error);
+    expect(lastState()).toMatchObject({ available: true, downloaded: false, error });
+  });
+
+  it('keeps checking after a failed download', async() => {
+    // A real check arms the timer for the next one, then starts the download.
+    await setupUpdate(true);
+    await flush();
+    updater.checkForUpdates.mockClear();
+
+    updater.emit('checking-for-update');
+    updater.emit('update-available', makeInfo('v1.22.3'));
+    updater.emit('download-progress', {
+      total: 4, delta: 2, transferred: 2, percent: 50, bytesPerSecond: 2048,
+    });
+    updater.emit('error', new Error('download failed'));
+
+    // A failed download must not wedge the state machine: the scheduled check
+    // has to keep running so the download gets another chance.
+    await jest.runOnlyPendingTimersAsync();
+
+    expect(updater.checkForUpdates).toHaveBeenCalled();
   });
 
   it('clears a previous error once a later check succeeds', () => {
@@ -304,6 +372,142 @@ describe('setupUpdate state machine', () => {
     updater.emit('update-downloaded', makeInfo('v1.22.4'));
 
     expect(updater.quitAndInstall).not.toHaveBeenCalled();
+  });
+
+  it('hands the update to only one installer at a time', () => {
+    const info = makeInfo('v1.22.3');
+
+    updater.emit('checking-for-update');
+    updater.emit('update-available', info);
+    updater.emit('update-downloaded', info);
+
+    ipcMainHandlers['update-apply']();
+    ipcMainHandlers['update-apply']();
+
+    expect(updater.quitAndInstall).toHaveBeenCalledTimes(1);
+
+    // Installing failed and left the application running, so asking again has
+    // to reach the installer.
+    updater.emit('error', new Error('install failed'));
+    ipcMainHandlers['update-apply']();
+
+    expect(updater.quitAndInstall).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the install latched when an in-flight check fails', async() => {
+    await setupUpdate(true);
+    await flush();
+
+    const info = makeInfo('v1.22.3');
+
+    updater.emit('checking-for-update');
+    updater.emit('update-available', info);
+    updater.emit('update-downloaded', info);
+
+    // A scheduled check is already in flight when the user installs. When that
+    // check later fails it must not release the latch and re-enable the button
+    // the install already claimed. electron-updater emits 'error' for a failing
+    // check while its promise is still pending.
+    let failCheck!: (reason: Error) => void;
+
+    updater.checkForUpdates.mockReturnValueOnce(new Promise((_resolve, reject) => {
+      failCheck = reject;
+    }));
+    await jest.runOnlyPendingTimersAsync();
+
+    ipcMainHandlers['update-apply']();
+
+    updater.emit('error', new Error('check failed'));
+    failCheck(new Error('check failed'));
+    await flush();
+
+    ipcMainHandlers['update-apply']();
+
+    expect(updater.quitAndInstall).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the install latched when one of two overlapping checks fails', async() => {
+    await setupUpdate(true);
+    await flush();
+
+    const info = makeInfo('v1.22.3');
+
+    updater.emit('checking-for-update');
+    updater.emit('update-available', info);
+    updater.emit('update-downloaded', info);
+
+    // A scheduled check is in flight when a manual retry starts a second one.
+    // The retry finishes first; its completion must not conclude that no check
+    // is running while the slow one is still out there to fail.
+    let failSlowCheck!: (reason: Error) => void;
+
+    updater.checkForUpdates.mockReturnValueOnce(new Promise((_resolve, reject) => {
+      failSlowCheck = reject;
+    }));
+    await jest.runOnlyPendingTimersAsync();
+    ipcMainHandlers['update-retry']();
+    await flush();
+
+    ipcMainHandlers['update-apply']();
+
+    updater.emit('error', new Error('slow check failed'));
+    failSlowCheck(new Error('slow check failed'));
+    await flush();
+
+    ipcMainHandlers['update-apply']();
+
+    expect(updater.quitAndInstall).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps checking after an install that did not complete', async() => {
+    await setupUpdate(true);
+    await flush();
+
+    const info = makeInfo('v1.22.3');
+
+    updater.emit('checking-for-update');
+    updater.emit('update-available', info);
+    updater.emit('update-downloaded', info);
+    ipcMainHandlers['update-apply']();
+    updater.checkForUpdates.mockClear();
+
+    // A cancelled quit-to-install leaves the latch set, but the scheduled check
+    // still has to run, or the updater wedges until the next restart.
+    await jest.runOnlyPendingTimersAsync();
+
+    expect(updater.checkForUpdates).toHaveBeenCalled();
+  });
+
+  it('checks again when the user retries a failed download', async() => {
+    updater.emit('checking-for-update');
+    updater.emit('update-available', makeInfo('v1.22.3'));
+    updater.emit('download-progress', {
+      total: 4, delta: 2, transferred: 2, percent: 50, bytesPerSecond: 2048,
+    });
+    updater.emit('error', new Error('download failed'));
+
+    ipcMainHandlers['update-retry']();
+    await flush();
+
+    expect(updater.checkForUpdates).toHaveBeenCalled();
+  });
+
+  it('keeps the failed-download card up when the retry check also fails', () => {
+    updater.emit('checking-for-update');
+    updater.emit('update-available', makeInfo('v1.22.3'));
+    updater.emit('download-progress', {
+      total: 4, delta: 2, transferred: 2, percent: 50, bytesPerSecond: 2048,
+    });
+    updater.emit('error', new Error('download failed'));
+
+    expect(lastState()).toMatchObject({ available: true, downloaded: false });
+
+    // The user hits Retry and the check fails too. The card and its Retry
+    // button have to stay up rather than vanish until the next scheduled check.
+    updater.emit('checking-for-update');
+    updater.emit('error', new Error('still offline'));
+
+    expect(lastState().available).toBe(true);
   });
 
   it('schedules the next check even when a check fails', async() => {

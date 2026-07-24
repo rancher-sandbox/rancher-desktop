@@ -1623,17 +1623,22 @@ updateStatus:
   available: Uma atualização para a versão {version} está disponível
   # @source Check for updates automatically
   checkForUpdates: Verificar atualizações automaticamente
+  # @reason source's noun subject ("The download ... failed") inverted to the "Falha ao <infinitivo>" pattern the file already uses for failures (containerInspect.error.loadFailed), keeping the established verb "baixar" instead of the noun loanword "download"
+  # @source The download of version {version} failed.
+  downloadFailed: Falha ao baixar a versão {version}.
   # @reason lowercase kept to match the source register (appended to a status line)
   # @source downloading... ({percent}%, {speed})
   downloading: baixando... ({percent}%, {speed})
-  # @source There was an error checking for updates.
-  errorChecking: Ocorreu um erro ao verificar atualizações.
   # @source Release Notes
   releaseNotes: Notas de versão
   # @source Restart Now
   restartNow: Reiniciar agora
   # @source Restart the application to apply the update.
   restartToApply: Reinicie o aplicativo para aplicar a atualização.
+  # @source Retry
+  retry: Tentar novamente
+  # @source Retrying...
+  retrying: Tentando novamente...
   unsupported:
     # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: Uma versão mais recente do Rancher Desktop está disponível, mas não é compatível com o seu sistema.

@@ -1603,17 +1603,21 @@ updateStatus:
   available: Hay disponible una actualización a la versión {version}
   # @source Check for updates automatically
   checkForUpdates: Buscar actualizaciones automáticamente
+  # @source The download of version {version} failed.
+  downloadFailed: Falló la descarga de la versión {version}.
   # @reason Lowercase kept; the source is lowercase because the string is appended inline.
   # @source downloading... ({percent}%, {speed})
   downloading: descargando... ({percent}%, {speed})
-  # @source There was an error checking for updates.
-  errorChecking: Se produjo un error al buscar actualizaciones.
   # @source Release Notes
   releaseNotes: Notas de la versión
   # @source Restart Now
   restartNow: Reiniciar ahora
   # @source Restart the application to apply the update.
   restartToApply: Reinicie la aplicación para aplicar la actualización.
+  # @source Retry
+  retry: Reintentar
+  # @source Retrying...
+  retrying: Reintentando...
   unsupported:
     # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: Hay disponible una versión más reciente de Rancher Desktop, pero no es compatible con su sistema.

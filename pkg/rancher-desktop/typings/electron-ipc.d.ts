@@ -33,6 +33,8 @@ export interface IpcMainEvents {
   'update-state': () => void;
   // Quit and apply the update.
   'update-apply': () => void;
+  // Check again, to retry a download that failed.
+  'update-retry': () => void;
   // #endregion
 
   // #region main/containerEvents

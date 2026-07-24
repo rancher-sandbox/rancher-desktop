@@ -1632,17 +1632,22 @@ updateStatus:
   available: È disponibile un aggiornamento alla versione {version}
   # @source Check for updates automatically
   checkForUpdates: Controlla automaticamente la disponibilità di aggiornamenti
+  # @source The download of version {version} failed.
+  downloadFailed: Il download della versione {version} non è riuscito.
   # @reason lowercase kept to match the source's inline status style; 'download' is an established loanword
   # @source downloading... ({percent}%, {speed})
   downloading: download in corso... ({percent}%, {speed})
-  # @source There was an error checking for updates.
-  errorChecking: Si è verificato un errore durante il controllo degli aggiornamenti.
   # @source Release Notes
   releaseNotes: Note di rilascio
   # @source Restart Now
   restartNow: Riavvia ora
   # @source Restart the application to apply the update.
   restartToApply: Riavvia l'applicazione per applicare l'aggiornamento.
+  # @source Retry
+  retry: Riprova
+  # @reason riprovare has no idiomatic verbal noun, so the in-progress label drops the shared root with retry and uses a noun phrase, like applyingUpdate
+  # @source Retrying...
+  retrying: Nuovo tentativo...
   unsupported:
     # @source A newer version of Rancher Desktop is available, but not supported on your system.
     message: È disponibile una versione più recente di Rancher Desktop, ma non è supportata sul tuo sistema.
