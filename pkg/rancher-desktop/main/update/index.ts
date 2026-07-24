@@ -104,7 +104,9 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
 
     options.updateProvider = LonghornProvider;
 
-    if (process.env.RD_UPGRADE_RESPONDER_URL) {
+    // A responder chooses which release the updater goes looking for, so it is
+    // gated on the same flag as the API it then fetches that release from.
+    if (process.env.RD_FORCE_UPDATES_ENABLED && process.env.RD_UPGRADE_RESPONDER_URL) {
       console.log(`using custom upgrade responder URL ${ process.env.RD_UPGRADE_RESPONDER_URL }`);
       options.upgradeServer = process.env.RD_UPGRADE_RESPONDER_URL;
     }
