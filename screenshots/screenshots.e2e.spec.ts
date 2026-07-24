@@ -1,3 +1,4 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -30,6 +31,12 @@ const isWin = os.platform() === 'win32';
 const isMac = os.platform() === 'darwin';
 let console: Log;
 
+// A fresh install defaults to the oldest supported Kubernetes version so that a
+// later upgrade never forces a downgrade; show the current stable one instead.
+const stableKubernetesVersion: string = JSON.parse(
+  fs.readFileSync(path.resolve(import.meta.dirname, '..', 'resources', 'k3s-versions.json'), 'utf8'),
+).channels.stable;
+
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
   let page: Page;
@@ -53,6 +60,7 @@ test.describe.serial('Main App Test', () => {
         allowedImages: { enabled: false, patterns: ['rancher/example'] },
         name:          ContainerEngine.MOBY,
       },
+      kubernetes:  { version: stableKubernetesVersion },
       diagnostics: { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
     });
 
