@@ -26,6 +26,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
 )
 
 /**
@@ -187,6 +189,16 @@ func verifyMgmtRemoved(t *testing.T, dotFile string) {
 	expectedContents, err := getExpectedContents(path.Base(dotFile))
 	assert.NoError(t, err)
 	assert.Equal(t, expectedContents, string(byteContents))
+}
+
+func TestUpdaterCacheDir(t *testing.T) {
+	cache := path.Join("/home", "user", ".cache", "rancher-desktop")
+	got := updaterCacheDir(&paths.Paths{Cache: cache})
+
+	// electron-updater stages updates in a sibling of the app cache directory,
+	// not a subdirectory (which a cache wipe would already remove).
+	assert.Equal(t, cache+"-updater", got)
+	assert.Equal(t, path.Dir(cache), path.Dir(got))
 }
 
 func TestRemoveManagedBlock(t *testing.T) {

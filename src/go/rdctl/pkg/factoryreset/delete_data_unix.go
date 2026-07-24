@@ -73,6 +73,14 @@ func appHomeDirectories(appPaths *paths.Paths) []string {
 	return pathList
 }
 
+// updaterCacheDir returns the directory where electron-updater stages a
+// downloaded update that is not yet installed. electron-updater puts that
+// directory beside the app cache with a "-updater" suffix, so deriving it from
+// appPaths.Cache keeps the path correct if the app cache directory ever moves.
+func updaterCacheDir(appPaths *paths.Paths) string {
+	return appPaths.Cache + "-updater"
+}
+
 // Most of the errors in this function are reported, but we continue to try to delete things,
 // because there isn't really a dependency graph here.
 // For example, if we can't delete the Lima VM, that doesn't mean we can't remove docker files
