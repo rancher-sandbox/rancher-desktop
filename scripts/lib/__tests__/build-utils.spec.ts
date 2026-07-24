@@ -36,15 +36,13 @@ describe('build-utils', () => {
     });
 
     it('externalizes the main process as module-import, so dynamic imports stay dynamic', async() => {
-      await expect(buildUtils.webpackConfig.then(config => config.externalsType)).resolves.toBe('module-import');
+      await expect(buildUtils.webpackConfig).resolves.toHaveProperty('externalsType', 'module-import');
     });
 
     it('should bundle everything into the preload script', async() => {
       // A sandboxed renderer loading it from outside the asar cannot resolve anything.
-      const config = await buildUtils.webpackPreloadConfig;
-
-      expect(config.externals).toEqual([]);
-      expect(config.externalsType).toBe('commonjs2');
+      await expect(buildUtils.webpackPreloadConfig).resolves.toHaveProperty('externals', []);
+      await expect(buildUtils.webpackPreloadConfig).resolves.toHaveProperty('externalsType', 'commonjs2');
     });
 
     it.each([
