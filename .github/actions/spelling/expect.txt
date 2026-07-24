@@ -94,6 +94,7 @@ certutil
 cgroupfs
 chartjs
 checkpath
+checkupgrade
 chirico
 cidata
 cidfile

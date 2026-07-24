@@ -12,10 +12,20 @@ Forces debug logging to always be enabled. Useful to debug first-run issues when
 
 When set, it will force auto-update to be enabled even in `yarn dev` mode. Updates will be checked and downloaded, but **not** installed.
 
+## RD_GITHUB_API_URL=http://localhost:8314
+
+Set an alternate GitHub API endpoint, from which the updater fetches the release
+it was told about by the upgrade responder. Takes effect only when
+`RD_FORCE_UPDATES_ENABLED` is also set, because the release names both the asset
+to download and the checksum that verifies it. Together with
+`RD_UPGRADE_RESPONDER_URL` this lets a test serve a whole release of its own.
+
 ## RD_MOCK_MACOS_VERSION=semver
 
 Used for testing compatibility of the app with the OS version, for upgrade responder tests, and for enabling/disabling certain parts of the preferences (related to VZ emulation mode).
 
 ## RD_UPGRADE_RESPONDER_URL=http://localhost:8314/v1/checkupgrade
 
-Set an alternate upgrade responder endpoint for testing.
+Set an alternate upgrade responder endpoint for testing. Takes effect only when
+`RD_FORCE_UPDATES_ENABLED` is also set, because the responder chooses which
+release the updater then goes looking for.

@@ -142,7 +142,19 @@ factory_reset() {
         clear_iptables_chain "KUBE"
     fi
     rdctl reset --factory "$@"
+    delete_pending_update
     setup_ramdisk
+}
+
+# An update that finished downloading is staged, and the next launch installs
+# it, so a leak lands in whichever test runs next. electron-updater names the
+# staging directory after the build: a `-updater` sibling of the cache when
+# packaged, the cache itself in dev mode, and the app home on Windows. Factory
+# reset removes only the Windows one.
+delete_pending_update() {
+    rm -rf "$PATH_CACHE/updater-longhorn.json" "$PATH_CACHE/pending" \
+        "$PATH_CACHE/update.zip" "$PATH_CACHE/current.blockmap" \
+        "${PATH_CACHE}-updater" "$PATH_APP_HOME/pending"
 }
 
 # Turn `rdctl start` arguments into `yarn dev` arguments
