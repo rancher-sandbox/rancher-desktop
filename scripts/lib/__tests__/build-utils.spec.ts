@@ -20,14 +20,14 @@ describe('build-utils', () => {
 
     it.each([
       // Bare dependencies keep their own resolution.
-      ['electron-updater', 'module-import electron-updater'],
-      ['@napi-rs/xattr', 'module-import @napi-rs/xattr'],
+      ['electron-updater', 'electron-updater'],
+      ['@napi-rs/xattr', '@napi-rs/xattr'],
       // Subpaths need the extension spelled out for Node's ESM loader.
-      ['electron-updater/out/MacUpdater', 'module-import electron-updater/out/MacUpdater.js'],
-      ['lodash/merge', 'module-import lodash/merge.js'],
-      ['lodash/isEqual.js', 'module-import lodash/isEqual.js'],
+      ['electron-updater/out/MacUpdater', 'electron-updater/out/MacUpdater.js'],
+      ['lodash/merge', 'lodash/merge.js'],
+      ['lodash/isEqual.js', 'lodash/isEqual.js'],
       // Optional dependencies ship with the app, so they are external too.
-      ['posix-node', 'module-import posix-node'],
+      ['posix-node', 'posix-node'],
       // Everything else is bundled.
       ['@pkg/utils/logging', undefined],
       ['./relative', undefined],
@@ -35,9 +35,16 @@ describe('build-utils', () => {
       await expect(classify(buildUtils.webpackConfig, request)).resolves.toBe(expected);
     });
 
+    it('externalizes the main process as module-import, so dynamic imports stay dynamic', async() => {
+      await expect(buildUtils.webpackConfig.then(config => config.externalsType)).resolves.toBe('module-import');
+    });
+
     it('should bundle everything into the preload script', async() => {
-      // A sandboxed renderer loading it from outside the asar can resolve nothing.
-      await expect(buildUtils.webpackPreloadConfig.then(config => config.externals)).resolves.toEqual([]);
+      // A sandboxed renderer loading it from outside the asar cannot resolve anything.
+      const config = await buildUtils.webpackPreloadConfig;
+
+      expect(config.externals).toEqual([]);
+      expect(config.externalsType).toBe('commonjs2');
     });
 
     it.each([

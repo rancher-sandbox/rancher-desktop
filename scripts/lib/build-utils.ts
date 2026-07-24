@@ -2,8 +2,8 @@
  * This module is a helper for the build & dev scripts.
  */
 
-import fs from 'fs';
 import childProcess from 'node:child_process';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 import util from 'util';
@@ -43,13 +43,13 @@ function canResolve(specifier: string): boolean {
  */
 function externalSpecifier(request: string): string {
   const candidates = [`${ request }.js`, request];
+  const resolved = candidates.find(canResolve);
 
-  for (const candidate of candidates) {
-    if (canResolve(candidate)) {
-      return candidate;
-    }
+  if (!resolved) {
+    throw new Error(`Cannot resolve external "${ request }"; Node will not resolve it at runtime either.`);
   }
-  throw new Error(`Cannot resolve external "${ request }"; Node will not resolve it at runtime either.`);
+
+  return resolved;
 }
 
 /**
@@ -74,10 +74,7 @@ function externalsEntry(dependencies: Set<string>) {
       return callback();
     }
 
-    // `module-import` leaves a dynamic import dynamic, where plain `module`
-    // hoists it to the top of the bundle; @napi-rs/xattr ships no Windows
-    // binding, so it must stay behind its `import()`.
-    return callback(null, `module-import ${ externalSpecifier(request ?? '') }`);
+    return callback(null, externalSpecifier(request ?? ''));
   };
 }
 
@@ -287,11 +284,15 @@ export default {
           __dirname:  false,
           __filename: false,
         },
-        entry:       { background: path.resolve(this.rootDir, 'background') },
-        experiments: { outputModule: true },
-        externals:   [externalsEntry(this.runtimeDependencies)],
-        devtool:     this.isDevelopment ? 'source-map' : false,
-        resolve:     {
+        entry:         { background: path.resolve(this.rootDir, 'background') },
+        experiments:   { outputModule: true },
+        // `module-import` leaves a dynamic import dynamic, where plain `module`
+        // hoists it to the top of the bundle; @napi-rs/xattr ships no Windows
+        // binding, so it must stay behind its `import()`.
+        externalsType: 'module-import',
+        externals:     [externalsEntry(this.runtimeDependencies)],
+        devtool:       this.isDevelopment ? 'source-map' : false,
+        resolve:       {
           alias:      { '@pkg': path.resolve(this.rootDir, 'pkg', 'rancher-desktop') },
           extensions: ['.ts', '.js', '.json', '.node'],
           modules:    ['node_modules'],
@@ -362,7 +363,8 @@ export default {
           library:  { type: 'commonjs2' },
           path:     path.join(this.rootDir, 'resources'),
         },
-        experiments: { outputModule: false },
+        experiments:   { outputModule: false },
+        externalsType: 'commonjs2',
       };
 
       const result = _.merge({}, await this.webpackConfig, overrides);
