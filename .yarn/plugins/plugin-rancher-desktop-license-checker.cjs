@@ -51,6 +51,23 @@ module.exports = {
     ]);
 
     /**
+     * Packages that only run while building and never reach the application,
+     * so their licenses do not have to be acceptable.  Each was checked against
+     * the packaged app.asar and the webpack module graph; the comment names
+     * whatever pulls the package in.
+     */
+    const BUILD_ONLY_PACKAGES = new Set([
+      'caniuse-lite', // browserslist
+      'map-stream', // ps-tree
+      'mdn-data', // css-tree, via the CSS minifier
+      'sanitize-filename', // electron-builder
+      'spdx-exceptions', // license tooling
+      'spdx-license-ids', // license tooling
+      'truncate-utf8-bytes', // sanitize-filename
+      'webpack-chain', // @vue/cli-service
+    ]);
+
+    /**
      * Hard-coded list of license overrides, for licenses that are not correctly
      * specified in package.json (verified by browsing the source code).
      * @type Record<string, string>
@@ -120,6 +137,9 @@ module.exports = {
 
         let hasErrors = false;
         for (const dependency of dependencies) {
+          if (BUILD_ONLY_PACKAGES.has(structUtils.stringifyIdent(dependency))) {
+            continue;
+          }
           try {
             const licenses = await this.getLicensesForPackage(dependency, wrappedFetch);
             if (!licenses.acceptable()) {
@@ -132,6 +152,7 @@ module.exports = {
         }
 
         if (hasErrors) {
+          console.log('If a package above never ships, add it to BUILD_ONLY_PACKAGES in .yarn/plugins/plugin-rancher-desktop-license-checker.cjs');
           process.exit(1);
         }
 
@@ -139,8 +160,9 @@ module.exports = {
       }
 
       /**
-       * Find all packages required by the given workspace, excluding development
-       * dependencies.
+       * Find all packages required by the given workspace, development
+       * dependencies included: webpack inlines many of those into the renderer
+       * bundle, which ships.
        * @note Some dependencies to node-gyp are explicitly ignored because they
        * were automatically added by Yarn and do not actually exist.
        * @param {Configuration} configuration - The project configuration
@@ -154,10 +176,6 @@ module.exports = {
         const knownDependencies = new Map();
 
         await project.restoreInstallState();
-
-        for (const workspace of project.workspaces) {
-          workspace.manifest.devDependencies.clear();
-        }
 
         const cache = await Cache.find(project.configuration);
         await project.resolveEverything({ report: new ThrowReport(), cache });
