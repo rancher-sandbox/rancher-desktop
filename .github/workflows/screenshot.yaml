@@ -128,9 +128,6 @@ jobs:
           if [[ $name =~ ^[0-9]+_ ]]; then
               name="${name#*_}"
           fi
-          if [[ name == "intro" ]]; then
-            continue
-          fi
           out="out/${window}/${platform}_${name}"
           mkdir -p "$(dirname "$out")"
           cp "$line" "$out"
@@ -138,11 +135,24 @@ jobs:
         done < <(find in -name '*.png' -print0)
     - name: Generate introduction image
       run: |
-        # The intro image consists of the mac image on the left and the Windows
-        # image on the right, each showing Kubernetes settings.
-        sudo DEBIAN_FRONTEND=noninteractive apt-get install graphicsmagick # spellcheck-ignore-line
+        # Place the Preferences window (Kubernetes tab) over the main window, macOS
+        # on the left and Windows on the right.  Both windows are white, so give the
+        # Preferences window a drop shadow to separate them.
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install imagemagick # spellcheck-ignore-line
         mkdir -p out/getting-started
-        gm convert in/darwin/light/main/*_intro.png in/win32/light/main/*_intro.png +append out/getting-started/introduction_preferences_tabKubernetes.png
+        for platform in darwin win32; do
+          main=(in/"$platform"/light/main/*_General.png)
+          prefs=(in/"$platform"/light/preferences/*_kubernetes.png)
+          convert "${prefs[0]}" \( +clone -background black -shadow 55x12+0+9 \) \
+            +swap -background none -layers merge +repage "shadow-$platform.png"
+          convert "${main[0]}" "shadow-$platform.png" -gravity center -composite "half-$platform.png"
+        done
+        # The two captures differ slightly in height; scale the Windows half to the
+        # macOS height so they line up when joined.
+        height=$(identify -format '%h' half-darwin.png)
+        convert half-win32.png -resize "x$height" half-win32-scaled.png
+        convert half-darwin.png half-win32-scaled.png +append \
+          out/getting-started/introduction_preferences_tabKubernetes.png
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: screenshots.zip
