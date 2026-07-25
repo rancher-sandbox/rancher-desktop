@@ -43,6 +43,9 @@ func DeleteData(ctx context.Context, appPaths *paths.Paths, removeKubernetesCach
 		pathList = append(pathList, filepath.Join(configPath, "Rancher Desktop"))
 	}
 
+	// Remove a downloaded update so it is not installed after the reset.
+	pathList = append(pathList, updaterCacheDir(appPaths))
+
 	if removeKubernetesCache {
 		pathList = append(pathList, appPaths.Cache)
 	} else {

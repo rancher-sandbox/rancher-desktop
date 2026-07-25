@@ -30,9 +30,12 @@ func DeleteData(ctx context.Context, appPaths *paths.Paths, removeKubernetesCach
 	}
 	pathList = append(pathList, appHomeDirectories(appPaths)...)
 
-	// Get path that electron-updater stores cache data in. Technically this
-	// is the wrong directory to use for cache data, but it is set by electron-updater.
-	// TODO: investigate changing the directory electron-updater uses
+	// Remove a downloaded update so it is not installed after the reset.
+	pathList = append(pathList, updaterCacheDir(appPaths))
+
+	// Older electron-updater versions staged updates under
+	// ~/Library/Application Support/Caches; remove that legacy location too, so a
+	// large update downloaded on an earlier release is not left behind.
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		logrus.Errorf("failed to get config dir: %s", err)
