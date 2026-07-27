@@ -179,6 +179,20 @@ describe('UpdateStatus.vue', () => {
         .toContain('<strong>hello</strong>');
     });
 
+    it('should keep the top of the card in view', () => {
+      const wrapper = wrap({
+        enabled:     true,
+        updateState: {
+          available: true,
+          info:      { version: 'v1.2.3', releaseNotes: 'hello' },
+        } as UpdateState,
+      });
+
+      // The Card centres an overflowing body, which hides the status line and
+      // the notes toggle. Its sticky layout anchors the content to the top.
+      expect(wrapper.find('.card-container.card-sticky').exists()).toBeTruthy();
+    });
+
     it('should not support scripting', () => {
       const wrapper = wrap({
         enabled:     true,

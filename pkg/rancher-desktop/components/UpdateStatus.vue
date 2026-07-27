@@ -4,6 +4,7 @@
       <h3>{{ t('updateStatus.updateAvailable') }}</h3>
       <card
         ref="updateInfo"
+        sticky
         :show-highlight-border="false"
       >
         <template #body>
@@ -199,21 +200,6 @@ export default defineComponent({
   :deep(.card-title),
   :deep(.card-wrap > hr) {
     display: none;
-  }
-
-  // card-wrap is a plain block here; make it a column so the body can scroll.
-  :deep(.card-wrap) {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-
-  // Scroll long notes inside the card; anchor to the top (the Card centres it).
-  :deep(.card-body) {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    justify-content: flex-start;
   }
 
   .update-notification {
