@@ -1,6 +1,6 @@
 module github.com/rancher-sandbox/rancher-desktop/src/go/networking
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
@@ -42,8 +42,11 @@ require (
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/mod v0.38.0 // indirect
-	golang.org/x/time v0.12.0 // indirect
+	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.47.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// Dependabot does not read go.work, so without this it pins a remote version.
+replace github.com/rancher-sandbox/rancher-desktop/src/go/guestagent => ../guestagent
