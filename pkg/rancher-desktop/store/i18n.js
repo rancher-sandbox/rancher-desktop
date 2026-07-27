@@ -12,6 +12,13 @@ import { availableLocales, loadTranslations } from '@pkg/utils/translationLoader
 const intlCache = {};
 let ipcListenersBound = false;
 
+// Chromium uses the document language to pick a fallback font for characters
+// Lato lacks. Without one, Han text can come out with Japanese or Traditional
+// Chinese glyphs.
+function setDocumentLanguage(locale) {
+  document.documentElement.lang = locale;
+}
+
 export const state = function() {
   const out = {
     default:      'en-us',
@@ -226,6 +233,7 @@ export const actions = {
           // Try to show something...
 
           commit('setSelected', 'en-us');
+          setDocumentLanguage('en-us');
 
           return;
         }
@@ -237,6 +245,7 @@ export const actions = {
     }
 
     commit('setSelected', locale);
+    setDocumentLanguage(locale);
     this.$cookies.set(LOCALE, locale, {
       encode: x => x,
       maxAge: 86400 * 365,
