@@ -194,6 +194,10 @@ export default defineComponent({
     // Fill and shrink past the Card's 100px minimum, so the body scrolls.
     flex: 1;
     min-height: 0;
+    // In light mode the Card's shadow is the border colour, so its 20px blur
+    // would smear the box's edge.
+    box-shadow: none;
+    border: 1px solid var(--border);
   }
 
   // Hide the empty title and <hr> the Card draws with no title slot.
