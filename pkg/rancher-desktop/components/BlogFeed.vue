@@ -122,11 +122,10 @@ export default defineComponent({
   overflow-y: auto;
   padding: 1rem;
   // Tint the feed so it reads as one imported widget, set apart from the
-  // app's own content above it. Carry the same shadow as the update card.
+  // app's own content above it.
   background: var(--box-bg);
   border: 1px solid var(--border);
   border-radius: var(--border-radius);
-  box-shadow: 0 0 20px var(--shadow);
 }
 
 .blog-entry + .blog-entry {
