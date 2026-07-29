@@ -717,13 +717,15 @@ describe('settings', () => {
         6: [
           {
             extensions: {
-              'mice:oldest':   true,
-              'cats:youngest': false,
+              'mice:oldest':                         true,
+              'cats:youngest':                       false,
+              'registry.example:5000/org/image:tag': true,
             },
           },
           {
             extensions: {
-              mice: 'oldest',
+              mice:                              'oldest',
+              'registry.example:5000/org/image': 'tag',
             },
           },
         ],
