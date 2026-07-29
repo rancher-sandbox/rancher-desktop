@@ -1728,11 +1728,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/asar@npm:4.2.0":
-  version: 4.2.0
-  resolution: "@electron/asar@npm:4.2.0"
+"@electron/asar@npm:4.2.1":
+  version: 4.2.1
+  resolution: "@electron/asar@npm:4.2.1"
   dependencies:
-    commander: "npm:^13.1.0"
     glob: "npm:^13.0.2"
     minimatch: "npm:^10.0.1"
   dependenciesMeta:
@@ -1740,7 +1739,7 @@ __metadata:
       built: true
   bin:
     asar: bin/asar.mjs
-  checksum: 10c0/6ec3f5c9b670f0a5c1b83e098bfc9d4b59b90bad2446f462d34c7d43caad96c6026a5eee2ec269dabe095dd0a07c76369d617b786ac262b98ba51556b34f7bb8
+  checksum: 10c0/2212c82161ab0a6c8e63d7bb7f433c727235dd17a3d47bdba810c698fbd39a81ac97cbac22acc273d2639f94d1c27339d6861ce8dbee1ef70efc5c74aad5e317
   languageName: node
   linkType: hard
 
@@ -7630,13 +7629,6 @@ __metadata:
   version: 10.0.1
   resolution: "commander@npm:10.0.1"
   checksum: 10c0/53f33d8927758a911094adadda4b2cbac111a5b377d8706700587650fd8f45b0bbe336de4b5c3fe47fd61f420a3d9bd452b6e0e6e5600a7e74d7bf0174f6efe3
-  languageName: node
-  linkType: hard
-
-"commander@npm:^13.1.0":
-  version: 13.1.0
-  resolution: "commander@npm:13.1.0"
-  checksum: 10c0/7b8c5544bba704fbe84b7cab2e043df8586d5c114a4c5b607f83ae5060708940ed0b5bd5838cf8ce27539cde265c1cbd59ce3c8c6b017ed3eec8943e3a415164
   languageName: node
   linkType: hard
 
@@ -14573,7 +14565,7 @@ __metadata:
     "@babel/plugin-proposal-private-methods": "npm:7.18.6"
     "@babel/plugin-proposal-private-property-in-object": "npm:7.21.11"
     "@docker/extension-api-client-types": "npm:0.4.2"
-    "@electron/asar": "npm:4.2.0"
+    "@electron/asar": "npm:4.2.1"
     "@electron/fuses": "npm:^2.1.3"
     "@electron/notarize": "npm:3.1.1"
     "@eslint/config-helpers": "npm:0.7.0"
