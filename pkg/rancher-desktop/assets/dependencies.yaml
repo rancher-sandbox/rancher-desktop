@@ -55,15 +55,15 @@ alpineLimaISO:
     isoVersion: 0.2.47.rd9
 certManager:
   assets:
-    - checksum: sha256:cc046deb0ef4aaa8237f1ae448ef463446905bfc310cba88f25fc614389f84fd
+    - checksum: sha256:a1383be02862dd2802e6810f19dd1f4784550f336ff4eb27788e842302f76977
       platform: linux
-      url: https://github.com/cert-manager/cert-manager/releases/download/v1.21.0/cert-manager.crds.yaml
+      url: https://github.com/cert-manager/cert-manager/releases/download/v1.21.1/cert-manager.crds.yaml
       variant: crds
-    - checksum: sha256:9c2c6fabf3cf8fe14dacb016f37c819b66bc2c79e8b7acde4573d45ec141fb97
+    - checksum: sha256:c27101f3f3e2349fb4a9e704316105bf7b52ad73b8c8257d3498ef7f2f6a4adc
       platform: linux
-      url: https://charts.jetstack.io/charts/cert-manager-v1.21.0.tgz
+      url: https://charts.jetstack.io/charts/cert-manager-v1.21.1.tgz
       variant: chart
-  version: 1.21.0
+  version: 1.21.1
 check-spelling:
   assets: []
   version: 0.0.26
