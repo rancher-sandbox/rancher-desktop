@@ -188,16 +188,21 @@ export class DockerBuildx extends GlobalDependency(GitHubDependency) {
 
   async getAssets(version: string): Promise<DependencyAsset[]> {
     const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
-    // Upstream checksums.txt omits darwin entries
-    // (https://github.com/docker/buildx/issues/945), so we hash darwin without
-    // upstream verification.
-    const upstream = await fetchUpstreamChecksums(`${ baseURL }/checksums.txt`, 'sha256');
+    // Docker code-signs the darwin and windows binaries after publishing the
+    // release, so checksums.txt omits them.
+    // https://github.com/docker/buildx/pull/3978
+    const [checksums, signedChecksums] = await Promise.all([
+      fetchUpstreamChecksums(`${ baseURL }/checksums.txt`, 'sha256'),
+      fetchUpstreamChecksums(`${ baseURL }/checksums-signed.txt`, 'sha256'),
+    ]);
 
     return Promise.all(cartesian(HOST_PLATFORMS, ARCHES).map(async([platform, arch]) => {
       const executableName = `buildx-v${ version }.${ platform }-${ arch }${ exeSuffix(platform) }`;
       const url = `${ baseURL }/${ executableName }`;
-      const verify = platform === 'darwin' ? undefined : { algorithm: 'sha256' as const, expected: upstream[executableName] };
-      const checksum = await downloadAndHash(url, verify ? { verify } : undefined);
+      const upstream = ['darwin', 'windows'].includes(platform) ? signedChecksums : checksums;
+      const checksum = await downloadAndHash(url, {
+        verify: { algorithm: 'sha256', expected: upstream[executableName] },
+      });
 
       return { platform, arch, url, checksum };
     }));
