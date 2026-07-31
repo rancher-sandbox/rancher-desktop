@@ -27,7 +27,9 @@ depend() {
 }
 
 healthcheck() {
-    /usr/bin/curl --fail --unix-socket /mnt/wsl/rancher-desktop/run/docker.sock --url http://./_ping
+    # The hostname is ignored when connecting via --unix-socket, but newer curl
+    # (8.21) rejects "." as a hostname, which made this check fail every time.
+    /usr/bin/curl --fail --unix-socket /mnt/wsl/rancher-desktop/run/docker.sock --url http://localhost/_ping
 }
 healthcheck_timer=60
 respawn_delay=5
