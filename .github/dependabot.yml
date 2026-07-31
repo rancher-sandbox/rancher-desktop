@@ -40,6 +40,11 @@ updates:
     # updates of webpack until we can migrate off @vue/cli-service (which is
     # unlikely to be fixed as it is in maintenance mode).
     dependency-name: "webpack"
+  - # TypeScript 7 is the Go port; its npm package exports only version and
+    # versionMajorMinor, so ts-loader and @typescript-eslint fail with a
+    # TypeError.  Drop this rule once they support 7.x.
+    dependency-name: "typescript"
+    update-types: [version-update:semver-major]
 
 # Maintain dependencies for Golang
 - package-ecosystem: "gomod"
