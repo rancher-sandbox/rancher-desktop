@@ -24,7 +24,6 @@ import { loadFromString, exportConfig } from '@pkg/backend/kubeconfig';
 import { ContainerEngine } from '@pkg/config/settings';
 import { t } from '@pkg/main/i18n';
 import mainEvents from '@pkg/main/mainEvents';
-import { isUnixError } from '@pkg/typings/unix.interface';
 import DownloadProgressListener from '@pkg/utils/DownloadProgressListener';
 import * as childProcess from '@pkg/utils/childProcess';
 import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
@@ -73,6 +72,14 @@ interface cacheData {
   versions:      string[];
   /** Mapping of channel labels to current version (excluding build information). */
   channels:      Record<string, ShortVersion>;
+}
+
+function isErrorWithCode(error: unknown): error is { code: string | number } {
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return false;
+  }
+
+  return typeof error.code === 'string' || typeof error.code === 'number';
 }
 
 /**
@@ -864,6 +871,7 @@ export default class K3sHelper extends events.EventEmitter {
    */
   async waitForServerReady(getHost: () => Promise<string | undefined>, port: number): Promise<void> {
     let host: string | undefined;
+    let waitingForHost = false;
 
     console.log(`Waiting for K3s server to be ready on port ${ port }...`);
     while (true) {
@@ -871,6 +879,10 @@ export default class K3sHelper extends events.EventEmitter {
         host = await getHost();
 
         if (typeof host === 'undefined') {
+          if (!waitingForHost) {
+            console.log('Server host address is not known yet; waiting...');
+            waitingForHost = true;
+          }
           await util.promisify(setTimeout)(500);
           continue;
         }
@@ -908,7 +920,7 @@ export default class K3sHelper extends events.EventEmitter {
         });
         break;
       } catch (error) {
-        if (!isUnixError(error)) {
+        if (!isErrorWithCode(error)) {
           console.error(error);
 
           return;
