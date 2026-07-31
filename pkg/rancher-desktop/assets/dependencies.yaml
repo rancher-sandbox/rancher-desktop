@@ -70,30 +70,30 @@ check-spelling:
 dockerBuildx:
   assets:
     - arch: amd64
-      checksum: sha256:d41ece72044243b4f58b343441ae37446d9c29a7d6b5e11c61847bbcf8f7dfda
+      checksum: sha256:07823fdfcd82a41be90155a8b16876c1a780a6462de805a9f3f63b3119ccfb99
       platform: linux
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.linux-amd64
+      url: https://github.com/docker/buildx/releases/download/v0.36.0/buildx-v0.36.0.linux-amd64
     - arch: arm64
-      checksum: sha256:c4248d6cbc4a619a7e0b4609c11e509ad4ac0b475e1c64817c0ac20c5d90c766
+      checksum: sha256:70382de03915c07c488ae4ddc4f7e169ee978f953e754ecfce110ba017e0132b
       platform: linux
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.linux-arm64
+      url: https://github.com/docker/buildx/releases/download/v0.36.0/buildx-v0.36.0.linux-arm64
     - arch: amd64
-      checksum: sha256:7d53fd11deca2d4caebc5436c9eebece5c81c8bbc6d4b539cf30be5c133c38c7
+      checksum: sha256:8a75be22ecf40f633fe0a0199be48fa304c0446a0d7fa8a53d7c71b1d0093028
       platform: darwin
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.darwin-amd64
+      url: https://github.com/docker/buildx/releases/download/v0.36.0/buildx-v0.36.0.darwin-amd64
     - arch: arm64
-      checksum: sha256:fedbcbd488dcdb46414c6119920d8186d406531a1157ceede4e857e25af77ff1
+      checksum: sha256:82c6a3d9df37790c5bdb0d7ca88986d1d17622fc2b88ebe34b275c6c47acd7a6
       platform: darwin
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.darwin-arm64
+      url: https://github.com/docker/buildx/releases/download/v0.36.0/buildx-v0.36.0.darwin-arm64
     - arch: amd64
-      checksum: sha256:8076395009787cd1d30c94edeb5d7ac3945273374fc162c00e9810c3e9325ebe
+      checksum: sha256:ce84699d1d93a67d25888b9e6a717862a71b20305602f96d44770b1c12dfcdd8
       platform: windows
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.windows-amd64.exe
+      url: https://github.com/docker/buildx/releases/download/v0.36.0/buildx-v0.36.0.windows-amd64.exe
     - arch: arm64
-      checksum: sha256:ae03abd184e69ecefd9b751cdd5862db6d4822c2d27861b5b059fe6c1722681a
+      checksum: sha256:3c553164f2b25dd6d2314d8a9a2c19afac58d48f49095eeb6b46165d93d114d8
       platform: windows
-      url: https://github.com/docker/buildx/releases/download/v0.35.0/buildx-v0.35.0.windows-arm64.exe
-  version: 0.35.0
+      url: https://github.com/docker/buildx/releases/download/v0.36.0/buildx-v0.36.0.windows-arm64.exe
+  version: 0.36.0
 dockerCLI:
   assets:
     - arch: amd64
