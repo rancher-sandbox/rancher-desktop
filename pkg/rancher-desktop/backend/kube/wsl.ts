@@ -263,7 +263,10 @@ export default class WSLKubernetesBackend extends events.EventEmitter implements
     await this.progressTracker.action(
       t('progress.waitingForKubernetesApi'),
       100,
-      this.k3sHelper.waitForServerReady(() => this.vm.ipAddress, config.kubernetes?.port));
+      // The network tunnel publishes the API on the host at 127.0.0.1 only
+      // (and includes it in the server certificate's SANs); the VM's own
+      // eth0 address is not reachable from the host.
+      this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), config.kubernetes?.port));
 
     const client = this.client = kubeClient?.() || new KubeClient();
 
