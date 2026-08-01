@@ -11,6 +11,8 @@ import yaml from 'yaml';
 
 import { DependencyAsset, DownloadContext, getPublishedReleaseTagNames, VersionedDependency } from './dependencies';
 
+import { splitImageReference } from '@pkg/utils/dockerUtils';
+
 const EXTENSION_PATH = 'scripts/assets/extension-data.yaml';
 const EXTENSION_OUTPUT_PATH = 'pkg/rancher-desktop/assets/extension-data.yaml';
 
@@ -30,7 +32,7 @@ interface ExtensionInfo {
 export class Extension extends VersionedDependency {
   constructor(ref: string, info: ExtensionInfo) {
     super();
-    const [name, tag] = ref.split(':', 2);
+    const [name, tag] = splitImageReference(ref);
 
     this.name = name;
     this.currentVersion = Promise.resolve(tag);

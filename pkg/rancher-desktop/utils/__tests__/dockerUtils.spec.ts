@@ -1,4 +1,15 @@
-import { imageInfo, parseImageReference } from '../dockerUtils';
+import { imageInfo, parseImageReference, splitImageReference } from '../dockerUtils';
+
+describe('splitImageReference', () => {
+  test.each([
+    ['image', ['image', 'latest']],
+    ['image:tag', ['image', 'tag']],
+    ['registry.example:5000/org/image:tag', ['registry.example:5000/org/image', 'tag']],
+    ['registry.example:5000/org/image', ['registry.example:5000/org/image', 'latest']],
+  ])('%s', (input, expected) => {
+    expect(splitImageReference(input)).toEqual(expected);
+  });
+});
 
 describe('parseImageReference', () => {
   const dockerHub = new URL('https://index.docker.io');
@@ -8,6 +19,8 @@ describe('parseImageReference', () => {
     'dir/name':                         new imageInfo(dockerHub, 'dir/name'),
     'registry.test/thing':              new imageInfo(new URL('https://registry.test/'), 'thing' ),
     'registry.test:5000/org/thing:tag': new imageInfo(new URL('https://registry.test:5000/'), 'org/thing', 'tag'),
+    'registry.test:65536/thing':         null,
+    'registry.6/thing':                  null,
     _:                                  null,
     ':10/tag':                          null,
     [`xxx:${ Array(130).join('x') }`]:  null,
