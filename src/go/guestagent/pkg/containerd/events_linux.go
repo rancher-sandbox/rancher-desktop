@@ -120,8 +120,11 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
 				}
 
-				err = e.portTracker.Add(startTask.ContainerID, ports)
-				if err != nil {
+				switch err = e.portTracker.Add(startTask.ContainerID, ports); {
+				case err == nil:
+				case errors.Is(err, tracker.ErrPortAlreadyExposed):
+					log.Debugf("ports for container %s already exposed elsewhere", startTask.ContainerID)
+				default:
 					log.Errorf("adding port mapping to tracker failed: %v", err)
 
 					continue
@@ -156,8 +159,11 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							log.Errorf("failed to remove port mapping from container update event: %v", err)
 						}
 
-						err = e.portTracker.Add(cuEvent.ID, ports)
-						if err != nil {
+						switch err = e.portTracker.Add(cuEvent.ID, ports); {
+						case err == nil:
+						case errors.Is(err, tracker.ErrPortAlreadyExposed):
+							log.Debugf("updated ports for container %s already exposed elsewhere", cuEvent.ID)
+						default:
 							log.Errorf("failed to add port mapping from container update event: %v", err)
 
 							continue
@@ -167,7 +173,11 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					continue
 				}
 				// Not 100% sure if we ever get here...
-				if err = e.portTracker.Add(cuEvent.ID, ports); err != nil {
+				switch err = e.portTracker.Add(cuEvent.ID, ports); {
+				case err == nil:
+				case errors.Is(err, tracker.ErrPortAlreadyExposed):
+					log.Debugf("updated ports for container %s already exposed elsewhere", cuEvent.ID)
+				default:
 					log.Errorf("failed to add port mapping from container update event: %v", err)
 				}
 
@@ -284,8 +294,11 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) {
 			log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
 		}
 
-		err = e.portTracker.Add(c.ID(), ports)
-		if err != nil {
+		switch err = e.portTracker.Add(c.ID(), ports); {
+		case err == nil:
+		case errors.Is(err, tracker.ErrPortAlreadyExposed):
+			log.Debugf("ports for running container %s already exposed elsewhere", c.ID())
+		default:
 			log.Errorf("adding port mapping to tracker failed: %v", err)
 
 			continue

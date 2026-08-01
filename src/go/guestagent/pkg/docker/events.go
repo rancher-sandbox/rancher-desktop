@@ -17,6 +17,7 @@ package docker
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -97,8 +98,11 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 			case events.ActionStart:
 				if len(container.NetworkSettings.Ports) != 0 {
 					validatePortMapping(container.NetworkSettings.Ports)
-					err = e.portTracker.Add(container.ID, container.NetworkSettings.Ports)
-					if err != nil {
+					switch err = e.portTracker.Add(container.ID, container.NetworkSettings.Ports); {
+					case err == nil:
+					case errors.Is(err, tracker.ErrPortAlreadyExposed):
+						log.Debugf("ports for container %s already exposed elsewhere", container.ID)
+					default:
 						log.Errorf("adding port mapping to tracker failed: %s", err)
 					}
 
@@ -161,7 +165,14 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 
 				continue
 			}
-			if err := e.portTracker.Add(container.ID, portMap); err != nil {
+			// A port another component already exposes still needs the
+			// loopback DNAT rules below: they route bindIP:port to the
+			// container's 127.0.0.1 listener whoever called expose.
+			switch err := e.portTracker.Add(container.ID, portMap); {
+			case err == nil:
+			case errors.Is(err, tracker.ErrPortAlreadyExposed):
+				log.Debugf("ports for already running container %s exposed elsewhere", container.ID)
+			default:
 				log.Errorf("registering already running containers failed: %v", err)
 				continue
 			}
