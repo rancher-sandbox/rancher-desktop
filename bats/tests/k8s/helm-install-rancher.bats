@@ -134,7 +134,9 @@ verify_rancher() {
     local host
     host=$(traefik_hostname)
 
-    run try --max 9 --delay 10 curl --insecure --silent --show-error "https://${host}/dashboard/auth/login"
+    # Without `--fail`, Traefik's "no available server" 503 counts as a
+    # successful curl, and `try` returns after the first attempt.
+    run try --max 9 --delay 10 curl --insecure --silent --show-error --fail "https://${host}/dashboard/auth/login"
     assert_success
     assert_output --partial 'src="/dashboard/'
     run kubectl get secret --namespace cattle-system bootstrap-secret -o json
