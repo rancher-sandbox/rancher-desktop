@@ -45,6 +45,10 @@ updates:
     # TypeError.  Drop this rule once they support 7.x.
     dependency-name: "typescript"
     update-types: [version-update:semver-major]
+  groups:
+    # vue pins @vue/compiler-sfc exactly, so separate bumps break the lockfile.
+    vue:
+      patterns: ["vue", "@vue/compiler-sfc"]
 
 # Maintain dependencies for Golang
 - package-ecosystem: "gomod"
