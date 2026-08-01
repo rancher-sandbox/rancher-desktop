@@ -876,7 +876,7 @@ test.describe('Command server', () => {
           });
           const newSettings: Settings = JSON.parse((await rdctl(['list-settings'])).stdout);
 
-          expect(newSettings).toEqual(_.merge(oldSettings, body));
+          expect(newSettings).toEqual(_.merge({}, oldSettings, body));
 
           // And now reinstate the old prefs so other tests that count on them will pass.
           const result = await rdctl(['api', '/v1/settings', '-X', 'PUT', '-b', JSON.stringify(oldSettings)]);
