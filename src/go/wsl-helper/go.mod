@@ -92,3 +92,6 @@ require (
 )
 
 tool github.com/go-swagger/go-swagger/cmd/swagger
+
+// Dependabot does not read go.work, so without this it pins a remote version.
+replace github.com/rancher-sandbox/rancher-desktop/src/go/rdctl => ../rdctl
