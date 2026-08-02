@@ -121,7 +121,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         const args: string[] = [];
 
         if (this.cfg?.kubernetes.enabled) {
-          const k8sPort = 6443;
+          const k8sPort = this.cfg.kubernetes.port;
           const eth0IP = '192.168.127.2';
           const k8sPortForwarding = `127.0.0.1:${ k8sPort }=${ eth0IP }:${ k8sPort }`;
 
@@ -831,6 +831,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       GUESTAGENT_DOCKER:        cfg?.containerEngine.name === ContainerEngine.MOBY ? 'true' : 'false',
       GUESTAGENT_DEBUG:         this.debug ? 'true' : 'false',
       GUESTAGENT_K8S_SVC_ADDR:  isAdminInstall && !cfg?.kubernetes.ingress.localhostOnly ? '0.0.0.0' : '127.0.0.1',
+      // An empty value makes the init script omit the flag, so the agent keeps its default.
+      GUESTAGENT_K8S_API_PORT:  cfg ? cfg.kubernetes.port.toString() : '',
     };
 
     await Promise.all([
