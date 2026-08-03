@@ -92,6 +92,15 @@ export class ContainersPage {
     await expect(this.getGroupRow(groupName).locator('input[type="checkbox"]')).toBeChecked();
   }
 
+  /**
+   * The "N selected" bulk-action count label lives in the table header, which
+   * is a sibling of the `.sortable-table` element itself - so it must be
+   * located from the page, not scoped to `this.table`.
+   */
+  getSelectionCount(count: number) {
+    return this.page.locator('.action-availability').getByText(`${ count } selected`, { exact: true });
+  }
+
   async clickBulkStop() {
     await this.page.getByRole('button', { name: 'Stop' }).first().click();
   }

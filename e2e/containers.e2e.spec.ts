@@ -718,7 +718,7 @@ test.describe.serial('Container Compose Group Actions', () => {
     // The row checkboxes reflect selection reactively rather than through the
     // native `checked` DOM property, so assert on the table's own selection
     // count label instead of the (unreliable) checkbox element state.
-    await expect(containersPage.table.getByText('2 selected', { exact: true })).toBeVisible();
+    await expect(containersPage.getSelectionCount(2)).toBeVisible();
 
     await containersPage.clickBulkStop();
 
