@@ -690,6 +690,8 @@ test.describe.serial('Container Compose Group Actions', () => {
     const containersPage = await navPage.navigateTo('Containers');
 
     await containersPage.waitForTableToLoad();
+    await containersPage.waitForContainerToAppear(composeContainerId1);
+    await containersPage.waitForContainerToAppear(composeContainerId2);
     await containersPage.waitForGroupToAppear(composeProjectName);
     await containersPage.selectGroup(composeProjectName);
 
@@ -710,6 +712,8 @@ test.describe.serial('Container Compose Group Actions', () => {
     const containersPage = await navPage.navigateTo('Containers');
 
     await containersPage.waitForTableToLoad();
+    await containersPage.waitForContainerToAppear(composeContainerId1);
+    await containersPage.waitForContainerToAppear(composeContainerId2);
     await containersPage.waitForGroupToAppear(composeProjectName);
     await containersPage.selectGroup(composeProjectName);
     await containersPage.clickBulkDelete();
