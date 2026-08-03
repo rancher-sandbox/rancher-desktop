@@ -7,14 +7,29 @@ import { Octokit } from 'octokit';
 import semver from 'semver';
 import YAML from 'yaml';
 
-import { download, getResource, hashFile } from './download';
+import {
+  download, getResource, hashFile, parseSha256Checksum, Sha256Checksum,
+} from './download';
+
+export { parseSha256Checksum, type Sha256Checksum };
 
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
 export type GoPlatform = 'linux' | 'darwin' | 'windows';
+export type GoArch = 'amd64' | 'arm64';
+
+/**
+ * The platform axis an {@link DependencyAsset} targets: the Go platform name,
+ * plus `wsl` for the WSL-specific build (the only place where a single
+ * architecture ships distinct linux and WSL binaries).
+ */
+export type AssetPlatform = GoPlatform | 'wsl';
 
 export interface DownloadContext {
   dependencies:       DependencyManifest;
+  // manifestPath is the dependencies.yaml `dependencies` came from;
+  // asset-selection errors name it.
+  manifestPath:       string;
   dependencyPlatform: DependencyPlatform;
   platform:           Platform;
   goPlatform:         GoPlatform;
@@ -80,81 +95,147 @@ export interface DependencyVersions {
 export const DEP_VERSIONS_PATH = 'pkg/rancher-desktop/assets/dependencies.yaml';
 
 /**
- * A sha256 checksum as stored in `dependencies.yaml`, including the algorithm
- * prefix.  The prefix documents the algorithm for readers of the file; the
- * install path strips it and treats the remainder as sha256 hex.  Values
- * carry lowercase hex; {@link parseSha256Checksum} normalizes on parse so
- * `download()` can compare against `crypto.createHash('sha256').digest('hex')`
- * (always lowercase) with a plain `===`.
+ * One downloadable artifact for a dependency.  Every field needed to fetch and
+ * verify the bytes lives here, so a downloader needs no per-package knowledge.
+ * It selects by {@link platform}/{@link arch} (and {@link variant} where one
+ * package ships several), fetches {@link url}, and checks the bytes against
+ * {@link checksum}.
  */
-export type Sha256Checksum = `sha256:${ string }`;
-
-/**
- * Parses a raw string as a {@link Sha256Checksum}.  Throws unless the value
- * has the form `sha256:<64 hex chars>`.  Uppercase hex parses but normalizes
- * to lowercase so consumers can compare with `===`.
- */
-export function parseSha256Checksum(value: unknown): Sha256Checksum {
-  if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/i.test(value)) {
-    throw new Error(`Invalid sha256 checksum ${ JSON.stringify(value) }; expected "sha256:<64 hex chars>"`);
-  }
-
-  return value.toLowerCase() as Sha256Checksum;
+export interface DependencyAsset {
+  /** The platform this artifact targets. */
+  platform: AssetPlatform;
+  /**
+   * The architecture this artifact targets.  Omitted for arch-independent
+   * artifacts (e.g. the WiX .NET toolset), which match any architecture.
+   */
+  arch?:    GoArch;
+  /** The fully-resolved download URL. */
+  url:      string;
+  /** The sha256 of the downloaded bytes, `sha256:`-prefixed. */
+  checksum: Sha256Checksum;
+  /**
+   * Distinguishes artifacts that share a platform/arch but differ in kind,
+   * such as a Helm chart versus its CRDs.
+   */
+  variant?: string;
 }
 
 /**
- * The compound entry recorded for each dependency in `dependencies.yaml`:
- * the version (typed per dependency) plus a map from artifact filename to
- * its stored {@link Sha256Checksum}.  Filenames match what upstream
- * publishes — the same string a `sha256sum` or `sha512sum` file uses.
+ * The entry recorded for each dependency in a `dependencies.yaml`: the tracked
+ * version plus the {@link DependencyAsset}s resolved for it.  The shape mirrors
+ * the on-disk YAML so the in-memory model and the file stay in sync without
+ * translation.
  */
-export interface DependencyEntry<K extends keyof DependencyVersions = keyof DependencyVersions> {
-  version:   DependencyVersions[K];
-  checksums: Record<string, Sha256Checksum>;
+export interface DependencyEntry {
+  version: Version;
+  assets:  DependencyAsset[];
 }
 
-/**
- * The parsed contents of `dependencies.yaml`, keyed by dependency name.
- * The shape mirrors the on-disk YAML so the in-memory model and the file
- * stay in sync without translation.
- */
-export type DependencyManifest = {
-  [K in keyof DependencyVersions]: DependencyEntry<K>;
-};
+/** The parsed contents of a `dependencies.yaml`, keyed by dependency name. */
+export type DependencyManifest = Record<string, DependencyEntry>;
+
+interface RawAsset {
+  platform: unknown;
+  arch?:    unknown;
+  url:      unknown;
+  checksum: unknown;
+  variant?: unknown;
+}
 
 interface RawEntry {
-  version:    unknown;
-  checksums?: Record<string, unknown>;
+  version: unknown;
+  assets?: unknown;
 }
 
-/** Reads `dependencies.yaml` into the typed compound manifest. */
+const ASSET_PLATFORMS = ['linux', 'darwin', 'windows', 'wsl'] satisfies readonly AssetPlatform[];
+const ASSET_ARCHES = ['amd64', 'arm64'] satisfies readonly GoArch[];
+
+/** Parses and validates a single asset from a manifest entry. */
+function parseAsset(name: string, path: string, raw: RawAsset): DependencyAsset {
+  if (!ASSET_PLATFORMS.includes(raw.platform as AssetPlatform)) {
+    throw new Error(`Asset for ${ name } in ${ path } has invalid platform ${ JSON.stringify(raw.platform) }`);
+  }
+  if (raw.arch !== undefined && !ASSET_ARCHES.includes(raw.arch as GoArch)) {
+    throw new Error(`Asset for ${ name } in ${ path } has invalid arch ${ JSON.stringify(raw.arch) }`);
+  }
+  if (typeof raw.url !== 'string' || !URL.canParse(raw.url)) {
+    throw new Error(`Asset for ${ name } in ${ path } has invalid url ${ JSON.stringify(raw.url) }`);
+  }
+  if (raw.variant !== undefined && typeof raw.variant !== 'string') {
+    throw new Error(`Asset for ${ name } in ${ path } has invalid variant ${ JSON.stringify(raw.variant) }`);
+  }
+  const asset: DependencyAsset = {
+    platform: raw.platform as AssetPlatform,
+    url:      raw.url,
+    checksum: parseSha256Checksum(raw.checksum),
+  };
+
+  if (raw.arch !== undefined) {
+    asset.arch = raw.arch as GoArch;
+  }
+  if (raw.variant !== undefined) {
+    asset.variant = raw.variant;
+  }
+
+  return asset;
+}
+
+/**
+ * Validates a manifest entry's `version`.  Most dependencies track a plain
+ * version string; `alpineLimaISO` and `mobyOpenAPISpec` track a structured
+ * version (see {@link AlpineLimaISOVersion} / {@link MobyOpenAPISpecVersion}),
+ * so those two shapes are accepted too.  A bare YAML number (e.g. `1.0`) is
+ * rejected so an unquoted version cannot silently lose precision.  The
+ * `mobyOpenAPISpec` commit must be a full 40-char SHA.  A mutable ref (a
+ * branch, a short SHA) would otherwise let a regenerate bake a moving target
+ * into the install URL, defeating the immutable-source guarantee.
+ */
+function parseVersion(name: string, path: string, raw: unknown): Version {
+  if (typeof raw === 'string') {
+    return raw;
+  }
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const obj = raw as Record<string, unknown>;
+
+    if (typeof obj.isoVersion === 'string' && typeof obj.alpineVersion === 'string') {
+      return { isoVersion: obj.isoVersion, alpineVersion: obj.alpineVersion };
+    }
+    if (typeof obj.apiVersion === 'string' && typeof obj.commit === 'string') {
+      if (!/^[0-9a-f]{40}$/i.test(obj.commit)) {
+        throw new Error(`Entry ${ name } in ${ path } has invalid mobyOpenAPISpec commit ${ JSON.stringify(obj.commit) }; expected a 40-char SHA`);
+      }
+
+      return { apiVersion: obj.apiVersion, commit: obj.commit };
+    }
+  }
+
+  throw new Error(`Entry ${ name } in ${ path } has invalid version ${ JSON.stringify(raw) }; expected a string or a structured version`);
+}
+
+/**
+ * Reads a `dependencies.yaml` into the typed manifest.  An entry with no
+ * `assets` list parses with an empty one, so `rddepman --regenerate` can
+ * migrate a manifest still written in the old `checksums` schema.  Remove
+ * the tolerance, and its test, once this change has landed on `main`.
+ */
 export async function readDependencyManifest(path: string): Promise<DependencyManifest> {
   const raw: Record<string, RawEntry> = YAML.parse(await fs.promises.readFile(path, 'utf-8'));
-  const manifest: Partial<DependencyManifest> = {};
+  const manifest: DependencyManifest = {};
 
   for (const [name, entry] of Object.entries(raw)) {
     if (!entry || typeof entry !== 'object' || !('version' in entry)) {
       throw new Error(`Entry ${ name } in ${ path } is missing a "version" field`);
     }
-    const version = entry.version;
-    const valid = typeof version === 'string' ||
-      (typeof version === 'object' && version !== null && !Array.isArray(version));
-
-    if (!valid) {
-      throw new Error(`Entry ${ name } in ${ path } has invalid version ${ JSON.stringify(version) }; expected a string or object`);
+    if (entry.assets !== undefined && !Array.isArray(entry.assets)) {
+      throw new Error(`Entry ${ name } in ${ path } has a non-list "assets" field`);
     }
-    const checksums: Record<string, Sha256Checksum> = {};
-
-    for (const [file, value] of Object.entries(entry.checksums ?? {})) {
-      checksums[file] = parseSha256Checksum(value);
-    }
-    (manifest as any)[name] = {
-      version,
-      checksums,
+    manifest[name] = {
+      version: parseVersion(name, path, entry.version),
+      assets:  ((entry.assets as RawAsset[]) ?? []).map(asset => parseAsset(name, path, asset)),
     };
   }
 
-  return manifest as DependencyManifest;
+  return manifest;
 }
 
 // Split the editor-warning marker across array entries so this source file
@@ -164,26 +245,45 @@ const MANIFEST_HEADER = [
   '# Regenerated by `yarn rddepman` on every dependency bump.  DO NOT ',
   'EDIT.\n',
   '# Manual edits must recompute the affected sha256 entries; stale digests\n',
-  '# fail postinstall verification.  Document non-obvious version pins in\n',
+  '# fail verification at download time.  Document non-obvious version pins in\n',
   '# scripts/dependencies/<name>.ts instead of inline comments here — the\n',
   '# next bump will strip them.\n',
   '#\n',
-  '# Each entry pairs a version with a checksums map of upstream artifact\n',
-  '# filenames; install-time downloads verify against the stored sha256.\n',
+  '# Each entry pairs a version with the assets resolved for it; every asset\n',
+  '# carries its full url and sha256 so a downloader can fetch and verify it\n',
+  '# without per-package knowledge.\n',
 ].join('');
 
 /**
- * Writes the manifest to disk in compound-entry form and invalidates the
- * shared cache so subsequent reads observe the new contents.  Always emits a
- * leading header comment so contributors editing the YAML directly see the
- * warning where they are editing; everything else round-trips through
- * `YAML.stringify`, which drops any other comments on the next rddepman bump.
+ * Caches each manifest read by path so the dependency classes that share a
+ * file read it once.  {@link writeDependencyManifest} invalidates the entry
+ * for the file it wrote.
+ */
+const manifestCache = new Map<string, Promise<DependencyManifest>>();
+
+/** Reads a manifest through {@link manifestCache}. */
+function getCachedManifest(path: string): Promise<DependencyManifest> {
+  let cached = manifestCache.get(path);
+
+  if (!cached) {
+    cached = readDependencyManifest(path);
+    manifestCache.set(path, cached);
+  }
+
+  return cached;
+}
+
+/**
+ * Writes the manifest and drops its cache entry, so later reads see the new
+ * contents.  `YAML.stringify` discards comments, so every write re-emits the
+ * header; whatever order the manifest had in memory, sorted keys hold a bump's
+ * diff to the entries that changed.
  */
 export async function writeDependencyManifest(path: string, manifest: DependencyManifest): Promise<void> {
-  await fs.promises.writeFile(path, MANIFEST_HEADER + YAML.stringify(manifest), { encoding: 'utf-8' });
-  if (path === DEP_VERSIONS_PATH) {
-    depManifestCache = undefined;
-  }
+  manifestCache.delete(path);
+  await fs.promises.writeFile(path,
+    MANIFEST_HEADER + YAML.stringify(manifest, { sortMapEntries: true }),
+    { encoding: 'utf-8' });
 }
 
 /**
@@ -201,33 +301,63 @@ export async function readDependencyVersions(path: string): Promise<DependencyVe
   return versions as DependencyVersions;
 }
 
+/** A predicate over a dependency's assets used to pick the one(s) to install. */
+export interface AssetSelector {
+  platform: AssetPlatform;
+  arch?:    GoArch;
+  variant?: string;
+}
+
+/** Returns whether `asset` matches `selector`. */
+function assetMatches(asset: DependencyAsset, selector: AssetSelector): boolean {
+  return asset.platform === selector.platform &&
+    (selector.arch === undefined || asset.arch === undefined || asset.arch === selector.arch) &&
+    (selector.variant === undefined || asset.variant === selector.variant);
+}
+
+/** Renders a selector for error messages. */
+function describeSelector(selector: AssetSelector): string {
+  return Object.entries(selector).map(([key, value]) => `${ key }=${ value }`).join(', ');
+}
+
+/** The architecture to install binaries for. */
+export function hostArch(context: DownloadContext): GoArch {
+  return context.isM1 ? 'arm64' : 'amd64';
+}
+
+/** The default selector: the platform and architecture we install for. */
+function hostSelector(context: DownloadContext): AssetSelector {
+  return { platform: context.goPlatform, arch: hostArch(context) };
+}
+
 /**
- * Returns the stored sha256 for the given artifact as raw hex, with the
- * `sha256:` prefix stripped so it slots straight into `download()`.  Throws
- * if the artifact has no recorded checksum.
+ * Returns every asset of `name` matching `selector`.  Throws when the manifest
+ * has no such dependency; returns [] when it has no matching asset.
  */
-export function lookupChecksum(
-  context: DownloadContext,
-  name: keyof DependencyVersions,
-  artifactName: string,
-): string {
+export function selectAssets(context: DownloadContext, name: string, selector = hostSelector(context)): DependencyAsset[] {
   const entry = context.dependencies[name];
 
   if (!entry) {
-    throw new Error(`Dependency "${ name }" is not present in ${ DEP_VERSIONS_PATH }.`);
+    throw new Error(`Dependency "${ name }" is not present in ${ context.manifestPath }.`);
   }
-  const prefixed = entry.checksums?.[artifactName];
 
-  if (!prefixed) {
-    const available = Object.keys(entry.checksums ?? {}).sort().join(', ') || '(none)';
+  return entry.assets.filter(asset => assetMatches(asset, selector));
+}
+
+/** Returns the asset of `name` matching `selector`; throws unless exactly one does. */
+export function selectAsset(context: DownloadContext, name: string, selector = hostSelector(context)): DependencyAsset {
+  const matches = selectAssets(context, name, selector);
+
+  if (matches.length !== 1) {
+    const urls = matches.map(asset => asset.url).join(', ') || '(none)';
 
     throw new Error(
-      `No checksum recorded for ${ name } artifact "${ artifactName }" in ${ DEP_VERSIONS_PATH }. ` +
-      `Available: ${ available }`,
+      `Expected exactly one ${ name } asset for ${ describeSelector(selector) } in ${ context.manifestPath }, ` +
+      `found ${ matches.length }: ${ urls }.`,
     );
   }
 
-  return prefixed.slice('sha256:'.length);
+  return matches[0];
 }
 
 /**
@@ -388,6 +518,18 @@ export abstract class VersionedDependency implements Dependency {
   /** The current version. */
   abstract get currentVersion(): Promise<Version>;
 
+  /** The assets recorded for the current version; empty when none are tracked. */
+  get currentAssets(): Promise<DependencyAsset[]> {
+    return Promise.resolve([]);
+  }
+
+  /**
+   * Whether `rddepman --regenerate` re-resolves this dependency's assets at its
+   * recorded version.  Defaults to true; a dependency opts out when its assets
+   * cannot be resolved from the recorded version alone.
+   */
+  readonly regenerable: boolean = true;
+
   /** The newest version that can be upgraded to. */
   get latestVersion(): Promise<Version> {
     return (async() => {
@@ -415,19 +557,19 @@ export abstract class VersionedDependency implements Dependency {
   }
 
   /**
-   * Returns the sha256 of every artifact for the given version, verifying
+   * Resolves every {@link DependencyAsset} for the given version, verifying
    * each against any upstream checksum file the source publishes.  rddepman
-   * calls this at bump time and stores the result in `dependencies.yaml`.
-   * Classes that download nothing (e.g. `check-spelling`) return an empty map.
+   * calls this at bump time and records the result in the manifest.  Classes
+   * that download nothing (e.g. `check-spelling`) return an empty list.
    */
-  abstract getChecksums(version: Version): Promise<Record<string, Sha256Checksum>>;
+  abstract getAssets(version: Version): Promise<DependencyAsset[]>;
 
   /**
    * Update the version manifest (e.g. `dependencies.yaml`) for this dependency,
    * in preparation for making a pull request.
    * @returns The set of files that have been modified.
    */
-  abstract updateManifest(newVersion: Version, newChecksums: Record<string, Sha256Checksum>): Promise<Set<string>>;
+  abstract updateManifest(newVersion: Version, newAssets: DependencyAsset[]): Promise<Set<string>>;
 
   /**
    * Compare the two versions.  The return value is:
@@ -486,39 +628,35 @@ export abstract class VersionedDependency implements Dependency {
   }
 }
 
-/** Shared cache so all GlobalDependency subclasses read DEP_VERSIONS_PATH once. */
-let depManifestCache: Promise<DependencyManifest> | undefined;
-
-function getCachedManifest(): Promise<DependencyManifest> {
-  depManifestCache ||= readDependencyManifest(DEP_VERSIONS_PATH);
-
-  return depManifestCache;
-}
-
 /**
- * A GlobalDependency is a dependency where the version is managed in the file
- * {@link DEP_VERSIONS_PATH}.
+ * A GlobalDependency is a dependency whose version and assets are managed in a
+ * `dependencies.yaml` manifest.  {@link GlobalDependency.manifestPath} selects
+ * which one; it defaults to {@link DEP_VERSIONS_PATH}, and a subclass may
+ * override it to track a separate manifest.
  */
 export function GlobalDependency<T extends abstract new(...args: any[]) => VersionedDependency>(Base: T) {
   abstract class GlobalDependency extends Base {
-    /** The name of this dependency; it must be a key in DEP_VERSIONS_PATH. */
-    abstract name: keyof DependencyVersions;
+    /** The dependency's name, a top-level key in the manifest at {@link manifestPath}. */
+    abstract name: string;
+
+    /** The manifest file this dependency's version and assets live in. */
+    readonly manifestPath: string = DEP_VERSIONS_PATH;
 
     get currentVersion(): Promise<Version> {
-      return getCachedManifest().then(m => m[this.name].version);
+      return getCachedManifest(this.manifestPath).then(m => m[this.name].version);
     }
 
-    async updateManifest(newVersion: Version, newChecksums: Record<string, Sha256Checksum>): Promise<Set<string>> {
-      const manifest = await getCachedManifest();
+    get currentAssets(): Promise<DependencyAsset[]> {
+      return getCachedManifest(this.manifestPath).then(m => m[this.name].assets);
+    }
 
-      // The cast trusts the subclass to pass a Version that matches its
-      // own DependencyVersions field; rddepman builds the call from
-      // `dep.getChecksums(latestVersion)` whose return type already
-      // depends on the dependency's own version shape.
-      (manifest as any)[this.name] = { version: newVersion, checksums: newChecksums };
-      await writeDependencyManifest(DEP_VERSIONS_PATH, manifest);
+    async updateManifest(newVersion: Version, newAssets: DependencyAsset[]): Promise<Set<string>> {
+      const manifest = await getCachedManifest(this.manifestPath);
 
-      return new Set([DEP_VERSIONS_PATH]);
+      manifest[this.name] = { version: newVersion, assets: newAssets };
+      await writeDependencyManifest(this.manifestPath, manifest);
+
+      return new Set([this.manifestPath]);
     }
   }
 

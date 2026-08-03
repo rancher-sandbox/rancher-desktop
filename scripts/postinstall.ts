@@ -16,6 +16,7 @@ import {
   Dependency,
   DependencyManifest,
   DependencyPlatform,
+  DEP_VERSIONS_PATH,
   DownloadContext,
   readDependencyManifest,
 } from '@/scripts/lib/dependencies';
@@ -186,7 +187,7 @@ async function downloadDependencies(items: DependencyWithContext[]): Promise<voi
 
 async function runScripts(): Promise<void> {
   // load desired versions and checksums of dependencies
-  const manifest = await readDependencyManifest(path.join('pkg', 'rancher-desktop', 'assets', 'dependencies.yaml'));
+  const manifest = await readDependencyManifest(DEP_VERSIONS_PATH);
   const platform = os.platform();
   const dependencies: DependencyWithContext[] = [];
 
@@ -233,6 +234,7 @@ async function buildDownloadContextFor(rawPlatform: DependencyPlatform, manifest
   const resourcesDir = path.join(process.cwd(), 'resources');
   const downloadContext: DownloadContext = {
     dependencies:       manifest,
+    manifestPath:       DEP_VERSIONS_PATH,
     dependencyPlatform: rawPlatform,
     platform,
     goPlatform:         platform === 'win32' ? 'windows' : platform,

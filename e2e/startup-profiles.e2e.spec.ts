@@ -259,11 +259,11 @@ test.describe.serial('starting up with profiles', () => {
       expect(windowCount).toEqual(0);
       expect(contents).toContain('Fatal Error:');
       if (process.platform === 'win32') {
-        expect(contents).toContain('Invalid default-deployment: no version specified at HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Defaults.');
-        expect(contents).toContain(`You'll need to add a version field to make it valid (current version is ${ CURRENT_SETTINGS_VERSION }).`);
+        expect(contents).toContain('Invalid deployment: no version specified at HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Defaults.');
+        expect(contents).toContain(`Add a version field to make it valid (current version is ${ CURRENT_SETTINGS_VERSION }).`);
       } else {
         expect(contents).toContain('Failed to load the deployment profile');
-        expect(contents).toMatch(/Invalid deployment file.*defaults.*: no version specified. You'll need to add a version field to make it valid/);
+        expect(contents).toMatch(/Invalid deployment file.*defaults.*: no version specified. Add a version field to make it valid/);
       }
     });
 
@@ -283,11 +283,11 @@ test.describe.serial('starting up with profiles', () => {
       expect(windowCount).toEqual(0);
       expect(contents).toContain('Fatal Error:');
       if (process.platform === 'win32') {
-        expect(contents).toContain('Invalid locked-deployment: no version specified at HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Locked.');
-        expect(contents).toContain(`You'll need to add a version field to make it valid (current version is ${ CURRENT_SETTINGS_VERSION }).`);
+        expect(contents).toContain('Invalid deployment: no version specified at HKCU\\SOFTWARE\\Rancher Desktop\\Profile\\Locked.');
+        expect(contents).toContain(`Add a version field to make it valid (current version is ${ CURRENT_SETTINGS_VERSION }).`);
       } else {
         expect(contents).toContain('Failed to load the deployment profile');
-        expect(contents).toMatch(/Invalid deployment file.*locked.*: no version specified. You'll need to add a version field to make it valid/);
+        expect(contents).toMatch(/Invalid deployment file.*locked.*: no version specified. Add a version field to make it valid/);
       }
     });
   });

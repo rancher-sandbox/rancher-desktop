@@ -35,7 +35,7 @@ export default defineComponent({
   <div class="wsl-integrations">
     <rd-fieldset
       data-test="wslIntegrations"
-      :legend-text="t('integrations.windows.description', { }, true)"
+      :legend-text="t('integrations.windows.description')"
     >
       <wsl-integration
         data-test-id="wsl-integration-list"

@@ -19,6 +19,9 @@ type snapshotFile struct {
 	WorkingPath string
 	// The path that the file is put at in a snapshot.
 	SnapshotPath string
+	// Fallback path for restoring snapshots written by older versions of
+	// Rancher Desktop, which used different filenames. Empty if unchanged.
+	LegacySnapshotPath string
 	// Whether clonefile (macOS) or ioctl_ficlone (Linux) should be used
 	// when copying the file around.
 	CopyOnWrite bool
@@ -53,18 +56,20 @@ func (snapshotter SnapshotterImpl) Files(appPaths *paths.Paths, snapshotDir stri
 			FileMode:     0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(appPaths.Lima, "0", "basedisk"),
-			SnapshotPath: filepath.Join(snapshotDir, "basedisk"),
-			CopyOnWrite:  true,
-			MissingOk:    false,
-			FileMode:     0o644,
+			WorkingPath:        filepath.Join(appPaths.Lima, "0", "iso"),
+			SnapshotPath:       filepath.Join(snapshotDir, "iso"),
+			LegacySnapshotPath: filepath.Join(snapshotDir, "basedisk"),
+			CopyOnWrite:        true,
+			MissingOk:          false,
+			FileMode:           0o644,
 		},
 		{
-			WorkingPath:  filepath.Join(appPaths.Lima, "0", "diffdisk"),
-			SnapshotPath: filepath.Join(snapshotDir, "diffdisk"),
-			CopyOnWrite:  true,
-			MissingOk:    false,
-			FileMode:     0o644,
+			WorkingPath:        filepath.Join(appPaths.Lima, "0", "disk"),
+			SnapshotPath:       filepath.Join(snapshotDir, "disk"),
+			LegacySnapshotPath: filepath.Join(snapshotDir, "diffdisk"),
+			CopyOnWrite:        true,
+			MissingOk:          false,
+			FileMode:           0o644,
 		},
 		{
 			WorkingPath:  filepath.Join(appPaths.Lima, "_config", "user"),
@@ -127,7 +132,15 @@ func (snapshotter SnapshotterImpl) RestoreFiles(ctx context.Context, appPaths *p
 	for _, file := range files {
 		taskRunner.Add(func() error {
 			filename := filepath.Base(file.WorkingPath)
-			err := copyFile(file.WorkingPath, file.SnapshotPath, file.CopyOnWrite, file.FileMode)
+			snapshotPath := file.SnapshotPath
+			// Older snapshots stored the VM disk under Lima's legacy filenames;
+			// fall back to them so those snapshots stay restorable.
+			if file.LegacySnapshotPath != "" {
+				if _, statErr := os.Stat(snapshotPath); errors.Is(statErr, os.ErrNotExist) {
+					snapshotPath = file.LegacySnapshotPath
+				}
+			}
+			err := copyFile(file.WorkingPath, snapshotPath, file.CopyOnWrite, file.FileMode)
 			if errors.Is(err, os.ErrNotExist) && file.MissingOk {
 				if err := os.RemoveAll(file.WorkingPath); err != nil {
 					return fmt.Errorf("failed to remove %q: %w", filename, err)

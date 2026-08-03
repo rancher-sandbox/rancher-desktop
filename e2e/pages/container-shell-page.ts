@@ -55,7 +55,7 @@ export class ContainerShellPage {
    */
   async getTerminalText(): Promise<string> {
     return this.page.evaluate(() => {
-      const el = document.querySelector('[data-testid="terminal"]');
+      const el = document.querySelector('.container-shell-component [data-testid="terminal"]');
       const term = (el as any)?.__xtermTerminal;
 
       if (!term) return '';

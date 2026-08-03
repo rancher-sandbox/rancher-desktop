@@ -18,7 +18,7 @@ export default defineComponent({
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: 'Diagnostics' },
+      { titleKey: 'diagnostics.title' },
     );
   },
 });

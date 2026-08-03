@@ -13,9 +13,29 @@ import { simpleSpawn } from '@/scripts/simple_process';
 
 type ChecksumAlgorithm = 'sha1' | 'sha256' | 'sha512';
 
+/**
+ * A sha256 checksum as stored in `dependencies.yaml`, where the prefix names
+ * the algorithm for readers of the file.  Values always carry lowercase hex,
+ * so any two compare with `===`.
+ */
+export type Sha256Checksum = `sha256:${ string }`;
+
+/** Parses a raw value as a {@link Sha256Checksum}, or throws. */
+export function parseSha256Checksum(value: unknown): Sha256Checksum {
+  if (typeof value !== 'string' || !/^sha256:[0-9a-f]{64}$/i.test(value)) {
+    throw new Error(`Invalid sha256 checksum ${ JSON.stringify(value) }; expected "sha256:<64 hex chars>"`);
+  }
+
+  return value.toLowerCase() as Sha256Checksum;
+}
+
+async function sha256File(filePath: string): Promise<Sha256Checksum> {
+  return `sha256:${ await hashFile(filePath, 'sha256') }`;
+}
+
 export interface DownloadOptions {
-  /** Hex-encoded sha256 the downloaded bytes must match. */
-  expectedChecksum?: string;
+  /** The checksum the downloaded bytes must match. */
+  expectedChecksum?: Sha256Checksum;
   /** Whether to re-download files that already exist. */
   overwrite?:        boolean;
   /** The file mode required. */
@@ -73,14 +93,14 @@ export async function download(url: string, destPath: string, options: DownloadO
       await fs.promises.access(destPath, access);
       if (expectedChecksum) {
         try {
-          const actualChecksum = await hashFile(hashTarget, 'sha256');
+          const actualChecksum = await sha256File(hashTarget);
 
           if (actualChecksum === expectedChecksum) {
             console.log(`${ destPath } already exists with expected checksum, not re-downloading.`);
 
             return;
           }
-          console.log(`${ destPath } exists but sha256 of ${ hashTarget } differs ([${ actualChecksum }] vs expected [${ expectedChecksum }]); re-downloading.`);
+          console.log(`${ destPath } exists but the checksum of ${ hashTarget } differs ([${ actualChecksum }] vs expected [${ expectedChecksum }]); re-downloading.`);
         } catch (ex: any) {
           if (ex.code !== 'ENOENT') {
             throw ex;
@@ -114,10 +134,10 @@ export async function download(url: string, destPath: string, options: DownloadO
     await response.body.pipeTo(stream.Writable.toWeb(file));
 
     if (expectedChecksum) {
-      const actualChecksum = await hashFile(tempPath, 'sha256');
+      const actualChecksum = await sha256File(tempPath);
 
       if (actualChecksum !== expectedChecksum) {
-        throw new Error(`Expecting URL ${ url } to have sha256 [${ expectedChecksum }], got [${ actualChecksum }]`);
+        throw new Error(`Expecting URL ${ url } to have checksum [${ expectedChecksum }], got [${ actualChecksum }]`);
       }
     }
     const mode =

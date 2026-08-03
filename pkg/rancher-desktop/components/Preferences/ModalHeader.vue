@@ -6,7 +6,7 @@ export default defineComponent({ name: 'preferences-header' });
 <template>
   <div class="preferences-header">
     <div class="title">
-      Preferences
+      {{ t('preferences.header') }}
     </div>
   </div>
 </template>

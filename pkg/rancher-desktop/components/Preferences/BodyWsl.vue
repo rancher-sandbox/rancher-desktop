@@ -61,12 +61,12 @@ export default defineComponent({
   >
     <template #tabs>
       <tab
-        label="Integrations"
+        label-key="preferences.tabs.integrations"
         name="integrations"
         :weight="2"
       />
       <tab
-        label="Proxy"
+        label-key="preferences.tabs.proxy"
         name="proxy"
         :weight="1"
       />

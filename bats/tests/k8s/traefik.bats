@@ -42,7 +42,7 @@ assert_traefik_pods_are_up() {
 }
 
 assert_curl() {
-    try --max 30 --delay 10 curl --silent --head "$@"
+    run curl --silent --head "$@"
     assert_success
     assert_output --regexp 'HTTP/[0-9.]* 404'
 }
@@ -52,6 +52,8 @@ refute_curl() {
     assert_output --partial "curl: (7) Failed to connect"
 }
 
+# Traefik refuses connections and answers 503 while it is starting, so callers
+# retry this whole assertion with `try`.
 assert_traefik() {
     assert_curl "http://$1:80"
     assert_curl --insecure "https://$1:443"
@@ -67,7 +69,7 @@ assert_traefik_on_localhost() {
         # BUG BUG BUG not yet implemented
         skip "Test does not yet work from inside a WSL distro"
     fi
-    try --max 10 assert_traefik localhost
+    try --max 30 --delay 10 assert_traefik localhost
 }
 
 @test 'factory reset' {
@@ -127,7 +129,7 @@ assert_traefik_on_localhost() {
 
 @test 'curl traefik via host-ip while kubernetes.ingress.localhost-only is false' {
     skip_unless_host_ip
-    try --max 10 assert_traefik "$HOST_IP"
+    try --max 30 --delay 10 assert_traefik "$HOST_IP"
 }
 
 @test 'set kubernetes.ingress.localhost-only to true' {

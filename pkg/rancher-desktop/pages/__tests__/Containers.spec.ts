@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 
 import mockModules from '@pkg/utils/testUtils/mockModules';
+import { t } from '@pkg/utils/testUtils/translations';
 
 const componentStub = { template: '<div />' };
 
@@ -46,7 +47,7 @@ describe('Containers methods', () => {
   const helpers = {
     isRunning: (candidate: any) => candidate.state === 'running' || candidate.status === 'Up',
     isStopped: (candidate: any) => candidate.state === 'created' || candidate.state === 'exited',
-    t:         (key: string) => key,
+    t,
   };
 
   it('adds restart actions for running containers', () => {

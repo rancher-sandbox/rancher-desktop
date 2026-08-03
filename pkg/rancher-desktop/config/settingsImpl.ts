@@ -17,6 +17,7 @@ import {
 } from '@pkg/config/settings';
 import { PathManagementStrategy } from '@pkg/integrations/pathManager';
 import clone from '@pkg/utils/clone';
+import { splitImageReference } from '@pkg/utils/dockerUtils';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { RecursivePartial, RecursiveReadonly } from '@pkg/utils/typeUtils';
@@ -437,9 +438,7 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
     // by the image (without tag) with the value being the tag.
     if (_.hasIn(settings, 'extensions')) {
       const withTags = Object.entries(settings.extensions ?? {}).filter(([, v]) => v).map(([k]) => k);
-      const extensions = withTags.map((image) => {
-        return image.split(':', 2).concat('latest').slice(0, 2) as [string, string];
-      });
+      const extensions = withTags.map(splitImageReference);
 
       settings.extensions = Object.fromEntries(extensions);
     }
@@ -517,6 +516,7 @@ export const updateTable: Record<number, (settings: any, locked : boolean) => vo
       _.set(settings, 'containerEngine.mobyStorageDriver', 'auto');
     }
   },
+  // v19 added application.locale (defaults filled by _.defaultsDeep).
 };
 
 function migrateSettingsToCurrentVersion(settings: Record<string, any>): Settings {

@@ -548,6 +548,11 @@ export class RDXClient implements v1.DockerDesktopClient {
           return result as any;
         }
 
+        // The Docker Engine API prefixes container names with '/'; the CLI
+        // output we parse strips it, so restore it to match the Engine API.
+        const names = (typeof c.Names === 'string' ? c.Names.split(/\s+/g) : Array.from(c.Names))
+          .map((name: string) => (name.startsWith('/') ? name : `/${ name }`));
+
         return {
           ...pick(c, 'Image', 'Command', 'Status'),
           ...pick(details, 'Id', 'NetworkSettings', 'Mounts'),
@@ -558,7 +563,7 @@ export class RDXClient implements v1.DockerDesktopClient {
           Ports:      details.NetworkSettings?.Ports ?? {},
           ...pick(details.Config, 'Labels'),
           ...pick(details.State, ['Status', 'State'] as const),
-          Names:      typeof c.Names === 'string' ? c.Names.split(/\s+/g) : Array.from(c.Names),
+          Names:      names,
           Created:    Date.parse(c.CreatedAt).valueOf(),
           Started:    Date.parse(details.State.StartedAt).valueOf(),
         };

@@ -3,6 +3,14 @@
 load '../helpers/load'
 RD_FILE_RAMDISK_SIZE=12 # We need more disk to run the Rancher image.
 
+local_setup() {
+    if is_macos x86_64 || is_linux x86_64; then
+        # Alpine 3.23 no longer includes the legacy iptables modules in the x86_64 kernel
+        # https://github.com/rancher/rancher/issues/54862
+        skip "rancher/rancher needs iptables (legacy)"
+    fi
+}
+
 @test 'factory reset' {
     factory_reset
 }

@@ -51,19 +51,19 @@ export class Screenshots {
     );
   }
 
-  protected async screenshot(title: string, includeAll = false) {
+  protected async screenshot(title: string) {
     const outPath = this.buildPath(title);
 
     try {
       switch (process.platform) {
       case 'darwin':
-        await this.screenshotDarwin(outPath, includeAll);
+        await this.screenshotDarwin(outPath);
         break;
       case 'win32':
-        await this.screenshotWindows(outPath, includeAll);
+        await this.screenshotWindows(outPath);
         break;
       default:
-        await this.screenshotLinux(outPath, includeAll);
+        await this.screenshotLinux(outPath);
       }
     } catch (e) {
       console.error('Failed to take screenshot', { error: e });
@@ -71,28 +71,24 @@ export class Screenshots {
     }
   }
 
-  protected async screenshotDarwin(outPath: string, includeAll: boolean) {
+  protected async screenshotDarwin(outPath: string) {
     const { stdout: windowId, stderr } = await spawnFile('GetWindowID', [this.appBundleTitle, this.windowTitle], { stdio: 'pipe' });
 
     if (!windowId) {
       throw new Error(`Failed to find window ID for ${ this.windowTitle }: ${ stderr || '(no stderr)' }`);
     }
-    const args = [...(includeAll ? [] : ['-a']), '-o', '-l', windowId.trim(), outPath];
 
-    await spawnFile('screencapture', args, { stdio: this.log });
+    await spawnFile('screencapture', ['-a', '-o', '-l', windowId.trim(), outPath], { stdio: this.log });
   }
 
-  protected async screenshotWindows(outPath: string, includeAll: boolean) {
+  protected async screenshotWindows(outPath: string) {
     const script = path.resolve(import.meta.dirname, 'screenshot.ps1');
-    const args = ['-ExecutionPolicy', 'Bypass', script, '-FilePath', outPath, '-Title', `'${ this.windowTitle }'`];
+    const args = ['-ExecutionPolicy', 'Bypass', script, '-FilePath', outPath, '-Title', `'${ this.windowTitle }'`, '-Foreground'];
 
-    if (!includeAll) {
-      args.push('-Foreground');
-    }
     await spawnFile('powershell.exe', args, { stdio: this.log });
   }
 
-  protected async screenshotLinux(outPath: string, includeAll: boolean) {
+  protected async screenshotLinux(outPath: string) {
     // Find the target window; note that this is a child window of the window
     // frame, so we can't use it directly.
     let windowId;
@@ -129,23 +125,14 @@ export class MainWindowScreenshots extends Screenshots {
     this.windowTitle = 'Rancher Desktop';
   }
 
-  async take(tabName: Parameters<NavPage['navigateTo']>[0], navPage?: NavPage, timeout?: number, includeAll?: boolean): Promise<void>;
-  async take(screenshotName: string, includeAll?: boolean): Promise<void>;
-  async take(name: string, navPageOrIncludeAll?: NavPage | boolean, timeout = 200, includeAll = false) {
-    let navPage: NavPage | undefined;
-
-    if (typeof navPageOrIncludeAll === 'boolean') {
-      includeAll = navPageOrIncludeAll;
-    } else {
-      navPage = navPageOrIncludeAll;
-    }
+  async take(name: Parameters<NavPage['navigateTo']>[0] | string, navPage?: NavPage, timeout = 200) {
     if (navPage) {
       await navPage.navigateTo(name as Parameters<NavPage['navigateTo']>[0]);
       await this.page.waitForTimeout(timeout);
     }
 
     await this.createScreenshotsDirectory();
-    await this.screenshot(name, includeAll);
+    await this.screenshot(name);
   }
 }
 

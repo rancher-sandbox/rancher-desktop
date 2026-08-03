@@ -34,13 +34,13 @@ export default defineComponent({
   <div class="preferences-nav">
     <nav-item
       v-for="navItem in navItems"
-      :key="navItem"
-      :data-test="navToKebab(navItem)"
-      :name="navItem"
-      :active="currentNavItem === navItem"
+      :key="navItem.name"
+      :data-test="navToKebab(navItem.name)"
+      :name="navItem.name"
+      :active="currentNavItem === navItem.name"
       @click="navClicked"
     >
-      {{ navItem }}
+      {{ t(navItem.labelKey) }}
     </nav-item>
   </div>
 </template>

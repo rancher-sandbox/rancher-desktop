@@ -30,7 +30,7 @@
               @update:value="handleShowAllCheckbox"
             />
             <div v-if="supportsNamespaces">
-              <label>Namespace</label>
+              <label>{{ t('generic.namespace') }}</label>
               <select
                 class="select-namespace"
                 :value="selectedNamespace"
@@ -314,16 +314,16 @@ export default {
       this.imageOutputCuller = getImageOutputCuller(command);
     },
     async deleteImages() {
-      const message = `Delete ${ this.imagesToDelete.length } ${ this.imagesToDelete.length > 1 ? 'images' : 'image' }?`;
+      const message = this.t('images.confirmDelete.multiple', { count: this.imagesToDelete.length });
       const detail = this.imageIdsToDelete.join('\n');
 
       const options: Electron.MessageBoxOptions = {
         message,
         detail,
         type:      'question',
-        buttons:   ['Yes', 'No'],
+        buttons:   [this.t('images.confirmDelete.confirm'), this.t('generic.cancel')],
         defaultId: 1,
-        title:     'Confirming image deletion',
+        title:     this.t('images.confirmDelete.title'),
         cancelId:  1,
       };
 
@@ -341,11 +341,11 @@ export default {
     },
     async deleteImage(obj: Image) {
       const options: Electron.MessageBoxOptions = {
-        message:   `Delete image ${ obj.imageName }:${ obj.tag }?`,
+        message:   this.t('images.confirmDelete.single', { name: obj.imageName, tag: obj.tag }),
         type:      'question',
-        buttons:   ['Yes', 'No'],
+        buttons:   [this.t('images.confirmDelete.confirm'), this.t('generic.cancel')],
         defaultId: 1,
-        title:     'Confirming image deletion',
+        title:     this.t('images.confirmDelete.title'),
         cancelId:  1,
       };
       const result = await ipcRenderer.invoke('show-message-box', options);

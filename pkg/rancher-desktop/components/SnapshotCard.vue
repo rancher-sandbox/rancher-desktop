@@ -81,7 +81,7 @@ export default defineComponent({
                 dialog:           'SnapshotsDialog',
                 error,
                 errorTitle:       this.t('snapshots.dialog.restore.error.header'),
-                errorDescription: this.t('snapshots.dialog.restore.error.description', { snapshot: this.snapshot.name }, true),
+                errorDescription: this.t('snapshots.dialog.restore.error.description', { snapshot: this.snapshot.name }),
                 errorButton:      this.t('snapshots.dialog.restore.error.buttonText'),
               });
           } else {
@@ -136,7 +136,7 @@ export default defineComponent({
           format: {
             header:            this.t(`snapshots.dialog.${ type }.header`, { snapshot: this.snapshot.name }),
             snapshot:          this.snapshot,
-            message:           type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`, { }, true) : '',
+            message:           type === 'restore' ? this.t(`snapshots.dialog.${ type }.info`) : '',
             showProgressBar:   false,
             snapshotEventType: 'confirm',
           },
@@ -160,7 +160,7 @@ export default defineComponent({
           },
           format: {
             header:            this.t('snapshots.dialog.restoring.header', { snapshot }),
-            message:           this.t('snapshots.dialog.restoring.message', { snapshot }, true),
+            message:           this.t('snapshots.dialog.restoring.message', { snapshot }),
             showProgressBar:   true,
             snapshotEventType: 'restore',
           },
@@ -185,7 +185,7 @@ export default defineComponent({
         <div class="created">
           <span
             v-if="snapshot.formattedCreateDate"
-            v-clean-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time }, true)"
+            v-clean-html="t('snapshots.card.created', { date: snapshot.formattedCreateDate.date, time: snapshot.formattedCreateDate.time })"
             class="value"
           />
         </div>

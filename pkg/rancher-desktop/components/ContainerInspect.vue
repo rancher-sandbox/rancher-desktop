@@ -9,7 +9,7 @@
       data-testid="info-loading"
     >
       <i class="icon icon-spinner icon-spin" />
-      Loading container details…
+      {{ t('containerInspect.loading') }}
     </div>
 
     <template v-else-if="data">
@@ -20,30 +20,30 @@
       >
         <tbody>
           <tr data-testid="info-row-name">
-            <th>Name</th>
+            <th>{{ t('containerInspect.summary.name') }}</th>
             <td>{{ displayName }}</td>
           </tr>
           <tr data-testid="info-row-id">
-            <th>ID</th>
+            <th>{{ t('containerInspect.summary.id') }}</th>
             <td>{{ shortId }}</td>
           </tr>
           <tr data-testid="info-row-image">
-            <th>Image</th>
+            <th>{{ t('containerInspect.summary.image') }}</th>
             <td>{{ data.Config.Image }}</td>
           </tr>
           <tr data-testid="info-row-ip">
-            <th>IP Address</th>
+            <th>{{ t('containerInspect.summary.ipAddress') }}</th>
             <td>{{ ipAddress }}</td>
           </tr>
           <tr data-testid="info-row-created">
-            <th>Created</th>
+            <th>{{ t('containerInspect.summary.created') }}</th>
             <td>{{ formatDate(data.Created) }}</td>
           </tr>
           <tr
             v-if="data.State.Status === 'running'"
             data-testid="info-row-started"
           >
-            <th>Started</th>
+            <th>{{ t('containerInspect.summary.started') }}</th>
             <td>{{ formatDate(data.State.StartedAt) }}</td>
           </tr>
         </tbody>
@@ -55,7 +55,7 @@
         data-testid="info-section-mounts"
       >
         <summary>
-          Mounts <span class="count">({{ data.Mounts.length }})</span>
+          {{ t('containerInspect.sections.mounts') }} <span class="count">({{ data.Mounts.length }})</span>
         </summary>
         <div
           v-if="data.Mounts.length"
@@ -64,10 +64,10 @@
           <table class="detail-table">
             <thead>
               <tr>
-                <th>Type</th>
-                <th>Source</th>
-                <th>Destination</th>
-                <th>R/W</th>
+                <th>{{ t('containerInspect.mounts.type') }}</th>
+                <th>{{ t('containerInspect.mounts.source') }}</th>
+                <th>{{ t('containerInspect.mounts.destination') }}</th>
+                <th>{{ t('containerInspect.mounts.rw') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -78,7 +78,7 @@
                 <td>{{ mount.Type }}</td>
                 <td>{{ mount.Source }}</td>
                 <td>{{ mount.Destination }}</td>
-                <td>{{ mount.RW ? 'RW' : 'RO' }}</td>
+                <td>{{ mount.RW ? t('containerInspect.mounts.readWrite') : t('containerInspect.mounts.readOnly') }}</td>
               </tr>
             </tbody>
           </table>
@@ -87,7 +87,7 @@
           v-else
           class="section-empty"
         >
-          None
+          {{ t('containerInspect.none') }}
         </div>
       </details>
 
@@ -97,7 +97,7 @@
         data-testid="info-section-env"
       >
         <summary>
-          Environment <span class="count">({{ envVars.length }})</span>
+          {{ t('containerInspect.sections.environment') }} <span class="count">({{ envVars.length }})</span>
         </summary>
         <div
           v-if="envVars.length"
@@ -119,7 +119,7 @@
           v-else
           class="section-empty"
         >
-          None
+          {{ t('containerInspect.none') }}
         </div>
       </details>
 
@@ -129,21 +129,21 @@
         data-testid="info-section-command"
       >
         <summary>
-          Command &amp; Args
+          {{ t('containerInspect.sections.commandArgs') }}
         </summary>
         <div class="section-body">
           <table class="detail-table">
             <tbody>
               <tr v-if="entrypoint">
-                <th>Entrypoint</th>
+                <th>{{ t('containerInspect.command.entrypoint') }}</th>
                 <td>{{ entrypoint }}</td>
               </tr>
               <tr v-if="command">
-                <th>Command</th>
+                <th>{{ t('containerInspect.command.command') }}</th>
                 <td>{{ command }}</td>
               </tr>
               <tr v-if="data.Args.length">
-                <th>Args</th>
+                <th>{{ t('containerInspect.command.args') }}</th>
                 <td>{{ data.Args.join(' ') }}</td>
               </tr>
             </tbody>
@@ -157,17 +157,17 @@
         data-testid="info-section-capabilities"
       >
         <summary>
-          Capabilities
+          {{ t('containerInspect.sections.capabilities') }}
         </summary>
         <div class="section-body">
           <table class="detail-table">
             <tbody>
               <tr>
-                <th>Added</th>
+                <th>{{ t('containerInspect.capabilities.added') }}</th>
                 <td>{{ capAdd }}</td>
               </tr>
               <tr>
-                <th>Dropped</th>
+                <th>{{ t('containerInspect.capabilities.dropped') }}</th>
                 <td>{{ capDrop }}</td>
               </tr>
             </tbody>
@@ -181,7 +181,7 @@
         data-testid="info-section-ports"
       >
         <summary>
-          Ports <span class="count">({{ portEntries.length }})</span>
+          {{ t('containerInspect.sections.ports') }} <span class="count">({{ portEntries.length }})</span>
         </summary>
         <div
           v-if="portEntries.length"
@@ -203,7 +203,7 @@
           v-else
           class="section-empty"
         >
-          None
+          {{ t('containerInspect.none') }}
         </div>
       </details>
 
@@ -213,7 +213,7 @@
         data-testid="info-section-labels"
       >
         <summary>
-          Labels <span class="count">({{ labelEntries.length }})</span>
+          {{ t('containerInspect.sections.labels') }} <span class="count">({{ labelEntries.length }})</span>
         </summary>
         <div
           v-if="labelEntries.length"
@@ -235,7 +235,7 @@
           v-else
           class="section-empty"
         >
-          None
+          {{ t('containerInspect.none') }}
         </div>
       </details>
     </template>
@@ -246,7 +246,7 @@
       data-testid="info-error"
     >
       <i class="icon icon-warning" />
-      {{ error || 'An unknown error has occurred' }}
+      {{ error || t('containerInspect.error.unknown') }}
     </div>
   </div>
 </template>
@@ -263,6 +263,7 @@ const props = defineProps<{
 }>();
 
 const store = useStore();
+const t = (key: string, args?: Record<string, unknown>) => store.getters['i18n/t'](key, args);
 const data = computed<ContainerInspectData | undefined>(
   () => store.state['container-engine'].inspectData[props.containerId],
 );
@@ -282,7 +283,7 @@ const fetchInspect = async() => {
       namespace:   props.namespace,
     });
   } catch (err: any) {
-    error.value = err?.message ?? 'Failed to load container details.';
+    error.value = err?.message ?? t('containerInspect.error.loadFailed');
   } finally {
     loading.value = false;
   }
@@ -301,8 +302,8 @@ const envEntries = computed(() => envVars.value.map((e) => {
 }));
 const entrypoint = computed(() => (data.value?.Config.Entrypoint ?? []).join(' '));
 const command = computed(() => (data.value?.Config.Cmd ?? []).join(' '));
-const capAdd = computed(() => (data.value?.HostConfig.CapAdd ?? []).join(', ') || 'None');
-const capDrop = computed(() => (data.value?.HostConfig.CapDrop ?? []).join(', ') || 'None');
+const capAdd = computed(() => (data.value?.HostConfig.CapAdd ?? []).join(', ') || t('containerInspect.none'));
+const capDrop = computed(() => (data.value?.HostConfig.CapDrop ?? []).join(', ') || t('containerInspect.none'));
 
 const ipAddress = computed(() => {
   const primary = data.value?.NetworkSettings?.IPAddress;

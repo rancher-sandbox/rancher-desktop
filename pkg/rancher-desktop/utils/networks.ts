@@ -2,7 +2,7 @@ import net from 'net';
 import os from 'os';
 
 export enum networkStatus {
-  CHECKING = 'checking...',
+  CHECKING = 'checking',
   CONNECTED = 'online',
   OFFLINE = 'offline',
 }

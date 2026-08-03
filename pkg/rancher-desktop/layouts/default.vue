@@ -195,9 +195,9 @@ export default {
             cancelId: 1,
           },
           format: {
-            header:            action || this.t('snapshots.dialog.generic.header', {}, true),
+            header:            action || this.t('snapshots.dialog.generic.header'),
             /** TODO: put here operation type information from 'state' */
-            message:           this.t('snapshots.dialog.generic.message', {}, true),
+            message:           this.t('snapshots.dialog.generic.message'),
             showProgressBar:   true,
             snapshotEventType: 'backend-lock',
           },

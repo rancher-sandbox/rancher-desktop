@@ -17,10 +17,19 @@ export default defineComponent({
       'page',
       [
         'title',
+        'titleKey',
+        'titleArgs',
         'description',
+        'descriptionKey',
         'action',
         'icon',
       ]),
+    displayTitle(): string {
+      return this.titleKey ? this.t(this.titleKey, this.titleArgs) : this.title;
+    },
+    displayDescription(): string {
+      return this.descriptionKey ? this.t(this.descriptionKey) : this.description;
+    },
   },
   watch: {
     $route: {
@@ -74,7 +83,7 @@ export default defineComponent({
             key="mainTitleIcon"
             :class="icon"
           />
-          {{ title }}
+          {{ displayTitle }}
         </h1>
       </transition-group>
       <transition
@@ -92,10 +101,10 @@ export default defineComponent({
     </div>
     <hr>
     <div
-      v-show="description"
+      v-show="displayDescription"
       class="description"
     >
-      {{ description }}
+      {{ displayDescription }}
     </div>
   </div>
 </template>

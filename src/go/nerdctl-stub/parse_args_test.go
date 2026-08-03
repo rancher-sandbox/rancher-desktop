@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -309,4 +310,44 @@ func TestParse(t *testing.T) {
 			}
 		})
 	})
+}
+
+// TestPathArgHandlers checks that options whose values contain host paths are
+// registered with the matching path handler instead of the default
+// ignoredArgHandler that leaves the value untranslated.
+func TestPathArgHandlers(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		command string
+		option  string
+		handler argHandler
+	}{
+		{"builder build", "--output", argHandlers.builderCacheArgHandler},
+		{"builder build", "-o", argHandlers.builderCacheArgHandler},
+		{"builder build", "--secret", argHandlers.builderCacheArgHandler},
+		{"builder debug", "--secret", argHandlers.builderCacheArgHandler},
+		{"container exec", "--env-file", argHandlers.filePathArgHandler},
+		{"image convert", "--zstdchunked-record-in", argHandlers.filePathArgHandler},
+		{"image decrypt", "--key", argHandlers.filePathArgHandler},
+		{"image encrypt", "--key", argHandlers.filePathArgHandler},
+		{"image pull", "--cosign-key", argHandlers.filePathArgHandler},
+		{"image push", "--cosign-key", argHandlers.filePathArgHandler},
+	}
+	for _, tc := range cases {
+		t.Run(tc.command+" "+tc.option, func(t *testing.T) {
+			t.Parallel()
+			def, ok := commands[tc.command]
+			if !assert.True(t, ok, "command %q not found", tc.command) {
+				return
+			}
+			handler, ok := def.options[tc.option]
+			if !assert.True(t, ok, "option %q of %q not found", tc.option, tc.command) {
+				return
+			}
+			assert.Equal(t,
+				reflect.ValueOf(tc.handler).Pointer(),
+				reflect.ValueOf(handler).Pointer(),
+				"option %s of %q has the wrong handler", tc.option, tc.command)
+		})
+	}
 }

@@ -47,7 +47,7 @@ export class ContainerLogsPage {
 
   async scrollToBottom() {
     await this.page.evaluate(() => {
-      const container = document.querySelector('[data-testid="terminal"]');
+      const container = document.querySelector('.container-logs-component [data-testid="terminal"]');
 
       container?.__xtermTerminal?.scrollToBottom();
     });
@@ -55,7 +55,7 @@ export class ContainerLogsPage {
 
   async scrollToTop() {
     await this.page.evaluate(() => {
-      const container = document.querySelector('[data-testid="terminal"]');
+      const container = document.querySelector('.container-logs-component [data-testid="terminal"]');
 
       container?.__xtermTerminal?.scrollToTop();
     });
@@ -63,9 +63,18 @@ export class ContainerLogsPage {
 
   async getScrollPosition(): Promise<number> {
     return await this.page.evaluate(() => {
-      const container = document.querySelector('[data-testid="terminal"]');
+      const container = document.querySelector('.container-logs-component [data-testid="terminal"]');
 
       return container?.__xtermTerminal?.buffer.active.viewportY ?? 0;
+    });
+  }
+
+  /** Number of rows the terminal has fitted itself to. */
+  async getTerminalRows(): Promise<number> {
+    return this.page.evaluate(() => {
+      const el = document.querySelector('.container-logs-component [data-testid="terminal"]');
+
+      return (el as any)?.__xtermTerminal?.rows ?? 0;
     });
   }
 }

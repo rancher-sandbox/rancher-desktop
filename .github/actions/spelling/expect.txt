@@ -94,6 +94,7 @@ certutil
 cgroupfs
 chartjs
 checkpath
+checkupgrade
 chirico
 cidata
 cidfile
@@ -220,7 +221,6 @@ Fflags
 ficlone
 filekey
 filestat
-fineprint
 fleetworkspace
 FOLDERID
 fontstack

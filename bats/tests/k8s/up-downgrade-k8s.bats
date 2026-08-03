@@ -118,7 +118,9 @@ verify_kuberlr_for_version() {
 verify_nginx_after_change_k8s() {
     run curl http://localhost:8686
     assert_failure
-    assert_output --partial "Failed to connect to localhost port 8686"
+    # curl 8.6+ reports "...localhost:8686 after N ms..." instead of the older
+    # "...localhost port 8686..."; match both spellings.
+    assert_output --regexp "Failed to connect to localhost(:| port )8686"
 
     run curl http://localhost:8585
     assert_success

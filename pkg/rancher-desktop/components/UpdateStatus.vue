@@ -1,84 +1,65 @@
 <template>
-  <div>
-    <div class="version">
-      <version />
-      <rd-checkbox
-        v-if="updatePossible"
-        v-model:value="updatesEnabled"
-        class="updatesEnabled"
-        label="Check for updates automatically"
-        :is-locked="autoUpdateLocked"
-      />
-    </div>
-    <card
-      v-if="hasUpdate"
-      ref="updateInfo"
-      :show-highlight-border="false"
-    >
-      <template #title>
-        <div class="type-title">
-          <h3>Update Available</h3>
-        </div>
-      </template>
-      <template #body>
-        <div ref="updateStatus">
-          <p>
-            {{ statusMessage }}
-          </p>
-          <p
-            v-if="updateReady"
-            class="update-notification"
+  <div class="update-status">
+    <template v-if="hasUpdate">
+      <h3>{{ t('updateStatus.updateAvailable') }}</h3>
+      <card
+        ref="updateInfo"
+        sticky
+        :show-highlight-border="false"
+      >
+        <template #body>
+          <div ref="updateStatus">
+            <p>
+              {{ statusMessage }}
+            </p>
+            <p
+              v-if="updateReady"
+              class="update-notification"
+            >
+              {{ t('updateStatus.restartToApply') }}
+            </p>
+          </div>
+          <details
+            v-if="detailsMessage"
+            class="release-notes"
           >
-            Restart the application to apply the update.
+            <summary>{{ t('updateStatus.releaseNotes') }}</summary>
+            <div
+              ref="releaseNotes"
+              v-html="detailsMessage"
+            />
+          </details>
+        </template>
+        <template #actions>
+          <button
+            v-if="updateReady"
+            ref="applyButton"
+            class="btn role-secondary"
+            :disabled="applying"
+            @click="applyUpdate"
+          >
+            {{ applyMessage }}
+          </button>
+          <span v-else />
+        </template>
+      </card>
+    </template>
+    <template v-else-if="unsupportedUpdateAvailable">
+      <h3>{{ t('updateStatus.unsupported.title') }}</h3>
+      <card :show-highlight-border="false">
+        <template #body>
+          <p>
+            {{ t('updateStatus.unsupported.message') }}
           </p>
-        </div>
-        <details
-          v-if="detailsMessage"
-          class="release-notes"
-        >
-          <summary>Release Notes</summary>
-          <div
-            ref="releaseNotes"
-            v-html="detailsMessage"
-          />
-        </details>
-      </template>
-      <template #actions>
-        <button
-          v-if="updateReady"
-          ref="applyButton"
-          class="btn role-secondary"
-          :disabled="applying"
-          @click="applyUpdate"
-        >
-          {{ applyMessage }}
-        </button>
-        <span v-else />
-      </template>
-    </card>
-    <card
-      v-else-if="unsupportedUpdateAvailable"
-      :show-highlight-border="false"
-    >
-      <template #title>
-        <div class="type-title">
-          <h3>Latest Version Not Supported</h3>
-        </div>
-      </template>
-      <template #body>
-        <p>
-          A newer version of Rancher Desktop is available, but not supported on your system.
-        </p>
-        <br>
-        <p>
-          For more information please see
-          <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.
-        </p>
-      </template>
-      <template #actions>
-        <div />
-      </template>
-    </card>
+          <br>
+          <!-- v-clean-html: the translated string embeds a link -->
+          <p v-clean-html="t('updateStatus.unsupported.seeDocumentation')" />
+        </template>
+        <template #actions>
+          <div />
+        </template>
+      </card>
+    </template>
   </div>
 </template>
 
@@ -88,8 +69,6 @@ import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { defineComponent } from 'vue';
 
-import Version from '@pkg/components/Version.vue';
-import RdCheckbox from '@pkg/components/form/RdCheckbox.vue';
 import { UpdateState } from '@pkg/main/update';
 
 import type { PropType } from 'vue';
@@ -98,9 +77,7 @@ const { Card } = (Components as any).default ?? Components;
 
 export default defineComponent({
   name:       'update-status',
-  components: {
-    Version, Card, RdCheckbox,
-  },
+  components: { Card },
 
   props: {
     enabled: {
@@ -115,10 +92,6 @@ export default defineComponent({
       type:    String,
       default: undefined,
     },
-    isAutoUpdateLocked: {
-      type:    Boolean,
-      default: false,
-    },
   },
 
   data() {
@@ -126,23 +99,8 @@ export default defineComponent({
   },
 
   computed: {
-    updatesEnabled: {
-      get(): boolean {
-        return this.enabled;
-      },
-      set(value: boolean) {
-        // We emit an event, but _don't_ set the prop here; we let the containing
-        // page update our prop instead.
-        this.$emit('enabled', value);
-      },
-    },
-
-    updatePossible(): boolean {
-      return !!this.updateState?.configured;
-    },
-
     hasUpdate(): boolean {
-      return this.updatesEnabled && !!this.updateState?.available;
+      return this.enabled && !!this.updateState?.available;
     },
 
     updateReady(): boolean {
@@ -151,14 +109,16 @@ export default defineComponent({
 
     statusMessage(): string {
       if (this.updateState?.error) {
-        return 'There was an error checking for updates.';
+        return this.t('updateStatus.errorChecking');
       }
       if (!this.updateState?.info) {
         return '';
       }
 
       const { info, progress } = this.updateState;
-      const prefix = `An update to version ${ info.version } is available`;
+      // Punctuation is hardcoded here (period, semicolon). Some locales use
+      // different punctuation; revisit when locale coverage grows.
+      const prefix = this.t('updateStatus.available', { version: info.version });
 
       if (!progress) {
         return `${ prefix }.`;
@@ -172,7 +132,7 @@ export default defineComponent({
         notation:    'compact',
       }).format(progress.bytesPerSecond);
 
-      return `${ prefix }; downloading... (${ percent }%, ${ speed })`;
+      return `${ prefix }; ${ this.t('updateStatus.downloading', { percent: String(percent), speed }) }`;
     },
 
     detailsMessage(): string | undefined {
@@ -191,15 +151,11 @@ export default defineComponent({
     },
 
     applyMessage(): string {
-      return this.applying ? 'Applying update...' : 'Restart Now';
+      return this.applying ? this.t('updateStatus.applyingUpdate') : this.t('updateStatus.restartNow');
     },
 
     unsupportedUpdateAvailable(): boolean {
       return !this.hasUpdate && !!this.updateState?.info?.unsupportedUpdateAvailable;
-    },
-
-    autoUpdateLocked(): boolean {
-      return this.isAutoUpdateLocked;
     },
   },
 
@@ -214,10 +170,42 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-  .version {
+  // Shrink so long release notes scroll inside the card, not push the blog off.
+  .update-status {
     display: flex;
-    justify-content: space-between
+    flex-direction: column;
+    min-height: 0;
+
+    // Match the blog feed's heading above its box.
+    h3 {
+      margin-bottom: 0.75rem;
+    }
   }
+
+  // Keep the card tall enough to read the notes once they are open.
+  .update-status:has(.release-notes[open]) {
+    min-height: 14rem;
+  }
+
+  :deep(.card-container) {
+    // Drop the Card's grid margin so the box aligns with the blog box.
+    margin-left: 0;
+    margin-right: 0;
+    // Fill and shrink past the Card's 100px minimum, so the body scrolls.
+    flex: 1;
+    min-height: 0;
+    // In light mode the Card's shadow is the border colour, so its 20px blur
+    // would smear the box's edge.
+    box-shadow: none;
+    border: 1px solid var(--border);
+  }
+
+  // Hide the empty title and <hr> the Card draws with no title slot.
+  :deep(.card-title),
+  :deep(.card-wrap > hr) {
+    display: none;
+  }
+
   .update-notification {
     font-weight: 900;
   }

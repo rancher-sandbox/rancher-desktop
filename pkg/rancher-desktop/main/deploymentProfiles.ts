@@ -8,6 +8,9 @@ import * as nativeReg from 'native-reg';
 
 import * as settings from '@pkg/config/settings';
 import * as settingsImpl from '@pkg/config/settingsImpl';
+// t() uses English fallback here because deployment profiles are read during
+// early startup, before initMainI18n() has loaded the user's locale.
+import { t } from '@pkg/main/i18n';
 import { spawnFile } from '@pkg/utils/childProcess';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -88,13 +91,13 @@ export async function readDeploymentProfiles(registryProfilePath = REGISTRY_PROF
   }
   if (defaults) {
     if (!('version' in defaults)) {
-      throw new DeploymentProfileError(`Invalid deployment file ${ fullDefaultPath }: no version specified. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
+      throw new DeploymentProfileError(t('deploymentProfile.noVersion', { path: fullDefaultPath, version: settings.CURRENT_SETTINGS_VERSION }));
     }
     defaults = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(defaults, false);
   }
   if (locked) {
     if (!('version' in locked)) {
-      throw new DeploymentProfileError(`Invalid deployment file ${ fullLockedPath }: no version specified. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
+      throw new DeploymentProfileError(t('deploymentProfile.noVersion', { path: fullLockedPath, version: settings.CURRENT_SETTINGS_VERSION }));
     }
     locked = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(locked, true);
   }
@@ -235,7 +238,7 @@ class Win32DeploymentReader {
             if (!('version' in defaults)) {
               const registryPath = [keyName, ...this.registryPathCurrent, DEFAULTS_HIVE_NAME].join('\\');
 
-              throw new DeploymentProfileError(`Invalid default-deployment: no version specified at ${ registryPath }. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
+              throw new DeploymentProfileError(t('deploymentProfile.noVersionRegistry', { path: registryPath, version: settings.CURRENT_SETTINGS_VERSION }));
             }
             defaults = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(defaults, false);
           }
@@ -243,7 +246,7 @@ class Win32DeploymentReader {
             if (!('version' in locked)) {
               const registryPath = [keyName, ...this.registryPathCurrent, LOCKED_HIVE_NAME].join('\\');
 
-              throw new DeploymentProfileError(`Invalid locked-deployment: no version specified at ${ registryPath }. You'll need to add a version field to make it valid (current version is ${ settings.CURRENT_SETTINGS_VERSION }).`);
+              throw new DeploymentProfileError(t('deploymentProfile.noVersionRegistry', { path: registryPath, version: settings.CURRENT_SETTINGS_VERSION }));
             }
             locked = settingsImpl.migrateSpecifiedSettingsToCurrentVersion(locked, true);
           }
@@ -545,19 +548,19 @@ function validateDeploymentProfileWithErrors(profile: any, errors: string[], sch
     if (Array.isArray(profileVal) || Array.isArray(schemaVal)) {
       if (Array.isArray(profileVal) !== Array.isArray(schemaVal)) {
         if (Array.isArray(schemaVal)) {
-          errors.push(`Error for field '${ fullPath(key) }': expecting value of type array, got '${ JSON.stringify(profileVal) }'`);
+          errors.push(t('validation.profileExpectedArray', { field: fullPath(key), value: JSON.stringify(profileVal) }));
         } else {
-          errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got an array ${ JSON.stringify(profileVal) }`);
+          errors.push(t('validation.profileExpectedTypeGotArray', { field: fullPath(key), expectedType: typeof schemaVal, value: JSON.stringify(profileVal) }));
         }
       }
     } else if (typeof profileVal !== 'object') {
       if (typeof profileVal !== typeof schemaVal) {
-        errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got '${ JSON.stringify(profileVal) }'`);
+        errors.push(t('validation.profileExpectedType', { field: fullPath(key), expectedType: typeof schemaVal, value: JSON.stringify(profileVal) }));
       }
     } else if (haveUserDefinedObject(parentPathParts.concat(key))) {
       // Keep this part of the profile
     } else if (typeof profileVal !== typeof schemaVal) {
-      errors.push(`Error for field '${ fullPath(key) }': expecting value of type ${ typeof schemaVal }, got '${ JSON.stringify(profileVal) }'`);
+      errors.push(t('validation.profileExpectedType', { field: fullPath(key), expectedType: typeof schemaVal, value: JSON.stringify(profileVal) }));
     } else {
       // Finally recurse and compare the schema sub-object with the specified sub-object
       validateDeploymentProfileWithErrors(profileVal, errors, schemaVal, [...parentPathParts, key]);

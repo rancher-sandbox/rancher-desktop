@@ -4,6 +4,7 @@ import FloatingVue from 'floating-vue';
 
 import type { UpdateState } from '@pkg/main/update';
 import mockModules from '@pkg/utils/testUtils/mockModules';
+import { t as tFn } from '@pkg/utils/testUtils/translations';
 
 mockModules({
   '@pkg/utils/ipcRenderer': {
@@ -21,12 +22,8 @@ function wrap(props: typeof UpdateStatus['$props']) {
   return mount(UpdateStatus, {
     props,
     global: {
-      mocks:   { t: jest.fn() },
-      stubs:   {
-        T:          { template: '<span> {{ k }} </span>' },
-        RdCheckbox: { template: '<input type="checkbox">' },
-        Version:    { template: '<span />' },
-      },
+      mocks:   { t: tFn },
+      stubs:   { T: { template: '<span> {{ k }} </span>' } },
     },
     plugins: [FloatingVue],
   });
@@ -95,9 +92,12 @@ describe('UpdateStatus.vue', () => {
         } as UpdateState,
       });
 
-      expect(wrapper.get({ ref: 'updateStatus' }).text().replace(/\s+/g, ' '))
-        .toEqual('An update to version v1.2.3 is available. Restart the application to apply the update.');
+      const statusDiv = wrapper.get({ ref: 'updateStatus' });
 
+      expect(statusDiv.find('p').text())
+        .toEqual('An update to version v1.2.3 is available.');
+      expect(statusDiv.find('.update-notification').text())
+        .toEqual('Restart the application to apply the update.');
       expect(wrapper.get({ ref: 'applyButton' }).attributes()).not.toHaveProperty('disabled');
     });
 
@@ -177,6 +177,20 @@ describe('UpdateStatus.vue', () => {
 
       expect(wrapper.get({ ref: 'releaseNotes' }).html())
         .toContain('<strong>hello</strong>');
+    });
+
+    it('should keep the top of the card in view', () => {
+      const wrapper = wrap({
+        enabled:     true,
+        updateState: {
+          available: true,
+          info:      { version: 'v1.2.3', releaseNotes: 'hello' },
+        } as UpdateState,
+      });
+
+      // The Card centres an overflowing body, which hides the status line and
+      // the notes toggle. Its sticky layout anchors the content to the top.
+      expect(wrapper.find('.card-container.card-sticky').exists()).toBeTruthy();
     });
 
     it('should not support scripting', () => {

@@ -111,6 +111,20 @@ const ImageRefPrefixRegExp = makeRE`
   `;
 
 /**
+ * Split an image reference into its name and tag without mistaking a registry
+ * port for the tag separator.
+ */
+export function splitImageReference(reference: string): [string, string] {
+  const colon = reference.lastIndexOf(':');
+
+  if (colon > reference.lastIndexOf('/')) {
+    return [reference.slice(0, colon), reference.slice(colon + 1)];
+  }
+
+  return [reference, 'latest'];
+}
+
+/**
  * Given an image reference, parse it into (possibly) registry, name, and
  * (possibly) tag components.
  * @param prefix If set, accept prefixes (names that end with a slash).
@@ -138,11 +152,22 @@ export function parseImageReference(reference: string, prefix = false): imageInf
     registry = `https://${ registry }`;
   }
 
+  let registryUrl: URL;
+
+  try {
+    registryUrl = new URL(registry);
+  } catch {
+    // The image-name regular expression is intentionally smaller than URL's
+    // host validation. Reject values such as out-of-range ports rather than
+    // leaking a TypeError to callers that are validating user input.
+    return null;
+  }
+
   if (registry.endsWith('.docker.io') && !name.includes('/')) {
     name = `library/${ name }`;
   }
 
-  return new imageInfo(new URL(registry), name, result.groups['tag']);
+  return new imageInfo(registryUrl, name, result.groups['tag']);
 }
 
 /**

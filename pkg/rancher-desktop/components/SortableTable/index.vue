@@ -813,7 +813,7 @@ export default {
 
     labelFor(col) {
       if ( col.labelKey ) {
-        return this.t(col.labelKey, undefined, true);
+        return this.t(col.labelKey);
       } else if ( col.label ) {
         return col.label;
       }

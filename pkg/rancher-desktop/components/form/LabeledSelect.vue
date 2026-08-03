@@ -185,7 +185,9 @@ export default {
         if (this.localizedLabel) {
           const label = get(option, this.optionLabel);
 
-          return this.$store.getters['i18n/t'](label) || label;
+          // The `i18n/t` getter returns a `%key%` placeholder for missing
+          // keys, so test with `i18n/exists` to fall back to the raw label.
+          return this.$store.getters['i18n/exists'](label) ? this.$store.getters['i18n/t'](label) : label;
         } else {
           return get(option, this.optionLabel);
         }

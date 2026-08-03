@@ -41,6 +41,7 @@ local_setup_file() {
 }
 @test 'factory-reset when Rancher Desktop is not running' {
     touch_updater_longhorn
+    stage_pending_update
     rdctl_factory_reset --verbose
 }
 
@@ -70,6 +71,10 @@ local_setup_file() {
 
 @test 'Verify updater-longhorn.json was deleted' {
     check_updater_longhorn_gone
+}
+
+@test 'Verify the staged update was deleted' {
+    check_pending_update_gone
 }
 
 @test 'Start Rancher Desktop 2' {
@@ -165,8 +170,6 @@ check_directories() {
         # So just assert on the other members of AppHome
         # TODO on macOS (not implemented by `rdctl factory-reset`)
         # ~/Library/Saved Application State/io.rancherdesktop.app.savedState
-        # this one only exists after an update has been downloaded
-        # ~/Library/Application Support/Caches/rancher-desktop-updater
     fi
 
     if is_windows; then
@@ -250,4 +253,19 @@ check_updater_longhorn_gone() {
 
 touch_updater_longhorn() {
     touch "$PATH_CACHE/updater-longhorn.json"
+}
+
+# electron-updater stages a downloaded update beside the app cache, so a reset
+# that keeps the cache has to remove the sibling directory on its own. Windows
+# stages inside the app home, which the reset already clears.
+stage_pending_update() {
+    if is_unix; then
+        mkdir -p "${PATH_CACHE}-updater/pending"
+        touch "${PATH_CACHE}-updater/pending/update.zip"
+    fi
+}
+
+check_pending_update_gone() {
+    skip_on_windows
+    assert_not_exists "${PATH_CACHE}-updater"
 }

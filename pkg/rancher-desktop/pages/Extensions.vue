@@ -36,7 +36,6 @@ import { defaultSettings } from '@pkg/config/settings';
 import ExtensionsInstalled from '@pkg/pages/extensions/installed.vue';
 
 export default {
-  title:      'Marketplace',
   components: {
     RdTabbed,
     Tab,
@@ -52,10 +51,7 @@ export default {
     };
   },
   mounted() {
-    this.$store.dispatch('page/setHeader', {
-      title:       this.t('marketplace.title'),
-      description: '',
-    });
+    this.$store.dispatch('page/setHeader', { titleKey: 'marketplace.title' });
   },
   methods: {
     tabActivate(tab) {

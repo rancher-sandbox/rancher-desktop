@@ -1,63 +1,62 @@
 import { IntlMessageFormat } from 'intl-messageformat';
 
-import en from '@pkg/assets/translations/en-us.yaml';
+import packageJson from '../../../package.json' with { type: 'json' };
+
 import { LOCALE } from '@pkg/config/cookies';
-import { getProduct, getVendor } from '@pkg/config/private-label';
+import { getVendor } from '@pkg/config/private-label';
+import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 import { get } from '@pkg/utils/object';
-
-const translationContext = import.meta.webpackContext('@pkg/assets/translations', { recursive: true, regExp: /.*/ });
-
-const NONE = 'none';
+import { availableLocales, loadTranslations } from '@pkg/utils/translationLoader';
 
 // Formatters can't be serialized into state
 const intlCache = {};
+let ipcListenersBound = false;
+
+// Chromium uses the document language to pick a fallback font for characters
+// Lato lacks. Without one, Han text can come out with Japanese or Traditional
+// Chinese glyphs.
+function setDocumentLanguage(locale) {
+  document.documentElement.lang = locale;
+}
 
 export const state = function() {
-  const available = translationContext.keys().map(path => path.replace(/^.*\/([^\/]+)\.[^.]+$/, '$1'));
-
   const out = {
     default:      'en-us',
     selected:     null,
-    previous:     null,
-    available,
-    translations: { 'en-us': en },
+    available:    [...availableLocales],
+    translations: { 'en-us': loadTranslations('en-us') },
   };
 
   return out;
 };
 
 export const getters = {
-  selectedLocaleLabel(state) {
-    const key = `locale.${ state.selected }`;
+  availableLocales(state) {
+    const labelled = state.available.map((locale) => {
+      const nativeName = get(state.translations[locale], `locale.${ locale }`);
+      const translatedName = get(state.translations[state.selected], `locale.${ locale }`) ??
+                          get(state.translations[state.default], `locale.${ locale }`);
 
-    if ( state.selected === NONE ) {
-      return `%${ key }%`;
-    } else {
-      return get(state.translations[state.default], key);
-    }
-  },
-
-  availableLocales(state, getters) {
-    const out = {};
-
-    for ( const locale of state.available ) {
-      const key = `locale.${ locale }`;
-
-      if ( state.selected === NONE ) {
-        out[locale] = `%${ key }%`;
-      } else {
-        out[locale] = get(state.translations[state.default], key);
+      if ( !nativeName || !translatedName || nativeName === translatedName ) {
+        return [locale, nativeName ?? translatedName ?? locale];
       }
-    }
 
-    return out;
+      return [locale, `${ nativeName } (${ translatedName })`];
+    });
+
+    // Sort by the label the user reads, collated in the selected locale.
+    // Fall back to the default when the selection is not a bundled locale,
+    // because Intl.Collator rejects an unknown tag. The selection is null
+    // until init runs, and older settings can carry 'none'.
+    const collationLocale = state.available.includes(state.selected) ? state.selected : state.default;
+    const collator = new Intl.Collator(collationLocale);
+
+    labelled.sort(([, a], [, b]) => collator.compare(a, b));
+
+    return Object.fromEntries(labelled);
   },
 
   t: state => (key, args) => {
-    if (state.selected === NONE ) {
-      return `%${ key }%`;
-    }
-
     const cacheKey = `${ state.selected }/${ key }`;
     let formatter = intlCache[cacheKey];
 
@@ -69,17 +68,27 @@ export const getters = {
       }
 
       if ( !msg ) {
-        return undefined;
+        // Visible placeholder, matching the main process; missing keys
+        // must be debuggable, not silently blank.
+        return `%${ key }%`;
       }
 
       if ( typeof msg === 'object' ) {
         console.error('Translation for', cacheKey, 'is an object');
 
-        return undefined;
+        return `%${ key }%`;
       }
 
       if ( msg?.includes('{')) {
-        formatter = new IntlMessageFormat(msg, state.selected);
+        try {
+          // Uses the selected locale for formatting even when falling back to
+          // English text. Acceptable: plural rules rarely diverge for the
+          // strings used here.
+          formatter = new IntlMessageFormat(msg, state.selected);
+        } catch (e) {
+          console.error(`Malformed ICU pattern for key "${ key }":`, e);
+          formatter = msg;
+        }
       } else {
         formatter = msg;
       }
@@ -93,11 +102,19 @@ export const getters = {
       // Inject things like appName so they're always available in any translation
       const moreArgs = {
         vendor:  getVendor(),
-        appName: getProduct(),
+        appName: packageJson.productName,
         ...args,
       };
 
-      return formatter.format(moreArgs);
+      try {
+        return formatter.format(moreArgs);
+      } catch (e) {
+        // A missing argument must not abort the component render;
+        // degrade to the raw pattern like the main-process interpolator.
+        console.error(`Cannot format translation for key "${ key }":`, e);
+
+        return get(state.translations[state.selected], key) ?? get(state.translations[state.default], key);
+      }
     } else {
       return '?';
     }
@@ -112,7 +129,7 @@ export const getters = {
 
     let msg = get(state.translations[state.default], key);
 
-    if ( !msg && state.selected && state.selected !== NONE ) {
+    if ( !msg && state.selected ) {
       msg = get(state.translations[state.selected], key);
     }
 
@@ -159,18 +176,44 @@ export const mutations = {
 };
 
 export const actions = {
-  init({ state, commit, dispatch }) {
-    let selected = this.$cookies.get(LOCALE, { parseJSON: false });
+  async init({ state, commit, dispatch }) {
+    // Load all translation files so availableLocales can show native names.
+    // Acceptable overhead with a small number of locales; revisit if locale
+    // count grows significantly.
+    await Promise.allSettled(
+      state.available
+        .filter(locale => !state.translations[locale])
+        .map(locale => dispatch('load', locale)),
+    );
+
+    // The main process passes the resolved locale as a URL param, so the first
+    // paint is already localized; the cookie is a fallback for a window opened
+    // without one. Later changes arrive via settings-update below.
+    const urlLocale = new URLSearchParams(window.location.search).get('locale');
+    let selected = urlLocale || this.$cookies.get(LOCALE, { parseJSON: false });
 
     if ( !selected ) {
       selected = state.default;
+    }
+
+    if (!ipcListenersBound) {
+      ipcListenersBound = true;
+
+      // Listen for settings changes (from preferences UI or rdctl) to sync locale.
+      ipcRenderer.on('settings-update', (_, settings) => {
+        const locale = settings?.application?.locale || state.default;
+
+        if ( locale !== state.selected ) {
+          dispatch('switchTo', locale);
+        }
+      });
     }
 
     return dispatch('switchTo', selected);
   },
 
   async load({ commit }, locale) {
-    const translations = await translationContext(`./${ locale }.yaml`);
+    const translations = loadTranslations(locale);
 
     commit('loadTranslations', { locale, translations });
 
@@ -178,11 +221,8 @@ export const actions = {
   },
 
   async switchTo({ state, commit, dispatch }, locale) {
-    if ( locale === NONE ) {
-      commit('setSelected', locale);
-
-      // Don't remember into cookie
-      return;
+    if ( !locale ) {
+      locale = state.default;
     }
 
     if ( !state.translations[locale] ) {
@@ -193,13 +233,19 @@ export const actions = {
           // Try to show something...
 
           commit('setSelected', 'en-us');
+          setDocumentLanguage('en-us');
 
           return;
         }
       }
     }
 
+    for (const key of Object.keys(intlCache)) {
+      delete intlCache[key];
+    }
+
     commit('setSelected', locale);
+    setDocumentLanguage(locale);
     this.$cookies.set(LOCALE, locale, {
       encode: x => x,
       maxAge: 86400 * 365,
@@ -208,11 +254,4 @@ export const actions = {
     });
   },
 
-  toggleNone({ state, dispatch }) {
-    if ( state.selected === NONE ) {
-      return dispatch('switchTo', state.previous || state.default);
-    } else {
-      return dispatch('switchTo', NONE);
-    }
-  },
 };

@@ -42,7 +42,7 @@ export default defineComponent({
   <rd-fieldset
     data-test="pathManagement"
     :legend-text="t('pathManagement.label')"
-    :legend-tooltip="t('pathManagement.tooltip', { }, true)"
+    :legend-tooltip="t('pathManagement.tooltip')"
     :is-locked="isPreferenceLocked('application.pathManagementStrategy')"
   >
     <template #default="{ isLocked }">

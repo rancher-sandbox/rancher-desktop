@@ -1,3 +1,4 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -30,6 +31,12 @@ const isWin = os.platform() === 'win32';
 const isMac = os.platform() === 'darwin';
 let console: Log;
 
+// A fresh install defaults to the oldest supported Kubernetes version so that a
+// later upgrade never forces a downgrade; show the current stable one instead.
+const stableKubernetesVersion: string = JSON.parse(
+  fs.readFileSync(path.resolve(import.meta.dirname, '..', 'resources', 'k3s-versions.json'), 'utf8'),
+).channels.stable;
+
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
   let page: Page;
@@ -53,6 +60,7 @@ test.describe.serial('Main App Test', () => {
         allowedImages: { enabled: false, patterns: ['rancher/example'] },
         name:          ContainerEngine.MOBY,
       },
+      kubernetes:  { version: stableKubernetesVersion },
       diagnostics: { showMuted: true, mutedChecks: { MOCK_CHECKER: true } },
     });
 
@@ -515,26 +523,29 @@ test.describe.serial('Main App Test', () => {
         await expect(e2ePreferences.virtualMachine.mountType).toBeVisible();
         await prefScreenshot.take('virtualMachine', 'tabVolumes');
 
-        await e2ePreferences.virtualMachine.ninep.click();
-        await expect(e2ePreferences.virtualMachine.ninep).toBeChecked();
-        await page.waitForTimeout(afterCheckedTimeout);
-        await prefScreenshot.take('virtualMachine', 'tabVolumes_9P');
+        // 9p requires QEMU, which is the default on Linux.  macOS defaults to
+        // VZ, so its 9p screenshot is captured after switching to QEMU below.
+        if (!isMac) {
+          await e2ePreferences.virtualMachine.ninep.click();
+          await expect(e2ePreferences.virtualMachine.ninep).toBeChecked();
+          await page.waitForTimeout(afterCheckedTimeout);
+          await prefScreenshot.take('virtualMachine', 'tabVolumes_9P');
+        }
       });
 
       test.describe('Mac only tests', () => {
         test.skip(!isMac, 'Mac only test');
 
-        test('EmulationTab', async() => {
+        test('EmulationTab-vz', async() => {
           await e2ePreferences.virtualMachine.tabEmulation.click();
           await expect(e2ePreferences.virtualMachine.vmType).toBeVisible();
-          await prefScreenshot.take('virtualMachine', 'tabEmulation');
 
-          // If applicable, switch to VZ so we can use virtiofs.
+          // Ensure VZ (the default) is selected so virtiofs is available next.
           if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
-            await page.waitForTimeout(afterCheckedTimeout);
-            await expect(e2ePreferences.virtualMachine.vz).toBeVisible();
             await e2ePreferences.virtualMachine.vz.click({ position: { x: 10, y: 10 } });
             await expect(e2ePreferences.virtualMachine.vz).toBeChecked();
+            await page.waitForTimeout(afterCheckedTimeout);
+            await prefScreenshot.take('virtualMachine', 'tabEmulation_vz');
           }
         });
 
@@ -548,11 +559,25 @@ test.describe.serial('Main App Test', () => {
           }
         });
 
-        test('EmulationTab-vz', async() => {
+        test('VolumesTab-9p', async() => {
+          // 9p is only valid with QEMU, so switch the VM type before selecting it.
           await e2ePreferences.virtualMachine.tabEmulation.click();
-          if (await e2ePreferences.virtualMachine.vz.isEnabled()) {
-            await prefScreenshot.take('virtualMachine', 'tabEmulation_vz');
-          }
+          await e2ePreferences.virtualMachine.qemu.click({ position: { x: 10, y: 10 } });
+          await expect(e2ePreferences.virtualMachine.qemu).toBeChecked();
+
+          await e2ePreferences.virtualMachine.tabVolumes.click();
+          await e2ePreferences.virtualMachine.ninep.click();
+          await expect(e2ePreferences.virtualMachine.ninep).toBeChecked();
+          await page.waitForTimeout(afterCheckedTimeout);
+          await prefScreenshot.take('virtualMachine', 'tabVolumes_9P');
+        });
+
+        test('EmulationTab', async() => {
+          // QEMU is still selected from the previous test; the docs embed this
+          // as the QEMU emulation screenshot.
+          await e2ePreferences.virtualMachine.tabEmulation.click();
+          await expect(e2ePreferences.virtualMachine.qemu).toBeChecked();
+          await prefScreenshot.take('virtualMachine', 'tabEmulation');
         });
       });
     });
@@ -624,37 +649,5 @@ test.describe.serial('Main App Test', () => {
       await preferencesPage.waitForTimeout(250);
       await prefScreenshot.take('kubernetes', 'lockedFields');
     });
-  });
-
-  test('Intro Image', async({ colorScheme }) => {
-    await navPage.navigateTo('General');
-    const bounds = await navPage.page.evaluate(() => {
-      window.resizeTo(1024, 768);
-
-      return {
-        top: window.screenTop, left: window.screenLeft, width: window.outerWidth, height: window.outerHeight,
-      };
-    });
-
-    await navPage.preferencesButton.click();
-    await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
-    const preferencesPage = electronApp.windows()[1];
-
-    await preferencesPage.evaluate((bounds) => {
-      const {
-        top, left, width, height,
-      } = bounds;
-
-      window.moveTo(left + (width - window.outerWidth) / 2, top + (height - window.outerHeight) / 2);
-    }, bounds);
-
-    try {
-      await preferencesPage.emulateMedia({ colorScheme });
-      await preferencesPage.waitForTimeout(250);
-      await preferencesPage.bringToFront();
-      await screenshot.take('intro', true);
-    } finally {
-      preferencesPage.close({ runBeforeUnload: true });
-    }
   });
 });

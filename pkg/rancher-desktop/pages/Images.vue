@@ -84,7 +84,7 @@ export default defineComponent({
   watch: {
     state: {
       handler(state: string) {
-        this.setHeader({ title: this.t('images.title') });
+        this.setHeader({ titleKey: 'images.title' });
 
         if (!state || state === ImageManagerStates.UNREADY) {
           return;

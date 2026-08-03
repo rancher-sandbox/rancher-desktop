@@ -1,3 +1,7 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
 import { jest } from '@jest/globals';
 import semver from 'semver';
 
@@ -30,11 +34,27 @@ const standardMockedVersion: WSLVersionInfo = {
   },
 };
 
+// The provider caches update info under `paths.cache` at module load, and
+// logging creates `paths.logs` the same way, so point both somewhere disposable
+// rather than at the developer's own directories.
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rd-longhorn-test-'));
+const cacheDir = path.join(tmpDir, 'cache');
+const logsDir = path.join(tmpDir, 'logs');
+
+fs.mkdirSync(cacheDir, { recursive: true });
+
+afterAll(() => {
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});
+
 const modules = mockModules({
   '@pkg/utils/childProcess': { spawnFile: jest.fn<typeof spawnFileType>() },
   '@pkg/utils/osVersion':    { getMacOsVersion: jest.fn(() => new semver.SemVer('12.0.0')) },
+  '@pkg/utils/paths':        { cache: cacheDir, logs: logsDir },
   '@pkg/utils/wslVersion':   { default: jest.fn<typeof getWSLVersionType>() },
   electron:                  {
+    // Older than any release the tests offer, so a staged update looks newer.
+    app: { getVersion: () => '1.0.0' },
     net: {
       // We only return a subset of the values, so we need a complicated type here.
       fetch: jest.fn<(...args: Parameters<typeof fetch>) => Promise<Partial<Awaited<ReturnType<typeof fetch>>>>>(),
@@ -390,5 +410,216 @@ describe('LonghornProvider.getSha512Sum', () => {
 
     await expect(makeProvider()['getSha512Sum']('https://example.test/cs'))
       .rejects.toThrow(/sha512/i);
+  });
+});
+
+describe('LonghornProvider.checkForUpdates', () => {
+  const cacheFile = path.join(cacheDir, 'updater-longhorn.json');
+  const assetName = 'Rancher.Desktop.Setup.9.9.9.msi';
+  const githubURL = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop/releases/tags/v9.9.9';
+  const serverURL = 'http://127.0.0.1:8314';
+  let LonghornProviderClass: typeof import('../LonghornProvider').default;
+
+  beforeAll(async() => {
+    ({ default: LonghornProviderClass } = await import('../LonghornProvider'));
+  });
+  beforeEach(() => {
+    // Documented developer variables, which every test file inherits from the
+    // shell, so clear them before the first test rather than after each one.
+    delete process.env.RD_FORCE_UPDATES_ENABLED;
+    delete process.env.RD_GITHUB_API_URL;
+    delete process.env.RD_UPGRADE_RESPONDER_URL;
+    modules['@pkg/utils/wslVersion'].default.mockResolvedValue(standardMockedVersion);
+  });
+  afterEach(() => {
+    modules.electron.net.fetch.mockReset();
+    fs.rmSync(cacheFile, { force: true });
+  });
+
+  /** Answer the upgrade responder, the release lookup, and the checksum, in that order. */
+  function mockRelease() {
+    modules.electron.net.fetch.mockResolvedValueOnce({
+      json: () => Promise.resolve({
+        requestIntervalInMinutes: 100,
+        versions:                 [{
+          Name: 'v9.9.9', ReleaseDate: '2038-01-01T00:00:00Z', Supported: true, Tags: ['latest'],
+        }],
+      }),
+    });
+    modules.electron.net.fetch.mockResolvedValueOnce({
+      json: () => Promise.resolve({
+        name:         'Rancher Desktop 9.9.9',
+        body:         'Simulated release.',
+        published_at: '2038-01-01T00:00:00Z',
+        assets:       [
+          { name: assetName, browser_download_url: `${ serverURL }/msi`, size: 1 },
+          { name: `${ assetName }.sha512sum`, browser_download_url: `${ serverURL }/sha512sum`, size: 1 },
+        ],
+      }),
+    });
+    modules.electron.net.fetch.mockResolvedValueOnce({
+      ok:         true,
+      status:     200,
+      statusText: 'OK',
+      text:       () => Promise.resolve(`${ 'a'.repeat(128) }  ${ assetName }\n`),
+    });
+  }
+
+  // `getUpdater` points the provider at the responder override when it honours
+  // one, so a test that sets the variable must configure the same URL here.
+  function makeProvider(upgradeServer = 'https://upgrade.test/v1/checkupgrade') {
+    return new LonghornProviderClass(
+      {
+        owner: 'rancher-sandbox', repo: 'rancher-desktop', vPrefixedTagName: true, upgradeServer,
+      } as any,
+      { currentVersion: new semver.SemVer('1.0.0') } as any,
+      { platform: 'win32' } as any,
+    );
+  }
+
+  /** The release lookup is the request that follows the upgrade responder query. */
+  async function releaseLookupURL() {
+    mockRelease();
+    await makeProvider()['checkForUpdates']();
+
+    return modules.electron.net.fetch.mock.calls[1][0];
+  }
+
+  it('fetches the release from GitHub when no override is set', async() => {
+    await expect(releaseLookupURL()).resolves.toBe(githubURL);
+  });
+
+  it('honours RD_GITHUB_API_URL when updates are forced', async() => {
+    process.env.RD_FORCE_UPDATES_ENABLED = '1';
+    process.env.RD_GITHUB_API_URL = serverURL;
+
+    await expect(releaseLookupURL()).resolves
+      .toBe(`${ serverURL }/repos/rancher-sandbox/rancher-desktop/releases/tags/v9.9.9`);
+  });
+
+  it('ignores RD_GITHUB_API_URL unless updates are forced', async() => {
+    process.env.RD_GITHUB_API_URL = serverURL;
+
+    await expect(releaseLookupURL()).resolves.toBe(githubURL);
+  });
+
+  it('discards a cached release that came from a different API', async() => {
+    // A release cached by a test run names a download and a checksum the test
+    // server chose; a later run must not install it just because it is fresh.
+    fs.writeFileSync(cacheFile, JSON.stringify({
+      nextUpdateTime: Date.now() + 60_000,
+      apiURL:         serverURL,
+      upgradeServer:  '',
+      file:           { url: `${ serverURL }/msi`, size: 1, checksum: 'cached' },
+    }));
+
+    await expect(releaseLookupURL()).resolves.toBe(githubURL);
+  });
+
+  it('reuses a cached release that came from the same API', async() => {
+    fs.writeFileSync(cacheFile, JSON.stringify({
+      nextUpdateTime: Date.now() + 60_000,
+      apiURL:         'https://api.github.com',
+      upgradeServer:  '',
+      file:           { url: 'https://example.test/msi', size: 1, checksum: 'cached' },
+    }));
+
+    await makeProvider()['checkForUpdates']();
+    expect(modules.electron.net.fetch).not.toHaveBeenCalled();
+  });
+
+  it('discards a cached release found through a different upgrade responder', async() => {
+    fs.writeFileSync(cacheFile, JSON.stringify({
+      nextUpdateTime: Date.now() + 60_000,
+      apiURL:         'https://api.github.com',
+      upgradeServer:  `${ serverURL }/v1/checkupgrade`,
+      file:           { url: 'https://example.test/msi', size: 1, checksum: 'cached' },
+    }));
+
+    await expect(releaseLookupURL()).resolves.toBe(githubURL);
+  });
+
+  it('leaves no update queued from a release the run would refuse to fetch', async() => {
+    const { hasQueuedUpdate } = await import('../LonghornProvider');
+
+    // Written by a run with the test flag set; this run has neither variable.
+    fs.writeFileSync(cacheFile, JSON.stringify({
+      nextUpdateTime: Date.now() + 60_000,
+      apiURL:         serverURL,
+      upgradeServer:  '',
+      isInstallable:  true,
+      release:        { tag: 'v9.9.9', name: '', notes: '', date: '' },
+      file:           { url: `${ serverURL }/msi`, size: 1, checksum: 'cached' },
+    }));
+
+    await expect(hasQueuedUpdate()).resolves.toBe(false);
+  });
+
+  it('queues an update staged from the servers this run would ask', async() => {
+    const { hasQueuedUpdate } = await import('../LonghornProvider');
+
+    fs.writeFileSync(cacheFile, JSON.stringify({
+      nextUpdateTime: Date.now() + 60_000,
+      apiURL:         'https://api.github.com',
+      upgradeServer:  '',
+      isInstallable:  true,
+      release:        { tag: 'v9.9.9', name: '', notes: '', date: '' },
+      file:           { url: 'https://example.test/msi', size: 1, checksum: 'cached' },
+    }));
+
+    await expect(hasQueuedUpdate()).resolves.toBe(true);
+  });
+
+  it('reuses the release it just cached', async() => {
+    // The second query would succeed if it happened, so a cache that recorded
+    // no source fails this by fetching again rather than by throwing.
+    mockRelease();
+    mockRelease();
+    await makeProvider()['checkForUpdates']();
+    const afterFirst = modules.electron.net.fetch.mock.calls.length;
+
+    await makeProvider()['checkForUpdates']();
+    expect(modules.electron.net.fetch.mock.calls).toHaveLength(afterFirst);
+  });
+
+  it('records the responder override when updates are forced', async() => {
+    process.env.RD_FORCE_UPDATES_ENABLED = '1';
+    process.env.RD_UPGRADE_RESPONDER_URL = `${ serverURL }/v1/checkupgrade`;
+    mockRelease();
+
+    await makeProvider(`${ serverURL }/v1/checkupgrade`)['checkForUpdates']();
+    expect(JSON.parse(fs.readFileSync(cacheFile, 'utf-8')).upgradeServer)
+      .toBe(`${ serverURL }/v1/checkupgrade`);
+  });
+
+  it('ignores the responder override unless updates are forced', async() => {
+    process.env.RD_UPGRADE_RESPONDER_URL = `${ serverURL }/v1/checkupgrade`;
+    mockRelease();
+
+    await makeProvider()['checkForUpdates']();
+    expect(JSON.parse(fs.readFileSync(cacheFile, 'utf-8')).upgradeServer).toBe('');
+  });
+
+  it('leaves no update queued from a cache that predates recorded sources', async() => {
+    const { hasQueuedUpdate } = await import('../LonghornProvider');
+
+    // The schema every installation carries into its first launch of this build.
+    fs.writeFileSync(cacheFile, JSON.stringify({
+      nextUpdateTime: Date.now() + 60_000,
+      isInstallable:  true,
+      release:        { tag: 'v9.9.9', name: '', notes: '', date: '' },
+      file:           { url: 'https://example.test/msi', size: 1, checksum: 'cached' },
+    }));
+
+    await expect(hasQueuedUpdate()).resolves.toBe(false);
+  });
+
+  it('discards a cache that predates recorded sources', async() => {
+    fs.writeFileSync(cacheFile, JSON.stringify({
+      nextUpdateTime: Date.now() + 60_000,
+      file:           { url: 'https://example.test/msi', size: 1, checksum: 'cached' },
+    }));
+
+    await expect(releaseLookupURL()).resolves.toBe(githubURL);
   });
 });

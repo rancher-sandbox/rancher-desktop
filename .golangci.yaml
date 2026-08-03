@@ -32,8 +32,9 @@ linters:
       # "error" is the conventional log-field key, "--" is the POSIX
       # end-of-options marker, "eth0" shares a platform-interface table
       # with other literal names, and "--address" is a wsl.exe / nerdctl
-      # flag inlined in command-line slices.
-      ignore-string-values: ^(error|--|eth0|--address)$
+      # flag inlined in command-line slices, and '' plays three distinct
+      # YAML-quoting roles in i18n-report (empty scalar, escape, unescape).
+      ignore-string-values: ^(error|--|eth0|--address|'')$
     gocritic:
       disabled-checks:
         - dupImport # https://github.com/go-critic/go-critic/issues/845

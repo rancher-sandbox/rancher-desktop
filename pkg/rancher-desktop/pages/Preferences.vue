@@ -28,8 +28,8 @@ export default defineComponent({
     ...mapGetters('preferences', ['getPreferences', 'hasError']),
     ...mapGetters('transientSettings', ['getCurrentNavItem']),
     ...mapState('credentials', ['credentials']),
-    navItems(): string[] {
-      return preferencesNavItems.map(({ name }) => name);
+    navItems(): { name: string; labelKey: string }[] {
+      return preferencesNavItems.map(({ name, labelKey }) => ({ name, labelKey }));
     },
   },
   async beforeMount() {
@@ -99,14 +99,14 @@ export default defineComponent({
       const cancelPosition = 1;
 
       const result = await ipcRenderer.invoke('show-message-box', {
-        title:    'Rancher Desktop - Reset Kubernetes',
+        title:    this.t('preferences.resetDialog.title'),
         type:     'warning',
-        message:  'Apply preferences and reset Kubernetes?',
-        detail:   'These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.',
+        message:  this.t('preferences.resetDialog.message'),
+        detail:   this.t('preferences.resetDialog.detail'),
         cancelId: cancelPosition,
         buttons:  [
-          'Apply and reset',
-          'Cancel',
+          this.t('preferences.resetDialog.apply'),
+          this.t('generic.cancel'),
         ],
       });
 
@@ -126,9 +126,10 @@ export default defineComponent({
 
       if (direction) {
         const dir = (direction === 'forward' ? 1 : -1);
-        const idx = (this.navItems.length + this.navItems.indexOf(this.getCurrentNavItem) + dir) % this.navItems.length;
+        const currentIdx = this.navItems.findIndex(item => item.name === this.getCurrentNavItem);
+        const idx = (this.navItems.length + currentIdx + dir) % this.navItems.length;
 
-        await this.commitNavItem(this.navItems[idx]);
+        await this.commitNavItem(this.navItems[idx].name);
       }
     },
   },
@@ -162,15 +163,15 @@ export default defineComponent({
       >
         <empty-state
           icon="icon-warning"
-          heading="Unable to fetch preferences"
-          body="Reload Preferences to try again."
+          :heading="t('preferences.error.heading')"
+          :body="t('preferences.error.body')"
         >
           <template #primary-action>
             <button
               class="btn role-primary"
               @click="reloadPreferences"
             >
-              Reload preferences
+              {{ t('preferences.error.reload') }}
             </button>
           </template>
         </empty-state>

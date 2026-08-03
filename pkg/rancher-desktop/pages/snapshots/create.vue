@@ -42,7 +42,7 @@ export default defineComponent({
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('snapshots.create.title') },
+      { titleKey: 'snapshots.create.title' },
     );
     (this.$refs.nameInput as any)?.select();
   },
@@ -114,7 +114,7 @@ export default defineComponent({
           format: {
             header:            this.t('snapshots.dialog.creating.header', { snapshot: name }),
             showProgressBar:   true,
-            message:           this.t('snapshots.dialog.creating.message', { snapshot: escapeHtml(name) }, true),
+            message:           this.t('snapshots.dialog.creating.message', { snapshot: escapeHtml(name) }),
             snapshotEventType: 'create',
           },
         },

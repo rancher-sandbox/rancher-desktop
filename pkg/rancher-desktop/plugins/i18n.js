@@ -1,56 +1,19 @@
 import { watchEffect, ref, h } from 'vue';
 import { useStore } from 'vuex';
 
-import { escapeHtml } from '../utils/string';
-
-export function stringFor(store, key, args, raw = false, escapehtml = true) {
-  const translation = store.getters['i18n/t'](key, args);
-
-  let out;
-
-  if ( translation !== undefined ) {
-    out = translation;
-  } else if ( args && Object.keys(args).length ) {
-    const argStr = Object.keys(args).map(k => `${ k }: ${ args[k] }`).join(', ');
-
-    out = `%${ key }(${ argStr })%`;
-    raw = true;
-  } else {
-    out = `%${ key }%`;
-  }
-
-  if ( raw ) {
-    return out;
-  } else if (escapehtml) {
-    return escapeHtml(out);
-  } else {
-    return out;
-  }
-}
+// The i18n/t getter returns the raw translation; escaping is the sink's job.
+// Text sinks ({{ }}, textContent) escape themselves; HTML sinks render
+// translator-controlled markup and sanitize via v-clean-html where the
+// content warrants it.
 
 function directive(el, binding, vnode /*, oldVnode */) {
   const { instance } = binding;
-  const raw = binding.modifiers && binding.modifiers.raw === true;
-  const str = stringFor(instance.$store, binding.value, {}, raw);
+  const str = instance.$store.getters['i18n/t'](binding.value, {});
 
   if ( binding.arg ) {
     el.setAttribute(binding.arg, str);
   } else {
     el.innerHTML = str;
-  }
-}
-
-export function directiveSsr(vnode, binding) {
-  console.warn('Function `directiveSsr` is deprecated. Please install i18n as a vue plugin: `vueApp.use(i18n)`');
-
-  const { context } = vnode;
-  const raw = binding.modifiers && binding.modifiers.raw === true;
-  const str = stringFor(context.$store, binding.value, {}, raw);
-
-  if ( binding.arg ) {
-    vnode.data.attrs[binding.arg] = str;
-  } else {
-    vnode.data.domProps = { innerHTML: str };
   }
 }
 
@@ -61,8 +24,8 @@ const i18n = {
       console.debug('Skipping i18n install. Directive, component, and option already exist.');
     }
 
-    vueApp.config.globalProperties.t = function(key, args, raw) {
-      return stringFor(this.$store, key, args, raw);
+    vueApp.config.globalProperties.t = function(key, args) {
+      return this.$store.getters['i18n/t'](key, args);
     };
 
     // InnerHTML: <some-tag v-t="'some.key'" />
@@ -78,6 +41,7 @@ const i18n = {
 
     // Basic (but you might want the directive above): <t k="some.key" />
     // With interpolation: <t k="some.key" count="1" :foo="bar" />
+    // raw renders the translation as innerHTML instead of a text child.
     vueApp.component('t', {
       inheritAttrs: false,
       props:        {
@@ -93,18 +57,13 @@ const i18n = {
           type:    [String, Object],
           default: 'span',
         },
-        escapehtml: {
-          type:    Boolean,
-          default: true,
-        },
       },
       setup(props, ctx) {
         const msg = ref('');
         const store = useStore();
 
-        // Update msg whenever k, $attrs, raw, or escapehtml changes
         watchEffect(() => {
-          msg.value = stringFor(store, props.k, ctx.attrs, props.raw, props.escapehtml);
+          msg.value = store.getters['i18n/t'](props.k, ctx.attrs);
         });
 
         return { msg };

@@ -12,6 +12,10 @@ updates:
     default-days: 7
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
+  groups:
+    # init and analyze share a config file and abort when their versions differ.
+    codeql-action:
+      patterns: ["github/codeql-action/*"]
 
 # Maintain dependencies for npm
 - package-ecosystem: "npm"
@@ -36,6 +40,15 @@ updates:
     # updates of webpack until we can migrate off @vue/cli-service (which is
     # unlikely to be fixed as it is in maintenance mode).
     dependency-name: "webpack"
+  - # TypeScript 7 is the Go port; its npm package exports only version and
+    # versionMajorMinor, so ts-loader and @typescript-eslint fail with a
+    # TypeError.  Drop this rule once they support 7.x.
+    dependency-name: "typescript"
+    update-types: [version-update:semver-major]
+  groups:
+    # vue pins @vue/compiler-sfc exactly, so separate bumps break the lockfile.
+    vue:
+      patterns: ["vue", "@vue/compiler-sfc"]
 
 # Maintain dependencies for Golang
 - package-ecosystem: "gomod"

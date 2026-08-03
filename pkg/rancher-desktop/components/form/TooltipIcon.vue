@@ -20,7 +20,7 @@ export default {
 <template>
   <i
     v-tooltip="{
-      content: t(tooltipText, undefined, true),
+      content: t(tooltipText),
       placement: tooltipPlacement,
     }"
     :class="`icon ${icon}`"

@@ -132,6 +132,19 @@ interface LonghornCache {
   /** The minimum time (in Unix epoch) we should next check for an update. */
   nextUpdateTime:             number;
   /**
+   * The GitHub API the release was fetched from. An entry fetched from a test
+   * server names both the download and its checksum, so it must not outlive the
+   * run that asked for it. A cache written before this field existed carries
+   * neither it nor the responder below, so `hasQueuedUpdate` and
+   * `checkForUpdates` both discard the entry.
+   */
+  apiURL?:                    string;
+  /**
+   * The upgrade responder override the release was found through, or the empty
+   * string when the update configuration's own server was used.
+   */
+  upgradeServer?:             string;
+  /**
    * Whether there is an unsupported version of Rancher Desktop that is
    * newer than the latest supported version.
    */
@@ -158,12 +171,46 @@ interface LonghornCache {
   }
 }
 
+/**
+ * Where this run looks for releases. A redirected server names the asset to
+ * download and the checksum that verifies it, so both overrides require the
+ * flag that already marks the run as a test.
+ */
+function updateSources(): Required<Pick<LonghornCache, 'apiURL' | 'upgradeServer'>> {
+  const testing = process.env.RD_FORCE_UPDATES_ENABLED;
+
+  return {
+    apiURL:        (testing && process.env.RD_GITHUB_API_URL) || 'https://api.github.com',
+    upgradeServer: (testing && process.env.RD_UPGRADE_RESPONDER_URL) || '',
+  };
+}
+
+/**
+ * Whether a cached release came from the servers this run would ask. Only the
+ * environment overrides count: a build whose bundled update configuration names
+ * a different responder or repository writes the identity an official build
+ * computes, so its cached release survives into one.
+ */
+function fromCurrentSources(cache: LonghornCache): boolean {
+  const sources = updateSources();
+
+  return cache.apiURL === sources.apiURL && cache.upgradeServer === sources.upgradeServer;
+}
+
 export async function hasQueuedUpdate(): Promise<boolean> {
   try {
     const rawCache = await fs.promises.readFile(gCachePath, 'utf-8');
     const cache: LonghornCache = JSON.parse(rawCache);
 
     if (!cache.isInstallable) {
+      return false;
+    }
+
+    // Every reader of the cache must agree on which releases count, or a test
+    // server's release stays queued for a launch that would refuse to fetch it.
+    if (!fromCurrentSources(cache)) {
+      console.log(`Ignoring update staged from ${ cache.apiURL ?? 'an unrecorded source' }.`);
+
       return false;
     }
 
@@ -376,11 +423,15 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
    * applicable.
    */
   protected async checkForUpdates(): Promise<LonghornCache> {
+    const sources = updateSources();
+
     try {
       const rawCache = await fs.promises.readFile(gCachePath, 'utf-8');
       const cache: LonghornCache = JSON.parse(rawCache);
 
-      if (cache.nextUpdateTime > Date.now()) {
+      // A cached release outlives the process, so a test server's release would
+      // otherwise still be installable once the run that fetched it is over.
+      if (cache.nextUpdateTime > Date.now() && fromCurrentSources(cache)) {
         return cache;
       }
     } catch (error) {
@@ -405,7 +456,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     // Get release information from GitHub releases.
     const { owner, repo, vPrefixedTagName } = this.configuration;
     const tag = (vPrefixedTagName ? 'v' : '') + latest.Name.replace(/^v/, '');
-    const infoURL = `https://api.github.com/repos/${ owner }/${ repo }/releases/tags/${ tag }`;
+    const infoURL = `${ sources.apiURL }/repos/${ owner }/${ repo }/releases/tags/${ tag }`;
     const releaseInfoRaw = await net.fetch(infoURL,
       { headers: { Accept: 'application/vnd.github.v3+json' } });
     const releaseInfo = await releaseInfoRaw.json() as GitHubReleaseInfo;
@@ -446,6 +497,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
 
     const cache: LonghornCache = {
       nextUpdateTime: nextRequestTime.getTime(),
+      ...sources,
       unsupportedUpdateAvailable,
       isInstallable:  false, // Always false, we'll update this later.
       release:        {

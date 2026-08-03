@@ -28,21 +28,23 @@ export default defineComponent({
   },
   data() {
     return {
-      headers: [
-        {
-          name:  'description',
-          label: 'Name',
-        },
-        {
-          name:  'mute',
-          label: 'Mute',
-          width: 76,
-        },
-      ],
       expanded: Object.fromEntries(Object.values(DiagnosticsCategory).map(c => [c, true])) as Record<DiagnosticsCategory, boolean>,
     };
   },
   computed: {
+    headers() {
+      return [
+        {
+          name:  'description',
+          label: this.t('diagnostics.tableHeaders.name'),
+        },
+        {
+          name:  'mute',
+          label: this.t('diagnostics.tableHeaders.mute'),
+          width: 76,
+        },
+      ];
+    },
     ...mapGetters('preferences', ['showMuted']),
     numFailed(): number {
       return this.rows.length - this.numMuted;
@@ -106,10 +108,10 @@ export default defineComponent({
     <div class="status">
       <div class="result-info">
         <div class="item-results">
-          <span class="icon icon-dot text-error" />{{ numFailed }} failed plus {{ numMuted }} muted
+          <span class="icon icon-dot text-error" />{{ t('diagnostics.failedCount', { count: numFailed, muted: numMuted }) }}
         </div>
         <toggle-switch
-          off-label="Show Muted"
+          :off-label="t('diagnostics.showMuted')"
           :value="showMuted"
           @update:value="toggleMute"
         />
@@ -149,7 +151,7 @@ export default defineComponent({
                 class="btn role-primary"
                 @click="toggleMute"
               >
-                Show Muted
+                {{ t('diagnostics.showMuted') }}
               </button>
             </template>
           </empty-state>
@@ -183,7 +185,7 @@ export default defineComponent({
             class="col-mute"
             role="columnheader"
           >
-            <span>Mute</span>
+            <span>{{ t('diagnostics.tableHeaders.mute') }}</span>
           </td>
         </tr>
       </template>
@@ -221,7 +223,7 @@ export default defineComponent({
             {{ row.fixes.map(fix => fix.description).join('\n') }}
           </td>
           <td v-else>
-            (No fixes available)
+            {{ t('diagnostics.noFixes') }}
           </td>
           <!--Empty data cells for remaining columns for row highlight-->
           <td

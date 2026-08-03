@@ -134,7 +134,9 @@ verify_rancher() {
     local host
     host=$(traefik_hostname)
 
-    run try --max 9 --delay 10 curl --insecure --silent --show-error "https://${host}/dashboard/auth/login"
+    # Without `--fail`, Traefik's "no available server" 503 counts as a
+    # successful curl, and `try` returns after the first attempt.
+    run try --max 9 --delay 10 curl --insecure --silent --show-error --fail "https://${host}/dashboard/auth/login"
     assert_success
     assert_output --partial 'src="/dashboard/'
     run kubectl get secret --namespace cattle-system bootstrap-secret -o json
@@ -143,16 +145,20 @@ verify_rancher() {
 }
 
 uninstall_rancher() {
-    run helm uninstall rancher --namespace cattle-system --wait
+    # Don't use `helm --wait`. Rancher's uninstall leaves a broken ext.cattle.io
+    # aggregated API that hangs helm's post-delete wait; factory_reset handles cleanup.
+    run helm uninstall rancher --namespace cattle-system
     assert_nothing
-    run helm uninstall cert-manager --namespace cert-manager --wait
+    run helm uninstall cert-manager --namespace cert-manager
     assert_nothing
 }
 
 @test 'add helm repo' {
     helm repo add jetstack https://charts.jetstack.io
     helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
-    helm repo update
+    # Update only the repos this test adds; the shared global config may hold
+    # unrelated stale repos that would fail a bare `helm repo update`.
+    helm repo update jetstack rancher-latest
 }
 
 foreach_k3s_version \

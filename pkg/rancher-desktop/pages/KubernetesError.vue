@@ -8,7 +8,7 @@
         >
         <span>
           <h2 data-test="k8s-error-header">
-            {{ t('app.name') }} Error
+            {{ t('kubernetesError.title') }}
           </h2>
           <h5>{{ versionString }}</h5>
         </span>
@@ -22,26 +22,25 @@
           v-if="lastCommand"
           class="error-part command"
         >
-          <h4>Last command run:</h4>
+          <h4>{{ t('kubernetesError.lastCommand') }}</h4>
           <p>{{ lastCommand }}</p>
         </div>
         <div
           v-if="lastCommandComment"
           class="error-part"
         >
-          <h4>Context:</h4>
+          <h4>{{ t('kubernetesError.context') }}</h4>
           <p>{{ lastCommandComment }}</p>
         </div>
         <div
           v-if="lastLogLines.length"
           class="error-part grow"
         >
-          <h4>
-            Some recent <a
-              href="#"
-              @click.prevent="showLogs"
-            >logfile</a> lines:
-          </h4>
+          <!-- v-clean-html: the translated string embeds a data-action link -->
+          <h4
+            v-clean-html="t('kubernetesError.logLines')"
+            @click.prevent="onLogLinesClick"
+          />
           <pre id="log-lines">{{ joinedLastLogLines }}</pre>
         </div>
       </div>
@@ -51,7 +50,7 @@
       class="role-primary primary-action"
       @click="close"
     >
-      Close
+      {{ t('generic.close') }}
     </button>
   </div>
 </template>
@@ -109,6 +108,11 @@ export default defineComponent({
     },
     showLogs() {
       ipcRenderer.send('show-logs');
+    },
+    onLogLinesClick(event: MouseEvent) {
+      if ((event.target as HTMLElement)?.closest('[data-action="showLogs"]')) {
+        this.showLogs();
+      }
     },
   },
 });
