@@ -86,10 +86,15 @@ export class ContainersPage {
   }
 
   async selectGroup(groupName: string) {
-    const checkbox = this.getGroupCheckbox(groupName);
+    const nativeCheckbox = this.getGroupRow(groupName).locator('input[type="checkbox"]');
 
-    await checkbox.click();
-    await expect(this.getGroupRow(groupName).locator('input[type="checkbox"]')).toBeChecked();
+    // The selection persists across navigations within the same app instance,
+    // so a previous test may have left this group already selected. Clicking
+    // again would toggle it off, so only click when it is not already checked.
+    if (!await nativeCheckbox.isChecked()) {
+      await this.getGroupCheckbox(groupName).click();
+    }
+    await expect(nativeCheckbox).toBeChecked();
   }
 
   /**
