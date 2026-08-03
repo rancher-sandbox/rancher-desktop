@@ -441,7 +441,7 @@ export default {
 
     update(toAdd, toRemove) {
       toRemove.forEach((row) => {
-        const index = this.selectedRows.findIndex((r) => r._key === row._key);
+        const index = this.selectedRows.findIndex((r) => get(r, this.keyField) === get(row, this.keyField));
 
         if (index !== -1) {
           this.selectedRows.splice(index, 1);
