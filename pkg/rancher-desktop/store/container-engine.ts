@@ -365,7 +365,7 @@ export const actions = {
 
         const info: Container = {
           id:            container.Id,
-          containerName: container.Names[0].replace(/_[a-z0-9-]{36}_[0-9]+/, ''),
+          containerName: container.Names[0].replace(/^\//, '').replace(/_[a-z0-9-]{36}_[0-9]+/, ''),
           imageName:     container.Image,
           state,
           started:       undefined,
