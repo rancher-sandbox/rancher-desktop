@@ -633,7 +633,7 @@ export default class SettingsValidator {
    */
   protected checkBooleanMapping<S>(mergedSettings: S, currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object' || desiredValue === null || Array.isArray(desiredValue)) {
-      errors.push(t('validation.proposedShouldBeObject', { field: fqname, value: desiredValue }));
+      errors.push(t('validation.proposedShouldBeObject', { field: fqname, value: String(desiredValue) }));
 
       return false;
     }
