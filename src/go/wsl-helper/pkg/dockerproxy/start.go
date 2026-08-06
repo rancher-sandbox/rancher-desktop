@@ -27,6 +27,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/linuxkit/virtsock/pkg/vsock"
@@ -45,7 +46,43 @@ const (
 	socketExistTimeout = 30 * time.Second
 	// fileExistSleep is interval to wait while waiting for a file to exist.
 	fileExistSleep = 500 * time.Millisecond
+	// dockerdExitTimeout is the time to wait for dockerd to exit after
+	// forwarding a SIGTERM, before giving up and exiting anyway.
+	dockerdExitTimeout = 30 * time.Second
+	// acceptErrorDelayInitial is the first backoff delay after a failed
+	// Accept(); it doubles on every consecutive failure.
+	acceptErrorDelayInitial = 10 * time.Millisecond
+	// acceptErrorDelayMax caps the Accept() backoff delay.
+	acceptErrorDelayMax = time.Second
 )
+
+var (
+	// listenerMu guards activeListener, so that a close cannot race the
+	// re-listen loop and hit a descriptor number that has been recycled.
+	listenerMu sync.Mutex
+	// activeListener is the vsock listener the SIGTERM handler closes.
+	activeListener net.Listener
+)
+
+func setActiveListener(listener net.Listener) {
+	listenerMu.Lock()
+	defer listenerMu.Unlock()
+	activeListener = listener
+}
+
+// closeActiveListener closes the current vsock listener.  A pending Accept()
+// stays blocked, so no caller can wait for the accept loop to return.
+func closeActiveListener() {
+	listenerMu.Lock()
+	defer listenerMu.Unlock()
+	if activeListener == nil {
+		return
+	}
+	if err := activeListener.Close(); err != nil {
+		logrus.Errorf("docker-proxy: error closing vsock listener: %s", err)
+	}
+	activeListener = nil
+}
 
 // waitForFileToExist will block until the given path exists.  If the given
 // timeout is reached, an error will be returned.
@@ -125,6 +162,43 @@ func Start(ctx context.Context, port uint32, dockerSocket string, args []string)
 		}
 	}()
 
+	// On SIGTERM, shut down dockerd and exit so that the service supervisor
+	// can restart us.  This has to exit the process explicitly: a blocked
+	// Accept() on the vsock listener cannot be interrupted, not even by
+	// closing the listener.
+	sigch := make(chan os.Signal, 1)
+	signal.Notify(sigch, unix.SIGTERM)
+	go func() {
+		<-sigch
+		logrus.Info("docker-proxy: shutting down on SIGTERM")
+		// Anything accepted from here on would die with this process.
+		closeActiveListener()
+		if proc := cmd.Process; proc != nil {
+			if err := proc.Signal(unix.SIGTERM); err != nil {
+				logrus.Errorf("could not stop dockerd: %s", err)
+			}
+		}
+		// Wait for dockerd to exit before we do, so that the supervisor
+		// does not start a new dockerd that conflicts with the old one.
+		exited := make(chan struct{})
+		go func() {
+			_ = cmd.Wait()
+			close(exited)
+		}()
+		select {
+		case <-exited:
+			os.Exit(0)
+		case <-time.After(dockerdExitTimeout):
+			logrus.Errorf("docker-proxy: dockerd still running %s after SIGTERM; killing it", dockerdExitTimeout)
+			if proc := cmd.Process; proc != nil {
+				if err := proc.Signal(unix.SIGKILL); err != nil {
+					logrus.Errorf("could not kill dockerd: %s", err)
+				}
+			}
+			os.Exit(1)
+		}
+	}()
+
 	// Wait for the docker socket to exist...
 	err = waitForFileToExist(dockerSocket, socketExistTimeout)
 	if err != nil {
@@ -134,11 +208,12 @@ func Start(ctx context.Context, port uint32, dockerSocket string, args []string)
 	for {
 		err := listenOnVsock(ctx, port, dockerSocket)
 		if err != nil {
-			logrus.Fatalf("docker-proxy: error listening on vsock: %s", err)
-			break
+			return fmt.Errorf("docker-proxy: error listening on vsock: %w", err)
 		}
+		// The listener died; wait a little before creating a new one, so
+		// that a persistent failure cannot spin hot.
+		time.Sleep(time.Second)
 	}
-	return nil
 }
 
 func listenOnVsock(ctx context.Context, port uint32, dockerSocket string) error {
@@ -146,26 +221,26 @@ func listenOnVsock(ctx context.Context, port uint32, dockerSocket string) error 
 	if err != nil {
 		return fmt.Errorf("could not listen on vsock port %08x: %w", port, err)
 	}
-	defer listener.Close()
+	setActiveListener(listener)
+	defer closeActiveListener()
 	logrus.Infof("docker-proxy: listening on vsock port %08x", port)
 
-	sigch := make(chan os.Signal, 1)
-	signal.Notify(sigch, unix.SIGTERM)
-	go func() {
-		<-sigch
-		listener.Close()
-	}()
-
+	var acceptDelay time.Duration
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			logrus.Errorf("docker-proxy: error accepting client connection: %s", err)
-			if errors.Is(err, unix.EINVAL) {
-				// This does not recover; return and re-listen
+			if errors.Is(err, unix.EINVAL) || errors.Is(err, unix.EBADF) {
+				// The listener does not recover from these; return and re-listen
 				return nil
 			}
+			// Back off so that a persistent error cannot spin hot and grow
+			// the log without bound.
+			acceptDelay = min(max(2*acceptDelay, acceptErrorDelayInitial), acceptErrorDelayMax)
+			time.Sleep(acceptDelay)
 			continue
 		}
+		acceptDelay = 0
 		go handleConnection(ctx, conn, dockerSocket)
 	}
 }
