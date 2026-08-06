@@ -22,6 +22,7 @@ mockModules({
   '@rancher/components': {
     BadgeState: componentStub,
     Banner:     componentStub,
+    Checkbox:   componentStub,
   },
   electron: { shell: { openExternal: jest.fn() } },
 });
