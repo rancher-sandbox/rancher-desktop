@@ -74,6 +74,16 @@ describe('SettingsValidator', () => {
     });
   });
 
+  it('should reject numeric strings with trailing characters', () => {
+    const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { kubernetes: { port: '6443oops' as unknown as number } });
+
+    expect({ needToUpdate, errors, isFatal }).toEqual({
+      needToUpdate: false,
+      errors:       ['Invalid value for "kubernetes.port": <"6443oops">'],
+      isFatal:      false,
+    });
+  });
+
   describe('all standard fields', () => {
     // Special fields that cannot be checked here; this includes enums and maps.
     const specialFields = [
@@ -345,6 +355,16 @@ describe('SettingsValidator', () => {
       expect({ needToUpdate, errors, isFatal }).toEqual({
         needToUpdate: false,
         errors:       ['Proposed field "WSL.integrations" should be an object, got <3>.'],
+        isFatal:      false,
+      });
+    });
+
+    test.each([null, [true]])('should reject %p', (integrations) => {
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { WSL: { integrations: integrations as unknown as Record<string, boolean> } });
+
+      expect({ needToUpdate, errors, isFatal }).toEqual({
+        needToUpdate: false,
+        errors:       [expect.stringContaining('Proposed field "WSL.integrations" should be an object')],
         isFatal:      false,
       });
     });
@@ -804,6 +824,13 @@ describe('SettingsValidator', () => {
       const [, errors] = subject.validateSettings(cfg, { application: { extensions: { installed: input } } });
 
       expect(errors).toEqual(expectedErrors);
+    });
+
+    it('should reject arrays', () => {
+      const [, errors] = subject.validateSettings(cfg, { application: { extensions: { installed: ['tag'] as unknown as Record<string, string> } } });
+
+      expect(errors).toEqual([expect.stringContaining('application.extensions.installed')]);
+      expect(errors[0]).toContain('not a valid mapping');
     });
   });
 

@@ -632,8 +632,8 @@ export default class SettingsValidator {
    * and mutedChecks.
    */
   protected checkBooleanMapping<S>(mergedSettings: S, currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
-    if (typeof (desiredValue) !== 'object') {
-      errors.push(t('validation.proposedShouldBeObject', { field: fqname, value: desiredValue }));
+    if (typeof (desiredValue) !== 'object' || desiredValue === null || Array.isArray(desiredValue)) {
+      errors.push(t('validation.proposedShouldBeObject', { field: fqname, value: String(desiredValue) }));
 
       return false;
     }
@@ -778,7 +778,7 @@ export default class SettingsValidator {
       return false;
     }
 
-    if (typeof desiredValue !== 'object' || !desiredValue) {
+    if (typeof desiredValue !== 'object' || !desiredValue || Array.isArray(desiredValue)) {
       errors.push(t('validation.invalidMapping', { field: fqname, value: desiredValue }));
 
       return false;
@@ -925,10 +925,10 @@ export default class SettingsValidator {
     const desiredValue: number | string = newSettings[index];
 
     if (typeof desiredValue === 'string') {
-      const parsedValue = parseInt(desiredValue, 10);
+      const parsedValue = Number(desiredValue);
 
-      // Ignore NaN; we'll fail validation later.
-      if (!Number.isNaN(parsedValue)) {
+      // Ignore invalid values; we'll fail validation later.
+      if (desiredValue.trim() !== '' && Number.isFinite(parsedValue)) {
         newSettings[index] = parsedValue;
       }
     }
