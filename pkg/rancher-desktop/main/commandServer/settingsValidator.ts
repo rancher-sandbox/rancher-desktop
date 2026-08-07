@@ -258,10 +258,13 @@ export default class SettingsValidator {
         continue;
       }
       if (typeof (allowedSettings[k]) === 'object') {
-        if (typeof (newSettings[k]) === 'object') {
-          changeNeeded = this.checkProposedSettings(mergedSettings, allowedSettings[k], currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+        const proposedValue = newSettings[k];
+        if (typeof proposedValue === 'object' && proposedValue && !Array.isArray(proposedValue)) {
+          changeNeeded = this.checkProposedSettings(mergedSettings, allowedSettings[k], currentSettings[k], proposedValue, errors, fqname) || changeNeeded;
+        } else if (typeof proposedValue === 'object') {
+          errors.push(t('validation.shouldBeObject', { field: fqname, value: JSON.stringify(proposedValue) }));
         } else {
-          errors.push(t('validation.shouldBeObject', { field: fqname, value: newSettings[k] }));
+          errors.push(t('validation.shouldBeObject', { field: fqname, value: proposedValue }));
         }
       } else if (typeof (newSettings[k]) === 'object') {
         if (typeof allowedSettings[k] === 'function') {

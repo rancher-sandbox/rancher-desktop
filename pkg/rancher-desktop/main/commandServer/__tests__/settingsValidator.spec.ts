@@ -915,6 +915,21 @@ describe('SettingsValidator', () => {
     ]);
   });
 
+  it('rejects null and arrays for object settings', () => {
+    for (const [field, value, expectedValue] of [
+      ['kubernetes', null, 'null'],
+      ['kubernetes.options', [], '[]'],
+    ] as const) {
+      const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, _.set({}, field, value));
+
+      expect({ needToUpdate, errors, isFatal }).toEqual({
+        needToUpdate: false,
+        errors:       [`Setting "${ field }" should wrap an inner object, but got <${ expectedValue }>.`],
+        isFatal:      false,
+      });
+    }
+  });
+
   // Add some fields that are very unlikely to ever collide with newly introduced fields.
   it('should ignore unrecognized settings', () => {
     const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, {
