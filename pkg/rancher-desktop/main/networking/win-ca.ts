@@ -38,8 +38,24 @@ export default async function * getWinCertificates(): AsyncIterable<string> {
     windowsHide: true,
   });
   const iterator = new AsyncCallbackIterator<string>();
+  let emissions = Promise.resolve();
 
-  proc.stdout.on('data', async(chunk: string | Buffer) => {
+  function queueEmit(cert: string) {
+    emissions = emissions.then(async() => {
+      if (cert) {
+        await iterator.emit(cert);
+      }
+    });
+  }
+
+  function queueError(reason: any) {
+    emissions = emissions.then(
+      () => iterator.error(reason),
+      () => iterator.error(reason),
+    );
+  }
+
+  proc.stdout.on('data', (chunk: string | Buffer) => {
     try {
       if (Buffer.isBuffer(chunk)) {
         buffer += chunk.toString('utf-8');
@@ -53,22 +69,24 @@ export default async function * getWinCertificates(): AsyncIterable<string> {
           break;
         }
         buffer = buffer.substring(match.length);
-        await iterator.emit(match);
+        queueEmit(match);
       }
     } catch (ex) {
-      await iterator.error(ex);
+      queueError(ex);
     }
   });
-  proc.on('exit', async(code, signal) => {
+  proc.on('close', (code, signal) => {
     if (!(code === 0 || signal === 'SIGTERM')) {
-      iterator.error(code || signal);
+      queueError(code || signal);
     } else {
-      try {
-        await iterator.emit(buffer);
+      emissions = emissions.then(async() => {
+        if (buffer) {
+          await iterator.emit(buffer);
+        }
         iterator.end();
-      } catch (ex) {
+      }, async(ex) => {
         await iterator.error(ex);
-      }
+      });
     }
   });
 
