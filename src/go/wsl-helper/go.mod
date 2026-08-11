@@ -15,7 +15,7 @@ require (
 	github.com/go-openapi/swag/stringutils v0.28.0
 	github.com/go-openapi/swag/typeutils v0.28.0
 	github.com/go-openapi/validate v0.26.1
-	github.com/go-swagger/go-swagger v0.36.1
+	github.com/go-swagger/go-swagger v0.36.2
 	github.com/google/uuid v1.6.0
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
 	github.com/moby/moby/api v1.55.0
@@ -42,7 +42,7 @@ require (
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-openapi/analysis v0.25.5 // indirect
-	github.com/go-openapi/codescan v0.36.2 // indirect
+	github.com/go-openapi/codescan v0.36.3 // indirect
 	github.com/go-openapi/inflect v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/go-openapi/jsonreference v1.0.0 // indirect
@@ -73,7 +73,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/rogpeppe/go-internal v1.15.0 // indirect
+	github.com/rogpeppe/go-internal v1.16.0 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
