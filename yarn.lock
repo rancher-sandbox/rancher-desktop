@@ -14778,7 +14778,7 @@ __metadata:
     ts-jest: "npm:29.4.12"
     ts-loader: "npm:^9.6.2"
     tsconfig-paths: "npm:4.2.0"
-    tsx: "npm:4.23.5"
+    tsx: "npm:4.23.7"
     typescript: "npm:6.0.3"
     vue: "npm:3.5.41"
     vue-3-slider-component: "npm:1.0.2"
@@ -16698,9 +16698,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsx@npm:4.23.5":
-  version: 4.23.5
-  resolution: "tsx@npm:4.23.5"
+"tsx@npm:4.23.7":
+  version: 4.23.7
+  resolution: "tsx@npm:4.23.7"
   dependencies:
     esbuild: "npm:~0.28.0"
     fsevents: "npm:~2.3.3"
@@ -16709,7 +16709,7 @@ __metadata:
       optional: true
   bin:
     tsx: dist/cli.mjs
-  checksum: 10c0/caed1b05eac5fbbb6f8a1ca8b22ae157b74caaba14cc781b023f8baaaa990fa8dfa60a4252eabda1a68c4dcaade3411013998fa001580a2de4ac1f0d78c80c92
+  checksum: 10c0/984fe7a63b0197d2d703fe68939006a83f52f986edc4e56034705e612d766f22df503c56bf0822ae7998c54891cafde2699baf1a198e43dd43cca320e1d1e986
   languageName: node
   linkType: hard
 
