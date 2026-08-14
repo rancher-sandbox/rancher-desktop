@@ -5,19 +5,31 @@
         class="breadcrumbs"
         data-testid="files-breadcrumbs"
       >
-        <button
-          v-for="(crumb, i) in breadcrumbs"
-          :key="crumb.path"
+        <span
           class="crumb"
-          :class="{ 'crumb-current': i === breadcrumbs.length - 1 }"
-          type="button"
-          @click="revealPath(crumb.path)"
+          :class="{ 'crumb-current': breadcrumbs.length === 1 }"
+          role="button"
+          tabindex="0"
+          @click="revealPath('/')"
+          @keydown.enter.space.prevent="revealPath('/')"
+        >/</span>
+        <template
+          v-for="(crumb, i) in segmentCrumbs"
+          :key="crumb.path"
         >
-          {{ crumb.label }}<span
-            v-if="i < breadcrumbs.length - 1"
+          <span
+            v-if="i > 0"
             class="crumb-sep"
           >/</span>
-        </button>
+          <span
+            class="crumb"
+            :class="{ 'crumb-current': i === segmentCrumbs.length - 1 }"
+            role="button"
+            tabindex="0"
+            @click="revealPath(crumb.path)"
+            @keydown.enter.space.prevent="revealPath(crumb.path)"
+          >{{ crumb.label }}</span>
+        </template>
       </div>
       <button
         class="btn role-tertiary btn-sm"
@@ -385,6 +397,9 @@ const breadcrumbs = computed(() => {
   return crumbs;
 });
 
+// Everything after the leading "/" crumb, which is rendered separately.
+const segmentCrumbs = computed(() => breadcrumbs.value.slice(1));
+
 function iconFor(node: TreeNode): string {
   switch (node.type) {
   case 'directory':
@@ -442,28 +457,39 @@ watch(() => props.containerId, loadRoot);
   flex: 1;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-family: 'Courier New', monospace;
   font-size: 13px;
-  overflow: hidden;
+  // Native form-control text on macOS Electron can render subpixel-antialiased
+  // (and the overflow container promoted a compositing layer); force grayscale
+  // antialiasing on plain spans to avoid coloured-fringe / repaint artifacts.
+  -webkit-font-smoothing: antialiased;
 }
 
 .crumb {
-  background: none;
-  border: none;
-  padding: 0;
   cursor: pointer;
   color: var(--link);
-  font-size: 13px;
+
+  &:hover:not(.crumb-current) {
+    text-decoration: underline;
+  }
 
   &.crumb-current {
     color: var(--body-text);
     cursor: default;
   }
+
+  &:focus-visible {
+    outline: 1px solid var(--primary);
+    outline-offset: 1px;
+  }
 }
 
 .crumb-sep {
   color: var(--muted);
-  margin: 0 0.25rem;
+  user-select: none;
 }
 
 .btn-sm {

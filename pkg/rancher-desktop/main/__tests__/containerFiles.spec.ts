@@ -150,6 +150,35 @@ describe('ContainerFilesHandler', () => {
 
       expect(result.entries.map((e: any) => e.name).sort()).toEqual(['bin', 'etc']);
     });
+
+    it('lists the root when the archive wraps entries under "./" (docker cp)', async() => {
+      // `docker cp <id>:/ -` emits a `.`-rooted archive; ensure the wrapper is
+      // stripped rather than collapsing everything into a single "." node.
+      mockClient.runClient.mockReturnValue(makeCpProcess(makePack([
+        { name: './', type: 'directory', mode: 0o755 },
+        { name: './bin/', type: 'directory', mode: 0o755 },
+        { name: './bin/sh', body: 'x' },
+        { name: './etc/', type: 'directory', mode: 0o755 },
+        { name: './usr/local/bin/', type: 'directory', mode: 0o755 },
+      ])));
+
+      const result = await handler.listViaCp('abc', '/', undefined);
+
+      expect(result.entries.map((e: any) => e.name).sort()).toEqual(['bin', 'etc', 'usr']);
+      expect(result.entries.every((e: any) => e.type === 'directory')).toBe(true);
+    });
+
+    it('strips a base-name wrapper for nested directories', async() => {
+      mockClient.runClient.mockReturnValue(makeCpProcess(makePack([
+        { name: 'ssl/', type: 'directory', mode: 0o755 },
+        { name: 'ssl/openssl.cnf', body: 'x' },
+        { name: 'ssl/certs/', type: 'directory', mode: 0o755 },
+      ])));
+
+      const result = await handler.listViaCp('abc', '/etc/ssl', undefined);
+
+      expect(result.entries.map((e: any) => e.name).sort()).toEqual(['certs', 'openssl.cnf']);
+    });
   });
 
   describe('readFile', () => {

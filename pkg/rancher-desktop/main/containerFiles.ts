@@ -220,7 +220,12 @@ export class ContainerFilesHandler {
 
   /** List a directory by streaming and parsing a `cp` tar archive. */
   protected listViaCp(containerId: string, dirPath: string, namespace: string | undefined): Promise<ContainerFileListResult> {
-    const rootPrefix = dirPath === '/' ? '' : `${ path.posix.basename(dirPath) }/`;
+    // `<engine> cp <id>:<dir> -` wraps the entries under a leading path
+    // component: the directory's base name (e.g. `etc/hostname` for `/etc`),
+    // or `.` for the container root (`./bin`, ...).  Some engines omit the
+    // wrapper entirely (`bin/`).  We tolerate all of these by treating a
+    // leading segment equal to the base name (or `.`) as the wrapper.
+    const base = dirPath === '/' ? '' : path.posix.basename(dirPath);
 
     return this.withCpStream(containerId, dirPath, namespace, (proc, stop) => {
       return new Promise<ContainerFileListResult>((resolve, reject) => {
@@ -255,33 +260,35 @@ export class ContainerFilesHandler {
             return;
           }
 
-          // Strip the archive root so `rel` is relative to `dirPath`.
-          let rel = header.name;
+          // Split the entry path into segments and locate the child of
+          // `dirPath`, skipping the optional archive-root wrapper segment.
+          const segments = header.name.split('/').filter(Boolean);
+          let childName: string | undefined;
+          let isImmediate: boolean;
 
-          if (rootPrefix && rel.startsWith(rootPrefix)) {
-            rel = rel.slice(rootPrefix.length);
-          } else if (rootPrefix && `${ rel }/` === rootPrefix) {
-            // The archive root entry itself.
-            rel = '';
+          if (segments.length > 0 && (segments[0] === base || segments[0] === '.')) {
+            // Entry is wrapped: <base>/<child>/...
+            childName = segments[1];
+            isImmediate = segments.length === 2;
+          } else {
+            // Entry is not wrapped: <child>/...
+            childName = segments[0];
+            isImmediate = segments.length === 1;
           }
-          rel = rel.replace(/\/$/, '');
 
-          if (rel) {
-            const segment = rel.split('/')[0];
-            const isImmediate = rel === segment;
-
+          if (childName) {
             if (isImmediate) {
-              children.set(segment, {
-                name:       segment,
+              children.set(childName, {
+                name:       childName,
                 type:       tarTypeToFileType(header.type),
                 size:       header.size ?? 0,
                 modeString: header.mode === undefined ? undefined : modeToString(header.mode),
                 mtimeMs:    header.mtime ? header.mtime.getTime() : undefined,
                 linkTarget: header.linkname || undefined,
               });
-            } else if (!children.has(segment)) {
+            } else if (!children.has(childName)) {
               // Only a deeper entry was seen; infer the intermediate directory.
-              children.set(segment, { name: segment, type: 'directory', size: 0 });
+              children.set(childName, { name: childName, type: 'directory', size: 0 });
             }
           }
 
