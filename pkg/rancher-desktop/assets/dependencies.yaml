@@ -224,30 +224,30 @@ golangci-lint:
 helm:
   assets:
     - arch: amd64
-      checksum: sha256:e9b88b4ee95b18c706839c28d3a0220e5bc470e9cd9262410c90793c45ff8b7c
+      checksum: sha256:c306b46f719b0a4da32d0f78ee21bf90ce8d602f15b22ab753f0674d1670a7f3
       platform: linux
-      url: https://get.helm.sh/helm-v4.2.3-linux-amd64.tar.gz
+      url: https://get.helm.sh/helm-v4.2.4-linux-amd64.tar.gz
     - arch: arm64
-      checksum: sha256:21abd9354d39b2cd79a8d76be6912cd137a983cbf997193503fb8a6a6e2f2785
+      checksum: sha256:564de2191b881e9f71b5606b25345821ea1682f06ab90499d3ab22b530176da1
       platform: linux
-      url: https://get.helm.sh/helm-v4.2.3-linux-arm64.tar.gz
+      url: https://get.helm.sh/helm-v4.2.4-linux-arm64.tar.gz
     - arch: amd64
-      checksum: sha256:ff3ac86755a45f3422473bc1200776aac0fe04c5766abe6ca66699f7b564b23b
+      checksum: sha256:6c163d687ca03c3b5c01928e53bbbcf9518278f47ce7a2f249a5a08e8bdaa2bc
       platform: darwin
-      url: https://get.helm.sh/helm-v4.2.3-darwin-amd64.tar.gz
+      url: https://get.helm.sh/helm-v4.2.4-darwin-amd64.tar.gz
     - arch: arm64
-      checksum: sha256:048ecf5ad3160f83d918f9fe945238d2132b079640f7b106175331c25f242c64
+      checksum: sha256:d747eb4e28bd2727173d15b759fa0a17822291ec09db7ced3d55af290a3661a2
       platform: darwin
-      url: https://get.helm.sh/helm-v4.2.3-darwin-arm64.tar.gz
+      url: https://get.helm.sh/helm-v4.2.4-darwin-arm64.tar.gz
     - arch: amd64
-      checksum: sha256:02c6137bb5f050479193afad5a28804e9edc3beeab7e7b53a6e1499c9ba387ef
+      checksum: sha256:38cbdab1c7d4f0412d571c3aeefc700bcdc7b663be481832a11dfed01ee67c36
       platform: windows
-      url: https://get.helm.sh/helm-v4.2.3-windows-amd64.tar.gz
+      url: https://get.helm.sh/helm-v4.2.4-windows-amd64.tar.gz
     - arch: arm64
-      checksum: sha256:c7a6b0fc66521ba0ff4f8d7930f38c658fbf1a5aa2569042305b12eac41ed0c3
+      checksum: sha256:1f027a0811c6c85cb7eb029ac3bad5d73e286cba623ef355a0c8631ba931abb4
       platform: windows
-      url: https://get.helm.sh/helm-v4.2.3-windows-arm64.tar.gz
-  version: 4.2.3
+      url: https://get.helm.sh/helm-v4.2.4-windows-arm64.tar.gz
+  version: 4.2.4
 kuberlr:
   assets:
     - arch: amd64
