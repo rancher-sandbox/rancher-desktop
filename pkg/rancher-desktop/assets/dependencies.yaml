@@ -409,14 +409,14 @@ steve:
 trivy:
   assets:
     - arch: amd64
-      checksum: sha256:bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea
+      checksum: sha256:2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a
       platform: linux
-      url: https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-64bit.tar.gz
+      url: https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz
     - arch: arm64
-      checksum: sha256:2ca2c023109c2db6b2b77366b6717291452d4531167377d95c79547f0c8e3467
+      checksum: sha256:b94ce1976bbf3c15b514b605ee88be7c6d94a29be2302847ff01cb794d47aad5
       platform: linux
-      url: https://github.com/aquasecurity/trivy/releases/download/v0.72.0/trivy_0.72.0_Linux-ARM64.tar.gz
-  version: 0.72.0
+      url: https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-ARM64.tar.gz
+  version: 0.74.0
 wix:
   assets:
     - checksum: sha256:6ac824e1642d6f7277d0ed7ea09411a508f6116ba6fae0aa5f2c7daa2ff43d31
