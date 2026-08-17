@@ -18,17 +18,20 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	options "github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/options/generated"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/paths"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/startwait"
 )
 
 // startCmd represents the start command
@@ -48,12 +51,23 @@ If it's running, behaves the same as 'rdctl set ...'.
 
 var applicationPath string
 var noModalDialogs bool
+var waitForStart bool
+var waitTimeout time.Duration
+
+// startPollInterval paces the backend_state polling done by --wait, and
+// defaultWaitTimeout bounds how long that polling continues.
+const (
+	startPollInterval  = 2 * time.Second
+	defaultWaitTimeout = 10 * time.Minute
+)
 
 func init() {
 	rootCmd.AddCommand(startCmd)
 	options.UpdateCommonStartAndSetCommands(startCmd)
 	startCmd.Flags().StringVarP(&applicationPath, "path", "p", "", "path to main executable")
 	startCmd.Flags().BoolVarP(&noModalDialogs, "no-modal-dialogs", "", false, "avoid displaying dialog boxes")
+	startCmd.Flags().BoolVar(&waitForStart, "wait", false, "wait until the backend has finished starting")
+	startCmd.Flags().DurationVar(&waitTimeout, "wait-timeout", defaultWaitTimeout, "how long to wait for start before giving up")
 }
 
 /**
@@ -70,10 +84,34 @@ func doStartOrSetCommand(cmd *cobra.Command) error {
 			// `--path | -p` is not a valid option for `rdctl set...`
 			return fmt.Errorf("--path %q specified but Rancher Desktop is already running", applicationPath)
 		}
-		return doSetCommand(cmd)
+		if err := doSetCommand(cmd); err != nil {
+			return err
+		}
+	} else {
+		cmd.SilenceUsage = true
+		if err := doStartCommand(cmd); err != nil {
+			return err
+		}
 	}
-	cmd.SilenceUsage = true
-	return doStartCommand(cmd)
+	if waitForStart {
+		return waitForBackendStart(cmd.Context())
+	}
+	return nil
+}
+
+// waitForBackendStart blocks until the backend is ready or waitTimeout elapses.
+func waitForBackendStart(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, waitTimeout)
+	defer cancel()
+
+	ticker := time.NewTicker(startPollInterval)
+	defer ticker.Stop()
+
+	err := startwait.Wait(ctx, ticker.C, startwait.LiveState)
+	if errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Errorf("timed out after %s waiting for Rancher Desktop to start", waitTimeout)
+	}
+	return err
 }
 
 func doStartCommand(cmd *cobra.Command) error {
