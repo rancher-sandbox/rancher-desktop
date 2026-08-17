@@ -2,7 +2,7 @@ module github.com/rancher-sandbox/rancher-desktop/src/go/nerdctl-stub/generate
 
 go 1.25.0
 
-require github.com/sirupsen/logrus v1.9.4
+require github.com/sirupsen/logrus v1.10.0
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
