@@ -141,6 +141,24 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
   }
 });
 
+process.on('uncaughtException', (error: any) => {
+  if (error instanceof RangeError &&
+      error.message.includes('init["status"] must be in the range of 200 to 599')) {
+    // net.fetch's status-0 RangeError is thrown from Electron's 'response'
+    // listener, outside the promise chain, so no call-site catch can reach it.
+    console.error('Ignoring net.fetch RangeError on network failure:', error);
+
+    return;
+  }
+
+  // Registering this listener suppresses Electron's built-in crash dialog
+  // (it bails when listenerCount('uncaughtException') > 1), so re-show it.
+  const stack = error?.stack ?? `${ error?.name }: ${ error?.message }`;
+
+  console.error('UncaughtException:', error);
+  showErrorDialog('A JavaScript error occurred in the main process', `Uncaught Exception:\n${ stack }`);
+});
+
 Electron.app.on('second-instance', async() => {
   await protocolsRegistered;
   console.warn('A second instance was started');
