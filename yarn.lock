@@ -10275,10 +10275,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:17.9.0":
-  version: 17.9.0
-  resolution: "globals@npm:17.9.0"
-  checksum: 10c0/776116bffb916e462d548c26a44c9a5d8f4e551935a883991e9f5d68cbcb21b63e4c688e36bbc564f97d3025e304d8b2bb0a611ecf944825aeee164898dcfbdd
+"globals@npm:17.10.0":
+  version: 17.10.0
+  resolution: "globals@npm:17.10.0"
+  checksum: 10c0/b1035f63a1070ebb4361096bb8d0037d0d6bb5a023618ab6307ac1a635fd8daeafbd161f6ebbcc5e2f25b364919beed66788f374c46b07135a9abf3c7ac9a245
   languageName: node
   linkType: hard
 
@@ -14747,7 +14747,7 @@ __metadata:
     floating-vue: "npm:5.2.2"
     fs-extra: "npm:11.4.0"
     glob: "npm:^13.0.3"
-    globals: "npm:17.9.0"
+    globals: "npm:17.10.0"
     intl-messageformat: "npm:11.2.13"
     jest: "npm:30.4.2"
     jest-environment-jsdom: "npm:30.4.1"
