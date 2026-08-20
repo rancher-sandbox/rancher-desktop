@@ -134,7 +134,7 @@
     "extract-zip": "2.0.1",
     "floating-vue": "5.2.2",
     "glob": "^13.0.3",
-    "globals": "17.10.0",
+    "globals": "17.11.0",
     "jest": "30.4.2",
     "jest-environment-jsdom": "30.4.1",
     "jquery": "4.0.0",
