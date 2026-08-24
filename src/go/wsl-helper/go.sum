@@ -38,8 +38,8 @@ github.com/go-openapi/jsonpointer v1.0.0 h1:kR9tHqY0CtZaOPVFm622dPVNhrvYpwr4uCxg
 github.com/go-openapi/jsonpointer v1.0.0/go.mod h1:Z3rw7dWu1p9IgitXCFamSlA5lmDiklEB6vkaxcNZW5Y=
 github.com/go-openapi/jsonreference v1.0.0 h1:jlmTr6torcd1YgDQvSfNmRtKzYDO4FGBkrAdlAVWnpY=
 github.com/go-openapi/jsonreference v1.0.0/go.mod h1:jtwdyGbJk0Xhe5Y+rwtglQP6Sb1WZST4rT32LWB+sv0=
-github.com/go-openapi/loads v0.25.0 h1:74Bc2snfaVlsHzwdQj/3gsA9XJz3daXTJVs+4ZaK7jI=
-github.com/go-openapi/loads v0.25.0/go.mod h1:JFBw4SIB9+PTIFHDfcXuSSy5h6aWzjtUCrPYyx3qWU8=
+github.com/go-openapi/loads v0.25.1 h1:toKQdIDLxlqfKLLGUUmUsiTd5/X0Chzvde9EGYQP/Ac=
+github.com/go-openapi/loads v0.25.1/go.mod h1:33Hen4tsKXHL45TyYojvfD5fZUFN4O1y4r/XhsRW2zc=
 github.com/go-openapi/runtime v0.33.0 h1:Dd3Oj2ig+WH8ckK95l0Wn2V8a4bH/UqWPRZVT0vc8yU=
 github.com/go-openapi/runtime v0.33.0/go.mod h1:+rsupH3+TFKqmFysqkmgBOTxpVJV8eV+j9myvvea2Xw=
 github.com/go-openapi/runtime/server-middleware v0.33.0 h1:ZFUNyaa2eUs9DhLd6MTe/QRsuxeYn4Lq0C8iAoY13XE=
@@ -80,8 +80,8 @@ github.com/go-openapi/testify/v2 v2.6.1 h1:6CNJhTjMzgaeaH8WhshcsZNPIvRemiOcFpU7s
 github.com/go-openapi/testify/v2 v2.6.1/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
 github.com/go-openapi/validate v0.26.3 h1:OkfZgLvLDnGP2hrRGD+42WBiPWWkoHomTJ+IVI+KaDc=
 github.com/go-openapi/validate v0.26.3/go.mod h1:7DOOa4raU6NRe7A8VQSKbm3VcuUIioREYHFt+er9Sk8=
-github.com/go-swagger/go-swagger v0.36.2 h1:eICdtKG85bUU8er0SlzGRb3zbkaNTmcVXsX8ZbvSPI0=
-github.com/go-swagger/go-swagger v0.36.2/go.mod h1:rDa1PiLwaF0emDO+WlnVRNzeYvzlrWdG5kTYBTkLzQE=
+github.com/go-swagger/go-swagger v0.36.4 h1:na61LCMHmwwP1RvzHUZ50FLkiJkholoJMvn8MyVzRVk=
+github.com/go-swagger/go-swagger v0.36.4/go.mod h1:ONc/lne3VwSFdVlTbIt3DVKkGIXxI531ajhtbz40Ck4=
 github.com/go-viper/mapstructure/v2 v2.5.0 h1:vM5IJoUAy3d7zRSVtIwQgBj7BiWtMPfmPEgAXnvj1Ro=
 github.com/go-viper/mapstructure/v2 v2.5.0/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=

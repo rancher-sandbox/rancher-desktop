@@ -15,7 +15,7 @@ require (
 	github.com/go-openapi/swag/stringutils v0.28.0
 	github.com/go-openapi/swag/typeutils v0.29.0
 	github.com/go-openapi/validate v0.26.3
-	github.com/go-swagger/go-swagger v0.36.2
+	github.com/go-swagger/go-swagger v0.36.4
 	github.com/google/uuid v1.6.0
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
 	github.com/moby/moby/api v1.55.0
@@ -45,7 +45,7 @@ require (
 	github.com/go-openapi/inflect v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/go-openapi/jsonreference v1.0.0 // indirect
-	github.com/go-openapi/loads v0.25.0 // indirect
+	github.com/go-openapi/loads v0.25.1 // indirect
 	github.com/go-openapi/runtime/server-middleware v0.33.0 // indirect
 	github.com/go-openapi/spec v0.22.9 // indirect
 	github.com/go-openapi/swag/cmdutils v0.28.0 // indirect
