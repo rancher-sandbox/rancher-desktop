@@ -124,7 +124,7 @@
     "cross-env": "10.1.0",
     "cross-spawn": "7.0.6",
     "css-loader": "7.1.4",
-    "dayjs": "1.11.21",
+    "dayjs": "1.11.22",
     "dompurify": "3.4.13",
     "ejs": "6.0.1",
     "electron": "43.4.0",
