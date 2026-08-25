@@ -1749,9 +1749,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/asar@npm:4.2.1":
-  version: 4.2.1
-  resolution: "@electron/asar@npm:4.2.1"
+"@electron/asar@npm:4.3.0":
+  version: 4.3.0
+  resolution: "@electron/asar@npm:4.3.0"
   dependencies:
     glob: "npm:^13.0.2"
     minimatch: "npm:^10.0.1"
@@ -1760,7 +1760,7 @@ __metadata:
       built: true
   bin:
     asar: bin/asar.mjs
-  checksum: 10c0/2212c82161ab0a6c8e63d7bb7f433c727235dd17a3d47bdba810c698fbd39a81ac97cbac22acc273d2639f94d1c27339d6861ce8dbee1ef70efc5c74aad5e317
+  checksum: 10c0/a1d682e60f9e0f6280bf85f4b4ff8b0bf03828f7f795703d4662a83938f11f48615795874af2bc83a8d94bac972c2915f0bfee1aeb24b34e41853017e57d7570
   languageName: node
   linkType: hard
 
@@ -14704,7 +14704,7 @@ __metadata:
     "@babel/plugin-proposal-private-methods": "npm:7.18.6"
     "@babel/plugin-proposal-private-property-in-object": "npm:7.21.11"
     "@docker/extension-api-client-types": "npm:0.4.2"
-    "@electron/asar": "npm:4.2.1"
+    "@electron/asar": "npm:4.3.0"
     "@electron/fuses": "npm:^2.1.3"
     "@electron/notarize": "npm:3.1.1"
     "@eslint/config-helpers": "npm:0.7.0"
