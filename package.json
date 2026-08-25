@@ -139,7 +139,7 @@
     "jest-environment-jsdom": "30.4.1",
     "jquery": "4.0.0",
     "js-yaml-loader": "1.2.2",
-    "marked": "18.0.9",
+    "marked": "18.0.10",
     "mustache": "4.2.0",
     "node-abi": "^4.33.0",
     "node-addon-api": "8",
