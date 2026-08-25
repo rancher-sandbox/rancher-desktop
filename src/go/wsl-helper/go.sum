@@ -52,8 +52,8 @@ github.com/go-openapi/swag v0.28.0 h1:xkgbOSKj6DZziNpyqRRAOt3GJGtgjgsd2RoyT30VWu
 github.com/go-openapi/swag v0.28.0/go.mod h1:4qYnT3Cqr1p1VknOdPo70evN4rgQnAg6jwApHyxSGIg=
 github.com/go-openapi/swag/cmdutils v0.28.0 h1:7TOeNtkYru1SG8Y34tDh9WBbLsMqGnptuxWiHREPZ4Q=
 github.com/go-openapi/swag/cmdutils v0.28.0/go.mod h1:Sm1MVFMkF6guJJ+pQqHnQA3N0j9qALV3NxzDSv6bETM=
-github.com/go-openapi/swag/conv v0.29.0 h1:4+1TogWpOIzMPzVKrvx1BfqBYlApB7D7DW3EAWpwmp4=
-github.com/go-openapi/swag/conv v0.29.0/go.mod h1:ch1l7V87F6zQXuLs5s0RFvrro6aFvrVcfVXn2PTZnu8=
+github.com/go-openapi/swag/conv v0.29.1 h1:AC4Eh/5c/eUDOUCzzsRC9ghmFgOSBHeRMGIngY0ZUGA=
+github.com/go-openapi/swag/conv v0.29.1/go.mod h1:S1X7/ZrBEZOC0Wc8AGxjbcGS92l3WEjA7aPtpl+RaqM=
 github.com/go-openapi/swag/fileutils v0.28.0 h1:Z04XWQD7R8Eq+7GnOrjovBxPPmZzsS4gt2H2GPGIViU=
 github.com/go-openapi/swag/fileutils v0.28.0/go.mod h1:VvJFZLTZS0AI854gEQz5tk7dBESdLjiNUMSZ/th2ry8=
 github.com/go-openapi/swag/jsonutils v0.29.0 h1:Xgnf9g32ycQjQUnDxkhqLraH2FhitcSE3w7ayQB3TgA=
@@ -70,8 +70,8 @@ github.com/go-openapi/swag/pools v0.29.0 h1:uMQcoJeHJ8fWkdfEXJZMMpqk6hpfW8qTL5Q/
 github.com/go-openapi/swag/pools v0.29.0/go.mod h1:leDcaghjkRAhCuCRv9NfJU5f0mjoU3cT/XZObhMk3pc=
 github.com/go-openapi/swag/stringutils v0.29.0 h1:/IEOuZ7PGJi6lqgH83dVt7/A9eHsDGEH1459lm+gpEo=
 github.com/go-openapi/swag/stringutils v0.29.0/go.mod h1:7fSqZ+z8Qc0tOfAAK0jVa5qFGrnIlRi6n7NeGGrr1vc=
-github.com/go-openapi/swag/typeutils v0.29.0 h1:HrWCYZeXVVNDo/7QQPRaYk33XeIDxksbxpalID3bWR8=
-github.com/go-openapi/swag/typeutils v0.29.0/go.mod h1:hxpgDZJVBkBsi/d3MIUosafoFdE5exaQRmVp0zwu3YE=
+github.com/go-openapi/swag/typeutils v0.29.1 h1:Nzv9nhnlLCRBPQqfOX+7lB6Guju370or8StT+lIOf6M=
+github.com/go-openapi/swag/typeutils v0.29.1/go.mod h1:hxpgDZJVBkBsi/d3MIUosafoFdE5exaQRmVp0zwu3YE=
 github.com/go-openapi/swag/yamlutils v0.28.0 h1:TV3JXH6DS46KUroDtMLAYHGkdWf5VDq3wVWFirmzROY=
 github.com/go-openapi/swag/yamlutils v0.28.0/go.mod h1:x0q/yndZHEgk9Rx3DyDqzFUmHy55KTvIZldvF2dTJXs=
 github.com/go-openapi/testify/enable/yaml/v2 v2.6.1 h1:Jm+/ze2rMtbD98yen92AhATGLGREDYXG56Xr4gMjEtE=
