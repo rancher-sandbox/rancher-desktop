@@ -8250,10 +8250,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dayjs@npm:1.11.22":
-  version: 1.11.22
-  resolution: "dayjs@npm:1.11.22"
-  checksum: 10c0/b9e5a807f21e323359ded3ae28e60d6fa0e760f021a1bb271becb336e11e42d796e00a4c1a690c6d233034a260ef9c72d94d30b02ffa721857d2144b750ca7c6
+"dayjs@npm:1.11.23":
+  version: 1.11.23
+  resolution: "dayjs@npm:1.11.23"
+  checksum: 10c0/69ab04bf19c676e44ab50cc2fca223d265f3dafd107151ef3b0f3ad74d360c37caa602abe62f87cb25d90bd9f6bee003698af47df5b0dbf10a998b7b5f3bb3f1
   languageName: node
   linkType: hard
 
@@ -14750,7 +14750,7 @@ __metadata:
     cross-env: "npm:10.1.0"
     cross-spawn: "npm:7.0.6"
     css-loader: "npm:7.1.4"
-    dayjs: "npm:1.11.22"
+    dayjs: "npm:1.11.23"
     dmg-license: "npm:1.0.11"
     dompurify: "npm:3.4.13"
     ejs: "npm:6.0.1"
