@@ -159,38 +159,38 @@ dockerCompose:
 dockerProvidedCredentialHelpers:
   assets:
     - arch: amd64
-      checksum: sha256:052a0243588b231fde8009f7fe95afc6f536e9d20f6b5896dfd5bc8fd55852f2
+      checksum: sha256:134c34af84ba6397f2d47a0bf8a09ea493ac2aa69a913904e1df1c61d0f0e031
       platform: linux
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-secretservice-v0.9.8.linux-amd64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.9/docker-credential-secretservice-v0.9.9.linux-amd64
     - arch: arm64
-      checksum: sha256:b9e7b135c9b0cacf8f058d785dbc7188df38d98717dbc2fb1d6c63afb6d67198
+      checksum: sha256:92cd1bf8da5b8f09214511768e906c825dfe6d59c962bfab37923307877ff36e
       platform: linux
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-secretservice-v0.9.8.linux-arm64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.9/docker-credential-secretservice-v0.9.9.linux-arm64
     - arch: amd64
-      checksum: sha256:3ae93407d42dc90bd0393b0a50da3ce95246d3f30c3255225cb6b0401cd74cac
+      checksum: sha256:ae80a143101672b53c65cd5aa05028897068d39e2649adff83a520ef3218355d
       platform: linux
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-pass-v0.9.8.linux-amd64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.9/docker-credential-pass-v0.9.9.linux-amd64
     - arch: arm64
-      checksum: sha256:b75d27a59a1b4e1b1eb1059184d5760a34c54cf730e97cb18832956fead18551
+      checksum: sha256:99f4f128f8e2bac63f38f79d8c3a783b1f9fff3573b25028b0116ea6de9d2b0c
       platform: linux
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-pass-v0.9.8.linux-arm64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.9/docker-credential-pass-v0.9.9.linux-arm64
     - arch: amd64
-      checksum: sha256:0575a404c4ead8b5135a2482ece4dd142bde3cbd319433697e212bbea0afb100
+      checksum: sha256:1be33ae30c8c80277bea3364d0d71afad411fa22e88bcabf3375550b989fd272
       platform: darwin
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-osxkeychain-v0.9.8.darwin-amd64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.9/docker-credential-osxkeychain-v0.9.9.darwin-amd64
     - arch: arm64
-      checksum: sha256:6fae515ffbc74f395af1b51c6f079ddb57895ed9e428e0bea3f6aff64e916b22
+      checksum: sha256:3585188b1df1c3568ae536999eddb48ad2c781b3cf07a2f7d7181262d045820c
       platform: darwin
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-osxkeychain-v0.9.8.darwin-arm64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.9/docker-credential-osxkeychain-v0.9.9.darwin-arm64
     - arch: amd64
-      checksum: sha256:fec0aa06335bbefc7f515630c9368afaa1423fa9fa585112f123b6625f72d560
+      checksum: sha256:ed50b9767eac0ba42782dc4f550ceab2f4354bacaad05c54caa9dec98a032c48
       platform: windows
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-wincred-v0.9.8.windows-amd64.exe
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.9/docker-credential-wincred-v0.9.9.windows-amd64.exe
     - arch: arm64
-      checksum: sha256:34fc52a556c2703d9b307cd5a9d1ec9cd6f8554d7f50210e3bc4fb93aceca45a
+      checksum: sha256:f7a3c6f78fdec5699f0021595989cf1c9ea58270866e7dd3dc3e2e4f4621e84b
       platform: windows
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.8/docker-credential-wincred-v0.9.8.windows-arm64.exe
-  version: 0.9.8
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.9/docker-credential-wincred-v0.9.9.windows-arm64.exe
+  version: 0.9.9
 electron:
   assets:
     - arch: amd64
