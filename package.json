@@ -125,7 +125,7 @@
     "cross-spawn": "7.0.6",
     "css-loader": "7.1.4",
     "dayjs": "1.11.23",
-    "dompurify": "3.4.13",
+    "dompurify": "3.4.14",
     "ejs": "6.0.1",
     "electron": "43.4.0",
     "electron-builder": "26.14.0",
