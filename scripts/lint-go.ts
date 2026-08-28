@@ -32,12 +32,11 @@ async function getModules(): Promise<string[]> {
  * the directory containing `go.mod`, relative to the top of the source tree;
  * for example, `src/go/wsl-helper`.  The second level is the go module to
  * modify; the value is the go module in the same `go.mod` to refer to.
+ *
+ * No module needs a linked version, so the map is empty; we keep the
+ * machinery for the next module that does.
  */
-const linkedModules: Record<string, Record<string, string>> = {
-  'src/go/wsl-helper': {
-    'github.com/go-openapi/swag': 'github.com/go-swagger/go-swagger',
-  },
-};
+const linkedModules: Record<string, Record<string, string>> = {};
 
 /**
  * The subset of `go mod edit -json` output that we care about.
