@@ -28,8 +28,8 @@ github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx5
 github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
 github.com/go-openapi/analysis v0.26.1 h1:BqYuDaQiFflcgPWGDQc7niUFE2pHTVq1H3iwDsRYMqM=
 github.com/go-openapi/analysis v0.26.1/go.mod h1:E2siwFrz00/Z1sifwhy63h+hMkg0USofwD4gYPYeQME=
-github.com/go-openapi/codescan v0.36.3 h1:acI//gm/PfYaM6GI5k3+qiXGHZ2vbZOjSG3RidLgua0=
-github.com/go-openapi/codescan v0.36.3/go.mod h1:n0z3IJDm3ysnon+bLfBbHoy0WrRzlBE0LfeuAxGEnuM=
+github.com/go-openapi/codescan v0.36.4 h1:ngm19zhpNK2+NibLflXZTGbsJ0MsH9xEspMyWSBgjZU=
+github.com/go-openapi/codescan v0.36.4/go.mod h1:0SOMEOGEok11EOBRiK9GSoSHVSn4XeqjN4JEg8GGV1E=
 github.com/go-openapi/errors v0.22.8 h1:oP7sW7TWc3wFFjrzzj0nI83H2qMBkNjNfSd+XRejk/I=
 github.com/go-openapi/errors v0.22.8/go.mod h1:BuUoHcYrU6E7V9gfj1I5wLQqgtIHnup/alXZ8KdgQ0w=
 github.com/go-openapi/inflect v1.0.0 h1:IzG7K5YBu97odaCXhjODGGt25WaNtEYLJc9NfUcW4AI=
@@ -64,8 +64,8 @@ github.com/go-openapi/swag/loading v0.29.1 h1:FCv5fG8UhTdDJa2R7w+5O9Ekpcbw7tt0nF
 github.com/go-openapi/swag/loading v0.29.1/go.mod h1:N0ESuem4p2oedKal8EJhciqnJ9Q9Wmt83L1CRB3Fouw=
 github.com/go-openapi/swag/mangling v0.29.1 h1:lHALtvYCdxVnRl4GrHmFPwfBTZYIObqdGNSKyu/8D6I=
 github.com/go-openapi/swag/mangling v0.29.1/go.mod h1:SAop9pB7PUjQ/CGCNf/JmCKTRK+GDO+RqE9UHqC/N6s=
-github.com/go-openapi/swag/netutils v0.28.0 h1:YXN6TALEi2pzts8/8GNm6T61HTAZsieukGZidap989k=
-github.com/go-openapi/swag/netutils v0.28.0/go.mod h1:J+WYyFMLtvtCGqa6jLv+YNUmIKI3ZRQRrvfNDMoQoEQ=
+github.com/go-openapi/swag/netutils v0.29.1 h1:IjIvdEP5duKcghFqJEPSUraRnkKYHoM65kTluTu+Jb4=
+github.com/go-openapi/swag/netutils v0.29.1/go.mod h1:DUde7x4Bx00k5jYl2AdRpNAO0m7atUvD2x6X+bWkbno=
 github.com/go-openapi/swag/pools v0.29.1 h1:NRogYxdEW9SjRM4mkAOji9iefO4MRXq3p/ZJcoQbUKg=
 github.com/go-openapi/swag/pools v0.29.1/go.mod h1:leDcaghjkRAhCuCRv9NfJU5f0mjoU3cT/XZObhMk3pc=
 github.com/go-openapi/swag/stringutils v0.29.1 h1:1ykunK7iJQk1uOO7+oUH1ukbsK85fFCOiCFMOVSY+F0=
@@ -80,8 +80,8 @@ github.com/go-openapi/testify/v2 v2.7.0 h1:bycOreEj6wfBvijg3YFogZ/sFjTCDmQnwSodS
 github.com/go-openapi/testify/v2 v2.7.0/go.mod h1:SgsVHtfooshd0tublTtJ50FPKhujf47YRqauXXOUxfw=
 github.com/go-openapi/validate v0.26.4 h1:MoiZYinqehNWMxPfKsyo8kxs7uYoFAf6k+4QfTHRvBI=
 github.com/go-openapi/validate v0.26.4/go.mod h1:qRkL7p9Dk183ZK3aZ6F+cekhKCioj9NLnFLnTNuPcXM=
-github.com/go-swagger/go-swagger v0.36.2 h1:eICdtKG85bUU8er0SlzGRb3zbkaNTmcVXsX8ZbvSPI0=
-github.com/go-swagger/go-swagger v0.36.2/go.mod h1:rDa1PiLwaF0emDO+WlnVRNzeYvzlrWdG5kTYBTkLzQE=
+github.com/go-swagger/go-swagger v0.36.5 h1:8CbHln5gYOuJfHUuRUmN3eGTTZyI44o2FTFFXv/GtoY=
+github.com/go-swagger/go-swagger v0.36.5/go.mod h1:FBiBp6zLDFfQIXyw/qGnDbDY3VAWKRTCrdQ5aR9TRzQ=
 github.com/go-viper/mapstructure/v2 v2.5.0 h1:vM5IJoUAy3d7zRSVtIwQgBj7BiWtMPfmPEgAXnvj1Ro=
 github.com/go-viper/mapstructure/v2 v2.5.0/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
