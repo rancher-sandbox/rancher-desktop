@@ -124,23 +124,32 @@
   publisher: Epinio by Krumware and SUSE
   short_description: Push from source to Kubernetes in one step
 - slug: julianb90/tachometer
-  version: 0.1.1
+  version: 0.2.6
   containerd_compatible: true
   labels:
-    com.docker.desktop.extension.api.version: 0.3.4
+    com.docker.desktop.extension.api.version: 0.4.2
     com.docker.desktop.extension.icon: https://raw.githubusercontent.com/julian-b90/tachometer/main/speedometer.png
     com.docker.extension.additional-urls: '[{"title":"Issues","url":"https://github.com/julian-b90/tachometer/issues"}]'
     com.docker.extension.categories: development,utility-tools
-    com.docker.extension.changelog: "<p>V 0.1.1 <br /> ### Changed <ul><li>update
-      dependencies</li><li>update node to latest LTS 20.17.0</li></ul></p>"
+    com.docker.extension.changelog: <p>V 0.2.6 <br />
+      <h4>Changed</h4><ul><li>Updated react and react-dom to
+      19.2.8</li><li>Updated react-router-dom to 7.18.2</li><li>Updated recharts
+      to 3.10.1</li><li>Updated vite to 8.2.2</li><li>Updated TypeScript type
+      definitions</li></ul></p>
     com.docker.extension.detailed-description: Extension shows real-time cpu and memory usage of containers
     com.docker.extension.publisher-url: https://github.com/julian-b90/tachometer
     com.docker.extension.screenshots: '[{"alt":"tachometer",
       "url":"https://raw.githubusercontent.com/julian-b90/tachometer/main/screenshot.png"},
       {"alt":"details view",
       "url":"https://raw.githubusercontent.com/julian-b90/tachometer/main/screenshot_2.png"}]'
+    dev.chainguard.image.title: static
+    dev.chainguard.package.main: ""
+    org.opencontainers.image.authors: Chainguard Team https://www.chainguard.dev/
+    org.opencontainers.image.created: 2026-07-08T23:06:13Z
     org.opencontainers.image.description: Extension shows real-time cpu and memory usage of containers
+    org.opencontainers.image.source: https://github.com/chainguard-images/images/tree/main/images/static
     org.opencontainers.image.title: Tachometer
+    org.opencontainers.image.url: https://images.chainguard.dev/directory/image/static/overview
     org.opencontainers.image.vendor: julian-b90
   title: Tachometer
   logo: https://raw.githubusercontent.com/julian-b90/tachometer/main/speedometer.png
