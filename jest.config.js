@@ -1,5 +1,15 @@
 // @ts-check
+import vm from 'node:vm';
+
 import { TS_EXT_TO_TREAT_AS_ESM, ESM_TS_TRANSFORM_PATTERN } from 'ts-jest';
+
+// Without --experimental-vm-modules the suites compile as CommonJS, and every
+// file using top-level await or import.meta fails with a TypeScript error
+// naming the module option, which reports as a broken tsconfig rather than a
+// missing flag.
+if (!vm.SourceTextModule) {
+  throw new Error('Run the tests with `yarn test:unit:jest`; jest needs --experimental-vm-modules to load these suites as ES modules.');
+}
 
 /** @type {import('jest').Config} */
 export default {
