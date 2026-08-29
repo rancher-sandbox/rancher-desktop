@@ -5,6 +5,8 @@
 
 import Electron from 'electron';
 
+import { extensionThemes } from './extension-themes';
+
 import type { SpawnOptions } from '@pkg/main/extensions/types';
 import clone from '@pkg/utils/clone';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
@@ -725,6 +727,16 @@ export default function initExtensions(): void {
   switch (document.location.protocol) {
   case 'x-rd-extension:': {
     Electron.contextBridge.exposeInMainWorld('ddClient', new RDXClient());
+    // Assigning from inside the main world keeps these writable.  Some
+    // extensions ship their own themes and assign over ours, which a
+    // contextBridge exposure would break.
+    Electron.contextBridge.executeInMainWorld({
+      func: (themes: unknown) => {
+        (globalThis as any).__ddMuiV5Themes = themes;
+        (globalThis as any).__ddMuiV6Themes = themes;
+      },
+      args: [extensionThemes],
+    });
     break;
   }
   case 'app:': {
