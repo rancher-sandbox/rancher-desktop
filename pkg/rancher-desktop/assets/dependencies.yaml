@@ -97,38 +97,38 @@ dockerBuildx:
 dockerCLI:
   assets:
     - arch: amd64
-      checksum: sha256:b041de96543c9716e17f1c271541fd814694cfde8eb88b8163abbf47b62d387b
+      checksum: sha256:57a427edbbc21b53b609a8e72fe05f804eae85ad42ea502b7ffc2ec61b3396fe
       platform: linux
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.1/docker-linux-amd64
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.2/docker-linux-amd64
     - arch: arm64
-      checksum: sha256:750822e95d926acb1151257f54e08abc1059445cf26ce755b0da6189cde0739e
+      checksum: sha256:1c03fc05265283f1be7c186be0ca9609de4f92691d404e31bc370826fa2d0cfe
       platform: linux
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.1/docker-linux-arm64
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.2/docker-linux-arm64
     - arch: amd64
-      checksum: sha256:c47dcfa22bc0e2bc51337a1f31a7a92032d1fdf4cde78b6fe787026ccabfa383
+      checksum: sha256:88aac9b9e3fdcdc9cc0efe829646fb0d87a9f80902276d18bbf92bdb88c23420
       platform: wsl
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.1/docker-wsl-amd64
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.2/docker-wsl-amd64
     - arch: arm64
-      checksum: sha256:ab643240f53c3e82bf03d22e2798690f902aa935e2b7ab838423f4685809c274
+      checksum: sha256:4e1bd2e949c304ee9c30e9e1e3497119ddbaabbf7438aa795d16cf49b9b6f739
       platform: wsl
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.1/docker-wsl-arm64
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.2/docker-wsl-arm64
     - arch: amd64
-      checksum: sha256:c67a27fd353454d50c2cd4dc26a0e6d2455f023164c1778a687834cf6f9336e5
+      checksum: sha256:22452f4b031170b6bc691b32146bcd5b950d2b7d1a4f5364b4398a311e30598d
       platform: darwin
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.1/docker-darwin-amd64
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.2/docker-darwin-amd64
     - arch: arm64
-      checksum: sha256:e28dc036a40647054286f0af85dfcf1384f44c2f17bec0456890975a1ccd9224
+      checksum: sha256:0f6c95b238780c69ebfe65e4e81a940b70a5bfba2f0ecda72a8ca626886850d5
       platform: darwin
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.1/docker-darwin-arm64
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.2/docker-darwin-arm64
     - arch: amd64
-      checksum: sha256:d7f685bc3abd86df2a4cd419cfa6fd7753e30a0a755ce980d7d0d692ffbdf626
+      checksum: sha256:fbf3b6d96a9cbb21b824c0eff4925d036430237317940079583ceea9a44482f3
       platform: windows
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.1/docker-windows-amd64.exe
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.2/docker-windows-amd64.exe
     - arch: arm64
-      checksum: sha256:efa77cadb52ad9e696f4d92bfdf8745e4bb81379db03791648039755aec3ba63
+      checksum: sha256:064eea4385df6d2e753ada9f94e8430e15e4a70c392842a64397d103113b46fd
       platform: windows
-      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.1/docker-windows-arm64.exe
-  version: 29.7.1
+      url: https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v29.7.2/docker-windows-arm64.exe
+  version: 29.7.2
 dockerCompose:
   assets:
     - arch: amd64
