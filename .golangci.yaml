@@ -148,6 +148,18 @@ linters:
         path: src/go/rdctl/pkg/process/process_windows.go
         text: 'ST1003:'
         source: ^\s*[A-Z0-9_]+\s+=
+      - # On non-Linux platforms WatchForServices is a stub that only returns
+        # errors, so the caller's error check is always true.
+        linters:
+          - staticcheck
+        path: src/go/guestagent/main\.go
+        text: 'SA4023'
+      - # On non-Windows platforms lockFile is a stub that only returns errors,
+        # so the caller's error check is always true.
+        linters:
+          - staticcheck
+        path: src/go/mock-wsl/mock-wsl\.go
+        text: 'SA4023'
       - # Don't de-duplicate different commands.
         linters:
           - dupl

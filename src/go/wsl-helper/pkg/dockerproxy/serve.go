@@ -274,8 +274,8 @@ func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, di
 
 	client := &http.Client{
 		Transport: &http.Transport{
-			Dial: func(string, string) (net.Conn, error) {
-				return dialer(req.Context())
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return dialer(ctx)
 			},
 		},
 	}
