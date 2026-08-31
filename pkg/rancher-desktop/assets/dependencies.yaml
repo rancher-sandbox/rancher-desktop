@@ -220,7 +220,7 @@ electron:
   version: 43.4.0
 golangci-lint:
   assets: []
-  version: 2.12.2
+  version: 2.13.2
 helm:
   assets:
     - arch: amd64
