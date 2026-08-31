@@ -128,7 +128,7 @@ async function syncModules(fix: boolean): Promise<boolean> {
     const changes = await getChanges();
 
     if (changes) {
-      console.log('Cannot run lint without fix with local changes');
+      console.log('This check runs go mod tidy and compares the result against git, so uncommitted changes to the Go module files break it. Commit or stash them first.');
       console.log(changes);
 
       return false;
