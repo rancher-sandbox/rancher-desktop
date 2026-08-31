@@ -147,7 +147,7 @@ async function syncModules(fix: boolean): Promise<boolean> {
     if (changes) {
       const { stdout } = await spawnFile('git', ['diff', '--', ...files], { stdio: 'pipe' });
 
-      console.log('Had to make modifications');
+      console.log("go mod tidy modified the Go module files. Run 'yarn lint:go:fix' locally and commit the result.");
       console.log(changes);
       console.log(stdout);
 
