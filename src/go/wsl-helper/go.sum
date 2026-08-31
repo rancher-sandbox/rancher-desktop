@@ -48,7 +48,7 @@ github.com/go-openapi/spec v0.22.10 h1:5cp1dq++t4U/4WCg6f1wqReZowUrJ5kl8Eri4SMl5
 github.com/go-openapi/spec v0.22.10/go.mod h1:aWRr+Ntv5tHoMQo0C1slTNLFo1FOYdZXFlUqViCN7yM=
 github.com/go-openapi/strfmt v0.27.0 h1:kbcTeaD9TXuXD0hhMXzuYa1sdTo6+dWGvwjW93E80IM=
 github.com/go-openapi/strfmt v0.27.0/go.mod h1:s/qhDqfY72irigXUGJmtgid2Rm+3tnz3k8hZaRmvWYc=
-github.com/go-openapi/swag v0.23.0 h1:vsEVJDUo2hPJ2tu0/Xc+4noaxyEffXNIs3cOULZ+GrE=
+github.com/go-openapi/swag v0.27.1 h1:VotvOLWW8q/EAxB0YdsBBGC8XYyeL1YwBj2ungAGPNg=
 github.com/go-openapi/swag/conv v0.29.1 h1:AC4Eh/5c/eUDOUCzzsRC9ghmFgOSBHeRMGIngY0ZUGA=
 github.com/go-openapi/swag/conv v0.29.1/go.mod h1:S1X7/ZrBEZOC0Wc8AGxjbcGS92l3WEjA7aPtpl+RaqM=
 github.com/go-openapi/swag/fileutils v0.29.1 h1:ZcPzMceVhU1WPbK6N1G6sNQKdd1CWJlf3cA08UHuoM0=
@@ -176,5 +176,5 @@ gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gotest.tools/v3 v3.5.2 h1:7koQfIKdy+I8UTetycgUqXWSDwpgv193Ka+qRsmBY8Q=
 gotest.tools/v3 v3.5.2/go.mod h1:LtdLGcnqToBH83WByAAi/wiwSFCArdFIUV/xxN4pcjA=
-k8s.io/client-go v0.36.4 h1:MDvfDNvMSt0Br94SK8neviVlwL9qifw9B26hJCpD1K0=
-k8s.io/client-go v0.36.4/go.mod h1:pNK4WKELbwlEDvtbE8l22lEZL5THYF61H5EealokZmA=
+k8s.io/client-go v0.37.0 h1:nsN31fy8wBySuZ+QRnKmrjRSQLOG2rvoGN0tKd12zhQ=
+k8s.io/client-go v0.37.0/go.mod h1:FcGqw+Ll/gNQiq+nPGY1Oyt9y7SgDh1d3MW3RFDEbn0=
