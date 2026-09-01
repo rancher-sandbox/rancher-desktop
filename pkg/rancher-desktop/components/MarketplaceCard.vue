@@ -11,7 +11,7 @@
           <span class="extensions-card-header-subtitle">{{
             extension.publisher
           }}</span>
-          <span class="extensions-card-header-version">{{ extension.version }}</span>
+          <span class="extensions-card-header-version">{{ extension.version.replace(/^v(?=\d)/, '') }}</span>
         </div>
       </div>
       <div class="extensions-card-content">
