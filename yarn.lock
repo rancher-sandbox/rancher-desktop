@@ -12339,12 +12339,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:18.0.10":
-  version: 18.0.10
-  resolution: "marked@npm:18.0.10"
+"marked@npm:18.0.11":
+  version: 18.0.11
+  resolution: "marked@npm:18.0.11"
   bin:
     marked: bin/marked.js
-  checksum: 10c0/7ffdfae727e1cb73e786431953950ee941c38251c8d469b07058446043d070a8746d51ef52d59c1c935875126a35c04b579ac1f1e5b6b0b94aa9eeb44f815287
+  checksum: 10c0/6c2a2bea05974f08f869d591a8eb6aa7fe68e56edbfe74c2d15eea3b85d45aabfea9dada6914d6f4a7917d612059b64eb8b9e5fd190c74ad8ab79c1f48a249b3
   languageName: node
   linkType: hard
 
@@ -14612,7 +14612,7 @@ __metadata:
     js-yaml-loader: "npm:1.2.2"
     jsonpath-plus: "npm:10.4.0"
     lodash: "npm:4.18.1"
-    marked: "npm:18.0.10"
+    marked: "npm:18.0.11"
     mustache: "npm:4.2.0"
     native-reg: "npm:1.1.1"
     node-abi: "npm:^4.34.0"
