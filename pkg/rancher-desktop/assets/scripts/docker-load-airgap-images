@@ -1,0 +1,124 @@
+#!/bin/sh
+# Load the k3s airgap images into moby, skipping any already present at the
+# same digest.
+#
+# Re-importing an image whose tag already points at the same target leaves a
+# moby-dangling@<digest> record that nothing removes, and every later inspect
+# then logs "multiple images have the same target, but one of them is still
+# dangling".
+
+set -o errexit -o nounset -o pipefail
+
+TARBALL="$1"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+decompress() {
+    case "$TARBALL" in
+    *.zst) zstd -f -c -d "$TARBALL" ;;
+    *) cat "$TARBALL" ;;
+    esac
+}
+
+load_everything() { # <message>
+    echo "airgap images: $1"
+    decompress | docker load
+    exit 0
+}
+
+# The archive includes an oci-layout file, so containerd reads index.json and
+# ignores the docker-style manifest.json beside it. An archive in any other
+# format has no index to filter, so load it whole.
+decompress | tar -xf - -C "$WORK" index.json 2>/dev/null || true
+[ -f "$WORK/index.json" ] || load_everything "no index.json in the archive, loading all images"
+
+cat >"$WORK/index.awk" <<'AWK'
+function value_of(entry, pattern,   v) {
+    if (!match(entry, pattern)) return ""
+    v = substr(entry, RSTART, RLENGTH)
+    sub(/^[^:]*:"/, "", v)
+    sub(/"$/, "", v)
+    return v
+}
+# Pass the patterns as strings. awk evaluates a regex literal in an argument
+# as $0 ~ /re/, so the callee would receive 0 or 1.
+function entry_name(entry) {
+    return value_of(entry, "\"io\\.containerd\\.image\\.name\":\"[^\"]*\"")
+}
+function entry_digest(entry) {
+    return value_of(entry, "\"digest\":\"[^\"]*\"")
+}
+# Split the manifests array into ENTRIES, dropping the delimiters between
+# them; restore() puts them back.
+function split_manifests(line,   body) {
+    body = line
+    sub(/^.*"manifests":\[/, "", body)
+    sub(/\][^]]*$/, "", body)
+    return split(body, ENTRIES, /\},\{"mediaType"/)
+}
+function restore(i, n,   entry) {
+    entry = ENTRIES[i]
+    if (i > 1) entry = "{\"mediaType\"" entry
+    if (i < n) entry = entry "}"
+    return entry
+}
+
+mode == "filter" && NR == FNR { keep[$0] = 1; next }
+
+{
+    n = split_manifests($0)
+
+    if (mode == "list") {
+        for (i = 1; i <= n; i++) {
+            entry = restore(i, n)
+            name = entry_name(entry)
+            digest = entry_digest(entry)
+            if (name != "" && digest != "") print digest " " name
+        }
+        next
+    }
+
+    header = $0
+    sub(/"manifests":\[.*$/, "", header)
+    out = ""
+    for (i = 1; i <= n; i++) {
+        entry = restore(i, n)
+        if (entry_name(entry) in keep) {
+            out = (out == "") ? entry : out "," entry
+        }
+    }
+    print header "\"manifests\":[" out "]}"
+}
+AWK
+
+awk -v mode=list -f "$WORK/index.awk" "$WORK/index.json" >"$WORK/archive-images"
+total=$(wc -l <"$WORK/archive-images")
+
+[ "$total" -gt 0 ] || load_everything "cannot read index.json, loading all images"
+
+# The classic image store reports an empty .Descriptor.Digest, so every image
+# looks absent and the whole archive loads.
+: >"$WORK/wanted"
+while read -r digest name; do
+    if [ "$(docker image inspect --format '{{.Descriptor.Digest}}' "$name" 2>/dev/null || true)" != "$digest" ]; then
+        echo "$name" >>"$WORK/wanted"
+    fi
+done <"$WORK/archive-images"
+wanted=$(wc -l <"$WORK/wanted")
+
+if [ "$wanted" -eq 0 ]; then
+    echo "airgap images: all $total already present, nothing to load"
+    exit 0
+fi
+
+[ "$wanted" -lt "$total" ] || load_everything "loading all $total"
+
+# Load only the missing images by dropping the rest from index.json. Docker
+# ingests every blob either way; dropping the entries skips the re-tag that
+# creates the dangling record.
+echo "airgap images: loading $wanted of $total"
+mkdir -p "$WORK/archive"
+decompress | tar -xf - -C "$WORK/archive"
+awk -v mode=filter -f "$WORK/index.awk" "$WORK/wanted" "$WORK/archive/index.json" >"$WORK/index.filtered"
+mv "$WORK/index.filtered" "$WORK/archive/index.json"
+tar -cf - -C "$WORK/archive" . | docker load

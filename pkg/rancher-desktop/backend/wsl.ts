@@ -35,6 +35,7 @@ import SERVICE_BUILDKITD_CONF from '@pkg/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@pkg/assets/scripts/buildkit.initd';
 import CONFIGURE_IMAGE_ALLOW_LIST from '@pkg/assets/scripts/configure-allowed-images';
 import DOCKER_CREDENTIAL_SCRIPT from '@pkg/assets/scripts/docker-credential-rancher-desktop';
+import DOCKER_LOAD_AIRGAP_IMAGES_SCRIPT from '@pkg/assets/scripts/docker-load-airgap-images';
 import INSTALL_WSL_HELPERS_SCRIPT from '@pkg/assets/scripts/install-wsl-helpers';
 import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
 import LOGROTATE_OPENRESTY_SCRIPT from '@pkg/assets/scripts/logrotate-openresty';
@@ -1339,6 +1340,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                   });
                 }),
                 this.progressTracker.action(t('progress.kubernetesComponents'), 50, async() => {
+                  await this.writeFile('/usr/local/bin/docker-load-airgap-images', DOCKER_LOAD_AIRGAP_IMAGES_SCRIPT, 0o755);
                   await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
                   await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
                   await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
