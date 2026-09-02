@@ -636,6 +636,7 @@ statefulset
 stoinks
 storageclass
 storybookjs
+streamx
 stringifying
 subkey
 subshells

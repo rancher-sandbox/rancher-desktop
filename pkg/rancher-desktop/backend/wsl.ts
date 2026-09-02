@@ -60,6 +60,7 @@ import { stripNoproxyPrefix } from '@pkg/utils/networks';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
+import { tarStreamFinished } from '@pkg/utils/tarStream';
 import { defined, RecursivePartial } from '@pkg/utils/typeUtils';
 
 import type { KubernetesBackend } from './k8s';
@@ -1547,7 +1548,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       if (certs && certs.length > 0) {
         const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
         const archive = tar.pack();
-        const archiveFinished = util.promisify(stream.finished)(archive);
+        const archiveFinished = tarStreamFinished(archive);
 
         archive.pipe(writeStream);
 
