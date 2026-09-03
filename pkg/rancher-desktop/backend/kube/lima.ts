@@ -12,6 +12,7 @@ import BackendHelper, { MANIFEST_CERT_MANAGER, MANIFEST_SPIN_OPERATOR } from '..
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import LimaBackend, { Action } from '../lima';
 
+import DOCKER_LOAD_AIRGAP_IMAGES_SCRIPT from '@pkg/assets/scripts/docker-load-airgap-images';
 import INSTALL_K3S_SCRIPT from '@pkg/assets/scripts/install-k3s';
 import LOGROTATE_K3S_SCRIPT from '@pkg/assets/scripts/logrotate-k3s';
 import SERVICE_CRI_DOCKERD_SCRIPT from '@pkg/assets/scripts/service-cri-dockerd.initd';
@@ -403,6 +404,7 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       LOG_DIR: paths.logs,
       ENGINE:  cfg.containerEngine.name ?? ContainerEngine.NONE,
     });
+    await this.vm.writeFile('/usr/local/bin/docker-load-airgap-images', DOCKER_LOAD_AIRGAP_IMAGES_SCRIPT, 0o755);
     await this.vm.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.vm.writeConf('k3s', config);
     await this.vm.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);

@@ -43,9 +43,9 @@ start_pre() {
   IMAGEPATH="/var/lib/rancher/k3s/agent/images/k3s-airgap-images-${ARCH}"
   if [ "${ENGINE}" == "moby" ]; then
     if [ -f ${IMAGEPATH}.tar.zst ]; then
-      zstd -f -c -d ${IMAGEPATH}.tar.zst | docker load
+      docker-load-airgap-images ${IMAGEPATH}.tar.zst
     elif [ -f ${IMAGEPATH}.tar ]; then
-      docker load --input ${IMAGEPATH}.tar
+      docker-load-airgap-images ${IMAGEPATH}.tar
     fi
   else
     if [ -f ${IMAGEPATH}.tar.zst ]; then
