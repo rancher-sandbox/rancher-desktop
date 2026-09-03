@@ -58,6 +58,7 @@ import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@pkg/utils/stringify';
+import { tarStreamFinished } from '@pkg/utils/tarStream';
 import { defined, RecursivePartial } from '@pkg/utils/typeUtils';
 import { openSudoPrompt } from '@pkg/window';
 
@@ -1199,9 +1200,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       // outdated ones, since we're going to need a prompt anyway.
       const tarStream = fs.createWriteStream(tarPath);
       const archive = tar.pack();
-      const archiveFinished = util.promisify(stream.finished)(archive);
+      const archiveFinished = tarStreamFinished(archive);
       const newEntry = util.promisify(archive.entry.bind(archive));
-      const baseHeader: Partial<tar.Headers> = {
+      const baseHeader: Partial<tar.Header> = {
         mode:  0o755,
         uid:   0,
         uname: 'root',
@@ -1227,7 +1228,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       for (const relPath of files) {
         const source = path.join(sourcePath, relPath);
         const info = await fs.promises.lstat(source);
-        const header: tar.Headers = {
+        const header: Partial<tar.Header> & { name: string } = {
           ...baseHeader,
           name:  path.normalize(path.join(path.basename(installedPath), relPath)),
           mode:  info.mode,
@@ -2098,7 +2099,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         await this.progressTracker.action(t('progress.bundlingCertificates'), 50, async function() {
           const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
           const archive = tar.pack();
-          const archiveFinished = util.promisify(stream.finished)(archive);
+          const archiveFinished = tarStreamFinished(archive);
 
           archive.pipe(writeStream);
 

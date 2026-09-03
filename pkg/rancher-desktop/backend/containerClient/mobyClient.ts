@@ -20,6 +20,7 @@ import { parseImageReference } from '@pkg/utils/dockerUtils';
 import Logging, { Log } from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
 import { executable } from '@pkg/utils/resources';
+import { tarStreamFinished } from '@pkg/utils/tarStream';
 import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.moby;
@@ -227,7 +228,7 @@ export class MobyClient implements ContainerEngineClient {
         } else {
           links[linkName] = path.posix.join(path.posix.dirname(entry.header.name), realName);
         }
-        await stream.promises.finished(entry.resume());
+        await tarStreamFinished(entry.resume());
         break;
       }
       case 'directory': {
@@ -238,7 +239,7 @@ export class MobyClient implements ContainerEngineClient {
           continue;
         }
         await fs.promises.mkdir(dirName, { recursive: true });
-        await stream.promises.finished(entry.resume());
+        await tarStreamFinished(entry.resume());
         console.debug(`Created directory ${ dirName }`);
 
         break;
@@ -286,7 +287,7 @@ export class MobyClient implements ContainerEngineClient {
 
       if (linkNames.length === 0) {
         // This entry isn't a link target
-        await stream.promises.finished(entry.resume());
+        await tarStreamFinished(entry.resume());
         continue;
       }
       switch (entry.header.type) {
@@ -353,7 +354,7 @@ export class MobyClient implements ContainerEngineClient {
       default:
         console.info(`Ignoring unsupported file type ${ entry.header.name } (${ entry.header.type })`);
       }
-      await stream.promises.finished(entry.resume());
+      await tarStreamFinished(entry.resume());
     }
 
     // Handle symlinks that were not found

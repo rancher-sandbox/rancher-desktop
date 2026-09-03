@@ -19,6 +19,7 @@ import { spawn, spawnFile } from '@pkg/utils/childProcess';
 import { parseImageReference } from '@pkg/utils/dockerUtils';
 import Logging, { Log } from '@pkg/utils/logging';
 import { executable } from '@pkg/utils/resources';
+import { tarStreamFinished } from '@pkg/utils/tarStream';
 import { defined } from '@pkg/utils/typeUtils';
 
 const console = Logging.nerdctl;
@@ -325,9 +326,9 @@ export class NerdctlClient implements ContainerEngineClient {
 
       const tarStream = fs.createWriteStream(path.join(hostDir, archiveName));
       const archive = tar.pack();
-      const archiveFinished = util.promisify(stream.finished)(archive);
+      const archiveFinished = tarStreamFinished(archive);
       const newEntry = util.promisify(archive.entry.bind(archive));
-      const baseHeader: Partial<tar.Headers> = {
+      const baseHeader: Partial<tar.Header> = {
         mode:  0o755,
         uid:   0,
         uname: 'root',

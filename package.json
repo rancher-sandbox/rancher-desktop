@@ -69,7 +69,7 @@
     "node-forge": "1.4.0",
     "proxy-agent": "^8.0.2",
     "semver": "7.8.5",
-    "tar-stream": "3.2.0",
+    "tar-stream": "3.2.1",
     "which": "7.0.0",
     "yaml": "2.9.0"
   },
@@ -99,7 +99,6 @@
     "@types/plist": "3.0.5",
     "@types/ps-tree": "1.1.6",
     "@types/semver": "7.8.0",
-    "@types/tar-stream": "3.1.4",
     "@types/which": "3.0.4",
     "@vue/cli-plugin-babel": "5.0.9",
     "@vue/cli-plugin-router": "5.0.9",

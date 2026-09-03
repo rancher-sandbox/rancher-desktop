@@ -7,6 +7,7 @@ import stream from 'stream';
 import tar from 'tar-stream';
 
 import { Dependency, DownloadContext } from '@/scripts/lib/dependencies';
+import { tarStreamFinished } from '@pkg/utils/tarStream';
 
 export class ExtensionProxyImage implements Dependency {
   readonly name = 'rdx-proxy.tar';
@@ -144,7 +145,7 @@ export class WSLDistroImage implements Dependency {
     });
     await stream.promises.finished(pristineFile.pipe(extractor));
 
-    async function addFile(fromPath: string, name: string, options: Omit<tar.Headers, 'name' | 'size'> = {}) {
+    async function addFile(fromPath: string, name: string, options: Partial<Omit<tar.Header, 'name' | 'size'>> = {}) {
       const { size } = await fs.promises.stat(fromPath);
       const inputFile = fs.createReadStream(fromPath);
 
@@ -174,7 +175,7 @@ export class WSLDistroImage implements Dependency {
 
     // Finish the archive.
     packer.finalize();
-    await stream.promises.finished(packer);
+    await tarStreamFinished(packer);
     console.log('Built WSLDistro image.');
   }
 }
