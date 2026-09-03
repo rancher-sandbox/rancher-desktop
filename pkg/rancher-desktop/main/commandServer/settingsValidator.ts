@@ -122,7 +122,7 @@ export default class SettingsValidator {
       },
       virtualMachine: {
         memoryInGB: this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
-        numberCPUs: this.checkLima(this.checkNumber(1, Number.POSITIVE_INFINITY)),
+        numberCPUs: this.checkLima(this.checkInteger(1, Number.POSITIVE_INFINITY)),
         useRosetta: this.checkPlatform('darwin', this.checkRosetta),
         type:       this.checkPlatform('darwin', this.checkMulti(
           this.checkEnum(...Object.values(VMType)),
@@ -144,7 +144,7 @@ export default class SettingsValidator {
             '9p': {
               securityModel:   this.checkLima(this.check9P(this.checkEnum(...Object.values(SecurityModel)))),
               protocolVersion: this.checkLima(this.check9P(this.checkEnum(...Object.values(ProtocolVersion)))),
-              msizeInKib:      this.checkLima(this.check9P(this.checkNumber(4, Number.POSITIVE_INFINITY))),
+              msizeInKib:      this.checkLima(this.check9P(this.checkInteger(4, Number.POSITIVE_INFINITY))),
               cacheMode:       this.checkLima(this.check9P(this.checkEnum(...Object.values(CacheMode)))),
             },
           },
@@ -152,7 +152,7 @@ export default class SettingsValidator {
             enabled:  this.checkPlatform('win32', this.checkBoolean),
             address:  this.checkPlatform('win32', this.checkString),
             password: this.checkPlatform('win32', this.checkString),
-            port:     this.checkPlatform('win32', this.checkNumber(1, 65535)),
+            port:     this.checkPlatform('win32', this.checkInteger(1, 65535)),
             username: this.checkPlatform('win32', this.checkString),
             noproxy:  this.checkPlatform('win32', this.checkNoproxyList),
           },
@@ -162,7 +162,7 @@ export default class SettingsValidator {
       WSL:        { integrations: this.checkPlatform('win32', this.checkBooleanMapping) },
       kubernetes: {
         version: this.checkKubernetesVersion,
-        port:    this.checkNumber(1, 65535),
+        port:    this.checkInteger(1, 65535),
         enabled: this.checkBoolean,
         options: { traefik: this.checkBoolean, flannel: this.checkBoolean },
         ingress: { localhostOnly: this.checkPlatform('win32', this.checkBoolean) },
@@ -528,6 +528,25 @@ export default class SettingsValidator {
       }
 
       return currentValue !== desiredValue;
+    };
+  }
+
+  /**
+   * checkInteger returns a checker for a whole number in the given range,
+   * inclusive.  Use it for counts, sizes and ports, where the backend has
+   * no sensible reading of a fractional value.
+   */
+  protected checkInteger(min: number, max: number) {
+    const checkRange = this.checkNumber(min, max);
+
+    return <S>(mergedSettings: S, currentValue: number, desiredValue: number, errors: string[], fqname: string) => {
+      if (typeof desiredValue === 'number' && !Number.isInteger(desiredValue)) {
+        errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+        return false;
+      }
+
+      return checkRange(mergedSettings, currentValue, desiredValue, errors, fqname);
     };
   }
 

@@ -84,6 +84,48 @@ describe('SettingsValidator', () => {
     });
   });
 
+  it('should reject a fractional port', () => {
+    const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { kubernetes: { port: '6443.7' as unknown as number } });
+
+    expect({ needToUpdate, errors, isFatal }).toEqual({
+      needToUpdate: false,
+      errors:       ['Invalid value for "kubernetes.port": <6443.7>'],
+      isFatal:      false,
+    });
+  });
+
+  it('should reject a fractional CPU count', () => {
+    modules.os.platform.mockReturnValue('linux');
+    const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { virtualMachine: { numberCPUs: 2.5 } });
+
+    expect({ needToUpdate, errors, isFatal }).toEqual({
+      needToUpdate: false,
+      errors:       ['Invalid value for "virtualMachine.numberCPUs": <2.5>'],
+      isFatal:      false,
+    });
+  });
+
+  it('should reject a fractional CPU count given as a string', () => {
+    modules.os.platform.mockReturnValue('linux');
+    const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg, { virtualMachine: { numberCPUs: '2.5' as unknown as number } });
+
+    expect({ needToUpdate, errors, isFatal }).toEqual({
+      needToUpdate: false,
+      errors:       ['Invalid value for "virtualMachine.numberCPUs": <2.5>'],
+      isFatal:      false,
+    });
+  });
+
+  it('should accept a fractional memory size', () => {
+    modules.os.platform.mockReturnValue('linux');
+    const [needToUpdate, errors] = subject.validateSettings(cfg, { virtualMachine: { memoryInGB: cfg.virtualMachine.memoryInGB + 0.5 } });
+
+    expect({ needToUpdate, errors }).toEqual({
+      needToUpdate: true,
+      errors:       [],
+    });
+  });
+
   describe('all standard fields', () => {
     // Special fields that cannot be checked here; this includes enums and maps.
     const specialFields = [
