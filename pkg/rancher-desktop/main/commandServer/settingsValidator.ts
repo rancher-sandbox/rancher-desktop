@@ -533,8 +533,8 @@ export default class SettingsValidator {
 
   /**
    * checkInteger returns a checker for a whole number in the given range,
-   * inclusive.  Use it for counts, sizes and ports, where the backend has
-   * no sensible reading of a fractional value.
+   * inclusive.  Use it for counts, sizes and ports, where fractional
+   * values do not make sense.
    */
   protected checkInteger(min: number, max: number) {
     const checkRange = this.checkNumber(min, max);
