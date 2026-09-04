@@ -165,6 +165,28 @@ export interface IpcMainInvokeEvents {
   'show-snapshots-confirm-dialog':  (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
   'show-snapshots-blocking-dialog': (options: { window: Partial<Electron.MessageBoxOptions>, format: SnapshotDialog }) => any;
   // #endregion
+
+  // #region main/containerFiles
+  /** List a single directory level inside a container. */
+  'container-files/list': (
+    containerId: string,
+    dirPath: string,
+    options?: { namespace?: string, running?: boolean },
+  ) => import('@pkg/main/containerFiles').ContainerFileListResult;
+  /** Read (a capped prefix of) a file inside a container for previewing. */
+  'container-files/read': (
+    containerId: string,
+    filePath: string,
+    options?: { namespace?: string, running?: boolean },
+  ) => import('@pkg/main/containerFiles').ContainerFileReadResult;
+  /** Copy a file or directory out of a container to a host path chosen by the user. */
+  'container-files/download': (
+    containerId: string,
+    filePath: string,
+    isDirectory: boolean,
+    options?: { namespace?: string, running?: boolean },
+  ) => import('@pkg/main/containerFiles').ContainerFileDownloadResult;
+  // #endregion
 }
 
 /**
