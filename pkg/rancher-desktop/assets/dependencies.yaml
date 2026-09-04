@@ -296,12 +296,12 @@ lima:
   version: 2.1.2.rd1
 mobyOpenAPISpec:
   assets:
-    - checksum: sha256:10617b2a7c57362f083d69ad24c0545b878d22dee447f300622dc9830fe9a82c
+    - checksum: sha256:f09a22ad220d551dca5d6c402052204d3e9fd1f16943cd78ba6677ea1266616f
       platform: linux
-      url: https://raw.githubusercontent.com/moby/moby/826b3f64b8d35457b68b847e5af8283d51e04c4d/api/docs/v1.55.yaml
+      url: https://raw.githubusercontent.com/moby/moby/20beedbee6f675d25dfa6781d3eef752b1bf8d7d/api/docs/v1.56.yaml
   version:
-    apiVersion: "1.55"
-    commit: 826b3f64b8d35457b68b847e5af8283d51e04c4d
+    apiVersion: "1.56"
+    commit: 20beedbee6f675d25dfa6781d3eef752b1bf8d7d
 moproxy:
   assets:
     - arch: amd64
