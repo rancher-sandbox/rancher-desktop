@@ -116,7 +116,7 @@
     "@yarnpkg/core": "^4.9.1",
     "@yarnpkg/types": "^4.0.1",
     "babel-core": "7.0.0-bridge.0",
-    "babel-jest": "30.4.1",
+    "babel-jest": "30.5.0",
     "babel-loader": "10.1.1",
     "chart.js": "4.5.1",
     "cookie-universal": "2.2.2",
