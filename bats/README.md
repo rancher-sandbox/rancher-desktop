@@ -200,6 +200,9 @@ that may be set when triggering a run manually:
     to test.  This allows to test code from runs where it failed to build on
     platforms that don't need to be tested, or in-process runs as long as the
     relevant platforms have already completed.
+  <tr><td><code>install-mode</code>
+    <td>Windows only: install from the MSI (<code>installer</code>) or from
+    the <code>zip</code>.
   <tr><td><code>ramdisk</code>
     <td>macOS only: put the VM on a ramdisk.
   <tr><td><code>vz</code>
