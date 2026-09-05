@@ -396,11 +396,12 @@ capture_logs() {
         logdir=$(unique_filename "${PATH_BATS_LOGS}/${RD_TEST_FILENAME}")
         mkdir -p "$logdir"
         # On Linux/macOS, the symlinks to the lima logs might be dangling.
-        # Remove any dangling ones before doing the copy.
+        # Remove them before the copy. An empty file left in their place
+        # makes lima.ts's symlink() fail, blanking lima logs until Rancher
+        # Desktop next starts.
         find -L "${PATH_LOGS}/" -type l \
             -exec rm -f -- '{}' ';' \
-            -exec touch -- '{}' ';' \
-            -exec echo 'Replaced dangling symlink with empty file:' '{}' ';'
+            -exec echo 'Removed dangling symlink:' '{}' ';'
         cp -LR "${PATH_LOGS}/" "$logdir"
         echo "${BATS_TEST_DESCRIPTION:-teardown}" >"${logdir}/test_description"
         # Capture settings.json
