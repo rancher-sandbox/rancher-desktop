@@ -232,6 +232,13 @@ jobs:
       # and tsc=reliable stops the watchdog demoting it again.
       run: scripts/patch-guest-iso.sh tsc_early_khz=auto tsc=reliable
 
+    - name: "macOS: Disable Spotlight indexing"
+      if: runner.os == 'macOS'
+      shell: bash
+      # Spotlight indexing takes so much of the runner's four cores that it
+      # leaves the VM too little CPU to boot in time.
+      run: sudo mdutil -a -i off
+
     - name: "Windows: Install WSL2 Distribution"
       if: runner.os == 'Windows'
       shell: pwsh
