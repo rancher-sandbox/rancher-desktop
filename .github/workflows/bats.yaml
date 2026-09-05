@@ -53,6 +53,9 @@ env:
 jobs:
   get-tests:
     name: Calculate tests to run
+    # A fork that enables this workflow wants the runs it dispatches, not the
+    # full nightly matrix against whatever build it last made.
+    if: github.event_name != 'schedule' || !github.event.repository.fork
     runs-on: ubuntu-latest
     steps:
     - name: Fetch install script
@@ -340,7 +343,9 @@ jobs:
   summarize:
     name: Summarize output
     needs: [ get-tests, bats ]
-    if: ${{ !cancelled() }}
+    # The fork guard skips get-tests on a fork's nightly, and then there is
+    # nothing to summarize.
+    if: ${{ !cancelled() && needs.get-tests.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
     - name: Fetch summarizer script
