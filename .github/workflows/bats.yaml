@@ -140,8 +140,15 @@ jobs:
         ZIP_NAME:     ${{ github.workspace }}/version.txt
         RD_LOCATION:  system
 
+    - name: "Linux: Identify the user that runs the tests"
+      if: runner.os == 'Linux'
+      shell: bash
+      run: echo "TEST_USER=$(id --user --name)" >> "$GITHUB_ENV"
+
     - name: Set up environment
       uses: $/.github/actions/setup-environment
+      with:
+        user: ${{ env.TEST_USER }}
 
     - name: "Linux: Install prerequisites"
       if: runner.os == 'Linux'
