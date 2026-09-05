@@ -39,6 +39,16 @@ on:
         description: Run with experimental settings (WSL)
         default: false
         type: boolean
+      ramdisk:
+        description: Put the VM on a ramdisk (macOS only)
+        default: 'true'
+        type: choice
+        options: [ 'true', 'false' ]
+      vz:
+        description: Use the Virtualization framework rather than QEMU (macOS only)
+        default: 'true'
+        type: choice
+        options: [ 'true', 'false' ]
   schedule:
   - cron: '0 8 * * 1-5' # 8AM UTC weekdays as a baseline
 
@@ -293,7 +303,10 @@ jobs:
         RD_TAKE_SCREENSHOTS:       "true"
         RD_TRACE:                  "true"
         RD_USE_GHCR_IMAGES:        "true"
-        RD_USE_RAMDISK:            "true"
+        RD_USE_RAMDISK:            ${{ inputs.ramdisk || 'true' }}
+        # Empty everywhere but macOS: defaults.bash rejects the variable on a
+        # platform that has no Virtualization framework.
+        RD_USE_VZ_EMULATION:       ${{ runner.os == 'macOS' && inputs.vz || '' }}
         RD_USE_WINDOWS_EXE:        "${{ runner.os == 'Windows' }}"
         WSLENV: "\
           GITHUB_TOKEN:\

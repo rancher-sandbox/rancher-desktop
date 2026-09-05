@@ -200,6 +200,10 @@ that may be set when triggering a run manually:
     to test.  This allows to test code from runs where it failed to build on
     platforms that don't need to be tested, or in-process runs as long as the
     relevant platforms have already completed.
+  <tr><td><code>ramdisk</code>
+    <td>macOS only: put the VM on a ramdisk.
+  <tr><td><code>vz</code>
+    <td>macOS only: use the Virtualization framework instead of QEMU.
   </tbody>
 </table>
 
