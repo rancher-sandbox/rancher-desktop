@@ -191,6 +191,7 @@ jobs:
         wsl.exe --distribution openSUSE --user root --exec
         zypper --non-interactive install
         curl
+        netcat-openbsd
         util-linux
 
     - name: "Windows: Enable experimental WSL settings"
