@@ -119,7 +119,8 @@ runs:
         ""|root)
           exit 0;;
       esac
-      echo "$TARGET_USER ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$TARGET_USER
+      echo "$TARGET_USER ALL=(ALL) NOPASSWD: ALL" \
+        | ${{ steps.sudo.outputs.sudo }} tee /etc/sudoers.d/$TARGET_USER >/dev/null
     env:
       TARGET_USER: ${{ inputs.user || 'root' }}
 
