@@ -168,7 +168,7 @@ jobs:
       shell: pwsh
       run: |
         # Install a "modern" WSL distribution
-        wsl --install --no-launch --web-download --name openSUSE openSUSE-Leap-15.6
+        wsl --install --no-launch --web-download --name openSUSE openSUSE-Leap-16.0
         # Prevent first-boot from running
         wsl --distribution openSUSE --user root --exec sed -i -e '/^command/d' /etc/wsl-distribution.conf
         # Create the initial user
