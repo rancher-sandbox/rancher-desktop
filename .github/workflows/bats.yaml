@@ -25,7 +25,7 @@ on:
         type: string
       kubernetes-version:
         description: Primary Kubernetes version to test
-        default: '1.22.7' # Must also change in calculate step
+        default: '1.25.16' # Must also change in calculate step
         type: string
       kubernetes-alt-version:
         description: Secondary Kubernetes version to test (e.g. for upgrades)
@@ -93,7 +93,7 @@ jobs:
         TESTS:                  ${{ inputs.tests }}
         PLATFORMS:              ${{ inputs.platforms }}
         ENGINES:                ${{ inputs.engines }}
-        KUBERNETES_VERSION:     ${{ inputs.kubernetes-version || '1.22.7' }}
+        KUBERNETES_VERSION:     ${{ inputs.kubernetes-version || '1.25.16' }}
         # rancher/rancher helm chart 2.8.5 supports up to 1.28.*
         KUBERNETES_ALT_VERSION: ${{ inputs.kubernetes-alt-version || '1.28.11' }}
       working-directory: bats/tests
