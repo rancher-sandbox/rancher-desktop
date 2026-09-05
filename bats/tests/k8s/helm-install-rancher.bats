@@ -96,8 +96,13 @@ deploy_rancher() {
         fail "Could not restore Rancher chart version"
     fi
 
+    # v1.16.5 is the newest cert-manager that still supports Kubernetes 1.25.
+    # Unpinned pulls the latest chart, whose CRDs declare selectableFields;
+    # the apiservers we test against reject that field.  An OCI registry has
+    # no index to search, so helm only accepts an exact version here.
     helm upgrade \
         --install cert-manager oci://quay.io/jetstack/charts/cert-manager \
+        --version v1.16.5 \
         --namespace cert-manager \
         --set installCRDs=true \
         --set "extraArgs[0]=--enable-certificate-owner-ref=true" \
