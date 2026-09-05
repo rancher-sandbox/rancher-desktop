@@ -236,6 +236,15 @@ jobs:
       # and tsc=reliable stops the watchdog demoting it again.
       run: scripts/patch-guest-iso.sh tsc_early_khz=auto tsc=reliable
 
+    - name: "macOS: Disable Spotlight indexing"
+      if: runner.os == 'macOS'
+      shell: bash
+      # Measured in rancher-desktop-2 on the same macos-15-intel runners:
+      # mds/mds_stores/mdworker_shared together took ~230% CPU during a BATS
+      # run, more than two of the runner's four cores, leaving the VM too
+      # little to boot in.
+      run: sudo mdutil -a -i off
+
     - name: "Windows: Install WSL2 Distribution"
       if: runner.os == 'Windows'
       shell: pwsh
