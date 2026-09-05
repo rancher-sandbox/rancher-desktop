@@ -39,6 +39,15 @@ on:
         description: Run with experimental settings (WSL)
         default: false
         type: boolean
+      # The tests ship inside the package build's bats.tar.gz, so iterating on
+      # a test normally needs a full package rebuild.  'checkout' replaces
+      # only tests/; bats-core, its helper libraries, and the bundled jq still
+      # come from the package.
+      tests-from:
+        description: Take the tests from the package build or from this checkout
+        default: 'package'
+        type: choice
+        options: [ 'package', 'checkout' ]
       ramdisk:
         description: Put the VM on a ramdisk (macOS only)
         default: 'true'
@@ -77,6 +86,15 @@ jobs:
           scripts/install-latest-ci.sh
           .github/workflows/bats/get-tests.py
 
+    - name: Fetch tests from this checkout
+      if: inputs.tests-from == 'checkout'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        sparse-checkout-cone-mode: false
+        sparse-checkout: /bats/tests/
+        path: checkout
+
     - id: repo
       name: Calculate short repository
       run: echo "repo=${GITHUB_REPOSITORY#*/}" >> "$GITHUB_OUTPUT"
@@ -97,6 +115,13 @@ jobs:
         ID:           ${{ inputs.package-id }}
         BATS_DIR:     ${{ github.workspace }}/bats
         INSTALL_MODE: skip
+
+    - name: Use the tests from this checkout
+      if: inputs.tests-from == 'checkout'
+      shell: bash
+      run: |
+        rm -rf bats/tests
+        mv checkout/bats/tests bats/tests
 
     - name: Calculate tests
       id: calculate
@@ -133,6 +158,15 @@ jobs:
           .github/actions/setup-environment/action.yaml
           .github/workflows/bats/sanitize-artifact-name.sh
 
+    - name: Fetch tests from this checkout
+      if: inputs.tests-from == 'checkout'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        sparse-checkout-cone-mode: false
+        sparse-checkout: /bats/tests/
+        path: checkout
+
     - name: Install latest CI build
       run: |
         : ${OWNER:=$GH_OWNER}
@@ -152,6 +186,13 @@ jobs:
         INSTALL_MODE: installer
         ZIP_NAME:     ${{ github.workspace }}/version.txt
         RD_LOCATION:  system
+
+    - name: Use the tests from this checkout
+      if: inputs.tests-from == 'checkout'
+      shell: bash
+      run: |
+        rm -rf bats/tests
+        mv checkout/bats/tests bats/tests
 
     - name: "Linux: Identify the user that runs the tests"
       if: runner.os == 'Linux'
