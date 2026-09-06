@@ -92,6 +92,32 @@ wslpath_from_win32_env() {
     fi
 }
 
+# The MSI marks a machine-wide install with a registry key and opens the
+# firewall for host-switch.exe (build/wix/main.wxs).  Rancher Desktop reads that
+# key to decide whether to publish container ports on all interfaces, so without
+# it a zip install silently behaves like a per-user one.  The rules below copy
+# main.wxs by hand, protocol included, so a change there needs the same change
+# here.
+configure_admin_install() {
+    local app_dir=$1
+    local host_switch profile
+
+    host_switch=$(cygpath --windows "$app_dir/resources/resources/win32/internal/host-switch.exe")
+
+    MSYS2_ARG_CONV_EXCL='*' reg.exe add 'HKLM\SOFTWARE\SUSE\RancherDesktop' \
+        /v AdminInstall /t REG_SZ /d true /f
+
+    # The MSI opens the private and domain profiles, but not public.
+    for profile in Private Domain; do
+        MSYS2_ARG_CONV_EXCL='*' netsh.exe advfirewall firewall delete rule \
+            name="Rancher Desktop Networking ${profile} Exception" >/dev/null 2>&1 || :
+        MSYS2_ARG_CONV_EXCL='*' netsh.exe advfirewall firewall add rule \
+            name="Rancher Desktop Networking ${profile} Exception" \
+            dir=in action=allow protocol=any profile="${profile}" \
+            program="$host_switch"
+    done
+}
+
 install_application() {
     local archive workdir
 
@@ -175,6 +201,9 @@ install_application() {
             # subdirectory like Linux & macOS do.
             mkdir -p "$dest/$app"
             unzip -o "$zip_abspath" -d "$dest/$app" >/dev/null
+            if [[ $RD_LOCATION == system ]]; then
+                configure_admin_install "$dest/$app"
+            fi
             ;;
         installer)
             local allusers=1
