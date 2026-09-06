@@ -50,7 +50,7 @@ on:
         options: [ 'package', 'checkout' ]
       ramdisk:
         description: Put the VM on a ramdisk (macOS only)
-        default: 'true'
+        default: 'false'
         type: choice
         options: [ 'true', 'false' ]
       vz:
@@ -359,7 +359,7 @@ jobs:
         RD_TAKE_SCREENSHOTS:       "true"
         RD_TRACE:                  "true"
         RD_USE_GHCR_IMAGES:        "true"
-        RD_USE_RAMDISK:            ${{ inputs.ramdisk || 'true' }}
+        RD_USE_RAMDISK:            ${{ inputs.ramdisk || 'false' }}
         # Empty everywhere but macOS: defaults.bash rejects the variable on a
         # platform that has no Virtualization framework.
         RD_USE_VZ_EMULATION:       ${{ runner.os == 'macOS' && inputs.vz || '' }}
