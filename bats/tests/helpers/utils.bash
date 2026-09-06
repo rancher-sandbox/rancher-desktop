@@ -442,7 +442,15 @@ capture_host_sockets() {
     "$@" >"$logdir/sockets.txt" 2>&1 || :
 }
 
+# capture_logs [--kubernetes]
+#
+# --kubernetes also saves the cluster state, which costs several kubectl
+# calls.  Pass it only when a test has failed.
 capture_logs() {
+    local with_kubernetes=false
+    if [[ ${1:-} == "--kubernetes" ]]; then
+        with_kubernetes=true
+    fi
     if capturing_logs && [[ -d $PATH_LOGS ]]; then
         local logdir
         logdir=$(unique_filename "${PATH_BATS_LOGS}/${RD_TEST_FILENAME}")
@@ -460,6 +468,9 @@ capture_logs() {
         cp "$PATH_CONFIG_FILE" "$logdir"
         foreach_profile export_profile "$logdir"
         capture_host_sockets "$logdir"
+        if "$with_kubernetes"; then
+            capture_kubernetes_state "$logdir"
+        fi
     fi
 }
 
