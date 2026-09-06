@@ -41,7 +41,7 @@ on:
         type: boolean
       install-mode:
         description: Install from the installer or from the zip (Windows only)
-        default: 'installer'
+        default: 'zip'
         type: choice
         options: [ 'installer', 'zip' ]
       # The tests ship inside the package build's bats.tar.gz, so iterating on
@@ -195,7 +195,7 @@ jobs:
         BRANCH:       ${{ inputs.branch || github.ref_name }}
         ID:           ${{ inputs.package-id }}
         BATS_DIR:     ${{ github.workspace }}/bats
-        INSTALL_MODE: ${{ inputs.install-mode || 'installer' }}
+        INSTALL_MODE: ${{ inputs.install-mode || 'zip' }}
         ZIP_NAME:     ${{ github.workspace }}/version.txt
         RD_LOCATION:  system
 

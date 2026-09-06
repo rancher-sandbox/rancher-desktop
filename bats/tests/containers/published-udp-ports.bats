@@ -6,6 +6,10 @@
 # records the network categories.  The 'binding to localhost' case never
 # leaves the distro: wsl-proxy answers it, so it passes even when the
 # exception is wrong.
+#
+# A zip install, the CI default, gets install-latest-ci.sh's copy of the
+# exception, so only an installer run tests the one build/wix/main.wxs
+# creates.
 load '../helpers/load'
 
 local_setup() {
