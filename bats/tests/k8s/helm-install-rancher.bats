@@ -112,10 +112,16 @@ deploy_rancher() {
     host=$(traefik_hostname)
 
     comment "Installing rancher $rancher_chart_version"
+    # Kubernetes 1.25 removed the PodSecurityPolicy API, but chart 2.7.2, the
+    # oldest one determine_chart_version accepts for 1.25, still defaults
+    # global.cattle.psp.enabled to true and then refuses to install.  2.7.5 and
+    # later derive the value from the cluster version, so the flag is a no-op
+    # there.
     helm upgrade \
         --install rancher rancher-latest/rancher \
         --version "$rancher_chart_version" \
         --namespace cattle-system \
+        --set global.cattle.psp.enabled=false \
         --set hostname="$host" \
         --set replicas=1 \
         --create-namespace
