@@ -152,6 +152,10 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.get-tests.outputs.tests )}}
     runs-on: ${{ matrix.host }}
+    # A wedged setup or install step would otherwise inherit GitHub's 6-hour
+    # default.  Keep this above the Run BATS step's own 120-minute cap so that
+    # step times out first and the log collection still runs.
+    timeout-minutes: 150
     steps:
     - name: Fetch install script
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
