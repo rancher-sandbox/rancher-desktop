@@ -239,6 +239,12 @@ jobs:
       # leaves the VM too little CPU to boot in time.
       run: sudo mdutil -a -i off
 
+    - name: "Linux: Size the VM for the runner"
+      if: runner.os == 'Linux'
+      shell: bash
+      # Give the guest every core except the one that the runner agent needs.
+      run: echo "RD_VM_CPUS=$(( $(nproc) - 1 ))" >> "$GITHUB_ENV"
+
     - name: "macOS: Size the VM for the runner"
       if: runner.os == 'macOS'
       shell: bash
