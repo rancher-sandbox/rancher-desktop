@@ -253,6 +253,32 @@ jobs:
       env:
         BATS_COMMAND: wsl.exe --distribution openSUSE --exec
 
+    - name: "Windows: Ensure WSL interop is registered"
+      if: runner.os == 'Windows'
+      shell: pwsh
+      # binfmt_misc is one kernel-global registry for the whole WSL VM, and
+      # systemd-shutdown wipes it when a systemd distro stops, taking
+      # WSLInterop with it (microsoft/WSL f67086e3d).  Without that handler
+      # paths.bash cannot run powershell.exe, every Windows path resolves to
+      # an empty string, and the suite dies before its first test.  That fix
+      # reached only the 2.9 pre-release line, so the 2.7.13 that
+      # `wsl --update` installs still needs this.  The binfmt.d file gets the
+      # handler back at the next boot, the direct write covers this one.
+      run: >-
+        wsl.exe --distribution openSUSE --user root --exec /bin/sh -c
+        'entry=":WSLInterop:M::MZ::/init:FP";
+        printf "%s\n" "$entry" > /etc/binfmt.d/WSLInterop.conf;
+        i=0;
+        while [ $i -lt 10 ] && ! ls /proc/sys/fs/binfmt_misc/WSLInterop* >/dev/null 2>&1;
+        do i=$((i+1)); sleep 1; done;
+        if ls /proc/sys/fs/binfmt_misc/WSLInterop* >/dev/null 2>&1;
+        then echo "handler present after ${i}s";
+        else echo "no handler after ${i}s, registering it";
+        printf "%s\n" "$entry" > /proc/sys/fs/binfmt_misc/register;
+        fi;
+        ls -la /proc/sys/fs/binfmt_misc/'
+      continue-on-error: true
+
     - name: Run BATS
       # We use ${{ env.BATS_COMMAND }} instead of ${BATS_COMMAND} to let the
       # shell parse the command, instead of doing it via expansion which is then
