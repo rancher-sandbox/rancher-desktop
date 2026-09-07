@@ -171,6 +171,9 @@ containers:
         stop: Stop
         restart: Restart
         start: Start
+      group:
+        # @context Accessible label for the checkbox that selects every container in a compose project group
+        selectAll: 'Select all containers in project {group}'
   sortableTables:
     noRows: There are no containers to show
 volumes:

@@ -119,8 +119,9 @@
           >
             <Checkbox
               class="group-select-checkbox"
-              data-testid="container-group-select"
-              :value="isGroupSelected(group)"
+              :data-testid="`container-group-select-${group.ref}`"
+              :aria-label="t('containers.manage.table.group.selectAll', { group: group.ref })"
+              :value="isGroupSelected(group) || isGroupIndeterminate(group)"
               :indeterminate="isGroupIndeterminate(group)"
               @update:value="setGroupSelected(group, $event)"
               @click.stop
@@ -472,9 +473,8 @@ export default defineComponent({
      * Execute a command against some containers
      * @param command {string} The command to run
      * @param _ids {Container | Container[]} The containers to affect
-     * @param extraArgs {string[]} Extra CLI flags to insert before the container ids
      */
-    async execCommand(command, _ids, extraArgs = []) {
+    async execCommand(command, _ids) {
       try {
         const ids = Array.isArray(_ids) ? _ids.map(c => c.id) : [_ids.id];
         const options = { cwd: '/' };
@@ -484,7 +484,7 @@ export default defineComponent({
           options.namespace = this.namespace;
         }
 
-        const { stderr, stdout } = await window.ddClient.docker.cli.exec(command, [...extraArgs, ...ids], options);
+        const { stderr, stdout } = await window.ddClient.docker.cli.exec(command, ids, options);
 
         if (stderr) {
           throw new Error(stderr);
@@ -643,9 +643,6 @@ export default defineComponent({
 
   .group-row {
     .group-tab {
-      display: flex;
-      align-items: center;
-      gap: 6px;
       font-weight: bold;
       > .icon {
         cursor: pointer;
