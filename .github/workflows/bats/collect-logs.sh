@@ -143,17 +143,27 @@ dump_memory_pressure() {
 }
 
 dump_sockets() {
-    if command -v ss >/dev/null; then
-        echo "=== Open sockets (ss) ==="
-        # ss names other users' processes only as root.
-        with_timeout 30 sudo --non-interactive ss --all --tcp --udp --processes --numeric
-    elif command -v lsof >/dev/null; then
-        echo "=== Open sockets (lsof) ==="
-        # lsof lists other users' sockets only as root.
-        with_timeout 30 sudo --non-interactive lsof -i -P -n
-    else
-        echo "=== Open sockets: skipped because neither ss nor lsof is installed ==="
-    fi
+    case "$platform" in
+    win32)
+        # Git Bash has neither ss nor lsof, and Windows netstat has no long
+        # options.
+        echo "=== Open sockets (netstat) ==="
+        with_timeout 30 netstat.exe -ano
+        ;;
+    *)
+        if command -v ss >/dev/null; then
+            echo "=== Open sockets (ss) ==="
+            # ss names other users' processes only as root.
+            with_timeout 30 sudo --non-interactive ss --all --tcp --udp --processes --numeric
+        elif command -v lsof >/dev/null; then
+            echo "=== Open sockets (lsof) ==="
+            # lsof lists other users' sockets only as root.
+            with_timeout 30 sudo --non-interactive lsof -i -P -n
+        else
+            echo "=== Open sockets: skipped because neither ss nor lsof is installed ==="
+        fi
+        ;;
+    esac
 }
 
 # Run these probes without a status check first.  In the hangs that this
@@ -242,7 +252,13 @@ dump_wsl_guest() {
     echo
 
     echo "=== ps ==="
-    ps aux 2>&1
+    if [[ $platform == win32 ]]; then
+        # Git Bash's ps shows Windows programs, such as Rancher Desktop and
+        # wsl.exe, only with --windows.
+        ps --windows 2>&1
+    else
+        ps aux 2>&1
+    fi
     echo
 
     dump_memory_pressure
