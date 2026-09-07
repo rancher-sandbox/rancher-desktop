@@ -434,6 +434,7 @@ describe('LonghornProvider.checkForUpdates', () => {
   afterEach(() => {
     modules.electron.net.fetch.mockReset();
     fs.rmSync(cacheFile, { force: true });
+    fs.mkdirSync(cacheDir, { recursive: true });
   });
 
   /** Answer the upgrade responder, the release lookup, and the checksum, in that order. */
@@ -501,6 +502,17 @@ describe('LonghornProvider.checkForUpdates', () => {
     process.env.RD_GITHUB_API_URL = serverURL;
 
     await expect(releaseLookupURL()).resolves.toBe(githubURL);
+  });
+
+  it('writes the cache when the cache directory is missing', async() => {
+    // Only the Kubernetes code path creates paths.cache, so it is missing on
+    // a launch with Kubernetes disabled after a factory reset.
+    fs.rmSync(cacheDir, { force: true, recursive: true });
+    mockRelease();
+
+    await makeProvider()['checkForUpdates']();
+    expect(JSON.parse(fs.readFileSync(cacheFile, 'utf-8')).file.url)
+      .toBe(`${ serverURL }/msi`);
   });
 
   it('discards a cached release that came from a different API', async() => {

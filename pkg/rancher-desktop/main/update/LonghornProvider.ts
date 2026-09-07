@@ -513,6 +513,9 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       },
     };
 
+    // Only the Kubernetes code path creates paths.cache, and a factory reset
+    // deletes it.
+    await fs.promises.mkdir(path.dirname(gCachePath), { recursive: true });
     await fs.promises.writeFile(gCachePath, JSON.stringify(cache),
       { encoding: 'utf-8', mode: 0o600 });
 
