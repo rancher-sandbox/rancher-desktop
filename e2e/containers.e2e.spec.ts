@@ -715,9 +715,9 @@ test.describe.serial('Container Compose Group Actions', () => {
     await containersPage.waitForGroupToAppear(composeProjectName);
     await containersPage.selectGroup(composeProjectName);
 
-    // The row checkboxes reflect selection reactively rather than through the
-    // native `checked` DOM property, so assert on the table's own selection
-    // count label instead of the (unreliable) checkbox element state.
+    // Assert on the table's "N selected" count label: it is the user-visible
+    // contract for how many rows a bulk action will apply to, which is exactly
+    // what selecting the group is meant to drive.
     await expect(containersPage.getSelectionCount(2)).toBeVisible();
 
     await containersPage.clickBulkStop();

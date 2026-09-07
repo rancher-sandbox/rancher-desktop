@@ -107,10 +107,12 @@ export class ContainersPage {
   }
 
   async clickBulkStop() {
-    await this.page.getByRole('button', { name: 'Stop' }).first().click();
+    // Target the bulk-action button by its stable test id rather than the
+    // visible (locale-specific) English label, which also hides on overflow.
+    await this.page.getByTestId('sortable-table-stopContainer').first().click();
   }
 
   async clickBulkDelete() {
-    await this.page.getByRole('button', { name: 'Delete' }).first().click();
+    await this.page.getByTestId('sortable-table-deleteContainer').first().click();
   }
 }
