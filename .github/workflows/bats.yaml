@@ -187,13 +187,23 @@ jobs:
     - name: "Windows: Install prerequisites in WSL"
       if: runner.os == 'Windows'
       shell: pwsh
-      run: >-
-        wsl.exe --distribution openSUSE --user root --exec
-        zypper --non-interactive install
-        curl
-        netcat-openbsd
-        openssl
-        util-linux
+      run: |
+        # cdn.opensuse.org intermittently answers 403 for the repo metadata.
+        # zypper carries on, reports every package as missing, and exits 1,
+        # which loses the job before any test runs.
+        #
+        # Actions prepends "$ErrorActionPreference = 'stop'", under which a
+        # failing native command throws and would abort the loop on the first
+        # attempt, so turn that off for the retry.
+        $ErrorActionPreference = 'Continue'
+        $PSNativeCommandUseErrorActionPreference = $false
+        foreach ($attempt in 1..3) {
+            wsl.exe --distribution openSUSE --user root --exec zypper --non-interactive install curl netcat-openbsd openssl util-linux
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            Write-Host "zypper install failed (attempt $attempt)"
+            if ($attempt -lt 3) { Start-Sleep -Seconds ($attempt * 15) }
+        }
+        exit 1
 
     - name: "Windows: Enable experimental WSL settings"
       if: runner.os == 'Windows' && inputs.experimental
