@@ -37,16 +37,19 @@ class Result:
 
     key = staticmethod(attrgetter("name", "host", "engine"))
 
+# The macOS runners are too slow for these suites to finish in a single job.
+# The containers suite hit the Run BATS step's two-hour timeout about halfway
+# through, and the tests it never reached went unreported.
+SPLIT_PER_FILE_ON_MAC = ("k8s", "containers")
+
 def resolve_test(test: str, platform: Platforms) -> Iterator[str]:
     """
     Given a test spec, convert that to a list of tests.
     """
     # If we can't glob the test, use it as-is.
     for test in glob.glob(test) or (test,):
-        if platform == "mac" and test == "k8s":
-            # The macOS runners on CI are extra slow; for this test suite,
-            # run each test individually.
-            for name in glob.glob("k8s/*.bats"):
+        if platform == "mac" and test in SPLIT_PER_FILE_ON_MAC:
+            for name in glob.glob(f"{test}/*.bats"):
                 yield name.removesuffix(".bats")
         else:
             yield test.removesuffix(".bats")
