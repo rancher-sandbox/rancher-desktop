@@ -92,6 +92,26 @@ wslpath_from_win32_env() {
     fi
 }
 
+# One stalled read would fail the job before its first test, and every job in
+# the matrix downloads its artifacts, so retry the download.  Each attempt
+# empties the directory first, so a truncated file cannot pass for the
+# artifact.  Pass a directory that holds nothing else.
+download_artifact() { # $name $workdir
+    local name=$1 workdir=$2 attempt
+    for attempt in 1 2 3; do
+        rm -rf "${workdir:?}"/*
+        if gh run download --repo "$OWNER/$REPO" "$ID" --dir "$workdir" --name "$name"; then
+            return
+        fi
+        echo "Failed to download $name (attempt $attempt)" >&2
+        if [[ $attempt -lt 3 ]]; then
+            sleep $((attempt * 10))
+        fi
+    done
+    echo "Giving up on $name after 3 attempts" >&2
+    exit 1
+}
+
 install_application() {
     local archive workdir
 
@@ -125,7 +145,7 @@ install_application() {
         archive="Rancher Desktop-linux.zip"
         ;;
     esac
-    gh run download --repo "$OWNER/$REPO" "$ID" --dir "$workdir" --name "$archive"
+    download_artifact "$archive" "$workdir"
 
     # `gh run download` extracts the artifact into the provided directory.
     local zip=("$workdir"/*)
@@ -237,8 +257,9 @@ install_application() {
 download_bats() {
     # Download the BATS archive; it's automatically extracted one level, i.e.
     # the wrapper zip file.
-    rm -f "$TMPDIR/bats.tar.gz"
-    gh run download --repo "$OWNER/$REPO" "$ID" --dir "$TMPDIR" --name bats.tar.gz
+    local workdir
+    workdir=$(mktemp -d "$TMPDIR/rd-bats.XXXXXXXXXX")
+    download_artifact bats.tar.gz "$workdir"
 
     # Unpack bats into $BATS_DIR
     rm -rf "$BATS_DIR"
@@ -247,8 +268,9 @@ download_bats() {
     # So instead of using tar -C, enter that directory first.
     (
         cd "$BATS_DIR"
-        tar xfz "$TMPDIR/bats.tar.gz"
+        tar xfz "$workdir/bats.tar.gz"
     )
+    rm -rf "$workdir"
 }
 
 determine_run_id
