@@ -107,8 +107,15 @@ configure_admin_install() {
     MSYS2_ARG_CONV_EXCL='*' reg.exe add 'HKLM\SOFTWARE\SUSE\RancherDesktop' \
         /v AdminInstall /t REG_SZ /d true /f
 
-    # The MSI opens the private and domain profiles, but not public.
-    for profile in Private Domain; do
+    # The MSI opens the private and domain profiles, but not public.  A
+    # hosted runner gives the WSL adapter no connection profile at all, so
+    # Windows treats its traffic as public and neither shipped rule matches;
+    # a published UDP port is then unreachable from the distro the tests run
+    # in.  Categorizing the adapter is not an option, because
+    # Set-NetConnectionProfile needs a profile that does not exist.  So open
+    # public as well, and only here: the installed product keeps the two
+    # profiles it ships with.
+    for profile in Private Domain Public; do
         MSYS2_ARG_CONV_EXCL='*' netsh.exe advfirewall firewall delete rule \
             name="Rancher Desktop Networking ${profile} Exception" >/dev/null 2>&1 || :
         MSYS2_ARG_CONV_EXCL='*' netsh.exe advfirewall firewall add rule \
