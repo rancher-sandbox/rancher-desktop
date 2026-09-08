@@ -54,18 +54,19 @@ def resolve_test(test: str, platform: Platforms) -> Iterator[str]:
         else:
             yield test.removesuffix(".bats")
 
+# The extensions test images compile Go inside the guest, and macos-15-intel
+# corrupts CPU-bound processes there.  So the suite fails on macOS for reasons
+# that say nothing about Rancher Desktop.  Building the binaries outside
+# the guest would let it run there again.
+SKIP_ON_MACOS = ("extensions",)
+
 def skip_test(test: Result) -> bool:
     """
     Check if a given test should be skipped.
     We skip some tests because the CI machines can't handle them.
     """
-    if test.host == "macos-15-intel" and test.name.startswith("k8s/"):
-        # The macOS CI runners are slow; skip some tests that can be tested on
-        # other OSes.
-        skipped_tests = ("verify-cached-images",)
-        if any(test.name == f"k8s/{t}" for t in skipped_tests):
-            return True
-    return False
+    suite = test.name.split("/")[0]
+    return test.host == "macos-15-intel" and suite in SKIP_ON_MACOS
 
 results: List[Result] = list()
 errors: bool = False
