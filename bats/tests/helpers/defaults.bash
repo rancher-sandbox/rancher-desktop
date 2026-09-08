@@ -166,6 +166,12 @@ using_ramdisk() {
 : "${RD_PROTECTED_DOT:=·}"
 
 ########################################################################
+# RD_VM_CPUS is the number of CPUs given to the virtual machine, matching
+# Rancher Desktop's own default.  CI sizes it per runner instead; see
+# .github/workflows/bats.yaml.
+: "${RD_VM_CPUS:=2}"
+
+########################################################################
 # RD_WAIT_FACTOR multiplies the waits in these helpers, `try`'s attempts and
 # the RD_KUBELET_TIMEOUT default below among them.  Waits sized for a
 # developer machine run out on a slow one, such as the macOS CI runners.

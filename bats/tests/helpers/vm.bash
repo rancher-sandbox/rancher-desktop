@@ -192,6 +192,7 @@ start_container_engine() {
             --application.admin-access="$admin_access"
             --application.path-management-strategy rcfiles
             --virtual-machine.memory-in-gb 6
+            --virtual-machine.number-cpus="$RD_VM_CPUS"
             --virtual-machine.mount.type="$RD_MOUNT_TYPE"
         )
     fi
