@@ -239,6 +239,13 @@ jobs:
       # leaves the VM too little CPU to boot in time.
       run: sudo mdutil -a -i off
 
+    - name: "macOS: Size the VM for the runner"
+      if: runner.os == 'macOS'
+      shell: bash
+      # The 2-vCPU default starves the guest on the 4-core macos-15-intel
+      # runners.  Drop this to 3 if jobs start losing their runner.
+      run: echo "RD_VM_CPUS=4" >> "$GITHUB_ENV"
+
     - name: "Windows: Install WSL2 Distribution"
       if: runner.os == 'Windows'
       shell: pwsh

@@ -167,7 +167,8 @@ using_ramdisk() {
 
 ########################################################################
 # RD_VM_CPUS is the number of CPUs given to the virtual machine, matching
-# Rancher Desktop's own default.
+# Rancher Desktop's own default.  CI sizes it per runner instead; see
+# .github/workflows/bats.yaml.
 : "${RD_VM_CPUS:=2}"
 
 ########################################################################
