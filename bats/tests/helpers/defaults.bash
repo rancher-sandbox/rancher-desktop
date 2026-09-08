@@ -166,9 +166,15 @@ using_ramdisk() {
 : "${RD_PROTECTED_DOT:=·}"
 
 ########################################################################
+# RD_WAIT_FACTOR multiplies the waits in these helpers, `try`'s attempts and
+# the RD_KUBELET_TIMEOUT default below among them.  Waits sized for a
+# developer machine run out on a slow one, such as the macOS CI runners.
+: "${RD_WAIT_FACTOR:=1}"
+
+########################################################################
 # RD_KUBELET_TIMEOUT specifies the number of minutes wait_for_kubelet()
 # waits before it times out.
-: "${RD_KUBELET_TIMEOUT:=10}"
+: "${RD_KUBELET_TIMEOUT:=$((10 * RD_WAIT_FACTOR))}"
 
 ########################################################################
 # RD_LOCATION specifies the location where Rancher Desktop is installed

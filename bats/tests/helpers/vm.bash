@@ -472,7 +472,7 @@ wait_for_container_engine() {
 wait_for_extension_manager() {
     trace "waiting for extension manager to be ready"
     # We want to match specific error strings, so we can't use try() directly.
-    local count=0 max=30 message
+    local count=0 max=$((30 * RD_WAIT_FACTOR)) message
     while true; do
         run --separate-stderr rdctl api /extensions
         if ((status == 0 || ++count >= max)); then
