@@ -414,6 +414,9 @@ jobs:
         # platform that has no Virtualization framework.
         RD_USE_VZ_EMULATION:       ${{ runner.os == 'macOS' && inputs.vz || '' }}
         RD_USE_WINDOWS_EXE:        "${{ runner.os == 'Windows' }}"
+        # The macOS runners are the slow ones; see RD_WAIT_FACTOR in
+        # bats/tests/helpers/defaults.bash.
+        RD_WAIT_FACTOR:            ${{ runner.os == 'macOS' && '2' || '1' }}
         WSLENV: "\
           GITHUB_TOKEN:\
           RD_CAPTURE_LOGS:\
@@ -425,6 +428,7 @@ jobs:
           RD_USE_GHCR_IMAGES:\
           RD_USE_RAMDISK:\
           RD_USE_WINDOWS_EXE:\
+          RD_WAIT_FACTOR:\
           "
       working-directory: bats
       timeout-minutes: 120
