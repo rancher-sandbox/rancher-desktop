@@ -245,6 +245,17 @@ jobs:
       # little to boot in.
       run: sudo mdutil -a -i off
 
+    - name: "macOS: Size the VM for the runner"
+      if: runner.os == 'macOS'
+      shell: bash
+      # The 2-vCPU default starves the guest on the 4-core macos-15-intel
+      # runners: kubelet overran its 1s housekeeping loop 213 times in run
+      # 34006415289, worst case 9.92s, and the apiserver could not finish a
+      # TLS handshake with a client on the same host.  rancher-desktop-2
+      # measured 4 vCPUs reaching pod-Running 2-3x faster than 3, with the
+      # runner agent still scheduled; drop to 3 if runs lose their runner.
+      run: echo "RD_VM_CPUS=4" >> "$GITHUB_ENV"
+
     - name: "Windows: Install WSL2 Distribution"
       if: runner.os == 'Windows'
       shell: pwsh
