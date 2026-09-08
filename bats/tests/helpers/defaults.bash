@@ -175,6 +175,7 @@ using_ramdisk() {
 # RD_WAIT_FACTOR multiplies the waits in these helpers, `try`'s attempts and
 # the RD_KUBELET_TIMEOUT default below among them.  Waits sized for a
 # developer machine run out on a slow one, such as the macOS CI runners.
+# CI sizes the factor per runner; see .github/workflows/bats.yaml.
 : "${RD_WAIT_FACTOR:=1}"
 
 ########################################################################
