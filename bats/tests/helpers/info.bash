@@ -32,6 +32,7 @@ show_info() { # @test
             printf "$format" "  9p security model:" "$RD_9P_SECURITY_MODEL"
         fi
         printf "$format" "Using image allow list:" "$(bool using_image_allow_list)"
+        printf "$format" "Wait factor:" "$RD_WAIT_FACTOR"
         if is_macos; then
             printf "$format" "Using VZ emulation:" "$(bool using_vz_emulation)"
             printf "$format" "Using ramdisk:" "$(bool using_ramdisk)"
