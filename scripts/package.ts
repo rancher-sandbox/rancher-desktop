@@ -9,7 +9,7 @@ import fs from 'fs';
 import * as path from 'path';
 
 import { flipFuses, FuseV1Options, FuseVersion } from '@electron/fuses';
-import { executeAppBuilder, log } from 'builder-util';
+import { log } from 'builder-util';
 import {
   AfterPackContext, Arch, build, CliOptions, Configuration, LinuxTargetSpecificOptions,
 } from 'electron-builder';
@@ -241,15 +241,13 @@ class Builder {
   }
 
   protected async createWindowsResources(workDir: string) {
-    // Create stub executable with the correct icon (for the installer)
+    // Create the icon; the toolset always writes it as `icon.ico`.
+    const { runIconsTool } = await import('app-builder-lib/out/toolsets/icons');
     const imageFile = path.join(process.cwd(), 'resources', 'icons', 'logo-square-512.png');
-    const iconArgs = ['icon', '--format', 'ico', '--out', workDir, '--input', imageFile];
-    const iconResult = await this.executeAppBuilderAsJson(iconArgs);
-    const iconFile = iconResult.icons[0].file;
-    const executable = path.join(process.cwd(), 'resources', 'win32', 'bin', 'rdctl.exe');
-    const rceditArgs = [executable, '--set-icon', iconFile];
+    const iconFile = path.join(process.cwd(), 'resources', 'icons', 'icon.ico');
 
-    await executeAppBuilder(['rcedit', '--args', JSON.stringify(rceditArgs)], undefined, undefined, 3);
+    await runIconsTool({ inputFile: imageFile, outputFormat: 'ico', outDir: workDir });
+    await fs.promises.rename(path.join(workDir, 'icon.ico'), iconFile);
 
     // Create the custom action for the installer
     log.info('building Windows Installer custom action...');
@@ -264,16 +262,6 @@ class Builder {
         await buildUtils.sleep(5_000);
       }
     }
-  }
-
-  protected async executeAppBuilderAsJson(...args: Parameters<typeof executeAppBuilder>) {
-    const result = JSON.parse(await executeAppBuilder(...args));
-
-    if (result.error) {
-      throw new Error(result.error);
-    }
-
-    return result;
   }
 
   async run() {
