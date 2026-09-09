@@ -12,8 +12,8 @@ require (
 	github.com/docker/go-connections v0.8.1
 	github.com/lima-vm/lima v1.0.0-beta.0
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/sync v0.22.0
-	golang.org/x/sys v0.47.0
+	golang.org/x/sync v0.23.0
+	golang.org/x/sys v0.48.0
 	google.golang.org/protobuf v1.36.12
 	k8s.io/api v0.37.0
 	k8s.io/apimachinery v0.37.0
