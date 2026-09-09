@@ -9,7 +9,7 @@ import fs from 'fs';
 import * as path from 'path';
 
 import { flipFuses, FuseV1Options, FuseVersion } from '@electron/fuses';
-import { executeAppBuilder, log } from 'builder-util';
+import { log } from 'builder-util';
 import {
   AfterPackContext, Arch, build, CliOptions, Configuration, LinuxTargetSpecificOptions,
 } from 'electron-builder';
@@ -241,13 +241,13 @@ class Builder {
   }
 
   protected async createWindowsResources(workDir: string) {
-    // Create the icon
+    // Create the icon; the toolset always writes it as `icon.ico`.
+    const { runIconsTool } = await import('app-builder-lib/out/toolsets/icons');
     const imageFile = path.join(process.cwd(), 'resources', 'icons', 'logo-square-512.png');
     const iconFile = path.join(process.cwd(), 'resources', 'icons', 'icon.ico');
-    const iconArgs = ['icon', '--format', 'ico', '--out', workDir, '--input', imageFile];
-    const iconResult = await this.executeAppBuilderAsJson(iconArgs);
-    const outFile = iconResult.icons[0].file;
-    await fs.promises.rename(outFile, iconFile);
+
+    await runIconsTool({ inputFile: imageFile, outputFormat: 'ico', outDir: workDir });
+    await fs.promises.rename(path.join(workDir, 'icon.ico'), iconFile);
 
     // Create the custom action for the installer
     log.info('building Windows Installer custom action...');
@@ -262,16 +262,6 @@ class Builder {
         await buildUtils.sleep(5_000);
       }
     }
-  }
-
-  protected async executeAppBuilderAsJson(...args: Parameters<typeof executeAppBuilder>) {
-    const result = JSON.parse(await executeAppBuilder(...args));
-
-    if (result.error) {
-      throw new Error(result.error);
-    }
-
-    return result;
   }
 
   async run() {
