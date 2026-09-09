@@ -36,6 +36,7 @@ var dockerproxyStartCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		port := dockerproxyStartViper.GetUint32("port")
 		endpoint := dockerproxyStartViper.GetString("endpoint")
+		logrus.WithFields(logrus.Fields{"endpoint": endpoint, "port": port}).Debug("starting docker daemon over vsock")
 		return dockerproxy.Start(cmd.Context(), port, endpoint, args)
 	},
 }
@@ -47,7 +48,6 @@ func init() {
 	}
 	dockerproxyStartCmd.Flags().Uint32("port", dockerproxy.DefaultPort, "Vsock port to listen on")
 	dockerproxyStartCmd.Flags().String("endpoint", defaultProxyEndpoint, "Dockerd socket endpoint")
-	dockerproxyStartViper.AutomaticEnv()
 	if err := dockerproxyStartViper.BindPFlags(dockerproxyStartCmd.Flags()); err != nil {
 		logrus.WithError(err).Fatal("Failed to set up flags")
 	}

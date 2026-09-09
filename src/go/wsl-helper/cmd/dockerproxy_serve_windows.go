@@ -39,6 +39,7 @@ var dockerproxyServeCmd = &cobra.Command{
 		cmd.SilenceErrors = true
 		endpoint := dockerproxyServeViper.GetString("endpoint")
 		port := dockerproxyServeViper.GetUint32("port")
+		logrus.WithFields(logrus.Fields{"endpoint": endpoint, "port": port}).Debug("starting docker proxy")
 		dialer, err := platform.MakeDialer(port)
 		if err != nil {
 			return err
@@ -54,7 +55,6 @@ var dockerproxyServeCmd = &cobra.Command{
 func init() {
 	dockerproxyServeCmd.Flags().String("endpoint", platform.DefaultEndpoint, "Endpoint to listen on")
 	dockerproxyServeCmd.Flags().Uint32("port", dockerproxy.DefaultPort, "Vsock port docker is listening on")
-	dockerproxyServeViper.AutomaticEnv()
 	if err := dockerproxyServeViper.BindPFlags(dockerproxyServeCmd.Flags()); err != nil {
 		logrus.WithError(err).Fatal("Failed to set up flags")
 	}
