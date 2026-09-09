@@ -39,6 +39,12 @@
         :disabled="!isRunning"
         @active="activeTab = 'tab-shell'"
       />
+      <tab
+        :label="t('containerInfo.files')"
+        name="tab-files"
+        :weight="-1"
+        @active="activeTab = 'tab-files'"
+      />
       <template #tab-row-extras>
         <li
           v-if="activeTab === 'tab-logs'"
@@ -124,6 +130,12 @@
           :is-container-running="isRunning"
           :namespace="namespace"
         />
+        <container-files
+          v-if="containerId && activeTab === 'tab-files'"
+          :container-id="containerId"
+          :is-container-running="isRunning"
+          :namespace="namespace"
+        />
       </div>
     </rd-tabbed>
   </div>
@@ -134,6 +146,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 
+import ContainerFiles from '@pkg/components/ContainerFiles.vue';
 import ContainerInspect from '@pkg/components/ContainerInspect.vue';
 import ContainerLogs from '@pkg/components/ContainerLogs.vue';
 import ContainerShell from '@pkg/components/ContainerShell.vue';
@@ -158,7 +171,7 @@ const searchInput = ref<HTMLInputElement | null>(null);
 const settings = ref<Settings>();
 const subscribeTimer = ref<ReturnType<typeof setTimeout>>();
 const searchTerm = ref('');
-const activeTab = ref<'tab-info' | 'tab-stats' | 'tab-logs' | 'tab-shell'>('tab-info');
+const activeTab = ref<'tab-info' | 'tab-stats' | 'tab-logs' | 'tab-shell' | 'tab-files'>('tab-info');
 const shellEverActivated = ref(false);
 
 // Vuex integration

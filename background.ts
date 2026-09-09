@@ -26,6 +26,7 @@ import { getPathManagerFor } from '@pkg/integrations/pathManagerImpl';
 import { BackendState, CommandWorkerInterface, HttpCommandServer } from '@pkg/main/commandServer/httpCommandServer';
 import SettingsValidator from '@pkg/main/commandServer/settingsValidator';
 import { ContainerExecHandler } from '@pkg/main/containerExec';
+import { ContainerFilesHandler } from '@pkg/main/containerFiles';
 import { ContainerStatsHandler } from '@pkg/main/containerStats';
 import { HttpCredentialHelperServer } from '@pkg/main/credentialServer/httpCredentialHelperServer';
 import { DeploymentProfileError, readDeploymentProfiles } from '@pkg/main/deploymentProfiles';
@@ -92,6 +93,7 @@ let firstRunDialogComplete = false;
 let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler | null = null;
 let containerExecHandler: ContainerExecHandler | null = null;
+let containerFilesHandler: ContainerFilesHandler | null = null;
 let containerStatsHandler: ContainerStatsHandler | null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
@@ -605,6 +607,12 @@ async function startK8sManager() {
     containerStatsHandler = new ContainerStatsHandler(k8smanager.containerEngineClient);
   } else {
     containerStatsHandler.updateClient(k8smanager.containerEngineClient);
+  }
+
+  if (!containerFilesHandler) {
+    containerFilesHandler = new ContainerFilesHandler(k8smanager.containerEngineClient);
+  } else {
+    containerFilesHandler.updateClient(k8smanager.containerEngineClient);
   }
 }
 
