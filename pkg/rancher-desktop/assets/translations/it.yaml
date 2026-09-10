@@ -514,7 +514,8 @@ dialog:
     delete: Elimina i carichi di lavoro
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: Il downgrade da {from} a {to} comporterà la perdita dei carichi di lavoro Kubernetes esistenti. Eliminare i dati?
-    # @source Confirming migration
+    # @reason 'Conferma' is both the noun and the second-person imperative in Italian, so the nominal form renders an imperative source correctly.
+    # @source Confirm migration
     title: Conferma della migrazione
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
@@ -702,7 +703,8 @@ images:
     multiple: Eliminare {count} {count, plural, one {immagine} other {immagini}}?
     # @source Delete image {name}:{tag}?
     single: Eliminare l'immagine {name}:{tag}?
-    # @source Confirming image deletion
+    # @reason 'Conferma' is both the noun and the second-person imperative in Italian, so the nominal form renders an imperative source correctly.
+    # @source Confirm image deletion
     title: Conferma dell'eliminazione delle immagini
   manager:
     # @source Close Output to Continue

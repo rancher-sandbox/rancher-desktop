@@ -506,7 +506,7 @@ dialog:
     delete: ワークロードを削除
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: '{from}から{to}へダウングレードすると、既存のKubernetesワークロードが失われます。データを削除しますか？'
-    # @source Confirming migration
+    # @source Confirm migration
     title: 移行の確認
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
@@ -691,7 +691,7 @@ images:
     multiple: '{count}{count, plural, one {個のイメージ} other {個のイメージ}}を削除しますか？'
     # @source Delete image {name}:{tag}?
     single: イメージ {name}:{tag} を削除しますか？
-    # @source Confirming image deletion
+    # @source Confirm image deletion
     title: イメージ削除の確認
   manager:
     # @source Close Output to Continue

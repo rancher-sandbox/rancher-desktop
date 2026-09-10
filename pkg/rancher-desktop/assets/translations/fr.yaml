@@ -518,8 +518,8 @@ dialog:
     delete: Supprimer les charges de travail
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: La rétrogradation de {from} vers {to} entraînera la perte des charges de travail Kubernetes existantes. Supprimer les données ?
-    # @source Confirming migration
-    title: Confirmation de la migration
+    # @source Confirm migration
+    title: Confirmer la migration
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
     detail: Repli sur la version de mise à niveau minimale recommandée {version}
@@ -698,8 +698,8 @@ images:
     multiple: Supprimer {count} {count, plural, one {image} other {images}} ?
     # @source Delete image {name}:{tag}?
     single: Supprimer l'image {name}:{tag} ?
-    # @source Confirming image deletion
-    title: Confirmation de la suppression d'images
+    # @source Confirm image deletion
+    title: Confirmer la suppression d'images
   manager:
     # @source Close Output to Continue
     close: Fermer la sortie pour continuer

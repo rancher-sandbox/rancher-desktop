@@ -562,7 +562,7 @@ dialog:
     delete: Workloads löschen
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: Ein Downgrade von {from} auf {to} führt zum Verlust bestehender Kubernetes-Workloads. Daten löschen?
-    # @source Confirming migration
+    # @source Confirm migration
     title: Migration bestätigen
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
@@ -740,7 +740,7 @@ images:
     multiple: '{count} {count, plural, one {Image} other {Images}} löschen?'
     # @source Delete image {name}:{tag}?
     single: Image {name}:{tag} löschen?
-    # @source Confirming image deletion
+    # @source Confirm image deletion
     title: Image-Löschung bestätigen
   manager:
     # @source Close Output to Continue
