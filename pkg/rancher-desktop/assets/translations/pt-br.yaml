@@ -514,8 +514,8 @@ dialog:
     # @reason 'downgrade' kept in English: common in Brazilian technical usage, mirrors 'upgrade'
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: Fazer downgrade de {from} para {to} perderá as cargas de trabalho existentes do Kubernetes. Excluir os dados?
-    # @source Confirming migration
-    title: Confirmando migração
+    # @source Confirm migration
+    title: Confirmar migração
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
     detail: Voltando para a versão mínima de upgrade recomendada, {version}
@@ -699,8 +699,8 @@ images:
     multiple: Excluir {count} {count, plural, one {imagem} other {imagens}}?
     # @source Delete image {name}:{tag}?
     single: Excluir a imagem {name}:{tag}?
-    # @source Confirming image deletion
-    title: Confirmação de exclusão de imagem
+    # @source Confirm image deletion
+    title: Confirmar exclusão de imagem
   manager:
     # @source Close Output to Continue
     close: Fechar a saída para continuar

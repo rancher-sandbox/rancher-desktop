@@ -504,7 +504,7 @@ dialog:
     delete: 워크로드 삭제
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: '{from}에서 {to}(으)로 다운그레이드하면 기존 Kubernetes 워크로드가 손실됩니다. 데이터를 삭제하시겠습니까?'
-    # @source Confirming migration
+    # @source Confirm migration
     title: 마이그레이션 확인
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
@@ -682,7 +682,7 @@ images:
     multiple: '{count, plural, one {이미지} other {이미지}} {count}개를 삭제하시겠습니까?'
     # @source Delete image {name}:{tag}?
     single: '{name}:{tag} 이미지를 삭제하시겠습니까?'
-    # @source Confirming image deletion
+    # @source Confirm image deletion
     title: 이미지 삭제 확인
   manager:
     # @source Close Output to Continue

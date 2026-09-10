@@ -285,7 +285,7 @@ images:
     confirm: Delete
     multiple: Delete {count} {count, plural, one {image} other {images}}?
     single: Delete image {name}:{tag}?
-    title: Confirming image deletion
+    title: Confirm image deletion
   sortableTables:
     noRows: There are no images to show
 portForwarding:
@@ -978,7 +978,7 @@ dialog:
     delete: Delete Workloads
     # @no-translate Kubernetes
     message: Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
-    title: Confirming migration
+    title: Confirm migration
   invalidK8sVersion:
     detail: Falling back to recommended minimum upgrade version of {version}
     # @no-translate Kubernetes
