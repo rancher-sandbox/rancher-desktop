@@ -423,6 +423,13 @@ containerStats:
     # @source Write
     write: Escrita
 containers:
+  confirmDelete:
+    # @source Delete
+    confirm: Excluir
+    # @source Delete {count} {count, plural, one {container} other {containers}}?
+    message: Excluir {count} {count, plural, one {contêiner} other {contêineres}}?
+    # @source Confirm container deletion
+    title: Confirmar exclusão de contêiner
   manage:
     table:
       action:
@@ -1843,6 +1850,13 @@ virtualMachine:
     # @source VZ Option
     legend: Opção do VZ
 volumes:
+  confirmDelete:
+    # @source Delete
+    confirm: Excluir
+    # @source Delete {count} {count, plural, one {volume} other {volumes}}?
+    message: Excluir {count} {count, plural, one {volume} other {volumes}}?
+    # @source Confirm volume deletion
+    title: Confirmar exclusão de volume
   files:
     # @source Available
     available: Disponível

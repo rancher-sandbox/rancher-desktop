@@ -468,6 +468,14 @@ containerStats:
     # @source Write
     write: Schreiben
 containers:
+  confirmDelete:
+    # @source Delete
+    confirm: Löschen
+    # @reason 'Container' is invariant in the German plural, so both branches carry the same noun
+    # @source Delete {count} {count, plural, one {container} other {containers}}?
+    message: '{count} {count, plural, one {Container} other {Container}} löschen?'
+    # @source Confirm container deletion
+    title: Container-Löschung bestätigen
   manage:
     table:
       action:
@@ -1894,6 +1902,14 @@ virtualMachine:
     # @source VZ Option
     legend: VZ-Option
 volumes:
+  confirmDelete:
+    # @source Delete
+    confirm: Löschen
+    # @reason anglicized plural 'Volumes' matches volumes.title and volumes.sortableTables.noRows, not the German 'Volumen'
+    # @source Delete {count} {count, plural, one {volume} other {volumes}}?
+    message: '{count} {count, plural, one {Volume} other {Volumes}} löschen?'
+    # @source Confirm volume deletion
+    title: Volume-Löschung bestätigen
   files:
     # @source Available
     available: Verfügbar
