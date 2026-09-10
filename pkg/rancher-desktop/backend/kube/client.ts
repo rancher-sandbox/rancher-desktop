@@ -275,8 +275,33 @@ export class KubeClient extends events.EventEmitter {
         this.emit('service-changed', this.listServices());
       }),
       () => this.coreV1API.listServiceForAllNamespaces());
+    this.services.on('error', ex => this.restartServiceWatch(ex));
 
     return this.services;
+  }
+
+  /**
+   * Restart the service watch after an error.  ListWatch reschedules itself only
+   * for an expired resource version or a client-side timeout; any other error
+   * leaves the watch dead, and port forwarding silently stops updating.
+   */
+  protected async restartServiceWatch(error: any): Promise<void> {
+    // Matches the retry interval in waitForServiceWatcher; while the
+    // apiserver is down this retries 20 times a minute.
+    const waitTime = 3_000;
+
+    while (!this.shutdown) {
+      console.error(`Error watching services, retrying in ${ waitTime / 1000 } secs:`, error);
+      await util.promisify(setTimeout)(waitTime);
+      if (this.shutdown) {
+        return;
+      }
+      try {
+        return await this.services?.start();
+      } catch (ex) {
+        error = ex;
+      }
+    }
   }
 
   /**
@@ -300,6 +325,8 @@ export class KubeClient extends events.EventEmitter {
   // away, and we should remove any pending work.
   destroy() {
     this.shutdown = true;
+    // ListWatch reconnects after its own client-side timeout, so stop it here.
+    this.services?.stop();
     for (const [namespace, endpoint, port, server] of this.servers) {
       this.servers.delete(namespace, endpoint, port);
       server?.close();
