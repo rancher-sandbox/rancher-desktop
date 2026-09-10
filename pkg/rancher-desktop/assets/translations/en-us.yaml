@@ -171,6 +171,10 @@ containers:
         stop: Stop
         restart: Restart
         start: Start
+  confirmDelete:
+    confirm: Delete
+    message: Delete {count} {count, plural, one {container} other {containers}}?
+    title: Confirm container deletion
   sortableTables:
     noRows: There are no containers to show
 volumes:
@@ -187,6 +191,10 @@ volumes:
       action:
         browse: Browse Files
         delete: Delete
+  confirmDelete:
+    confirm: Delete
+    message: Delete {count} {count, plural, one {volume} other {volumes}}?
+    title: Confirm volume deletion
   sortableTables:
     noRows: There are no volumes to show
   files:
