@@ -17,7 +17,6 @@
       no-rows-key="volumes.sortableTables.noRows"
       :row-actions="true"
       :paging="true"
-      :rows-per-page="10"
       :has-advanced-filtering="false"
       :loading="!volumes"
     >
