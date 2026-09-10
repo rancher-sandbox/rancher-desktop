@@ -20,7 +20,11 @@ a userspace forwarder on the namespace's tap IP so traffic arriving
 from host-switch reaches the in-namespace 127.0.0.1 listener. A
 two-scan stability gate filters out the transient reservation socket
 nerdctl's OCI createRuntime hook opens before CNI installs its
-iptables rules.
+iptables rules. Ports another component already exposes -- e.g.
+docker-proxy's persistent per-published-port listeners, which the
+docker events handler owns -- are recorded as delegated and skipped
+until their listener disappears, its binding shape changes, or the
+delegation ages out and the scanner re-establishes who owns the port.
 
 IPv6 limitation: procnettcp.ParseFiles returns entries from
 /proc/net/{tcp,tcp6,udp,udp6}, but addValidProtoEntryToPortMap
@@ -37,6 +41,7 @@ package procnet
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -54,6 +59,13 @@ import (
 const (
 	loopbackIP = "127.0.0.1"
 	wildcardIP = "0.0.0.0"
+
+	// ownershipRecheckInterval bounds how long the scanner trusts what
+	// it believes about a port. APITracker.RemoveAll clears every
+	// expose in the shared tracker without touching a listener, and the
+	// kube watcher and the iptables scanner never re-register. Long
+	// enough not to become the per-tick retry it replaced.
+	ownershipRecheckInterval = 5 * time.Minute
 )
 
 // loopbackController is what the scanner calls to manage userspace
@@ -79,6 +91,22 @@ type ProcNetScanner struct {
 	published nat.PortMap
 	pending   map[nat.Port]struct{}
 
+	// delegated holds ports whose expose is owned by another component
+	// (host-switch answered "proxy already running"). Under moby,
+	// docker-proxy holds a persistent listener in this namespace for
+	// every published port; it passes the stability gate and, without
+	// this set, the scanner would collide with the docker events
+	// handler and retry every tick for the container's lifetime.
+	delegated nat.PortMap
+
+	// recheckTicks counts Ticks since the scanner last verified who
+	// exposes each port it tracks, whether published or delegated.
+	recheckTicks map[nat.Port]int
+
+	// ownershipRecheckTicks is ownershipRecheckInterval expressed in
+	// Ticks for the scanInterval this scanner was built with.
+	ownershipRecheckTicks int
+
 	// addErrorLogged throttles publish-failure logs to one Error line
 	// per port; subsequent failures for the same port log at Debug
 	// until the port either publishes successfully or leaves both
@@ -102,6 +130,11 @@ func NewProcNetScanner(ctx context.Context, t tracker.Tracker, bindIP net.IP, sc
 }
 
 func newScanner(ctx context.Context, t tracker.Tracker, f loopbackController, bindIP net.IP, scanInterval time.Duration) *ProcNetScanner {
+	ticks := int(ownershipRecheckInterval / scanInterval)
+	if ticks < 1 {
+		ticks = 1
+	}
+
 	return &ProcNetScanner{
 		ctx:            ctx,
 		tracker:        t,
@@ -110,7 +143,11 @@ func newScanner(ctx context.Context, t tracker.Tracker, f loopbackController, bi
 		scanInterval:   scanInterval,
 		published:      make(nat.PortMap),
 		pending:        make(map[nat.Port]struct{}),
+		delegated:      make(nat.PortMap),
+		recheckTicks:   make(map[nat.Port]int),
 		addErrorLogged: make(map[nat.Port]bool),
+
+		ownershipRecheckTicks: ticks,
 	}
 }
 
@@ -145,6 +182,12 @@ func (p *ProcNetScanner) ForwardPorts() error {
 func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 	for port, bindings := range p.published {
 		if newBindings, ok := scanned[port]; ok && bindingsEqual(bindings, newBindings) {
+			p.recheckTicks[port]++
+			if p.recheckTicks[port] >= p.ownershipRecheckTicks {
+				p.recheckTicks[port] = 0
+				p.reassert(port, bindings)
+			}
+
 			continue
 		}
 		// Either the port vanished or its bind addresses changed
@@ -153,6 +196,30 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 		// preserves the two-scan gate semantics for the new shape.
 		p.unpublish(port, bindings)
 		delete(p.published, port)
+		delete(p.recheckTicks, port)
+	}
+
+	// Ports whose delegation expired this tick. They go back through
+	// the publish path below, and a renewal there logs at Debug so a
+	// long-lived delegation does not emit an Info line every recheck.
+	expiring := make(map[nat.Port]struct{})
+
+	for port, bindings := range p.delegated {
+		if newBindings, ok := scanned[port]; ok && bindingsEqual(bindings, newBindings) {
+			p.recheckTicks[port]++
+			if p.recheckTicks[port] < p.ownershipRecheckTicks {
+				continue
+			}
+			// Re-publish in this tick rather than the next. The port
+			// has been present for every scan since the delegation, so
+			// the two-scan gate has nothing left to filter.
+			expiring[port] = struct{}{}
+			p.pending[port] = struct{}{}
+		}
+		// Nothing to unexpose: the owning component cleans up its
+		// own ports.
+		delete(p.delegated, port)
+		delete(p.recheckTicks, port)
 	}
 
 	for port := range p.pending {
@@ -161,14 +228,29 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 			continue
 		}
 		if err := p.publish(port, bindings); err != nil {
+			// Another component already exposes this port; hand it off
+			// and stop retrying until the delegation is released.
+			if errors.Is(err, tracker.ErrPortAlreadyExposed) {
+				if _, renewed := expiring[port]; renewed {
+					log.Debugf("/proc/net scanner still delegating port %s to its existing exposer", port)
+				} else {
+					log.Infof("/proc/net scanner delegating port %s to its existing exposer", port)
+				}
+				p.delegated[port] = bindings
+				p.recheckTicks[port] = 0
+			}
 			continue
 		}
 		p.published[port] = bindings
+		p.recheckTicks[port] = 0
 	}
 
 	p.pending = make(map[nat.Port]struct{})
 	for port := range scanned {
 		if _, ok := p.published[port]; ok {
+			continue
+		}
+		if _, ok := p.delegated[port]; ok {
 			continue
 		}
 		p.pending[port] = struct{}{}
@@ -193,10 +275,18 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 // userspace forwarder for each loopback binding. It returns an error
 // if either step fails after rolling back the tracker entry, so the
 // caller can leave the port in pending for next-tick retry instead
-// of recording it as published.
+// of recording it as published. A tracker.ErrPortAlreadyExposed
+// return is not a failure: it tells the caller to record the port as
+// delegated instead.
 func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) error {
 	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
 	if err := p.tracker.Add(id, nat.PortMap{port: bindings}); err != nil {
+		if errors.Is(err, tracker.ErrPortAlreadyExposed) {
+			// No rollback: Add stored nothing under the scanner's id.
+			// The caller logs, since only it knows whether this is a
+			// new delegation or a renewal.
+			return err
+		}
 		p.logAddFailure(port, fmt.Sprintf("failed to add: %s", err))
 		if removeErr := p.tracker.Remove(id); removeErr != nil {
 			p.logAddFailure(port, fmt.Sprintf("rollback after tracker.Add failure: %s", removeErr))
@@ -247,6 +337,25 @@ func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) erro
 	delete(p.addErrorLogged, port)
 	log.Infof("/proc/net scanner added port: %s -> %+v", port, bindings)
 	return nil
+}
+
+// reassert re-exposes a port the scanner already published. Only the
+// tracker entry needs restoring: the loopback forwarder is the
+// scanner's own and RemoveAll does not touch it.
+//
+// Best-effort: Add exposes, stores, then notifies wsl-proxy, so a
+// failure at the notify step leaves the port exposed and stored but
+// unknown to wsl-proxy. Rolling back is unsafe, since Remove would
+// unexpose whatever an earlier publish left under this id. Every
+// later recheck then answers with the sentinel and hides the gap.
+func (p *ProcNetScanner) reassert(port nat.Port, bindings []nat.PortBinding) {
+	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
+	// The sentinel here is the scanner's own proxy still standing,
+	// which is the expected answer.
+	if err := p.tracker.Add(id, nat.PortMap{port: bindings}); err != nil &&
+		!errors.Is(err, tracker.ErrPortAlreadyExposed) {
+		p.logAddFailure(port, fmt.Sprintf("re-asserting expose: %s", err))
+	}
 }
 
 // logAddFailure emits the first publish-failure message for port at

@@ -27,6 +27,9 @@ type Tracker interface {
 	// Add adds a portMap to the storage using the containerID as a Key.
 	// It replaces all existing portMappings, without attempting to unbind listeners,
 	// so the caller is responsible for calling Remove first if necessary.
+	// Add returns ErrPortAlreadyExposed when every port it called the
+	// expose API for was already exposed by another component and
+	// nothing else failed.
 	Add(containerID string, portMapping nat.PortMap) error
 
 	// Remove removes a portMap using the containerID as a key.
