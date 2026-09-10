@@ -413,6 +413,14 @@ containerStats:
     # @source Write
     write: 쓰기
 containers:
+  confirmDelete:
+    # @source Delete
+    confirm: 삭제
+    # @reason reordered for Korean word order; plural branches identical since Korean nouns do not inflect
+    # @source Delete {count} {count, plural, one {container} other {containers}}?
+    message: '{count, plural, one {컨테이너} other {컨테이너}} {count}개를 삭제하시겠습니까?'
+    # @source Confirm container deletion
+    title: 컨테이너 삭제 확인
   manage:
     table:
       action:
@@ -1790,6 +1798,14 @@ virtualMachine:
     # @source VZ Option
     legend: VZ 옵션
 volumes:
+  confirmDelete:
+    # @source Delete
+    confirm: 삭제
+    # @reason reordered for Korean word order; plural branches identical since Korean nouns do not inflect
+    # @source Delete {count} {count, plural, one {volume} other {volumes}}?
+    message: '{count, plural, one {볼륨} other {볼륨}} {count}개를 삭제하시겠습니까?'
+    # @source Confirm volume deletion
+    title: 볼륨 삭제 확인
   files:
     # @source Available
     available: 사용 가능

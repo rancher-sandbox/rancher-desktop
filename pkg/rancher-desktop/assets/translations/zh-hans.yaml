@@ -482,6 +482,13 @@ containerStats:
     # @source Write
     write: 写入
 containers:
+  confirmDelete:
+    # @source Delete
+    confirm: 删除
+    # @source Delete {count} {count, plural, one {container} other {containers}}?
+    message: 删除 {count} 个{count, plural, one {容器} other {容器}}？
+    # @source Confirm container deletion
+    title: 确认删除容器
   manage:
     table:
       action:
@@ -1875,6 +1882,13 @@ virtualMachine:
     # @source VZ Option
     legend: VZ 选项
 volumes:
+  confirmDelete:
+    # @source Delete
+    confirm: 删除
+    # @source Delete {count} {count, plural, one {volume} other {volumes}}?
+    message: 删除 {count} 个{count, plural, one {卷} other {卷}}？
+    # @source Confirm volume deletion
+    title: 确认删除卷
   files:
     # @source Available
     available: 可用
