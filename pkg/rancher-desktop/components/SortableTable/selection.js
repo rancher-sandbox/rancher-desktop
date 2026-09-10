@@ -121,19 +121,48 @@ export default {
   watch: {
     // On page change
     pagedRows() {
-      // When the table contents changes:
-      // - Remove items that are in the selection but no longer in the table.
+      // When the table contents changes, rebuild the selection against the row
+      // objects currently in the table:
+      // - drop rows that are no longer present, and
+      // - re-bind surviving rows to the current row instances.
+      //
+      // Rows can reach `selectedRows` (local reactive data) and `pagedRows`
+      // (derived from the `rows` prop) through different Vue reactivity paths,
+      // and some tables (e.g. Images, Volumes) rebuild their row wrappers on
+      // every recompute. Selection is tracked by object identity (see the
+      // per-row checkbox `:value="selectedRows.includes(row.row)"`), so without
+      // re-binding, a still-selected row would render as unchecked while
+      // lingering in the selection - and bulk actions would operate on the
+      // invisible stale object. Compare by keyField, not object identity.
 
       const content = this.pagedRows;
-      const toRemove = [];
+      const byKey = new Map(content.map((row) => [get(row, this.keyField), row]));
+
+      const rebound = [];
 
       for (const node of this.selectedRows) {
-        if (!content.includes(node) ) {
-          toRemove.push(node);
+        const current = byKey.get(get(node, this.keyField));
+
+        if (current) {
+          rebound.push(current);
         }
       }
 
-      this.update([], toRemove);
+      const changed = rebound.length !== this.selectedRows.length ||
+        rebound.some((row, i) => row !== this.selectedRows[i]);
+
+      if (!changed) {
+        return;
+      }
+
+      this.selectedRows = rebound;
+      this.$nextTick(() => {
+        // Re-apply the imperative row-selected styling to the current rows.
+        for (const row of rebound) {
+          this.updateInput(row, true, this.keyField);
+        }
+        this.$emit('selection', this.selectedRows);
+      });
     },
   },
 
@@ -441,7 +470,7 @@ export default {
 
     update(toAdd, toRemove) {
       toRemove.forEach((row) => {
-        const index = this.selectedRows.findIndex((r) => r._key === row._key);
+        const index = this.selectedRows.findIndex((r) => get(r, this.keyField) === get(row, this.keyField));
 
         if (index !== -1) {
           this.selectedRows.splice(index, 1);
@@ -449,7 +478,13 @@ export default {
       });
 
       if ( toAdd ) {
-        this.selectedRows.push(...toAdd);
+        // Only add rows that are not already selected (compared by keyField),
+        // so callers that pass a whole group - some of whose rows may already
+        // be selected - do not create duplicate entries.
+        const selectedKeys = new Set(this.selectedRows.map((r) => get(r, this.keyField)));
+        const newRows = toAdd.filter((row) => !selectedKeys.has(get(row, this.keyField)));
+
+        this.selectedRows.push(...newRows);
       }
 
       // Uncheck and check the checkboxes of nodes that have been added/removed

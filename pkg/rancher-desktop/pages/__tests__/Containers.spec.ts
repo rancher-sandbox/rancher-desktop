@@ -22,6 +22,7 @@ mockModules({
   '@rancher/components': {
     BadgeState: componentStub,
     Banner:     componentStub,
+    Checkbox:   componentStub,
   },
   electron: { shell: { openExternal: jest.fn() } },
 });
@@ -78,5 +79,63 @@ describe('Containers methods', () => {
     expect(methods.containerCommandTarget(running)).toBe(running);
     expect(methods.containerCommandTarget(running, [])).toBe(running);
     expect(methods.containerCommandTarget(running, bulkSelection)).toBe(bulkSelection);
+  });
+
+  describe('group selection', () => {
+    /** Wrap containers the way SortableTable's group-row slot provides them. */
+    function group(ref: string, ...containers: any[]) {
+      return { ref, rows: containers.map(row => ({ row })) };
+    }
+
+    it('groupContainers unwraps the { row } wrappers back to container items', () => {
+      const a = container('a', 'running', 'Up');
+      const b = container('b', 'exited', 'Exited');
+
+      expect(methods.groupContainers(group('proj', a, b))).toEqual([a, b]);
+    });
+
+    it('isGroupSelected is true only when every container in the group is selected', () => {
+      const a = container('a', 'running', 'Up');
+      const b = container('b', 'exited', 'Exited');
+      const g = group('proj', a, b);
+      const call = (selectedRows: any[]) =>
+        methods.isGroupSelected.call({ selectedRows, groupContainers: methods.groupContainers }, g);
+
+      expect(call([])).toBe(false);
+      expect(call([a])).toBe(false);
+      expect(call([a, b])).toBe(true);
+    });
+
+    it('isGroupSelected is false for an empty group', () => {
+      const empty = group('empty');
+
+      expect(methods.isGroupSelected.call({ selectedRows: [], groupContainers: methods.groupContainers }, empty)).toBe(false);
+    });
+
+    it('isGroupIndeterminate is true only when some (but not all) are selected', () => {
+      const a = container('a', 'running', 'Up');
+      const b = container('b', 'exited', 'Exited');
+      const g = group('proj', a, b);
+      const call = (selectedRows: any[]) =>
+        methods.isGroupIndeterminate.call({ selectedRows, groupContainers: methods.groupContainers }, g);
+
+      expect(call([])).toBe(false);
+      expect(call([a])).toBe(true);
+      expect(call([a, b])).toBe(false);
+    });
+
+    it('setGroupSelected adds the whole group when checked and removes it when unchecked', () => {
+      const a = container('a', 'running', 'Up');
+      const b = container('b', 'exited', 'Exited');
+      const g = group('proj', a, b);
+      const update = jest.fn();
+      const self = { groupContainers: methods.groupContainers, $refs: { sortableTableRef: { update } } };
+
+      methods.setGroupSelected.call(self, g, true);
+      expect(update).toHaveBeenCalledWith([a, b], []);
+
+      methods.setGroupSelected.call(self, g, false);
+      expect(update).toHaveBeenCalledWith([], [a, b]);
+    });
   });
 });

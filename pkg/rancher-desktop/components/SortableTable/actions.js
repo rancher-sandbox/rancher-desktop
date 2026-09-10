@@ -105,9 +105,9 @@ export default {
         if (selectedRowsText) {
           selectedRowsText.style.display = displayType;
           selectedRowsTextWidth = selectedRowsText.offsetWidth;
-        } else {
-          selectedRowsText.style.display = 'none;';
         }
+      } else if (selectedRowsText) {
+        selectedRowsText.style.display = 'none';
       }
 
       this.hiddenActions = [];

@@ -72,4 +72,47 @@ export class ContainersPage {
   async waitForTableToLoad() {
     await this.table.waitFor({ state: 'visible' });
   }
+
+  getGroupRow(groupName: string) {
+    return this.table.locator(`tr.group-row[data-testid="container-group-${ groupName }"]`);
+  }
+
+  async waitForGroupToAppear(groupName: string, timeout = 30_000) {
+    await expect(this.getGroupRow(groupName)).toBeVisible({ timeout });
+  }
+
+  getGroupCheckbox(groupName: string) {
+    return this.getGroupRow(groupName).locator('.group-select-checkbox');
+  }
+
+  async selectGroup(groupName: string) {
+    const nativeCheckbox = this.getGroupRow(groupName).locator('input[type="checkbox"]');
+
+    // The selection persists across navigations within the same app instance,
+    // so a previous test may have left this group already selected. Clicking
+    // again would toggle it off, so only click when it is not already checked.
+    if (!await nativeCheckbox.isChecked()) {
+      await this.getGroupCheckbox(groupName).click();
+    }
+    await expect(nativeCheckbox).toBeChecked();
+  }
+
+  /**
+   * The "N selected" bulk-action count label lives in the table header, which
+   * is a sibling of the `.sortable-table` element itself - so it must be
+   * located from the page, not scoped to `this.table`.
+   */
+  getSelectionCount(count: number) {
+    return this.page.locator('.action-availability').getByText(`${ count } selected`, { exact: true });
+  }
+
+  async clickBulkStop() {
+    // Target the bulk-action button by its stable test id rather than the
+    // visible (locale-specific) English label, which also hides on overflow.
+    await this.page.getByTestId('sortable-table-stopContainer').first().click();
+  }
+
+  async clickBulkDelete() {
+    await this.page.getByTestId('sortable-table-deleteContainer').first().click();
+  }
 }
