@@ -572,7 +572,7 @@ dialog:
     delete: 删除工作负载
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: 从 {from} 降级到 {to} 将丢失现有的 Kubernetes 工作负载。是否删除数据？
-    # @source Confirming migration
+    # @source Confirm migration
     title: 确认迁移
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
@@ -734,7 +734,7 @@ images:
     multiple: 删除 {count} 个{count, plural, one {镜像} other {镜像}}？
     # @source Delete image {name}:{tag}?
     single: 删除镜像 {name}:{tag}？
-    # @source Confirming image deletion
+    # @source Confirm image deletion
     title: 确认删除镜像
   manager:
     # @source Close Output to Continue
