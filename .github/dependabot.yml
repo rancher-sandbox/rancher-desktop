@@ -45,6 +45,11 @@ updates:
     # TypeError.  Drop this rule once they support 7.x.
     dependency-name: "typescript"
     update-types: [version-update:semver-major]
+  - # @rancher/components is currently undergoing major changes, where new
+    # components under different names are being introduced.  The old components
+    # are not being maintained as well.  Instead of updating, we will have
+    # better results forking instead.
+    dependency-name: "@rancher/components"
   groups:
     # vue pins @vue/compiler-sfc exactly, so separate bumps break the lockfile.
     vue:
