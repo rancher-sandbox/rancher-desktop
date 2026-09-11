@@ -17,7 +17,6 @@
       no-rows-key="volumes.sortableTables.noRows"
       :row-actions="true"
       :paging="true"
-      :rows-per-page="10"
       :has-advanced-filtering="false"
       :loading="!volumes"
     >
@@ -96,7 +95,7 @@ interface RowItem extends Volume {
     bulkable:    boolean;
     bulkAction?: string;
   }[];
-  deleteVolume: (items?: RowItem[]) => void;
+  deleteVolume: (items?: RowItem[]) => Promise<void>;
   browseFiles:  (items?: RowItem[]) => void;
 }
 
@@ -157,8 +156,12 @@ export default defineComponent({
               bulkAction: 'deleteVolume',
             },
           ],
-          deleteVolume: (args?: Volume[]) => {
-            this.execCommand(['volume', 'rm'], Array.isArray(args) ? args : [volume]);
+          deleteVolume: async(args?: Volume[]) => {
+            const targets = Array.isArray(args) ? args : [volume];
+
+            if (await this.confirmDelete(targets)) {
+              await this.execCommand(['volume', 'rm'], targets);
+            }
           },
           browseFiles: () => {
             this.$router.push({ name: 'volumes-files-name', params: { name: volume.Name } });
@@ -239,6 +242,20 @@ export default defineComponent({
           namespace: value,
         });
       }
+    },
+    async confirmDelete(volumes: Volume[]): Promise<boolean> {
+      const cancelId = 1;
+      const result = await ipcRenderer.invoke('show-message-box', {
+        type:      'question',
+        title:     this.t('volumes.confirmDelete.title'),
+        message:   this.t('volumes.confirmDelete.message', { count: volumes.length }),
+        detail:    volumes.map(volume => volume.Name).join('\n'),
+        buttons:   [this.t('volumes.confirmDelete.confirm'), this.t('generic.cancel')],
+        defaultId: cancelId,
+        cancelId,
+      });
+
+      return result.response !== cancelId;
     },
     async execCommand(args: string[], volumes: Volume[]) {
       try {
