@@ -31,6 +31,7 @@ import {
   Version,
   VersionedDependency,
 } from '@/scripts/lib/dependencies';
+import { quoteReleaseNotes } from '@/scripts/lib/release-notes';
 
 const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
@@ -162,7 +163,7 @@ async function getBody(dependency: VersionedDependency, currentVersion: Version,
   let lastVersion = dependency.versionToTagName(currentVersion);
 
   return releaseNotes.map(([, release]) => {
-    const body = release.body?.replace(/(?<!\w)(#\d+)\b/g, (n) => `${ owner }/${ repo }${ n }`) || `Release ${ release.name } does not have release notes.`;
+    const body = release.body ? quoteReleaseNotes(release.body, owner, repo) : `Release ${ release.name } does not have release notes.`;
     const compareLink = [
       `[Compare between ${ lastVersion } and ${ release.tag_name }]`,
       `(https://github.com/${ owner }/${ repo }/compare/${ lastVersion }...${ release.tag_name })`,
