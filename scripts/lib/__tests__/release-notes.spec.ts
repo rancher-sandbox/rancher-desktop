@@ -16,9 +16,14 @@ describe('quoteReleaseNotes', () => {
     ['Thanks (@another-person)', `Thanks (${ mention('another-person') })`],
     ['Thanks @someone.', `Thanks ${ mention('someone') }.`],
     ['cc @example/maintainers', `cc ${ mention('example/maintainers', 'orgs/example/teams/maintainers') }`],
+    ['Thanks @someone/@another-person', `Thanks ${ mention('someone') }/${ mention('another-person') }`],
     ['See other/project#34', `See ${ link('other/project', 34, 'other/project#34') }`],
     ['See [#34]', `See [${ link('upstream/project', 34) }]`],
+    ['Fixes GH-12', `Fixes ${ link('upstream/project', 12, 'GH-12') }`],
+    ['Fixes #12/#13', `Fixes ${ link('upstream/project', 12) }/${ link('upstream/project', 13) }`],
+    ['Escaped \\#12 and \\@someone', `Escaped ${ link('upstream/project', 12, '\\#12') } and ${ mention('someone') }`],
     ['in https://github.com/example/tool/pull/56', 'in https://redirect.github.com/example/tool/pull/56'],
+    ['in http://github.com/example/tool/pull/56', 'in https://redirect.github.com/example/tool/pull/56'],
     ['_https://github.com/example/tool/pull/56_', '_https://redirect.github.com/example/tool/pull/56_'],
     ['[fixes #56](https://github.com/example/tool/pull/56)', '[fixes #56](https://redirect.github.com/example/tool/pull/56)'],
   ])('rewrites %j', (body, expected) => {
@@ -32,6 +37,7 @@ describe('quoteReleaseNotes', () => {
     'Run `npm install @scope/package`',
     '```\n@someone fixed #12\n```',
     'https://example.com/page#12',
+    'https://example.com/#12',
     'Zero&#8203;width',
     'https://github.com/example/tool/compare/v1.0.0...v1.1.0',
   ])('leaves %j unchanged', (body) => {

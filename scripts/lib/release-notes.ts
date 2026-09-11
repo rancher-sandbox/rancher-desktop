@@ -1,14 +1,17 @@
 const quotablePattern = new RegExp([
-  // Code spans, fenced code blocks and link text, copied unchanged, since
-  // GitHub finds no mentions or references inside them.
+  // A link to an issue or pull request.
+  /https?:\/\/github\.com\/(?<path>[\w.-]+\/[\w.-]+\/(?:issues|pull)\/\d+)/.source,
+  // Code spans, fenced code blocks, link text, and other URLs, copied
+  // unchanged, since GitHub finds no mentions or references inside them.
   /(?<ticks>`+).*?\k<ticks>/.source,
   /\[[^\]\n]*\](?=\()/.source,
-  // A link to an issue or pull request.
-  /https:\/\/github\.com\/(?<path>[\w.-]+\/[\w.-]+\/(?:issues|pull)\/\d+)/.source,
-  // An issue reference, `#12` or `owner/repo#12`, outside URLs and HTML entities.
-  /(?<![\w.&/-])(?:(?<repository>[\w-]+\/[\w.-]+))?#(?<number>\d+)\b/.source,
-  // A user or team mention, outside email addresses and URLs.
-  /(?<![\w/])@(?<mention>[a-z\d](?:-?[a-z\d])*(?:\/[\w.-]+)?)(?![\w-])/.source,
+  /(?:https?:\/\/|www\.)[^\s<>]*/.source,
+  // An issue reference, `#12`, `GH-12`, or `owner/repo#12`, outside HTML
+  // entities. GitHub links references and mentions even after a backslash
+  // escape, so the match includes the backslash.
+  /(?<![\w&\\])\\?(?:(?<repository>[\w-]+\/[\w.-]+)#|#|GH-)(?<number>\d+)\b/.source,
+  // A user or team mention, outside email addresses.
+  /(?<![\w\\])\\?@(?<mention>[a-z\d](?:-?[a-z\d])*(?:\/[\w.-]+)?)(?![\w-])/.source,
 ].join('|'), 'gis');
 
 /**
