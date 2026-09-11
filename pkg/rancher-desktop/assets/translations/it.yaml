@@ -423,6 +423,15 @@ containerStats:
     # @source Write
     write: Scrittura
 containers:
+  confirmDelete:
+    # @source Delete
+    confirm: Elimina
+    # @reason 'container' is the established loanword in it.yaml (containers.title); loanwords are invariable in the Italian plural, so both branches read the same.
+    # @source Delete {count} {count, plural, one {container} other {containers}}?
+    message: Eliminare {count} {count, plural, one {container} other {container}}?
+    # @reason 'Conferma' is both the noun and the second-person imperative in Italian, so the nominal form renders an imperative source correctly.
+    # @source Confirm container deletion
+    title: Conferma dell'eliminazione dei container
   manage:
     table:
       action:
@@ -514,7 +523,8 @@ dialog:
     delete: Elimina i carichi di lavoro
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: Il downgrade da {from} a {to} comporterà la perdita dei carichi di lavoro Kubernetes esistenti. Eliminare i dati?
-    # @source Confirming migration
+    # @reason 'Conferma' is both the noun and the second-person imperative in Italian, so the nominal form renders an imperative source correctly.
+    # @source Confirm migration
     title: Conferma della migrazione
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
@@ -702,7 +712,8 @@ images:
     multiple: Eliminare {count} {count, plural, one {immagine} other {immagini}}?
     # @source Delete image {name}:{tag}?
     single: Eliminare l'immagine {name}:{tag}?
-    # @source Confirming image deletion
+    # @reason 'Conferma' is both the noun and the second-person imperative in Italian, so the nominal form renders an imperative source correctly.
+    # @source Confirm image deletion
     title: Conferma dell'eliminazione delle immagini
   manager:
     # @source Close Output to Continue
@@ -1850,6 +1861,14 @@ virtualMachine:
     # @source VZ Option
     legend: Opzione VZ
 volumes:
+  confirmDelete:
+    # @source Delete
+    confirm: Elimina
+    # @source Delete {count} {count, plural, one {volume} other {volumes}}?
+    message: Eliminare {count} {count, plural, one {volume} other {volumi}}?
+    # @reason 'Conferma' is both the noun and the second-person imperative in Italian, so the nominal form renders an imperative source correctly.
+    # @source Confirm volume deletion
+    title: Conferma dell'eliminazione dei volumi
   files:
     # @source Available
     available: Disponibile
