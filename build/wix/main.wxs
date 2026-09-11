@@ -186,16 +186,14 @@
         Description="Rancher Desktop host-switch.exe profile exception for private networks"
         Program="[APPLICATIONFOLDER]resources\resources\win32\internal\host-switch.exe"
         Profile="private"
-        Scope="any"
-        Protocol="tcp" />
+        Scope="any" />
       <fire:FirewallException
         Id="HostSwitchFirewallDomainException"
         Name="Rancher Desktop Networking Domain Exception"
         Description="Rancher Desktop host-switch.exe profile exception for domain networks"
         Program="[APPLICATIONFOLDER]resources\resources\win32\internal\host-switch.exe"
         Profile="domain"
-        Scope="any"
-        Protocol="tcp" />
+        Scope="any" />
     </Component>
 
     <!-- If required, run the app after install (for updates) -->
