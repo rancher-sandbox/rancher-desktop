@@ -2,25 +2,27 @@ import { quoteReleaseNotes } from '../release-notes';
 
 describe('quoteReleaseNotes', () => {
   /** A mention in its quoted form. */
-  function code(handle: string): string {
-    return `<code>@\u200B${ handle }</code>`;
+  function mention(handle: string, profile = handle): string {
+    return `<a href="https://github.com/${ profile }"><code>@\u200B${ handle }</code></a>`;
   }
 
   /** An issue reference in its quoted form. */
-  function link(repository: string, number: number): string {
-    return `[${ repository }#${ number }](https://redirect.github.com/${ repository }/issues/${ number })`;
+  function link(repository: string, number: number, text = `#${ number }`): string {
+    return `<a href="https://redirect.github.com/${ repository }/issues/${ number }">${ text }</a>`;
   }
 
   it.each([
-    ['* Fix it by @someone in #12', `* Fix it by ${ code('someone') } in ${ link('example/tool', 12) }`],
-    ['Thanks (@another-person)', `Thanks (${ code('another-person') })`],
-    ['cc @example/maintainers', `cc ${ code('example/maintainers') }`],
-    ['See other/project#34', `See ${ link('other/project', 34) }`],
-    ['See [#34]', `See [${ link('example/tool', 34) }]`],
+    ['* Fix it by @someone in #12', `* Fix it by ${ mention('someone') } in ${ link('upstream/project', 12) }`],
+    ['Thanks (@another-person)', `Thanks (${ mention('another-person') })`],
+    ['Thanks @someone.', `Thanks ${ mention('someone') }.`],
+    ['cc @example/maintainers', `cc ${ mention('example/maintainers', 'orgs/example/teams/maintainers') }`],
+    ['See other/project#34', `See ${ link('other/project', 34, 'other/project#34') }`],
+    ['See [#34]', `See [${ link('upstream/project', 34) }]`],
     ['in https://github.com/example/tool/pull/56', 'in https://redirect.github.com/example/tool/pull/56'],
+    ['_https://github.com/example/tool/pull/56_', '_https://redirect.github.com/example/tool/pull/56_'],
     ['[fixes #56](https://github.com/example/tool/pull/56)', '[fixes #56](https://redirect.github.com/example/tool/pull/56)'],
   ])('rewrites %j', (body, expected) => {
-    expect(quoteReleaseNotes(body, 'example', 'tool')).toEqual(expected);
+    expect(quoteReleaseNotes(body, 'upstream', 'project')).toEqual(expected);
   });
 
   it.each([
@@ -33,6 +35,6 @@ describe('quoteReleaseNotes', () => {
     'Zero&#8203;width',
     'https://github.com/example/tool/compare/v1.0.0...v1.1.0',
   ])('leaves %j unchanged', (body) => {
-    expect(quoteReleaseNotes(body, 'example', 'tool')).toEqual(body);
+    expect(quoteReleaseNotes(body, 'upstream', 'project')).toEqual(body);
   });
 });
