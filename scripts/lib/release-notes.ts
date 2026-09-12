@@ -19,6 +19,10 @@ const quotablePattern = new RegExp([
   String.raw`(?<![a-z\d\\]|[a-z\d]_)\\?@(?<mention>${ login }(?:/[\w.-]+)?)(?![a-z\d-]|_[a-z\d])`,
 ].join('|'), 'gis');
 
+// Text that ends where only a URL fits: a markdown link destination or
+// reference definition, an autolink, or an HTML attribute.
+const urlOnlyContext = /(?:\][(:]\s*|[<"])$/;
+
 /**
  * Rewrite upstream release notes for quoting in a pull request body.
  * GitHub notifies every user a body mentions and adds a backlink to every
@@ -29,11 +33,25 @@ const quotablePattern = new RegExp([
  */
 export function quoteReleaseNotes(body: string, owner: string, repo: string): string {
   return body.replace(quotablePattern, (match, ...args) => {
-    // The last argument to a replacer is the named groups object.
-    const { path, repository, number, mention } = args.at(-1);
+    // A replacer's last three arguments are the match offset, the whole
+    // string, and the named groups object.
+    const [offset, , { path, repository, number, mention }] = args.slice(-3);
 
     if (path) {
-      return `https://redirect.github.com/${ path }`;
+      const href = `https://redirect.github.com/${ path }`;
+      const before = body.slice(0, offset);
+      const after = body.slice(offset + match.length);
+
+      // Keep the URL where an HTML link would break the markup, or where the
+      // link's `owner/repo#12` text would drop whatever follows the number.
+      if (urlOnlyContext.test(before) || /^[/#?]/.test(after)) {
+        return href;
+      }
+      // In an HTML block, GitHub would link the `owner/repo/pull/12` inside a
+      // bare redirect URL.
+      const [pathOwner, pathRepo, , pathNumber] = path.split('/');
+
+      return `<a href="${ href }">${ pathOwner }/${ pathRepo }#${ pathNumber }</a>`;
     }
     // HTML links work inside HTML blocks too, where GitHub parses no markdown.
     if (number) {

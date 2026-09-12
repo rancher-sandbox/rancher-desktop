@@ -11,6 +11,9 @@ describe('quoteReleaseNotes', () => {
     return `<a href="https://redirect.github.com/${ repository }/issues/${ number }">${ text }</a>`;
   }
 
+  /** A bare pull request URL in its quoted form. */
+  const pullRequest = '<a href="https://redirect.github.com/other/project/pull/56">other/project#56</a>';
+
   it.each([
     ['* Fix it by @someone in #12', `* Fix it by ${ mention('someone') } in ${ link('upstream/project', 12) }`],
     ['Thanks (@another-person)', `Thanks (${ mention('another-person') })`],
@@ -25,10 +28,14 @@ describe('quoteReleaseNotes', () => {
     ['Thanks _@someone_', `Thanks _${ mention('someone') }_`],
     ['See _other/project#34_', `See _${ link('other/project', 34, 'other/project#34') }_`],
     ['Fixes _#12_ and __GH-13__', `Fixes _${ link('upstream/project', 12) }_ and __${ link('upstream/project', 13, 'GH-13') }__`],
-    ['in https://github.com/other/project/pull/56', 'in https://redirect.github.com/other/project/pull/56'],
-    ['in http://github.com/other/project/pull/56', 'in https://redirect.github.com/other/project/pull/56'],
-    ['_https://github.com/other/project/pull/56_', '_https://redirect.github.com/other/project/pull/56_'],
+    ['in https://github.com/other/project/pull/56', `in ${ pullRequest }`],
+    ['in http://github.com/other/project/pull/56', `in ${ pullRequest }`],
+    ['_https://github.com/other/project/pull/56_', `_${ pullRequest }_`],
     ['[fixes #56](https://github.com/other/project/pull/56)', '[fixes #56](https://redirect.github.com/other/project/pull/56)'],
+    ['[56]: https://github.com/other/project/pull/56', '[56]: https://redirect.github.com/other/project/pull/56'],
+    ['<https://github.com/other/project/pull/56>', '<https://redirect.github.com/other/project/pull/56>'],
+    ['<a href="https://github.com/other/project/pull/56">fix</a>', '<a href="https://redirect.github.com/other/project/pull/56">fix</a>'],
+    ['https://github.com/other/project/pull/56/files', 'https://redirect.github.com/other/project/pull/56/files'],
   ])('rewrites %j', (body, expected) => {
     expect(quoteReleaseNotes(body, 'upstream', 'project')).toEqual(expected);
   });
