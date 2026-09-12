@@ -22,6 +22,9 @@ describe('quoteReleaseNotes', () => {
     ['Fixes GH-12', `Fixes ${ link('upstream/project', 12, 'GH-12') }`],
     ['Fixes #12/#13', `Fixes ${ link('upstream/project', 12) }/${ link('upstream/project', 13) }`],
     ['Escaped \\#12 and \\@someone', `Escaped ${ link('upstream/project', 12, '\\#12') } and ${ mention('someone') }`],
+    ['Thanks _@someone_', `Thanks _${ mention('someone') }_`],
+    ['See _other/project#34_', `See _${ link('other/project', 34, 'other/project#34') }_`],
+    ['Fixes _#12_ and __GH-13__', `Fixes _${ link('upstream/project', 12) }_ and __${ link('upstream/project', 13, 'GH-13') }__`],
     ['in https://github.com/other/project/pull/56', 'in https://redirect.github.com/other/project/pull/56'],
     ['in http://github.com/other/project/pull/56', 'in https://redirect.github.com/other/project/pull/56'],
     ['_https://github.com/other/project/pull/56_', '_https://redirect.github.com/other/project/pull/56_'],
@@ -32,6 +35,7 @@ describe('quoteReleaseNotes', () => {
 
   it.each([
     'Write to someone@example.com',
+    'snake_#12 and snake_@someone',
     'Read https://blog.example.com/@someone/post',
     '[found by @someone](https://example.com)',
     'Run `npm install @scope/package`',
