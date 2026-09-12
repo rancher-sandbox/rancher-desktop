@@ -31,7 +31,7 @@ import {
   Version,
   VersionedDependency,
 } from '@/scripts/lib/dependencies';
-import { quoteReleaseNotes } from '@/scripts/lib/release-notes';
+import { formatReleaseNotes } from '@/scripts/lib/release-notes';
 
 const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
@@ -160,33 +160,9 @@ async function getBody(dependency: VersionedDependency, currentVersion: Version,
   }
 
   releaseNotes.sort(([a], [b]) => semver.compare(a, b));
-  let lastVersion = dependency.versionToTagName(currentVersion);
+  const releases = releaseNotes.map(([, release]) => release);
 
-  return releaseNotes.map(([, release]) => {
-    const body = release.body
-      ? quoteReleaseNotes(release.body, owner, repo)
-      : `Release ${ release.name } does not have release notes.`;
-    const compareLink = [
-      `[Compare between ${ lastVersion } and ${ release.tag_name }]`,
-      `(https://github.com/${ owner }/${ repo }/compare/${ lastVersion }...${ release.tag_name })`,
-    ].join('');
-
-    lastVersion = release.tag_name;
-    if (releaseNotes.length > 1) {
-      // Make sure we don't have leading spaces or this turns into <pre>.
-      return [
-        '<details>',
-        `<summary><h3>${ release.name } (${ release.tag_name })</h3></summary>`,
-        '',
-        body,
-        '</details>',
-        '',
-        compareLink,
-      ].join('\n');
-    }
-
-    return `## ${ release.name } (${ release.tag_name })\n${ body }\n${ compareLink }\n`;
-  }).join('\n');
+  return formatReleaseNotes(releases, dependency.versionToTagName(currentVersion), owner, repo);
 }
 
 async function createDependencyBumpPR(dependency: VersionedDependency, currentVersion: Version, latestVersion: Version): Promise<void> {

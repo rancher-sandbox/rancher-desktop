@@ -70,3 +70,39 @@ export function quoteReleaseNotes(body: string, owner: string, repo: string): st
     return match;
   });
 }
+
+/** The fields of a GitHub release that `formatReleaseNotes` reads. */
+export interface Release {
+  name:     string | null;
+  tag_name: string;
+  html_url: string;
+  body?:    string | null;
+}
+
+/**
+ * Format the notes of `releases`, which must be sorted oldest first, for the
+ * body of a pull request that bumps a dependency from `previousTag`.
+ */
+export function formatReleaseNotes(releases: Release[], previousTag: string, owner: string, repo: string): string {
+  let lastVersion = previousTag;
+
+  return releases.map((release, index) => {
+    // GitHub rejects a pull request body over 65,536 characters, which the
+    // notes of several releases can exceed, so link all but the newest.
+    let body = `[Release notes](${ release.html_url })`;
+
+    if (index === releases.length - 1) {
+      body = release.body
+        ? quoteReleaseNotes(release.body, owner, repo)
+        : `Release ${ release.name } does not have release notes.`;
+    }
+    const compareLink = [
+      `[Compare between ${ lastVersion } and ${ release.tag_name }]`,
+      `(https://github.com/${ owner }/${ repo }/compare/${ lastVersion }...${ release.tag_name })`,
+    ].join('');
+
+    lastVersion = release.tag_name;
+
+    return `## ${ release.name } (${ release.tag_name })\n${ body }\n${ compareLink }\n`;
+  }).join('\n');
+}

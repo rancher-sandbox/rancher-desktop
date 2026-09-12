@@ -1,4 +1,4 @@
-import { quoteReleaseNotes } from '../release-notes';
+import { formatReleaseNotes, quoteReleaseNotes, Release } from '../release-notes';
 
 describe('quoteReleaseNotes', () => {
   /** A mention in its quoted form. */
@@ -53,5 +53,29 @@ describe('quoteReleaseNotes', () => {
     'https://github.com/other/project/compare/v1.0.0...v1.1.0',
   ])('leaves %j unchanged', (body) => {
     expect(quoteReleaseNotes(body, 'upstream', 'project')).toEqual(body);
+  });
+});
+
+describe('formatReleaseNotes', () => {
+  /** A release of upstream/project. */
+  function release(version: string, body: string): Release {
+    return {
+      name: version, tag_name: version, html_url: `https://github.com/upstream/project/releases/tag/${ version }`, body,
+    };
+  }
+
+  it('quotes the notes of the newest release and links the older ones', () => {
+    const releases = [release('v1.1.0', 'Older notes'), release('v1.2.0', 'Fix #13')];
+
+    expect(formatReleaseNotes(releases, 'v1.0.0', 'upstream', 'project')).toEqual([
+      '## v1.1.0 (v1.1.0)',
+      '[Release notes](https://github.com/upstream/project/releases/tag/v1.1.0)',
+      '[Compare between v1.0.0 and v1.1.0](https://github.com/upstream/project/compare/v1.0.0...v1.1.0)',
+      '',
+      '## v1.2.0 (v1.2.0)',
+      'Fix <a href="https://redirect.github.com/upstream/project/issues/13">#13</a>',
+      '[Compare between v1.1.0 and v1.2.0](https://github.com/upstream/project/compare/v1.1.0...v1.2.0)',
+      '',
+    ].join('\n'));
   });
 });
