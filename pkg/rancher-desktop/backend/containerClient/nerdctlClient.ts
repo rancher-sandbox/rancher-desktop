@@ -145,12 +145,23 @@ export class NerdctlClient implements ContainerEngineClient {
     ];
 
     for (const cmd of commandsToCheck) {
+      let failureCount = 0;
+
       while (true) {
         try {
           await this.vm.execCommand({ expectFailure: true, root: true }, ...cmd);
           break;
         } catch (ex) {
-          // Ignore the error, try again
+          failureCount++;
+          // Nothing bounds this loop, so an engine that never becomes ready
+          // stalls the whole start with no log line naming the command that
+          // fails.  A production SpawnError prints neither stdout nor stderr,
+          // so read stderr off the exception.
+          if (failureCount % 10 === 0) {
+            const stderr = ex && typeof ex === 'object' && 'stderr' in ex && typeof ex.stderr === 'string' ? ex.stderr.trim() : '';
+
+            console.error(`Failed to run ${ cmd.join(' ') } ${ failureCount } times (will retry): ${ ex }${ stderr ? `\n${ stderr }` : '' }`);
+          }
           await util.promisify(setTimeout)(1_000);
         }
       }
