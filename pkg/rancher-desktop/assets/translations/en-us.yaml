@@ -877,12 +877,23 @@ containerInfo:
   logs: Logs
   shell: Shell
   stats: Stats
+  files: Files
   search:
     ariaLabel: Search in logs
     clearSearch: Clear search
     nextMatch: Next match
     placeholder: Search logs...
     previousMatch: Previous match
+containerFiles:
+  loading: Loading…
+  refresh: Refresh
+  download: Download
+  selectPrompt: Select a file to preview its contents.
+  binary: This file appears to be binary and cannot be previewed. Use Download to save it.
+  truncated: This file is large; only the beginning is shown. Use Download to save the whole file.
+  errors:
+    list: Failed to list directory.
+    read: Failed to read file.
 containerInspect:
   loading: Loading container details…
   error:
