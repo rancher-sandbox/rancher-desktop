@@ -19,10 +19,6 @@ const quotablePattern = new RegExp([
   String.raw`(?<![a-z\d\\]|[a-z\d]_)\\?@(?<mention>${ login }(?:/[\w.-]+)?)(?![a-z\d-]|_[a-z\d])`,
 ].join('|'), 'gis');
 
-// Text that ends where only a URL fits: a markdown link destination or
-// reference definition, an autolink, or an HTML attribute.
-const urlOnlyContext = /(?:\][(:]\s*|[<"])$/;
-
 /**
  * Rewrite upstream release notes for quoting in a pull request body.
  * GitHub notifies every user a body mentions and adds a backlink to every
@@ -42,9 +38,11 @@ export function quoteReleaseNotes(body: string, owner: string, repo: string): st
       const before = body.slice(0, offset);
       const after = body.slice(offset + match.length);
 
-      // Keep the URL where an HTML link would break the markup, or where the
-      // link's `owner/repo#12` text would drop whatever follows the number.
-      if (urlOnlyContext.test(before) || /^[/#?]/.test(after)) {
+      // Keep the URL where an HTML link would break the markup (a markdown
+      // link destination or reference definition, an autolink, or an HTML
+      // attribute value), or where the link's `owner/repo#12` text would drop
+      // whatever follows the number.
+      if (/(?:\][(:]\s*|<|=\s*["']?)$/.test(before) || /^[/#?]/.test(after)) {
         return href;
       }
       // In an HTML block, GitHub would link the `owner/repo/pull/12` inside a
@@ -53,7 +51,7 @@ export function quoteReleaseNotes(body: string, owner: string, repo: string): st
 
       return `<a href="${ href }">${ pathOwner }/${ pathRepo }#${ pathNumber }</a>`;
     }
-    // HTML links work inside HTML blocks too, where GitHub parses no markdown.
+    // HTML links work inside HTML blocks too, where GitHub does not parse markdown.
     if (number) {
       const target = repository ?? `${ owner }/${ repo }`;
 

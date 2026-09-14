@@ -35,6 +35,9 @@ describe('quoteReleaseNotes', () => {
     ['[56]: https://github.com/other/project/pull/56', '[56]: https://redirect.github.com/other/project/pull/56'],
     ['<https://github.com/other/project/pull/56>', '<https://redirect.github.com/other/project/pull/56>'],
     ['<a href="https://github.com/other/project/pull/56">fix</a>', '<a href="https://redirect.github.com/other/project/pull/56">fix</a>'],
+    ["<a href='https://github.com/other/project/pull/56'>fix</a>", "<a href='https://redirect.github.com/other/project/pull/56'>fix</a>"],
+    ['<a href=https://github.com/other/project/pull/56>fix</a>', '<a href=https://redirect.github.com/other/project/pull/56>fix</a>'],
+    ['See "https://github.com/other/project/pull/56"', `See "${ pullRequest }"`],
     ['https://github.com/other/project/pull/56/files', 'https://redirect.github.com/other/project/pull/56/files'],
   ])('rewrites %j', (body, expected) => {
     expect(quoteReleaseNotes(body, 'upstream', 'project')).toEqual(expected);
