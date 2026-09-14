@@ -2064,11 +2064,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       } catch (err) {
         console.error('Error starting lima:', err);
         await this.setState(State.ERROR);
-        if (err instanceof BackendError) {
-          if (!err.fatal) {
-            return;
-          }
-        }
         throw err;
       } finally {
         this.currentAction = Action.NONE;
