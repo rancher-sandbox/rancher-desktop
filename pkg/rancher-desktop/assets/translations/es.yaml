@@ -419,8 +419,8 @@ containerStats:
     write: Escritura
 containers:
   confirmDelete:
-    # @source Delete
-    confirm: Eliminar
+    # @source &Delete
+    confirm: '&Eliminar'
     # @source Delete {count} {count, plural, one {container} other {containers}}?
     message: ¿Eliminar {count} {count, plural, one {contenedor} other {contenedores}}?
     # @source Confirm container deletion
@@ -1834,8 +1834,8 @@ virtualMachine:
     legend: Opción de VZ
 volumes:
   confirmDelete:
-    # @source Delete
-    confirm: Eliminar
+    # @source &Delete
+    confirm: '&Eliminar'
     # @source Delete {count} {count, plural, one {volume} other {volumes}}?
     message: ¿Eliminar {count} {count, plural, one {volumen} other {volúmenes}}?
     # @source Confirm volume deletion
