@@ -16,7 +16,6 @@
       no-rows-key="containers.sortableTables.noRows"
       :row-actions="true"
       :paging="true"
-      :rows-per-page="10"
       :has-advanced-filtering="false"
       :loading="containers === null"
       group-by="projectGroup"
@@ -163,7 +162,7 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
  * @property { (this: Container, containers?: Container[]) => void } [stopContainer]
  * @property { (this: Container, containers?: Container[]) => void } [restartContainer]
  * @property { (this: Container, containers?: Container[]) => void } [startContainer]
- * @property { (this: Container, containers?: Container[]) => void } [deleteContainer]
+ * @property { (this: Container, containers?: Container[]) => Promise<void> } [deleteContainer]
  * @property { (this: Container) => void } [viewInfo]
  * @property { (readonly [number, number])[] } portList
  */
@@ -249,8 +248,12 @@ export default defineComponent({
           startContainer:   (args) => {
             this.execCommand('start', this.containerCommandTarget(container, args));
           },
-          deleteContainer:   (args) => {
-            this.execCommand('rm', this.containerCommandTarget(container, args));
+          deleteContainer:   async(args) => {
+            const targets = this.containerCommandTarget(container, args);
+
+            if (await this.confirmDelete(targets)) {
+              await this.execCommand('rm', targets);
+            }
           },
           viewInfo: () => {
             this.viewInfo(container);
@@ -292,8 +295,24 @@ export default defineComponent({
     clearTimeout(this.subscribeTimer);
   },
   methods: {
+    /** @returns {Container[]} The bulk selection when the action came from the
+     * table's action bar, otherwise just the container in this row. */
     containerCommandTarget(container, args) {
-      return args?.length ? args : container;
+      return args?.length ? args : [container];
+    },
+    async confirmDelete(containers) {
+      const cancelId = 1;
+      const result = await ipcRenderer.invoke('show-message-box', {
+        type:      'question',
+        title:     this.t('containers.confirmDelete.title'),
+        message:   this.t('containers.confirmDelete.message', { count: containers.length }),
+        detail:    containers.map(container => container.containerName).join('\n'),
+        buttons:   [this.t('containers.confirmDelete.confirm'), this.t('generic.cancel')],
+        defaultId: cancelId,
+        cancelId,
+      });
+
+      return result.response !== cancelId;
     },
     getContainerActions(container) {
       return [
@@ -424,11 +443,11 @@ export default defineComponent({
     /**
      * Execute a command against some containers
      * @param command {string} The command to run
-     * @param _ids {Container | Container[]} The containers to affect
+     * @param containers {Container[]} The containers to affect
      */
-    async execCommand(command, _ids) {
+    async execCommand(command, containers) {
       try {
-        const ids = Array.isArray(_ids) ? _ids.map(c => c.id) : [_ids.id];
+        const ids = containers.map(container => container.id);
         const options = { cwd: '/' };
 
         console.info(`Executing command ${ command } on container ${ ids }`);

@@ -6,6 +6,30 @@ import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
 
 import { ContainerEngine } from '@pkg/config/settings';
 
+/** Button indexes in the delete confirmation, matching its `buttons` array. */
+const CONFIRM_DELETE = 0;
+const CANCEL_DELETE = 1;
+
+/**
+ * Replace the native delete confirmation with one that answers `response` and
+ * records the options it was given, so a test can assert what the user saw.
+ */
+async function answerDeleteConfirmation(electronApp: ElectronApplication, response: number) {
+  await electronApp.evaluate(({ dialog }, response) => {
+    (globalThis as any).lastDeleteConfirmation = undefined;
+    dialog.showMessageBox = ((options: any) => {
+      (globalThis as any).lastDeleteConfirmation = options;
+
+      return Promise.resolve({ response, checkboxChecked: false });
+    }) as typeof dialog.showMessageBox;
+  }, response);
+}
+
+/** The options the delete confirmation was last shown with. */
+function lastDeleteConfirmation(electronApp: ElectronApplication): Promise<any> {
+  return electronApp.evaluate(() => (globalThis as any).lastDeleteConfirmation);
+}
+
 let page: Page;
 
 test.describe.serial('Volumes Tests', () => {
@@ -20,6 +44,7 @@ test.describe.serial('Volumes Tests', () => {
 
     const navPage = new NavPage(page);
     await navPage.progressBecomesReady();
+    await answerDeleteConfirmation(electronApp, CONFIRM_DELETE);
   });
 
   test.afterAll(async({ colorScheme }, testInfo) => {
@@ -90,6 +115,16 @@ test.describe.serial('Volumes Tests', () => {
     await page.waitForFunction(async() => {
       return (await window.ddClient.docker.listContainers({ all: true })).length === 0;
     });
+    // Cancelling the confirmation must leave the volume alone.
+    await answerDeleteConfirmation(electronApp, CANCEL_DELETE);
+    await volumesPage.deleteVolume(testVolumeName);
+    await expect.poll(() => lastDeleteConfirmation(electronApp)).toMatchObject({
+      detail:  testVolumeName,
+      message: 'Delete 1 volume?',
+    });
+    await expect(volumesPage.getVolumeRow(testVolumeName)).toBeVisible();
+
+    await answerDeleteConfirmation(electronApp, CONFIRM_DELETE);
     await volumesPage.deleteVolume(testVolumeName);
     await expect(volumesPage.errorBanner).toBeHidden();
     await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({

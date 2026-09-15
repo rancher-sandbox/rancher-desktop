@@ -418,6 +418,13 @@ containerStats:
     # @source Write
     write: Escritura
 containers:
+  confirmDelete:
+    # @source Delete
+    confirm: Eliminar
+    # @source Delete {count} {count, plural, one {container} other {containers}}?
+    message: ¿Eliminar {count} {count, plural, one {contenedor} other {contenedores}}?
+    # @source Confirm container deletion
+    title: Confirmar la eliminación de contenedores
   manage:
     table:
       action:
@@ -507,8 +514,8 @@ dialog:
     delete: Eliminar cargas de trabajo
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: Bajar de la versión {from} a la {to} hará que se pierdan las cargas de trabajo de Kubernetes existentes. ¿Desea eliminar los datos?
-    # @source Confirming migration
-    title: Confirmación de la migración
+    # @source Confirm migration
+    title: Confirmar la migración
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
     detail: 'Se usará en su lugar la versión mínima de actualización recomendada: {version}'
@@ -690,8 +697,8 @@ images:
     multiple: ¿Eliminar {count} {count, plural, one {imagen} other {imágenes}}?
     # @source Delete image {name}:{tag}?
     single: ¿Eliminar la imagen {name}:{tag}?
-    # @source Confirming image deletion
-    title: Confirmación de eliminación de imágenes
+    # @source Confirm image deletion
+    title: Confirmar la eliminación de imágenes
   manager:
     # @source Close Output to Continue
     close: Cerrar la salida para continuar
@@ -1824,6 +1831,13 @@ virtualMachine:
     # @source VZ Option
     legend: Opción de VZ
 volumes:
+  confirmDelete:
+    # @source Delete
+    confirm: Eliminar
+    # @source Delete {count} {count, plural, one {volume} other {volumes}}?
+    message: ¿Eliminar {count} {count, plural, one {volumen} other {volúmenes}}?
+    # @source Confirm volume deletion
+    title: Confirmar la eliminación de volúmenes
   files:
     # @source Available
     available: Disponible
