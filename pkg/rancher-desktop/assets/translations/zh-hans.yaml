@@ -485,6 +485,7 @@ containers:
   confirmDelete:
     # @source &Delete
     confirm: 删除(&D)
+    # @reason Chinese nouns keep one form for any count, so both plural branches are identical.
     # @source Delete {count} {count, plural, one {container} other {containers}}?
     message: 删除 {count} 个{count, plural, one {容器} other {容器}}？
     # @source Confirm container deletion
@@ -737,6 +738,7 @@ images:
   confirmDelete:
     # @source Delete
     confirm: 删除
+    # @reason Chinese nouns keep one form for any count, so both plural branches are identical.
     # @source Delete {count} {count, plural, one {image} other {images}}?
     multiple: 删除 {count} 个{count, plural, one {镜像} other {镜像}}？
     # @source Delete image {name}:{tag}?
@@ -1887,6 +1889,7 @@ volumes:
   confirmDelete:
     # @source &Delete
     confirm: 删除(&D)
+    # @reason Chinese nouns keep one form for any count, so both plural branches are identical.
     # @source Delete {count} {count, plural, one {volume} other {volumes}}?
     message: 删除 {count} 个{count, plural, one {卷} other {卷}}？
     # @source Confirm volume deletion
