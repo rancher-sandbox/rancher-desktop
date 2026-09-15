@@ -321,8 +321,9 @@ export default defineComponent({
           [acceptId]: this.t('containers.confirmDelete.confirm'),
           [cancelId]: this.t('generic.cancel'),
         }),
-        defaultId: cancelId,
+        defaultId:           cancelId,
         cancelId,
+        normalizeAccessKeys: true,
       });
 
       return result.response !== cancelId;

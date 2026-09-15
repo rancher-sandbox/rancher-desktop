@@ -424,8 +424,8 @@ containerStats:
     write: Scrittura
 containers:
   confirmDelete:
-    # @source Delete
-    confirm: Elimina
+    # @source &Delete
+    confirm: '&Elimina'
     # @reason 'container' is the established loanword in it.yaml (containers.title); loanwords are invariable in the Italian plural, so both branches read the same.
     # @source Delete {count} {count, plural, one {container} other {containers}}?
     message: Eliminare {count} {count, plural, one {container} other {container}}?
@@ -1862,8 +1862,8 @@ virtualMachine:
     legend: Opzione VZ
 volumes:
   confirmDelete:
-    # @source Delete
-    confirm: Elimina
+    # @source &Delete
+    confirm: '&Elimina'
     # @source Delete {count} {count, plural, one {volume} other {volumes}}?
     message: Eliminare {count} {count, plural, one {volume} other {volumi}}?
     # @reason 'Conferma' is both the noun and the second-person imperative in Italian, so the nominal form renders an imperative source correctly.

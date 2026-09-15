@@ -483,8 +483,8 @@ containerStats:
     write: 写入
 containers:
   confirmDelete:
-    # @source Delete
-    confirm: 删除
+    # @source &Delete
+    confirm: 删除(&D)
     # @source Delete {count} {count, plural, one {container} other {containers}}?
     message: 删除 {count} 个{count, plural, one {容器} other {容器}}？
     # @source Confirm container deletion
@@ -1883,8 +1883,8 @@ virtualMachine:
     legend: VZ 选项
 volumes:
   confirmDelete:
-    # @source Delete
-    confirm: 删除
+    # @source &Delete
+    confirm: 删除(&D)
     # @source Delete {count} {count, plural, one {volume} other {volumes}}?
     message: 删除 {count} 个{count, plural, one {卷} other {卷}}？
     # @source Confirm volume deletion

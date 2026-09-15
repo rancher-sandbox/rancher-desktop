@@ -9,6 +9,7 @@ import * as K8s from '@pkg/backend/k8s';
 import { getSettings } from '@pkg/config/settingsImpl';
 import { getLocale } from '@pkg/main/i18n';
 import { IpcRendererEvents } from '@pkg/typings/electron-ipc';
+import { removeParenthesizedAccessKey } from '@pkg/utils/accessKeys';
 import { isDevBuild } from '@pkg/utils/environment';
 import Logging from '@pkg/utils/logging';
 import paths from '@pkg/utils/paths';
@@ -701,6 +702,11 @@ export async function openSudoPrompt(explanations: Record<string, string[]>): Pr
 
 export async function showMessageBox(options: Electron.MessageBoxOptions, couldBeModal = false) {
   const mainWindow = couldBeModal ? getWindow('main') : null;
+
+  // On macOS, normalizeAccessKeys removes only the "&", which would leave "削除(D)".
+  if (options.normalizeAccessKeys && process.platform === 'darwin') {
+    options = { ...options, buttons: options.buttons?.map(removeParenthesizedAccessKey) };
+  }
 
   return await (mainWindow ? Electron.dialog.showMessageBox(mainWindow, options) : Electron.dialog.showMessageBox(options));
 }

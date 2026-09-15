@@ -117,9 +117,10 @@ describe('Containers methods', () => {
       showMessageBox.mockResolvedValue({ response: cancelButton });
       await expect(methods.confirmDelete.call(helpers, [])).resolves.toBe(false);
       expect(showMessageBox).toHaveBeenCalledWith('show-message-box', expect.objectContaining({
-        buttons:   ['Delete', 'Cancel'],
-        cancelId:  cancelButton,
-        defaultId: cancelButton,
+        buttons:             ['&Delete', 'Cancel'],
+        cancelId:            cancelButton,
+        defaultId:           cancelButton,
+        normalizeAccessKeys: true,
       }));
     });
 
