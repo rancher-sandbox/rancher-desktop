@@ -296,19 +296,31 @@ export default defineComponent({
     clearTimeout(this.subscribeTimer);
   },
   methods: {
-    /** @returns {Container[]} The bulk selection when the action came from the
-     * table's action bar, otherwise just the container in this row. */
+    /**
+     * @param container {Container} The container in this row.
+     * @param args {Container[] | undefined} The bulk selection from the table's action bar, if any.
+     * @returns {Container[]} The bulk selection if there is one, otherwise the row's container.
+     */
     containerCommandTarget(container, args) {
       return args?.length ? args : [container];
     },
+    /**
+     * Ask the user to confirm deleting the given containers.
+     * @param containers {Container[]} The containers to delete, listed by name in the dialog.
+     * @returns {Promise<boolean>} Whether the user chose to delete them.
+     */
     async confirmDelete(containers) {
+      const acceptId = 0;
       const cancelId = 1;
       const result = await ipcRenderer.invoke('show-message-box', {
         type:      'question',
         title:     this.t('containers.confirmDelete.title'),
         message:   this.t('containers.confirmDelete.message', { count: containers.length }),
         detail:    containers.map(container => container.containerName).join('\n'),
-        buttons:   [this.t('containers.confirmDelete.confirm'), this.t('generic.cancel')],
+        buttons:   Object.assign([], {
+          [acceptId]: this.t('containers.confirmDelete.confirm'),
+          [cancelId]: this.t('generic.cancel'),
+        }),
         defaultId: cancelId,
         cancelId,
       });
