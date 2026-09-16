@@ -6,7 +6,7 @@
 # Usage:
 #   jobs:
 #     check-paths:
-#        uses: ./.github/workflows/actions/paths-ignore.yaml
+#        uses: ./.github/workflows/paths-ignore.yaml
 #     do_thing:
 #        if: jobs.check-paths.outputs.should-run == 'true'
 #        # Unfortunately, a string comparison is required.
