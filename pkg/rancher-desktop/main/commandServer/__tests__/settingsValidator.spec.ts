@@ -552,7 +552,7 @@ describe('SettingsValidator', () => {
 
     it('should reject invalid values', () => {
       const [needToUpdate, errors, isFatal] = subject.validateSettings(cfg,
-        { application: { locale: 'invalid' } });
+        { application: { locale: 'invalid' as unknown as settings.Locale } });
 
       expect(needToUpdate).toBe(false);
       expect(isFatal).toBe(true);
