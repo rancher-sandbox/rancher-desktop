@@ -70,8 +70,8 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
-    - uses: ./.github/actions/yarn-install
-    - uses: ./.github/actions/setup-environment
+    - uses: $/.github/actions/yarn-install
+    - uses: $/.github/actions/setup-environment
     - name: Override version
       if: inputs.mock_version
       run: echo "RD_MOCK_VERSION=${{ inputs.mock_version }}" >> "${GITHUB_ENV}"

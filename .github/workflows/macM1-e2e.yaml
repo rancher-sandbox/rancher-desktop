@@ -17,7 +17,7 @@ jobs:
         with:
           persist-credentials: false
           ref: main
-      - uses: ./.github/actions/yarn-install
+      - uses: $/.github/actions/yarn-install
       - name: Disable admin-access before start up
         run: |
           mkdir -p $HOME/Library/Preferences/rancher-desktop

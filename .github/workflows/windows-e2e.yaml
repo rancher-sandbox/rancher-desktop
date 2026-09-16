@@ -12,7 +12,7 @@ defaults:
     shell: powershell
 jobs:
   check-paths:
-    uses: ./.github/workflows/paths-ignore.yaml
+    uses: $/.github/workflows/paths-ignore.yaml
   e2e-tests:
     needs: check-paths
     if: needs.check-paths.outputs.should-run == 'true'
@@ -22,8 +22,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup-environment
-      - uses: ./.github/actions/yarn-install
+      - uses: $/.github/actions/setup-environment
+      - uses: $/.github/actions/yarn-install
       - name: Run e2e Tests
         run: yarn test:e2e
         env:
