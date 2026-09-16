@@ -14,7 +14,11 @@ if (!vm.SourceTextModule) {
 /** @type {import('jest').Config} */
 export default {
   transform: {
-    [ESM_TS_TRANSFORM_PATTERN]: ['ts-jest', { useESM: true }],
+    // tsconfig.jest.json sets isolatedModules, so ts-jest transpiles without
+    // type-checking, and `yarn test:unit:typecheck` runs tsc over the specs.
+    // Jest runs ts-jest's synchronous transform for ES modules, and that
+    // transform throws away the type errors it finds.
+    [ESM_TS_TRANSFORM_PATTERN]: ['ts-jest', { useESM: true, tsconfig: '<rootDir>/tsconfig.jest.json' }],
     '^.+\\.vue$':               './pkg/rancher-desktop/utils/testUtils/vue-jest.js',
   },
   transformIgnorePatterns: [],
