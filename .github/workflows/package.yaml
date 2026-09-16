@@ -25,7 +25,7 @@ defaults:
 
 jobs:
   check-paths:
-    uses: ./.github/workflows/paths-ignore.yaml
+    uses: $/.github/workflows/paths-ignore.yaml
     with:
       paths-ignore-globs: |
         .github/actions/spelling/**
@@ -55,7 +55,7 @@ jobs:
         persist-credentials: false
         # Needed to run `git describe` to get full version info
         fetch-depth: 0
-    - uses: ./.github/actions/yarn-install
+    - uses: $/.github/actions/yarn-install
     - run: yarn build
     - run: yarn package
     - name: Build bats.tar.gz
@@ -145,7 +145,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
-    - uses: ./.github/actions/yarn-install
+    - uses: $/.github/actions/yarn-install
     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       name: Download artifact
       with:
@@ -198,7 +198,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
-    - uses: ./.github/actions/yarn-install
+    - uses: $/.github/actions/yarn-install
     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       name: Download artifact
       with:

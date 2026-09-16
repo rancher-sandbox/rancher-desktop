@@ -27,7 +27,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ./.github/actions/yarn-install
+      - uses: $/.github/actions/yarn-install
 
       - run: yarn ucmonitor
         env:

@@ -129,7 +129,7 @@ jobs:
         persist-credentials: false
 
     - name: Set up environment
-      uses: ./.github/actions/setup-environment
+      uses: $/.github/actions/setup-environment
 
     - name: "Linux: Set startup command"
       if: runner.os == 'Linux'
@@ -193,7 +193,7 @@ jobs:
         echo "RD_LOGS_DIR=$RD_LOGS_DIR" >> "$GITHUB_ENV"
         mkdir -p $RD_LOGS_DIR
         chown --recursive ci-user "$LOGS_DIR"
-    - uses: ./.github/actions/setup-environment
+    - uses: $/.github/actions/setup-environment
     - name: Install Rancher Desktop from package
       if: runner.os == 'Linux'
       run: .github/workflows/smoke-test/install-from-repo.sh
@@ -273,7 +273,7 @@ jobs:
         echo "RD_LOGS_DIR=$RD_LOGS_DIR" >> "$GITHUB_ENV"
         mkdir -p $RD_LOGS_DIR
         chown --recursive ci-user "$LOGS_DIR"
-    - uses: ./.github/actions/setup-environment
+    - uses: $/.github/actions/setup-environment
       with:
         user: ci-user
 

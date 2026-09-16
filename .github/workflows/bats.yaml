@@ -140,7 +140,7 @@ jobs:
         RD_LOCATION:  system
 
     - name: Set up environment
-      uses: ./.github/actions/setup-environment
+      uses: $/.github/actions/setup-environment
 
     - name: "Linux: Install prerequisites"
       if: runner.os == 'Linux'
