@@ -2,7 +2,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { defined } from '@/pkg/rancher-desktop/utils/typeUtils';
 import {
   AssetPlatform,
   DependencyAsset,
@@ -326,22 +325,16 @@ export class Steve extends GlobalDependency(GitHubDependency) {
   async getAssets(version: string): Promise<DependencyAsset[]> {
     const steveURLBase = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const upstream = await fetchUpstreamChecksums(`${ steveURLBase }/steve.sha512sum`, 'sha512');
-    const archiveMatch = /^steve-(linux|darwin|windows)-(amd64|arm64)\.tar\.gz$/;
 
-    return (await Promise.all(Object.keys(upstream).map(async(archiveName) => {
-      const match = archiveMatch.exec(archiveName);
-
-      if (!match) {
-        return;
-      }
-      const [, platform, arch] = match as unknown as [string, AssetPlatform, GoArch];
+    return Promise.all(cartesian(HOST_PLATFORMS, ARCHES).map(async([platform, arch]) => {
+      const archiveName = `steve-${ platform }-${ arch }.tar.gz`;
       const url = `${ steveURLBase }/${ archiveName }`;
       const checksum = await downloadAndHash(url, {
         verify: { algorithm: 'sha512', expected: upstream[archiveName] },
       });
 
       return { platform, arch, url, checksum };
-    }))).filter(defined);
+    }));
   }
 }
 
