@@ -9,7 +9,7 @@ describe('container store', () => {
     ['/web', 'web'],
     ['web', 'web'],
   ])('normalizes the container name %s to %s for the UI', async(apiName, expectedName) => {
-    const listContainers = jest.fn().mockResolvedValue([{
+    const listContainers = jest.fn<() => Promise<unknown>>().mockResolvedValue([{
       Id:       'container-id',
       Names:    [apiName],
       Image:    'nginx',
@@ -20,7 +20,7 @@ describe('container store', () => {
       Labels:   {},
       Ports:    {},
     }]);
-    const commit = jest.fn();
+    const commit = jest.fn<(mutation: string, payload: any) => void>();
     const currentState = createState();
 
     currentState.client = { docker: { listContainers } } as any;

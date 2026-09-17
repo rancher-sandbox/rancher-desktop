@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "isolatedModules": true,
+    "noEmit": true,
+    // ts-jest emits, and transpiles one file at a time, so TypeScript 6 needs
+    // an explicit rootDir here; without it every suite fails with TS5011.
+    "rootDir": ".",
+    "skipLibCheck": true
+  },
+  "include": [
+    "pkg/rancher-desktop/**/__tests__/**/*.ts",
+    "scripts/**/__tests__/**/*.ts",
+    "pkg/rancher-desktop/typings/**/*.d.ts"
+  ]
+}

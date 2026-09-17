@@ -61,10 +61,10 @@ describe('WindowsIntegrationManager', () => {
     it('should return a set of running distro names', async() => {
       captureCommandMock.mockImplementation((_opts: any, ...args: string[]) => {
         if (args.includes('--running')) {
-          return 'Ubuntu\r\nMyDistro\r\n';
+          return Promise.resolve('Ubuntu\r\nMyDistro\r\n');
         }
 
-        return wslOutput;
+        return Promise.resolve(wslOutput);
       });
 
       const running = await integrationManager['runningDistros'];
@@ -75,10 +75,10 @@ describe('WindowsIntegrationManager', () => {
     it('should return an empty set when no distros are running', async() => {
       captureCommandMock.mockImplementation((_opts: any, ...args: string[]) => {
         if (args.includes('--running')) {
-          return '';
+          return Promise.resolve('');
         }
 
-        return wslOutput;
+        return Promise.resolve(wslOutput);
       });
 
       const running = await integrationManager['runningDistros'];
@@ -92,7 +92,7 @@ describe('WindowsIntegrationManager', () => {
           throw new Error('wsl.exe not found');
         }
 
-        return wslOutput;
+        return Promise.resolve(wslOutput);
       });
 
       const running = await integrationManager['runningDistros'];
@@ -114,10 +114,10 @@ describe('WindowsIntegrationManager', () => {
     it('should return the settings value for a stopped v2 distro without running wsl --exec', async() => {
       captureCommandMock.mockImplementation((_opts: any, ...args: string[]) => {
         if (args.includes('--running')) {
-          return ''; // no distros running
+          return Promise.resolve(''); // no distros running
         }
 
-        return wslOutput;
+        return Promise.resolve(wslOutput);
       });
 
       // Set integration enabled in settings for Ubuntu
@@ -137,10 +137,10 @@ describe('WindowsIntegrationManager', () => {
     it('should return false for a stopped v2 distro with no settings entry', async() => {
       captureCommandMock.mockImplementation((_opts: any, ...args: string[]) => {
         if (args.includes('--running')) {
-          return '';
+          return Promise.resolve('');
         }
 
-        return wslOutput;
+        return Promise.resolve(wslOutput);
       });
 
       const distro = new WSLDistro('Ubuntu', 2);

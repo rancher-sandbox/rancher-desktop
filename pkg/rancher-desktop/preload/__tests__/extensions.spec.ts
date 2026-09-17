@@ -47,7 +47,7 @@ describe('RDXClient', () => {
         }],
       };
 
-      client.docker.cli.exec = jest.fn()
+      client.docker.cli.exec = jest.fn<() => Promise<unknown>>()
         .mockResolvedValueOnce(lsResult)
         .mockResolvedValueOnce(inspectResult) as any;
 
