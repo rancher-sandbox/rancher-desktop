@@ -590,21 +590,31 @@ async function startK8sManager() {
   }
   await k8smanager.start(cfg);
 
+  // start() resolves without a client when the start was aborted, and stop()
+  // clears the client, which can happen while the import below loads.  The
+  // getter then throws and masks the real failure.
+  if (![K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
+    console.log(`Backend is ${ k8smanager.state } after start; skipping post-start setup.`);
+
+    return;
+  }
+  const containerEngineClient = k8smanager.containerEngineClient;
+
   const { initializeExtensionManager } = await import('@pkg/main/extensions/manager');
 
-  await initializeExtensionManager(k8smanager.containerEngineClient, cfg);
+  await initializeExtensionManager(containerEngineClient, cfg);
   window.send('extensions/changed');
 
   if (!containerExecHandler) {
-    containerExecHandler = new ContainerExecHandler(k8smanager.containerEngineClient);
+    containerExecHandler = new ContainerExecHandler(containerEngineClient);
   } else {
-    containerExecHandler.updateClient(k8smanager.containerEngineClient);
+    containerExecHandler.updateClient(containerEngineClient);
   }
 
   if (!containerStatsHandler) {
-    containerStatsHandler = new ContainerStatsHandler(k8smanager.containerEngineClient);
+    containerStatsHandler = new ContainerStatsHandler(containerEngineClient);
   } else {
-    containerStatsHandler.updateClient(k8smanager.containerEngineClient);
+    containerStatsHandler.updateClient(containerEngineClient);
   }
 }
 
