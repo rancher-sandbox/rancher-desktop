@@ -2161,28 +2161,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/core@npm:^1.1.0":
-  version: 1.7.2
-  resolution: "@floating-ui/core@npm:1.7.2"
+"@floating-ui/core@npm:^1.8.0":
+  version: 1.8.0
+  resolution: "@floating-ui/core@npm:1.8.0"
   dependencies:
-    "@floating-ui/utils": "npm:^0.2.10"
-  checksum: 10c0/ea5909ae1bfad6d8dd60ab893c7751fd974d96b25481d13805935a089b39881b4d69425a0a84cc74c82269d8b64ca0117c472fc83e425143bee1bb21b247de9c
+    "@floating-ui/utils": "npm:^0.2.12"
+  checksum: 10c0/cece958f6fab0f8cd7740cd57988c4f8bc5356dca39dd4c093433d44c91952c3a02c7a54d93d7ed6c078b6544d531a29f66621d2839c8bfbb4467dca6aed7df0
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:~1.1.1":
-  version: 1.1.1
-  resolution: "@floating-ui/dom@npm:1.1.1"
+"@floating-ui/dom@npm:^1.8.0":
+  version: 1.8.0
+  resolution: "@floating-ui/dom@npm:1.8.0"
   dependencies:
-    "@floating-ui/core": "npm:^1.1.0"
-  checksum: 10c0/2e508c834fed7567fc496ee946d092056487958330fd5260768536282eb19e990087ddbfe60a39cfe7ed87f8ec0741cc11fa33505c478238d78515a27dd69b6d
+    "@floating-ui/core": "npm:^1.8.0"
+    "@floating-ui/utils": "npm:^0.2.12"
+  checksum: 10c0/c32b2de7a596b69cfffa909c7028825e14f6319be1b45da529f8943c89fe16b75a49c214e800c87ded3f172353d3b99163d50072f11410488e756961b7b629cc
   languageName: node
   linkType: hard
 
-"@floating-ui/utils@npm:^0.2.10":
-  version: 0.2.10
-  resolution: "@floating-ui/utils@npm:0.2.10"
-  checksum: 10c0/e9bc2a1730ede1ee25843937e911ab6e846a733a4488623cd353f94721b05ec2c9ec6437613a2ac9379a94c2fd40c797a2ba6fa1df2716f5ce4aa6ddb1cf9ea4
+"@floating-ui/utils@npm:^0.2.12":
+  version: 0.2.12
+  resolution: "@floating-ui/utils@npm:0.2.12"
+  checksum: 10c0/bb910b90d56991a62011afaf5f8e0c4b7fb6dab69403f4dd17fbd6eb25560b28d533dff9791f270b4f459852e9006a1077b5d73cbedb5e34d9424afc6a828314
   languageName: node
   linkType: hard
 
@@ -10038,19 +10039,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"floating-vue@npm:5.2.2":
-  version: 5.2.2
-  resolution: "floating-vue@npm:5.2.2"
+"floating-vue@npm:5.4.0":
+  version: 5.4.0
+  resolution: "floating-vue@npm:5.4.0"
   dependencies:
-    "@floating-ui/dom": "npm:~1.1.1"
-    vue-resize: "npm:^2.0.0-alpha.1"
+    "@floating-ui/dom": "npm:^1.8.0"
   peerDependencies:
-    "@nuxt/kit": ^3.2.0
+    "@nuxt/kit": ^3.2.0 || ^4.0.0 || ^5.0.0-0
     vue: ^3.2.0
   peerDependenciesMeta:
     "@nuxt/kit":
       optional: true
-  checksum: 10c0/f765c4ef62c4bdbc6b38167c472d2badabdd3ace4484819532b099f1a027bcba6dba1916414cca14f6c375e33f399bd42111db3cbf69a3803f44bc3dd88e6761
+  checksum: 10c0/9e964e31db0893dc20b90f92a338e547c40202a6caf460e234c6d5731166a2538e1fdf14ac0fba0fae28d9299a2bdc39e92aa19aea9eb4340ec6a4b3347ab5fa
   languageName: node
   linkType: hard
 
@@ -14950,7 +14950,7 @@ __metadata:
     eslint-plugin-vue: "npm:10.11.0"
     express: "npm:5.2.1"
     extract-zip: "npm:2.0.1"
-    floating-vue: "npm:5.2.2"
+    floating-vue: "npm:5.4.0"
     fs-extra: "npm:11.4.0"
     glob: "npm:^13.0.3"
     globals: "npm:17.12.0"
@@ -17556,15 +17556,6 @@ __metadata:
     vue:
       optional: true
   checksum: 10c0/ffbe3e848e00c0e6afcc63a68eb5d279541ae5a3a41fee6a8400213b0327fa9e50153385a5e51bd39fdeda61a1bcec659ecae96061787e21a26261b746a7be48
-  languageName: node
-  linkType: hard
-
-"vue-resize@npm:^2.0.0-alpha.1":
-  version: 2.0.0-alpha.1
-  resolution: "vue-resize@npm:2.0.0-alpha.1"
-  peerDependencies:
-    vue: ^3.0.0
-  checksum: 10c0/47691bd15565d28d5ea83bcad07086f5b35584518d91b816b748d041ce4eee40a889a4e5ad6514d7bb65af642d36823a4b7e442d1e63f195f770d3d646848954
   languageName: node
   linkType: hard
 
