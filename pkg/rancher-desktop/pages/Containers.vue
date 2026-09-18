@@ -145,7 +145,7 @@ import { mapTypedGetters, mapTypedState } from '@pkg/entry/store';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 /**
- * @import { Container } from '@pk/store/containers'
+ * @import { Container } from '@pkg/store/container-engine'
  */
 
 /**
