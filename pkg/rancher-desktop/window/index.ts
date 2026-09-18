@@ -704,6 +704,8 @@ export async function showMessageBox(options: Electron.MessageBoxOptions, couldB
   const mainWindow = couldBeModal ? getWindow('main') : null;
 
   // On macOS, normalizeAccessKeys removes only the "&", which would leave "削除(D)".
+  // Only dialogs shown through this function get the strip; imageEvents.ts,
+  // background.ts and window/preferences.ts call Electron's dialog API directly.
   if (options.normalizeAccessKeys && process.platform === 'darwin') {
     options = { ...options, buttons: options.buttons?.map(removeParenthesizedAccessKey) };
   }
