@@ -80,6 +80,7 @@ import SortableTable from '@pkg/components/SortableTable';
 import type { Settings } from '@pkg/config/settings';
 import { mapTypedGetters, mapTypedState } from '@pkg/entry/store';
 import type { Volume } from '@pkg/store/container-engine';
+import { showDeleteConfirmation } from '@pkg/utils/deleteConfirmation';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 const MAX_PATH_LENGTH = 40;
@@ -248,23 +249,13 @@ export default defineComponent({
      * Ask the user to confirm deleting the given volumes.
      */
     async confirmDelete(volumes: Volume[]): Promise<boolean> {
-      const acceptId = 0;
-      const cancelId = 1;
-      const result = await ipcRenderer.invoke('show-message-box', {
-        type:      'question',
-        title:     this.t('volumes.confirmDelete.title'),
-        message:   this.t('volumes.confirmDelete.message', { count: volumes.length }),
-        detail:    volumes.map(volume => volume.Name).join('\n'),
-        buttons:   Object.assign([], {
-          [acceptId]: this.t('volumes.confirmDelete.confirm'),
-          [cancelId]: this.t('generic.cancel'),
-        }),
-        defaultId:           cancelId,
-        cancelId,
-        normalizeAccessKeys: true,
+      return await showDeleteConfirmation({
+        title:   this.t('volumes.confirmDelete.title'),
+        message: this.t('volumes.confirmDelete.message', { count: volumes.length }),
+        confirm: this.t('volumes.confirmDelete.confirm'),
+        cancel:  this.t('generic.cancel'),
+        names:   volumes.map(volume => volume.Name),
       });
-
-      return result.response !== cancelId;
     },
     async execCommand(args: string[], volumes: Volume[]) {
       try {
