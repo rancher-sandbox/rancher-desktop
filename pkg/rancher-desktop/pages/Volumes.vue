@@ -244,6 +244,9 @@ export default defineComponent({
         });
       }
     },
+    /**
+     * Ask the user to confirm deleting the given volumes.
+     */
     async confirmDelete(volumes: Volume[]): Promise<boolean> {
       const acceptId = 0;
       const cancelId = 1;
