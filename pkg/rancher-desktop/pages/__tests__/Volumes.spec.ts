@@ -35,6 +35,22 @@ describe('Volumes methods', () => {
     };
   }
 
+  it('names and counts the volumes in the confirmation, and defaults to Cancel', async() => {
+    const cancelButton = 1;
+
+    showMessageBox.mockResolvedValue({ response: cancelButton });
+    await expect((Volumes as any).methods.confirmDelete.call({ t }, [volume('one'), volume('two')]))
+      .resolves.toBe(false);
+    expect(showMessageBox).toHaveBeenCalledWith('show-message-box', expect.objectContaining({
+      message:             'Delete 2 volumes?',
+      detail:              'one\ntwo',
+      buttons:             ['&Delete', 'Cancel'],
+      cancelId:            cancelButton,
+      defaultId:           cancelButton,
+      normalizeAccessKeys: true,
+    }));
+  });
+
   describe('deletion', () => {
     /** Build the row SortableTable would render for a single volume. */
     function rowFor(item: any, context: any) {
