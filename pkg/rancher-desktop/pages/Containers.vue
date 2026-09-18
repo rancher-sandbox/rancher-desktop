@@ -142,6 +142,7 @@ import { mapGetters } from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
 import { mapTypedGetters, mapTypedState } from '@pkg/entry/store';
+import { showDeleteConfirmation } from '@pkg/utils/deleteConfirmation';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 /**
@@ -310,23 +311,13 @@ export default defineComponent({
      * @returns {Promise<boolean>} Whether the user chose to delete them.
      */
     async confirmDelete(containers) {
-      const acceptId = 0;
-      const cancelId = 1;
-      const result = await ipcRenderer.invoke('show-message-box', {
-        type:      'question',
-        title:     this.t('containers.confirmDelete.title'),
-        message:   this.t('containers.confirmDelete.message', { count: containers.length }),
-        detail:    containers.map(container => container.containerName).join('\n'),
-        buttons:   Object.assign([], {
-          [acceptId]: this.t('containers.confirmDelete.confirm'),
-          [cancelId]: this.t('generic.cancel'),
-        }),
-        defaultId:           cancelId,
-        cancelId,
-        normalizeAccessKeys: true,
+      return await showDeleteConfirmation({
+        title:   this.t('containers.confirmDelete.title'),
+        message: this.t('containers.confirmDelete.message', { count: containers.length }),
+        confirm: this.t('containers.confirmDelete.confirm'),
+        cancel:  this.t('generic.cancel'),
+        names:   containers.map(container => container.containerName),
       });
-
-      return result.response !== cancelId;
     },
     getContainerActions(container) {
       return [
