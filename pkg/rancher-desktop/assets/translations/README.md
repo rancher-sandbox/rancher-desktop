@@ -88,11 +88,12 @@ added there reaches the screen.
 Mark a letter of your own translated word, as German does in `&Löschen` and
 French in `&Supprimer`. Where the label has no Latin letter to mark, as in
 Chinese, Japanese and Korean, append the English key in parentheses instead, as
-in `削除(&D)`; Rancher Desktop strips that suffix on macOS, where the key does
-nothing. Use half-width parentheses, to match the other locales.
+in `削除(&D)`. On macOS the key does nothing, so Rancher Desktop strips that
+suffix from the container and volume delete confirmations. Use half-width
+parentheses to match the `mainMenu` labels, which already use this form; Rancher
+Desktop leaves those to Electron.
 
-Only the confirming button takes an access key. Cancel has none, because Windows
-uses its own standard Cancel button only when the label is plain "Cancel", and
+Only the confirming button takes an access key. Cancel has none, because
 `generic.cancel` is one key that dialogs and buttons across the app share.
 
 ## YAML comment conventions
