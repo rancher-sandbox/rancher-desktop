@@ -11,23 +11,23 @@ const CONFIRM_DELETE = 0;
 const CANCEL_DELETE = 1;
 
 /**
- * Replace the native delete confirmation with one that answers `response` and
+ * Replace every native message box with one that answers `response` and
  * records the options it was given, so a test can assert what the user saw.
  */
-async function answerDeleteConfirmation(electronApp: ElectronApplication, response: number) {
+async function answerMessageBox(electronApp: ElectronApplication, response: number) {
   await electronApp.evaluate(({ dialog }, response) => {
-    (globalThis as any).lastDeleteConfirmation = undefined;
+    (globalThis as any).lastMessageBox = undefined;
     dialog.showMessageBox = ((options: any) => {
-      (globalThis as any).lastDeleteConfirmation = options;
+      (globalThis as any).lastMessageBox = options;
 
       return Promise.resolve({ response, checkboxChecked: false });
     }) as typeof dialog.showMessageBox;
   }, response);
 }
 
-/** The options the delete confirmation was last shown with. */
-function lastDeleteConfirmation(electronApp: ElectronApplication): Promise<any> {
-  return electronApp.evaluate(() => (globalThis as any).lastDeleteConfirmation);
+/** The options the last message box was shown with. */
+function lastMessageBox(electronApp: ElectronApplication): Promise<any> {
+  return electronApp.evaluate(() => (globalThis as any).lastMessageBox);
 }
 
 let page: Page;
@@ -44,7 +44,11 @@ test.describe.serial('Volumes Tests', () => {
 
     const navPage = new NavPage(page);
     await navPage.progressBecomesReady();
-    await answerDeleteConfirmation(electronApp, CONFIRM_DELETE);
+  });
+
+  // The stub outlives the test that installs it.
+  test.beforeEach(async() => {
+    await answerMessageBox(electronApp, CONFIRM_DELETE);
   });
 
   test.afterAll(async({ colorScheme }, testInfo) => {
@@ -116,9 +120,9 @@ test.describe.serial('Volumes Tests', () => {
       return (await window.ddClient.docker.listContainers({ all: true })).length === 0;
     });
     // Cancelling the confirmation must leave the volume alone.
-    await answerDeleteConfirmation(electronApp, CANCEL_DELETE);
+    await answerMessageBox(electronApp, CANCEL_DELETE);
     await volumesPage.deleteVolume(testVolumeName);
-    await expect.poll(() => lastDeleteConfirmation(electronApp)).toMatchObject({
+    await expect.poll(() => lastMessageBox(electronApp)).toMatchObject({
       detail:  testVolumeName,
       message: 'Delete 1 volume?',
     });
@@ -127,7 +131,7 @@ test.describe.serial('Volumes Tests', () => {
     await volumesPage.waitForTableToLoad();
     await volumesPage.waitForVolumeToAppear(testVolumeName);
 
-    await answerDeleteConfirmation(electronApp, CONFIRM_DELETE);
+    await answerMessageBox(electronApp, CONFIRM_DELETE);
     await volumesPage.deleteVolume(testVolumeName);
     await expect(volumesPage.errorBanner).toBeHidden();
     await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({
