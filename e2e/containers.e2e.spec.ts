@@ -1,5 +1,6 @@
 import { expect, test, ElectronApplication, Page } from '@playwright/test';
 
+import { ContainerFilesPage } from './pages/container-files-page';
 import { ContainerInspectPage } from './pages/container-inspect-page';
 import { ContainerLogsPage } from './pages/container-logs-page';
 import { ContainerShellPage } from './pages/container-shell-page';
@@ -643,5 +644,110 @@ test.describe.serial('Container Stats Tab', () => {
 
     await expect(statsPage.notRunningBanner).toBeVisible({ timeout: 10_000 });
     await expect(statsPage.cpuChart).not.toBeVisible();
+  });
+});
+
+test.describe.serial('Container Files Tab', () => {
+  let electronApp: ElectronApplication;
+  let runningContainerId: string;
+  let stoppedContainerId: string;
+
+  test.beforeAll(async({ colorScheme }, testInfo) => {
+    [electronApp, page] = await startSlowerDesktop(testInfo, {
+      kubernetes:      { enabled: false },
+      containerEngine: { name: ContainerEngine.MOBY, allowedImages: { enabled: false } },
+    });
+
+    const navPage = new NavPage(page);
+    await navPage.progressBecomesReady();
+
+    // Long-running container for the "running" tests.
+    const runOutput = await tool('docker', 'run', '--detach', 'alpine', 'sleep', 'infinity');
+
+    runningContainerId = runOutput.trim();
+
+    // Stopped container (exits immediately) — exercises the `cp`/tar listing path.
+    const stopOutput = await tool('docker', 'run', '--detach', 'alpine', 'echo', 'done');
+
+    stoppedContainerId = stopOutput.trim();
+    // Give it a moment to exit.
+    await new Promise(resolve => setTimeout(resolve, 2_000));
+  });
+
+  test.afterAll(async({ colorScheme }, testInfo) => {
+    for (const id of [runningContainerId, stoppedContainerId]) {
+      if (id) {
+        try {
+          await tool('docker', 'rm', '-f', id);
+        } catch {}
+      }
+    }
+    await teardown(electronApp, testInfo);
+  });
+
+  async function navigateToFilesTab(containerId: string): Promise<ContainerFilesPage> {
+    const navPage = new NavPage(page);
+    await navPage.navigateTo('Containers');
+    const containersPage = new ContainersPage(page);
+    await containersPage.waitForTableToLoad();
+    await containersPage.waitForContainerToAppear(containerId);
+    await containersPage.clickContainerAction(containerId, 'info');
+    await page.waitForURL(`**/containers/info/${ containerId }**`, { timeout: 10_000 });
+    const filesPage = new ContainerFilesPage(page);
+    await filesPage.clickTab();
+
+    return filesPage;
+  }
+
+  test('Files tab appears after the Shell tab', async() => {
+    const navPage = new NavPage(page);
+    await navPage.navigateTo('Containers');
+    const containersPage = new ContainersPage(page);
+    await containersPage.waitForTableToLoad();
+    await containersPage.waitForContainerToAppear(runningContainerId);
+    await containersPage.clickContainerAction(runningContainerId, 'info');
+    await page.waitForURL(`**/containers/info/${ runningContainerId }**`, { timeout: 10_000 });
+
+    const tabs = page.locator('.tabs li.tab');
+    const names = (await tabs.allTextContents()).map((t: string) => t.trim());
+
+    const shellIdx = names.findIndex((n: string) => n === 'Shell');
+    const filesIdx = names.findIndex((n: string) => n === 'Files');
+
+    expect(filesIdx).toBeGreaterThan(shellIdx);
+    expect(filesIdx).toBe(names.length - 1);
+  });
+
+  test('lists the root filesystem of a running container', async() => {
+    const filesPage = await navigateToFilesTab(runningContainerId);
+
+    await filesPage.waitForTree();
+
+    // Well-known top-level directories from the alpine image.
+    await expect(filesPage.node('/etc')).toBeVisible();
+    await expect(filesPage.node('/bin')).toBeVisible();
+  });
+
+  test('expands a directory and previews a text file', async() => {
+    const filesPage = await navigateToFilesTab(runningContainerId);
+
+    await filesPage.waitForTree();
+    await filesPage.expandDirectory('/etc', '/etc/hosts');
+    await filesPage.openFile('/etc/hosts');
+
+    // /etc/hosts always contains a localhost entry.
+    await expect(filesPage.previewText).toContainText('localhost', { timeout: 15_000 });
+    // The breadcrumb should reflect the selected file.
+    await expect(filesPage.breadcrumbs).toContainText('hosts');
+  });
+
+  test('lists the filesystem of a stopped container', async() => {
+    // Regression guard: stopped containers are browsed via `<engine> cp` + tar,
+    // whose archive wraps root entries under `./`; the tree must still populate.
+    const filesPage = await navigateToFilesTab(stoppedContainerId);
+
+    await filesPage.waitForTree();
+    await expect(filesPage.node('/etc')).toBeVisible();
+    await expect(filesPage.node('/bin')).toBeVisible();
   });
 });
