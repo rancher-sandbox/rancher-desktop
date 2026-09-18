@@ -75,7 +75,7 @@
     "yaml": "2.9.0"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "8.0.1",
+    "@babel/eslint-parser": "8.0.5",
     "@babel/plugin-proposal-class-properties": "7.18.6",
     "@babel/plugin-proposal-nullish-coalescing-operator": "7.18.6",
     "@babel/plugin-proposal-optional-chaining": "7.21.0",
