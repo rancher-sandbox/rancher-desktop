@@ -49,7 +49,7 @@ describe('Volumes methods', () => {
 
     it('confirms the whole bulk selection, and deletes none of it when cancelled', async() => {
       const execCommand = jest.fn();
-      const confirmDelete = jest.fn().mockResolvedValue(false);
+      const confirmDelete = jest.fn<(targets: any[]) => Promise<boolean>>().mockResolvedValue(false);
       const doomed = [volume('one'), volume('two')];
       const row = rowFor(doomed[0], { execCommand, confirmDelete });
 
