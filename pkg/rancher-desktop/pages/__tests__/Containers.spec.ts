@@ -133,6 +133,26 @@ describe('Containers methods', () => {
       expect(execCommand).toHaveBeenCalledWith('rm', [doomed]);
     });
 
+    it('confirms the whole bulk selection, and deletes none of it when cancelled', async() => {
+      const execCommand = jest.fn();
+      const confirmDelete = jest.fn().mockResolvedValue(false);
+      const doomed = [container('one', 'exited', 'Exited'), container('two', 'exited', 'Exited')];
+      const row = rowFor(doomed[0], { execCommand, confirmDelete });
+
+      await row.deleteContainer(doomed);
+      expect(confirmDelete).toHaveBeenCalledWith(doomed);
+      expect(execCommand).not.toHaveBeenCalled();
+    });
+
+    it('deletes the whole bulk selection once the user confirms', async() => {
+      const execCommand = jest.fn();
+      const doomed = [container('one', 'exited', 'Exited'), container('two', 'exited', 'Exited')];
+      const row = rowFor(doomed[0], { execCommand, confirmDelete: () => Promise.resolve(true) });
+
+      await row.deleteContainer(doomed);
+      expect(execCommand).toHaveBeenCalledWith('rm', doomed);
+    });
+
     it('leaves the container alone when the user cancels', async() => {
       const execCommand = jest.fn();
       const row = rowFor(container('spared', 'exited', 'Exited'),

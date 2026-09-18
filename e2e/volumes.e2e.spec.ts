@@ -162,7 +162,28 @@ test.describe.serial('Volumes Tests', () => {
         await volumesPage.waitForVolumeToAppear(volumeName);
       }
 
+      await answerMessageBox(electronApp, CANCEL_DELETE);
       await volumesPage.deleteBulkVolumes(volumeNames);
+      await expect.poll(() => lastMessageBox(electronApp)).toMatchObject({
+        message: 'Delete 3 volumes?',
+      });
+
+      const confirmation = await lastMessageBox(electronApp);
+
+      for (const volumeName of volumeNames) {
+        const row = volumesPage.getVolumeRow(volumeName);
+
+        expect(confirmation.detail).toContain(volumeName);
+        // Reloading to prove the volumes survived would clear the selection
+        // the confirmed delete reuses.
+        await expect(row).toBeVisible();
+        await expect(row.locator('input[type="checkbox"]')).toBeChecked();
+      }
+
+      // The rows stay selected after a cancelled delete, so selecting them again
+      // would clear the selection.
+      await answerMessageBox(electronApp, CONFIRM_DELETE);
+      await volumesPage.clickBulkDelete();
       await expect(volumesPage.errorBanner).toBeHidden();
 
       for (const volumeName of volumeNames) {
