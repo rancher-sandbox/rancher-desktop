@@ -17,7 +17,9 @@ limitations under the License.
 /**
  * Remove an access key written in parentheses after the label, as Chinese,
  * Japanese and Korean translations write it. "削除(&D)" becomes "削除".
+ * Translations write the half-width pair; a full-width pair matches too, so
+ * converting them in a typography pass keeps the mnemonic working.
  */
 export function removeParenthesizedAccessKey(label: string): string {
-  return label.replace(/\(&[^&]\)/g, '');
+  return label.replace(/[(（]&[^&][)）]/g, '');
 }

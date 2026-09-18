@@ -19,6 +19,7 @@ import { removeParenthesizedAccessKey } from '../accessKeys';
 describe('removeParenthesizedAccessKey', () => {
   it.each([
     ['削除(&D)', '削除'],
+    ['削除（&D）', '削除'],
     ['&Delete', '&Delete'],
     ['Save (&&) Quit', 'Save (&&) Quit'],
   ])('turns %p into %p', (label, expected) => {
