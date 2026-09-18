@@ -55,6 +55,14 @@ describe('Volumes methods', () => {
     }));
   });
 
+  it('reports a confirmed deletion', async() => {
+    const deleteButton = 0;
+
+    showMessageBox.mockResolvedValue({ response: deleteButton });
+    await expect((Volumes as any).methods.confirmDelete.call({ t }, [volume('one')]))
+      .resolves.toBe(true);
+  });
+
   describe('deletion', () => {
     /** Build the row SortableTable would render for a single volume. */
     function rowFor(item: any, context: any) {
