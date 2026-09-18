@@ -172,6 +172,7 @@ containers:
         restart: Restart
         start: Start
   confirmDelete:
+    # @meaning '&' marks the access key, not literal text; see the README.
     confirm: '&Delete'
     message: Delete {count} {count, plural, one {container} other {containers}}?
     title: Confirm container deletion
@@ -192,6 +193,7 @@ volumes:
         browse: Browse Files
         delete: Delete
   confirmDelete:
+    # @meaning '&' marks the access key, not literal text; see the README.
     confirm: '&Delete'
     message: Delete {count} {count, plural, one {volume} other {volumes}}?
     title: Confirm volume deletion
