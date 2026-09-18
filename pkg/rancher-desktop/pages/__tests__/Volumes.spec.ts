@@ -26,6 +26,10 @@ mockModules({
 const { default: Volumes } = await import('@pkg/pages/Volumes.vue');
 
 describe('Volumes methods', () => {
+  beforeEach(() => {
+    showMessageBox.mockReset();
+  });
+
   function volume(name: string): any {
     return {
       Name:       name,
