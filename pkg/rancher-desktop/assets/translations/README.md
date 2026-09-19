@@ -76,6 +76,26 @@ Changing an en-us value after locales exist invalidates their `@source`
 snapshots and forces a drift pass across every locale, so phrasing is far
 cheaper to get right before the string ships.
 
+### Access keys in dialog buttons
+
+`&` before a letter in a button label marks that letter as the access key, but
+only where the code asks for it. The container and volume delete confirmations
+pass Electron's `normalizeAccessKeys`, which makes the letter selectable with
+Alt on Windows and Linux and removes the `&` on macOS. Every other dialog, the
+images delete confirmation included, shows its labels as written, so an `&`
+added there reaches the screen.
+
+Mark a letter of your own translated word, as German does in `&Löschen` and
+French in `&Supprimer`. Where the label has no Latin letter to mark, as in
+Chinese, Japanese and Korean, append the English key in parentheses instead, as
+in `削除(&D)`. On macOS the key does nothing, so Rancher Desktop strips that
+suffix from the container and volume delete confirmations. Use half-width
+parentheses to match the `mainMenu` labels, which already use this form; Rancher
+Desktop leaves those to Electron.
+
+Only the confirming button takes an access key. Cancel has none, because
+`generic.cancel` is one key that dialogs and buttons across the app share.
+
 ## YAML comment conventions
 
 Add these comments directly above the key they describe.
@@ -83,7 +103,7 @@ Add these comments directly above the key they describe.
 | Comment | Where | Purpose |
 |---------|-------|---------|
 | `@context` | en-us.yaml | Where in the UI the string appears |
-| `@meaning` | en-us.yaml | Domain-specific meaning when English is ambiguous |
+| `@meaning` | en-us.yaml | Domain-specific meaning when English is ambiguous, or markup a translator must keep |
 | `@no-translate` | en-us.yaml | Terms that should stay in English by default |
 | `@reason` | locale files | Why a wording was chosen, or why English was kept |
 

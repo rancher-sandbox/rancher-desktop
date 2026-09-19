@@ -80,6 +80,7 @@ import SortableTable from '@pkg/components/SortableTable';
 import type { Settings } from '@pkg/config/settings';
 import { mapTypedGetters, mapTypedState } from '@pkg/entry/store';
 import type { Volume } from '@pkg/store/container-engine';
+import { showDeleteConfirmation } from '@pkg/utils/deleteConfirmation';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 const MAX_PATH_LENGTH = 40;
@@ -96,7 +97,7 @@ interface RowItem extends Volume {
     bulkable:    boolean;
     bulkAction?: string;
   }[];
-  deleteVolume: (items?: RowItem[]) => void;
+  deleteVolume: (items?: RowItem[]) => Promise<void>;
   browseFiles:  (items?: RowItem[]) => void;
 }
 
@@ -157,8 +158,12 @@ export default defineComponent({
               bulkAction: 'deleteVolume',
             },
           ],
-          deleteVolume: (args?: Volume[]) => {
-            this.execCommand(['volume', 'rm'], Array.isArray(args) ? args : [volume]);
+          deleteVolume: async(args?: Volume[]) => {
+            const targets = args?.length ? args : [volume];
+
+            if (await this.confirmDelete(targets)) {
+              await this.execCommand(['volume', 'rm'], targets);
+            }
           },
           browseFiles: () => {
             this.$router.push({ name: 'volumes-files-name', params: { name: volume.Name } });
@@ -239,6 +244,18 @@ export default defineComponent({
           namespace: value,
         });
       }
+    },
+    /**
+     * Ask the user to confirm deleting the given volumes.
+     */
+    async confirmDelete(volumes: Volume[]): Promise<boolean> {
+      return await showDeleteConfirmation({
+        title:   this.t('volumes.confirmDelete.title'),
+        message: this.t('volumes.confirmDelete.message', { count: volumes.length }),
+        confirm: this.t('volumes.confirmDelete.confirm'),
+        cancel:  this.t('generic.cancel'),
+        names:   volumes.map(volume => volume.Name),
+      });
     },
     async execCommand(args: string[], volumes: Volume[]) {
       try {

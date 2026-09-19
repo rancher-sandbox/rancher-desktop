@@ -6,6 +6,30 @@ import { startSlowerDesktop, teardown, tool } from './utils/TestUtils';
 
 import { ContainerEngine } from '@pkg/config/settings';
 
+/** Button indexes in the delete confirmation, matching its `buttons` array. */
+const CONFIRM_DELETE = 0;
+const CANCEL_DELETE = 1;
+
+/**
+ * Replace every native message box with one that answers `response` and
+ * records the options it was given, so a test can assert what the user saw.
+ */
+async function answerMessageBox(electronApp: ElectronApplication, response: number) {
+  await electronApp.evaluate(({ dialog }, response) => {
+    (globalThis as any).lastMessageBox = undefined;
+    dialog.showMessageBox = ((options: any) => {
+      (globalThis as any).lastMessageBox = options;
+
+      return Promise.resolve({ response, checkboxChecked: false });
+    }) as typeof dialog.showMessageBox;
+  }, response);
+}
+
+/** The options the last message box was shown with. */
+function lastMessageBox(electronApp: ElectronApplication): Promise<any> {
+  return electronApp.evaluate(() => (globalThis as any).lastMessageBox);
+}
+
 let page: Page;
 
 test.describe.serial('Volumes Tests', () => {
@@ -20,6 +44,11 @@ test.describe.serial('Volumes Tests', () => {
 
     const navPage = new NavPage(page);
     await navPage.progressBecomesReady();
+  });
+
+  // The stub outlives the test that installs it.
+  test.beforeEach(async() => {
+    await answerMessageBox(electronApp, CONFIRM_DELETE);
   });
 
   test.afterAll(async({ colorScheme }, testInfo) => {
@@ -90,6 +119,19 @@ test.describe.serial('Volumes Tests', () => {
     await page.waitForFunction(async() => {
       return (await window.ddClient.docker.listContainers({ all: true })).length === 0;
     });
+    // Cancelling the confirmation must leave the volume alone.
+    await answerMessageBox(electronApp, CANCEL_DELETE);
+    await volumesPage.deleteVolume(testVolumeName);
+    await expect.poll(() => lastMessageBox(electronApp)).toMatchObject({
+      detail:  testVolumeName,
+      message: 'Delete 1 volume?',
+    });
+    // Without the reload the row is on screen even if the delete went ahead.
+    await page.reload();
+    await volumesPage.waitForTableToLoad();
+    await volumesPage.waitForVolumeToAppear(testVolumeName);
+
+    await answerMessageBox(electronApp, CONFIRM_DELETE);
     await volumesPage.deleteVolume(testVolumeName);
     await expect(volumesPage.errorBanner).toBeHidden();
     await expect(volumesPage.getVolumeRow(testVolumeName)).toBeHidden({
@@ -120,7 +162,28 @@ test.describe.serial('Volumes Tests', () => {
         await volumesPage.waitForVolumeToAppear(volumeName);
       }
 
+      await answerMessageBox(electronApp, CANCEL_DELETE);
       await volumesPage.deleteBulkVolumes(volumeNames);
+      await expect.poll(() => lastMessageBox(electronApp)).toMatchObject({
+        message: 'Delete 3 volumes?',
+      });
+
+      const confirmation = await lastMessageBox(electronApp);
+
+      for (const volumeName of volumeNames) {
+        const row = volumesPage.getVolumeRow(volumeName);
+
+        expect(confirmation.detail).toContain(volumeName);
+        // Reloading to prove the volumes survived would clear the selection
+        // the confirmed delete reuses.
+        await expect(row).toBeVisible();
+        await expect(row.locator('input[type="checkbox"]')).toBeChecked();
+      }
+
+      // The rows stay selected after a cancelled delete, so selecting them again
+      // would clear the selection.
+      await answerMessageBox(electronApp, CONFIRM_DELETE);
+      await volumesPage.clickBulkDelete();
       await expect(volumesPage.errorBanner).toBeHidden();
 
       for (const volumeName of volumeNames) {
