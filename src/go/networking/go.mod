@@ -7,7 +7,7 @@ require (
 	github.com/containers/gvisor-tap-vsock v0.8.9
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/docker/go-connections v0.8.1
-	github.com/dustin/go-humanize v1.0.1
+	github.com/dustin/go-humanize v1.1.0
 	github.com/google/gopacket v1.1.19
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
 	github.com/rancher-sandbox/rancher-desktop/src/go/guestagent v0.0.0-20240911164922-5443d1a11011
