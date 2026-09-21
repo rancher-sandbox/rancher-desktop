@@ -1477,6 +1477,8 @@ sortableTable:
         =0 {Nessun elemento}
         =1 {{count} {count, plural, =1 {elemento} other {elementi}}}
         other {{from} - {to} di {count} elementi}}
+    # @source Rows per page
+    perPage: Righe per pagina
   # @source Reset
   resetFilters: Reimposta
   # @source Filter

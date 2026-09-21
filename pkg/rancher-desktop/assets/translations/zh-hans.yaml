@@ -1502,6 +1502,8 @@ sortableTable:
         =0 {无项目}
         =1 {{count}{count, plural, =1 {项} other {项}}}
         other {{count}项中的第{from} - {to}项}}
+    # @source Rows per page
+    perPage: 每页行数
   # @source Reset
   resetFilters: 重置
   # @reason placeholder of the table filter box (en source is Filter despite the key name); 过滤 matches addFilter/filterFor terminology

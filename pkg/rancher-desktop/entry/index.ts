@@ -12,6 +12,8 @@ import store from './store';
 // This does just the Vuex part of cookie-universal-nuxt, which is all we need.
 (store as any).$cookies = Cookies();
 
+store.dispatch('prefs/loadCookies').catch(console.error);
+
 // Emulate Nuxt layouts by poking making the router match the main component we
 // will load, and then inspect it for the layout we set.
 // Because we're always using the hash mode for the router, get the correct

@@ -610,6 +610,7 @@ sortableTable:
       =0 {No Items}
       =1 {{count} {count, plural, =1 {Item} other {Items}}}
       other {{from} - {to} of {count} Items}}
+    perPage: Rows per page
   search: Filter
   in: in
   addFilter: Add Filter
