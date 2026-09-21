@@ -3,7 +3,7 @@ action:
   refresh: Làm mới
 allowedImages:
   # @source The image name needs to match one of the patterns defined in the Allowed Images preference tab.
-  alert: Tên image phải khớp với một trong các mẫu được định nghĩa trong tab tùy chọn Allowed Images.
+  alert: Tên image phải khớp với một trong các mẫu được định nghĩa trong tab Image được phép của Tùy chọn.
   # @source Enable
   enable: Bật
   errors:
@@ -356,7 +356,7 @@ containerInspect:
     ports: Cổng
   summary:
     # @source Created
-    created: Đã tạo
+    created: Thời điểm tạo
     # @reason 'ID' is the standard abbreviation in Vietnamese.
     # @source ID
     id: ID
@@ -368,7 +368,7 @@ containerInspect:
     # @source Name
     name: Tên
     # @source Started
-    started: Đã bắt đầu
+    started: Thời điểm khởi động
 containerStats:
   charts:
     # @source Block I/O (bytes/s)
@@ -455,7 +455,7 @@ deploymentProfile:
   noVersionRegistry: 'Triển khai không hợp lệ: chưa chỉ định phiên bản tại {path}. Thêm trường version để hợp lệ hóa (phiên bản hiện tại là {version}).'
 diagnostics:
   # @source {count} failed plus {muted} muted
-  failedCount: '{count} lỗi cộng với {muted} đã tắt tiếng'
+  failedCount: '{count} lỗi và {muted} đã bỏ qua'
   # @source Last run:
   lastRun: 'Lần chạy cuối:'
   # @source (Never)
@@ -465,7 +465,7 @@ diagnostics:
   results:
     muted:
       # @source Try showing muted diagnostics.
-      body: Thử hiển thị chẩn đoán đã tắt tiếng.
+      body: Thử hiển thị các chẩn đoán đã bỏ qua.
       # @source No results found
       heading: Không tìm thấy kết quả nào
       # @reason Icon identifier consumed by the application code; kept identical to the English source.
@@ -480,10 +480,10 @@ diagnostics:
       # @source icon-checkmark
       icon: icon-checkmark
   # @source Show Muted
-  showMuted: Hiển thị mục đã tắt tiếng
+  showMuted: Hiển thị mục đã bỏ qua
   tableHeaders:
     # @source Mute
-    mute: Tắt tiếng
+    mute: Bỏ qua
     # @source Name
     name: Tên
   # @source Diagnostics
@@ -750,9 +750,9 @@ images:
     results:
       headers:
         # @source Fixed
-        fixed: Đã sửa
+        fixed: Phiên bản sửa lỗi
         # @source Installed
-        installed: Đã cài đặt
+        installed: Phiên bản đã cài
         # @source Package
         package: Gói
         # @source Severity
@@ -774,7 +774,7 @@ images:
 integrations:
   windows:
     # @source Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros
-    description: Hiển thị cấu hình Kubernetes và Docker socket của Rancher Desktop cho các bản phân phối Windows Subsystem for Linux (WSL)
+    description: Chia sẻ cấu hình Kubernetes và Docker socket của Rancher Desktop với các bản phân phối Windows Subsystem for Linux (WSL)
 kubernetesError:
   # @source Context:
   context: 'Ngữ cảnh:'
@@ -1025,9 +1025,9 @@ preferences:
   # @source or
   incompatiblePrefWarningOr: hoặc
   # @source to be unselected.
-  incompatibleTypeWarningPostDisabled: để bỏ chọn.
+  incompatibleTypeWarningPostDisabled: không được chọn.
   # @source to be selected.
-  incompatibleTypeWarningPostSelected: để được chọn.
+  incompatibleTypeWarningPostSelected: được chọn.
   # @source The option requires
   incompatibleTypeWarningPre: Tùy chọn này yêu cầu
   locked:
@@ -1667,7 +1667,7 @@ virtualMachine:
       options:
         9p:
           # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
-          description: Hiển thị hệ thống tệp bằng cách sử dụng các thiết bị virtio-9p-pci của QEMU.
+          description: Chia sẻ hệ thống tệp bằng các thiết bị virtio-9p-pci của QEMU.
           # @reason 9p is a filesystem protocol name and stays in English.
           # @source 9p
           label: 9p
@@ -1730,13 +1730,13 @@ virtualMachine:
               tooltip: Mô hình bảo mật được sử dụng cho đường dẫn export
         reverse-sshfs:
           # @source Exposes the filesystem by running an SFTP server.
-          description: Hiển thị hệ thống tệp bằng cách chạy một máy chủ SFTP.
+          description: Chia sẻ hệ thống tệp bằng cách chạy một máy chủ SFTP.
           # @reason reverse-sshfs is the mount type identifier and stays in English.
           # @source reverse-sshfs
           label: reverse-sshfs
         virtiofs:
           # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
-          description: Hiển thị hệ thống tệp bằng cách sử dụng thiết bị thư mục chia sẻ của Apple Virtualization framework.
+          description: Chia sẻ hệ thống tệp bằng thiết bị thư mục dùng chung của Apple Virtualization framework.
           # @reason virtiofs is the mount type identifier and stays in English.
           # @source virtiofs
           label: virtiofs
@@ -1805,7 +1805,7 @@ volumes:
     table:
       header:
         # @source Modified
-        modified: Đã sửa đổi
+        modified: Ngày sửa đổi
         # @source Name
         name: Tên
         # @source Permissions
@@ -1820,7 +1820,7 @@ volumes:
     table:
       header:
         # @source Created
-        created: Đã tạo
+        created: Ngày tạo
         # @source Driver
         driver: Trình điều khiển
         # @source Mount Point
