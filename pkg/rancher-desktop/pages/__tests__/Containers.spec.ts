@@ -80,3 +80,76 @@ describe('Containers methods', () => {
     expect(methods.containerCommandTarget(running, bulkSelection)).toBe(bulkSelection);
   });
 });
+
+describe('Containers cell clicks', () => {
+  function clickEvent(modifiers: Record<string, boolean> = {}): any {
+    return {
+      shiftKey:        false,
+      ctrlKey:         false,
+      metaKey:         false,
+      preventDefault:  jest.fn(),
+      stopPropagation: jest.fn(),
+      ...modifiers,
+    };
+  }
+
+  function clickThatAddsToSelection(): any {
+    return clickEvent({ ctrlKey: true, metaKey: true });
+  }
+
+  const clickedContainer = { id: 'some-container' };
+  const publishedHostPort = 8080;
+
+  function cellClickHelpers() {
+    return {
+      isSelectionClick: methods.isSelectionClick,
+      viewInfo:         jest.fn(),
+      openUrl:          jest.fn(),
+    };
+  }
+
+  it('opens the info page when the container name is clicked', () => {
+    const helpers = cellClickHelpers();
+
+    methods.onContainerNameClick.call(helpers, clickEvent(), clickedContainer);
+
+    expect(helpers.viewInfo).toHaveBeenCalledWith(clickedContainer);
+  });
+
+  it('leaves a shift-click on the container name to the table', () => {
+    const helpers = cellClickHelpers();
+    const event = clickEvent({ shiftKey: true });
+
+    methods.onContainerNameClick.call(helpers, event, clickedContainer);
+
+    expect(helpers.viewInfo).not.toHaveBeenCalled();
+    expect(event.stopPropagation).not.toHaveBeenCalled();
+  });
+
+  it('leaves a click that adds to the selection to the table', () => {
+    const helpers = cellClickHelpers();
+    const event = clickThatAddsToSelection();
+
+    methods.onContainerNameClick.call(helpers, event, clickedContainer);
+
+    expect(helpers.viewInfo).not.toHaveBeenCalled();
+    expect(event.stopPropagation).not.toHaveBeenCalled();
+  });
+
+  it('opens the published port when a port is clicked', () => {
+    const helpers = cellClickHelpers();
+
+    methods.onPortClick.call(helpers, clickEvent(), publishedHostPort);
+
+    expect(helpers.openUrl).toHaveBeenCalledWith(publishedHostPort);
+  });
+
+  it('does not open the published port when the click selects rows', () => {
+    const helpers = cellClickHelpers();
+
+    methods.onPortClick.call(helpers, clickEvent({ shiftKey: true }), publishedHostPort);
+    methods.onPortClick.call(helpers, clickThatAddsToSelection(), publishedHostPort);
+
+    expect(helpers.openUrl).not.toHaveBeenCalled();
+  });
+});

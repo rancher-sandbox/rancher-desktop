@@ -63,7 +63,7 @@
           <a
             v-tooltip="getTooltipConfig(row.containerName)"
             class="container-name-link"
-            @click.stop.prevent="viewInfo(row)"
+            @click="onContainerNameClick($event, row)"
           >
             {{ shortSha(row.containerName) }}
           </a>
@@ -77,7 +77,7 @@
               :key="hostPort"
               target="_blank"
               class="link"
-              @click="openUrl(hostPort)"
+              @click="onPortClick($event, hostPort)"
             >
               {{ hostPort }}:{{ containerPort }}
             </a>
@@ -97,7 +97,7 @@
                   :key="hostPort"
                   target="_blank"
                   class="link"
-                  @click="openUrl(hostPort)"
+                  @click="onPortClick($event, hostPort)"
                 >
                   {{ hostPort }}:{{ containerPort }}
                 </a>
@@ -143,6 +143,7 @@ import { mapGetters } from 'vuex';
 import SortableTable from '@pkg/components/SortableTable';
 import { mapTypedGetters, mapTypedState } from '@pkg/entry/store';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
+import { isMore, isRange } from '@pkg/utils/platform';
 
 /**
  * @import { Container } from '@pk/store/containers'
@@ -408,6 +409,32 @@ export default defineComponent({
           dropdownContent.style.top = `${ dropdownRect.top - dropdownContent.getBoundingClientRect().height }px`;
         }
       }
+    },
+    /** @param event {MouseEvent} */
+    isSelectionClick(event) {
+      return isMore(event) || isRange(event);
+    },
+    /**
+     * @param event {MouseEvent}
+     * @param container {RowItem}
+     */
+    onContainerNameClick(event, container) {
+      if (this.isSelectionClick(event)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      this.viewInfo(container);
+    },
+    /**
+     * @param event {MouseEvent}
+     * @param hostPort {number}
+     */
+    onPortClick(event, hostPort) {
+      if (this.isSelectionClick(event)) {
+        return;
+      }
+      this.openUrl(hostPort);
     },
     viewInfo(container) {
       this.$router.push(`/containers/info/${ container.id }`);
