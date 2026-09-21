@@ -67,6 +67,11 @@ updates:
 #   default-days: 7
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
+  ignore:
+  - # containerd 1.7 lacks the UpdateSandbox method that api 1.12 added, so
+    # guestagent fails to build.  Drop this once guestagent uses containerd/v2.
+    dependency-name: "github.com/containerd/containerd/api"
+    versions: [">= 1.12.0"]
   groups:
     golang-x:
       patterns: ["golang.org/x/*"]
