@@ -879,13 +879,13 @@ mainMenu:
     # @source File a &Bug
     fileABug: Báo &lỗi
     # @source Get &Help
-    getHelp: Nhận &trợ giúp
+    getHelp: '&Nhận trợ giúp'
     # @source {appName} &Help
     help: '{appName} &Trợ giúp'
     # @source &Help
-    label: '&Trợ giúp'
+    label: Trợ &giúp
     # @source &Project Page
-    projectPage: '&Trang dự án'
+    projectPage: Trang &dự án
   # @source Hide {appName}
   hide: Ẩn {appName}
   # @source Hide Others
@@ -910,11 +910,11 @@ mainMenu:
     # @source Toggle &Developer Tools
     toggleDevTools: Bật/tắt &Công cụ nhà phát triển
     # @source Toggle Full &Screen
-    toggleFullScreen: Bật/tắt &Toàn màn hình
+    toggleFullScreen: Bật/tắt Toàn &màn hình
     # @source Zoom &In
     zoomIn: '&Phóng to'
     # @source Zoom &Out
-    zoomOut: '&Thu nhỏ'
+    zoomOut: Thu &nhỏ
   window:
     # @source Bring All to Front
     front: Đưa tất cả ra trước
