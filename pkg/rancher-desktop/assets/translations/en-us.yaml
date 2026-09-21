@@ -19,6 +19,7 @@ locale:
   ja: Japanese
   ko: Korean
   pt-br: Portuguese (Brazilian)
+  vi: Vietnamese
   zh-hans: Chinese (Simplified)
 nav:
   userMenu:

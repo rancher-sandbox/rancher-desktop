@@ -867,6 +867,8 @@ locale:
   # @reason Standard self-designation for the Brazilian Portuguese locale
   # @source Portuguese (Brazilian)
   pt-br: Português (Brasil)
+  # @source Vietnamese
+  vi: Vietnamita
   # @source Chinese (Simplified)
   zh-hans: Chinês (simplificado)
 mainMenu:

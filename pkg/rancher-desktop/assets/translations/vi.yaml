@@ -1,0 +1,1849 @@
+action:
+  # @source Refresh
+  refresh: Làm mới
+allowedImages:
+  # @source The image name needs to match one of the patterns defined in the Allowed Images preference tab.
+  alert: Tên image phải khớp với một trong các mẫu được định nghĩa trong tab tùy chọn Allowed Images.
+  # @source Enable
+  enable: Bật
+  errors:
+    # @source This item is a duplicate.
+    duplicate: Mục này bị trùng lặp.
+  # @source Allowed Image Patterns
+  label: Mẫu image được phép
+  patterns:
+    # @source Type the image pattern
+    placeholder: Nhập mẫu image
+application:
+  behavior:
+    autoStart:
+      # @source Automatically start at login
+      label: Tự động khởi động khi đăng nhập
+      # @source Startup
+      legendText: Khởi động
+    background:
+      # @source Background
+      legendText: Nền
+      # @source Hide the app window when Rancher Desktop is running in the background. It can be opened via the Notification Icon (if visible) or by running Rancher Desktop from the Applications menu.
+      # @source
+      legendTooltip: |
+          Ẩn cửa sổ ứng dụng khi Rancher Desktop đang chạy ở chế độ nền. Có thể mở lại thông qua Biểu tượng thông báo (nếu hiển thị) hoặc bằng cách chạy Rancher Desktop từ menu Ứng dụng.
+    notificationIcon:
+      # @source Hide Notification Icon
+      label: Ẩn biểu tượng thông báo
+      # @source Notification Icon
+      legendText: Biểu tượng thông báo
+    startInBackground:
+      # @source Start in the background
+      label: Khởi động ở chế độ nền
+    theme:
+      # @source Appearance
+      legendText: Giao diện
+      options:
+        dark:
+          # @source Always use dark mode
+          description: Luôn dùng chế độ tối
+          # @source Dark
+          label: Tối
+        light:
+          # @source Always use light mode
+          description: Luôn dùng chế độ sáng
+          # @source Light
+          label: Sáng
+        system:
+          # @source Follow the operating system setting
+          description: Theo cài đặt của hệ điều hành
+          # @source System
+          label: Hệ thống
+    windowQuitOnClose:
+      # @source Quit when closing application window
+      label: Thoát khi đóng cửa sổ ứng dụng
+  general:
+    adminAccess:
+      # @source Allow administrative credentials (sudo access)
+      label: Cho phép thông tin xác thực quản trị (quyền sudo)
+      # @source Administrative Access
+      legendText: Quyền quản trị
+      # @source If checked, {appName} will acquire administrative credentials ("sudo access") when starting. This enables bridged networking and default docker socket support. Takes effect on next start.
+      legendTooltip: Nếu được chọn, {appName} sẽ nhận thông tin xác thực quản trị ("quyền sudo") khi khởi động. Điều này bật hỗ trợ mạng bridged và socket docker mặc định. Có hiệu lực từ lần khởi động tiếp theo.
+    automaticUpdates:
+      # @source Check for updates automatically
+      label: Tự động kiểm tra cập nhật
+      # @source Automatic Updates
+      legendText: Cập nhật tự động
+    statistics:
+      # @source Allow collection of anonymous statistics to help improve {appName}
+      label: Cho phép thu thập thống kê ẩn danh để giúp cải thiện {appName}
+      # @source Statistics
+      legendText: Thống kê
+  locale:
+    # @source Community and AI tools provide translations. English is the canonical language. Report translation issues on GitHub.
+    disclaimer: Các công cụ cộng đồng và AI cung cấp bản dịch. Tiếng Anh là ngôn ngữ chính. Báo cáo sự cố dịch thuật trên GitHub.
+    # @source Language
+    legendText: Ngôn ngữ
+asyncButton:
+  activate:
+    # @source Activate
+    action: Kích hoạt
+    # @source Activated
+    success: Đã kích hoạt
+    # @source Activating&hellip;
+    waiting: Đang kích hoạt&hellip;
+  apply:
+    # @source Apply
+    action: Áp dụng
+    # @source Applied
+    success: Đã áp dụng
+    # @source Applying&hellip;
+    waiting: Đang áp dụng&hellip;
+  continue:
+    # @source Continue
+    action: Tiếp tục
+    # @source Saved
+    success: Đã lưu
+    # @source Saving&hellip;
+    waiting: Đang lưu&hellip;
+  copy:
+    # @source Click to Copy
+    action: Nhấp để sao chép
+    # @source Copied!
+    success: Đã sao chép!
+  create:
+    # @source Create
+    action: Tạo
+    # @source Created
+    success: Đã tạo
+    # @source Creating&hellip;
+    waiting: Đang tạo&hellip;
+  deactivate:
+    # @source Deactivate
+    action: Vô hiệu hóa
+    # @source Deactivated
+    success: Đã vô hiệu hóa
+    # @source Deactivating&hellip;
+    waiting: Đang vô hiệu hóa&hellip;
+  default:
+    # @source Action
+    action: Hành động
+    # @source Error
+    error: Lỗi
+    # @source Success
+    success: Thành công
+    # @source Waiting
+    waiting: Đang chờ
+  delete:
+    # @source Delete
+    action: Xóa
+    # @source Deleted
+    success: Đã xóa
+    # @source Deleting&hellip;
+    waiting: Đang xóa&hellip;
+  disable:
+    # @source Disable
+    action: Tắt
+    # @source Disabled
+    success: Đã tắt
+    # @source Disabling&hellip;
+    waiting: Đang tắt&hellip;
+  done:
+    # @source Done
+    action: Xong
+    # @source Saved
+    success: Đã lưu
+    # @source Saving&hellip;
+    waiting: Đang lưu&hellip;
+  download:
+    # @source Download
+    action: Tải xuống
+    # @source Saving
+    success: Đang lưu
+    # @source Downloading&hellip;
+    waiting: Đang tải xuống&hellip;
+  edit:
+    # @source Save
+    action: Lưu
+    # @source Saved
+    success: Đã lưu
+    # @source Saving&hellip;
+    waiting: Đang lưu&hellip;
+  enable:
+    # @source Enable
+    action: Bật
+    # @source Enabled
+    success: Đã bật
+    # @source Enabling&hellip;
+    waiting: Đang bật&hellip;
+  finish:
+    # @source Finish
+    action: Hoàn tất
+    # @source Finished
+    success: Đã hoàn tất
+    # @source Finishing&hellip;
+    waiting: Đang hoàn tất&hellip;
+  import:
+    # @source Import
+    action: Nhập
+    # @source Imported
+    success: Đã nhập
+    # @source Importing&hellip;
+    waiting: Đang nhập&hellip;
+  install:
+    # @source Install
+    action: Cài đặt
+    # @source Installing
+    success: Đang cài đặt
+    # @source Starting&hellip;
+    waiting: Đang khởi động&hellip;
+  refresh:
+    # @source
+    action: ''
+    # @reason Icon identifier consumed by the application code; kept identical to the English source.
+    # @source refresh
+    actionIcon: refresh
+    # @source
+    error: ''
+    # @reason Icon identifier consumed by the application code; kept identical to the English source.
+    # @source error
+    errorIcon: error
+    # @source
+    success: ''
+    # @reason Icon identifier consumed by the application code; kept identical to the English source.
+    # @source checkmark
+    successIcon: checkmark
+    # @source
+    waiting: ''
+    # @reason Icon identifier consumed by the application code; kept identical to the English source.
+    # @source refresh
+    waitingIcon: refresh
+  remove:
+    # @source Remove
+    action: Xóa
+    # @source Removed
+    success: Đã xóa
+    # @source Removing&hellip;
+    waiting: Đang xóa&hellip;
+  restore:
+    # @source Restore
+    action: Khôi phục
+    # @source Restored
+    success: Đã khôi phục
+    # @source Restoring&hellip;
+    waiting: Đang khôi phục&hellip;
+  snapshot:
+    # @source Snapshot Now
+    action: Chụp ảnh nhanh ngay
+    # @source Creating Snapshot
+    success: Đang tạo ảnh chụp nhanh
+    # @source Snapshotting&hellip;
+    waiting: Đang chụp ảnh nhanh&hellip;
+  uninstall:
+    # @source Uninstall
+    action: Gỡ cài đặt
+    # @source Uninstalled
+    success: Đã gỡ cài đặt
+    # @source Uninstalling&hellip;
+    waiting: Đang gỡ cài đặt&hellip;
+  update:
+    # @source Update
+    action: Cập nhật
+    # @source Updated
+    success: Đã cập nhật
+    # @source Updating&hellip;
+    waiting: Đang cập nhật&hellip;
+  upgrade:
+    # @source Upgrade
+    action: Nâng cấp
+    # @source Upgrading
+    success: Đang nâng cấp
+    # @source Starting&hellip;
+    waiting: Đang khởi động&hellip;
+blogFeed:
+  # @source Read more
+  readMore: Đọc thêm
+  # @source Recent blog posts
+  title: Bài đăng blog gần đây
+containerEngine:
+  # @reason Container Engine is a product concept kept in English for consistency with the related keys.
+  # @source Container Engine
+  label: Container Engine
+  options:
+    containerd:
+      # @source Namespaces for container images; use with nerdctl.
+      description: Namespace cho image container; dùng với nerdctl.
+      # @reason containerd is the project name and stays in English.
+      # @source containerd
+      label: containerd
+    moby:
+      # @source Docker API; use with Docker CLI.
+      description: Docker API; dùng với Docker CLI.
+      # @reason dockerd and moby are project names and stay in English.
+      # @source dockerd (moby)
+      label: dockerd (moby)
+containerInfo:
+  # @source Container Info
+  fallbackTitle: Thông tin container
+  # @source Info
+  info: Thông tin
+  # @source Logs
+  logs: Nhật ký
+  search:
+    # @source Search in logs
+    ariaLabel: Tìm kiếm trong nhật ký
+    # @source Clear search
+    clearSearch: Xóa tìm kiếm
+    # @source Next match
+    nextMatch: Kết quả tiếp theo
+    # @source Search logs...
+    placeholder: Tìm kiếm nhật ký...
+    # @source Previous match
+    previousMatch: Kết quả trước
+  # @reason 'Shell' is the conventional terminal term and is kept in English.
+  # @source Shell
+  shell: Shell
+  # @source Stats
+  stats: Thống kê
+containerInspect:
+  capabilities:
+    # @source Added
+    added: Đã thêm
+    # @source Dropped
+    dropped: Đã loại bỏ
+  command:
+    # @source Args
+    args: Đối số
+    # @source Command
+    command: Lệnh
+    # @reason 'Entrypoint' is a Docker term kept in English.
+    # @source Entrypoint
+    entrypoint: Entrypoint
+  error:
+    # @source Failed to load container details.
+    loadFailed: Không thể tải chi tiết container.
+    # @source An unknown error has occurred
+    unknown: Đã xảy ra lỗi không xác định
+  # @source Loading container details…
+  loading: Đang tải chi tiết container…
+  mounts:
+    # @source Destination
+    destination: Đích
+    # @reason Mount access-mode abbreviation; kept as-is.
+    # @source RO
+    readOnly: RO
+    # @reason Mount access-mode abbreviation; kept as-is.
+    # @source RW
+    readWrite: RW
+    # @reason Mount access-mode abbreviation; kept as-is.
+    # @source R/W
+    rw: R/W
+    # @source Source
+    source: Nguồn
+    # @source Type
+    type: Loại
+  # @source None
+  none: Không có
+  sections:
+    # @source Capabilities
+    capabilities: Khả năng
+    # @source Command & Args
+    commandArgs: Lệnh & Đối số
+    # @source Environment
+    environment: Môi trường
+    # @source Labels
+    labels: Nhãn
+    # @source Mounts
+    mounts: Mount
+    # @source Ports
+    ports: Cổng
+  summary:
+    # @source Created
+    created: Đã tạo
+    # @reason 'ID' is the standard abbreviation in Vietnamese.
+    # @source ID
+    id: ID
+    # @reason 'Image' is an established loanword in Vietnamese Docker terminology.
+    # @source Image
+    image: Image
+    # @source IP Address
+    ipAddress: Địa chỉ IP
+    # @source Name
+    name: Tên
+    # @source Started
+    started: Đã bắt đầu
+containerStats:
+  charts:
+    # @source Block I/O (bytes/s)
+    blockIO: Block I/O (byte/giây)
+    # @reason 'CPU' and '%' are identical in Vietnamese.
+    # @source CPU %
+    cpu: CPU %
+    # @source Memory
+    memory: Bộ nhớ
+    # @source Network I/O (bytes/s)
+    network: Network I/O (byte/giây)
+  interval:
+    # @source {minutes} min
+    minutes: '{minutes} phút'
+    # @source {seconds} s
+    seconds: '{seconds} giây'
+  # @source Stats are currently only available for the Docker (Moby) engine.
+  mobyOnly: Thống kê hiện chỉ khả dụng cho engine Docker (Moby).
+  # @source No processes found.
+  noProcesses: Không tìm thấy tiến trình nào.
+  # @source Stats are only available for running containers.
+  notRunning: Thống kê chỉ khả dụng cho các container đang chạy.
+  # @source Processes
+  processes: Tiến trình
+  # @source Refresh
+  refresh: Làm mới
+  series:
+    # @source Limit
+    limit: Giới hạn
+    # @source Read
+    read: Đọc
+    # @reason RX/TX network abbreviations are kept as-is.
+    # @source RX
+    rx: RX
+    # @reason RX/TX network abbreviations are kept as-is.
+    # @source TX
+    tx: TX
+    # @source Used
+    used: Đã dùng
+    # @source Write
+    write: Ghi
+containers:
+  manage:
+    table:
+      action:
+        # @source Info
+        info: Thông tin
+        # @source Restart
+        restart: Khởi động lại
+        # @source Start
+        start: Bắt đầu
+        # @source Stop
+        stop: Dừng
+      header:
+        # @source Name
+        containerName: Tên
+        # @reason 'Image' is an established loanword in Vietnamese Docker terminology.
+        # @source Image
+        image: Image
+        # @source Port(s)
+        ports: Cổng
+        # @source Uptime
+        started: Thời gian hoạt động
+        # @source State
+        state: Trạng thái
+  sortableTables:
+    # @source There are no containers to show
+    noRows: Không có container nào để hiển thị
+  # @source Containers
+  title: Container
+dashboard:
+  # @reason Product name; stays in English.
+  # @source Rancher Dashboard
+  windowTitle: Rancher Dashboard
+denyRoot:
+  # @source Rancher Desktop cannot be run with root privileges. Please run again as a regular user.
+  message: Không thể chạy Rancher Desktop với quyền root. Vui lòng chạy lại với tư cách người dùng thông thường.
+  # @source Cannot run as Root
+  title: Không thể chạy với quyền Root
+deploymentProfile:
+  # @source Invalid deployment file {path}: no version specified. Add a version field to make it valid (current version is {version}).
+  noVersion: 'Tệp triển khai không hợp lệ {path}: chưa chỉ định phiên bản. Thêm trường version để hợp lệ hóa (phiên bản hiện tại là {version}).'
+  # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
+  noVersionRegistry: 'Triển khai không hợp lệ: chưa chỉ định phiên bản tại {path}. Thêm trường version để hợp lệ hóa (phiên bản hiện tại là {version}).'
+diagnostics:
+  # @source {count} failed plus {muted} muted
+  failedCount: '{count} lỗi cộng với {muted} đã tắt tiếng'
+  # @source Last run:
+  lastRun: 'Lần chạy cuối:'
+  # @source (Never)
+  never: (Chưa bao giờ)
+  # @source (No fixes available)
+  noFixes: (Không có bản sửa nào)
+  results:
+    muted:
+      # @source Try showing muted diagnostics.
+      body: Thử hiển thị chẩn đoán đã tắt tiếng.
+      # @source No results found
+      heading: Không tìm thấy kết quả nào
+      # @reason Icon identifier consumed by the application code; kept identical to the English source.
+      # @source icon-search
+      icon: icon-search
+    success:
+      # @source Rancher Desktop appears to be functioning correctly.
+      body: Rancher Desktop có vẻ đang hoạt động bình thường.
+      # @source No problems detected
+      heading: Không phát hiện vấn đề nào
+      # @reason Icon identifier consumed by the application code; kept identical to the English source.
+      # @source icon-checkmark
+      icon: icon-checkmark
+  # @source Show Muted
+  showMuted: Hiển thị mục đã tắt tiếng
+  tableHeaders:
+    # @source Mute
+    mute: Tắt tiếng
+    # @source Name
+    name: Tên
+  # @source Diagnostics
+  title: Chẩn đoán
+dialog:
+  bridgedNetwork:
+    # @source Shared network isn't available either. Only network access is via port forwarding to the host.
+    noNetwork: Mạng chia sẻ cũng không khả dụng. Cách duy nhất để truy cập mạng là chuyển tiếp cổng tới máy chủ.
+    # @source Using shared network address {ip}
+    sharedFallback: Đang dùng địa chỉ mạng chia sẻ {ip}
+    # @source Bridged network did not get an IP address.
+    title: Mạng cầu nối không nhận được địa chỉ IP.
+  confirmMigration:
+    # @source Delete Workloads
+    delete: Xóa Workload
+    # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
+    message: Hạ cấp từ {from} xuống {to} sẽ làm mất các workload Kubernetes hiện có. Xóa dữ liệu?
+    # @source Confirming migration
+    title: Xác nhận di chuyển
+  invalidK8sVersion:
+    # @source Falling back to recommended minimum upgrade version of {version}
+    detail: Quay về phiên bản nâng cấp tối thiểu được đề xuất là {version}
+    # @source Requested Kubernetes version ''{version}'' is not a supported version.
+    message: Phiên bản Kubernetes được yêu cầu ''{version}'' không phải là phiên bản được hỗ trợ.
+    # @source Invalid Kubernetes Version
+    title: Phiên bản Kubernetes không hợp lệ
+  networkFailure:
+    # @source Please acquire a version in the range {range} and install in ''{path}''
+    detail: Vui lòng tải một phiên bản trong khoảng {range} và cài đặt vào ''{path}''
+    # @source Can't download a compatible version of kubectl in offline-mode
+    message: Không thể tải xuống phiên bản kubectl tương thích ở chế độ ngoại tuyến
+    # @source Network failure
+    title: Lỗi mạng
+extensions:
+  # @reason Icon identifier consumed by the application code; kept identical to the English source.
+  # @source icon-extension
+  icon: icon-extension
+  installed:
+    emptyState:
+      # @source It looks like you don't have any extensions installed yet. Browse the extensions catalog to get started.
+      body: Có vẻ như bạn chưa cài đặt tiện ích mở rộng nào. Duyệt danh mục tiện ích mở rộng để bắt đầu.
+      button:
+        # @source Browse Extensions
+        text: Duyệt tiện ích mở rộng
+      # @source No extensions installed
+      heading: Chưa cài đặt tiện ích mở rộng nào
+      # @reason Icon identifier consumed by the application code; kept identical to the English source.
+      # @source icon-extension
+      icon: icon-extension
+    list:
+      # @source Remove
+      uninstall: Xóa
+      # @source Upgrade
+      upgrade: Nâng cấp
+  view:
+    emptyState:
+      # @source {extensionId} was removed. Please visit the extensions catalog to reinstall the extension or browse for other extensions to enhance your Rancher Desktop experience.
+      body: '{extensionId} đã bị xóa. Vui lòng truy cập danh mục tiện ích mở rộng để cài đặt lại tiện ích hoặc duyệt các tiện ích mở rộng khác để nâng cao trải nghiệm Rancher Desktop của bạn.'
+      # @source Extension removed
+      heading: Đã xóa tiện ích mở rộng
+firstRun:
+  # @source Enable Kubernetes
+  enableKubernetes: Bật Kubernetes
+  kubernetesVersion:
+    # @source (cached versions only)
+    cachedOnly: (chỉ các phiên bản đã lưu trong bộ nhớ đệm)
+    # @source Kubernetes Version
+    legend: Phiên bản Kubernetes
+    # @source Other Versions
+    otherVersions: Các phiên bản khác
+    # @source Recommended Versions
+    recommendedVersions: Các phiên bản được đề xuất
+  # @reason 'OK' is the standard dialog button label in Vietnamese.
+  # @source OK
+  ok: OK
+  # @source Welcome to Rancher Desktop by SUSE
+  welcome: Chào mừng bạn đến với Rancher Desktop của SUSE
+general:
+  # @source Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
+  description: Rancher Desktop cung cấp khả năng quản lý Kubernetes và image thông qua ứng dụng máy tính để bàn.
+  # @source Homepage
+  homepage: Trang chủ
+  # @source Issues
+  issues: Vấn đề
+  # @source General
+  navLabel: Chung
+  # @source Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack
+  projectDiscussions: 'Thảo luận dự án: <b>#rancher-desktop</b> trong <a href="https://slack.rancher.io/">Rancher Users</a> Slack'
+  # @source Project Links:
+  projectLinks: 'Liên kết dự án:'
+  # @source Welcome to Rancher Desktop by SUSE
+  title: Chào mừng bạn đến với Rancher Desktop của SUSE
+generic:
+  # @source  and 
+  and: ' và '
+  # @source Apply
+  apply: Áp dụng
+  # @source Cancel
+  cancel: Hủy
+  # @source Close
+  close: Đóng
+  # @reason The comma separator is identical in Vietnamese.
+  # @source , 
+  comma: ', '
+  # @source Forward
+  forward: Chuyển tiếp
+  # @source Loading&hellip;
+  loading: Đang tải&hellip;
+  # @source Namespace
+  namespace: Không gian tên
+  # @reason 'OK' is the standard dialog button label in Vietnamese.
+  # @source OK
+  ok: OK
+  # @source Rerun
+  rerun: Chạy lại
+  # @source Search
+  search: Tìm kiếm
+imageEvents:
+  # @source Please select the Dockerfile to use (could have a different name)
+  buildMessage: Vui lòng chọn Dockerfile để sử dụng (có thể có tên khác)
+  # @source Pick the build directory
+  buildTitle: Chọn thư mục build
+  # @source Error trying to delete images {ids}
+  deleteBatchError: Lỗi khi cố xóa các image {ids}
+  # @source Error trying to delete image {name} ({id}):
+  # @source
+  # @source  {error}
+  deleteError: |-
+      Lỗi khi cố xóa image {name} ({id}):
+
+       {error}
+  # @source Error trying to push {name}:
+  # @source
+  # @source  {error}
+  pushError: |-
+      Lỗi khi cố đẩy {name}:
+
+       {error}
+  # @source Error trying to scan {name}:
+  # @source
+  # @source  {error}
+  scanError: |-
+      Lỗi khi cố quét {name}:
+
+       {error}
+images:
+  action:
+    # @source Add Image
+    add: Thêm image
+  add:
+    action:
+      # @reason 'Build' is kept as the established Docker loanword in Vietnamese.
+      # @source Build
+      build: Build
+      gerund:
+        # @source Building
+        build: Đang build
+        # @source Pulling
+        pull: Đang pull
+      infinitive:
+        # @reason 'build' is kept as the established Docker loanword in Vietnamese.
+        # @source build
+        build: build
+        # @reason 'pull' is kept as the established Docker loanword in Vietnamese.
+        # @source pull
+        pull: pull
+      pastTense:
+        # @source Built
+        build: Đã build
+        # @source Pulled
+        pull: Đã pull
+      # @reason 'Pull' is kept as the established Docker loanword in Vietnamese.
+      # @source Pull
+      pull: Pull
+    # @source Error trying to { action } ''{ image }''. See console output for more information.
+    errorText: Lỗi khi { action } ''{ image }''. Xem đầu ra console để biết thêm thông tin.
+    # @reason 'image' is an established loanword; {action} carries the localized verb.
+    # @source {action} image...
+    loadingText: '{action} image...'
+    # @reason 'image' is an established loanword; {action} carries the localized verb.
+    # @source {action} image
+    successText: '{action} image'
+    # @source Add Image
+    title: Thêm Image
+  confirmDelete:
+    # @source Delete
+    confirm: Xóa
+    # @source Delete {count} {count, plural, one {image} other {images}}?
+    multiple: Xóa {count} {count, plural, one {image} other {image}}?
+    # @source Delete image {name}:{tag}?
+    single: Xóa image {name}:{tag}?
+    # @source Confirming image deletion
+    title: Xác nhận xóa image
+  manager:
+    # @source Close Output to Continue
+    close: Đóng Output để tiếp tục
+    input:
+      build:
+        # @reason 'Build' is kept as the established Docker loanword in Vietnamese.
+        # @source Build
+        button: Build
+        # @source Name of image to build:
+        label: 'Tên image cần build:'
+        # @reason Example image reference kept as-is to show the expected format.
+        # @source registry.example.com/namespace/image:tag
+        placeholder: registry.example.com/namespace/image:tag
+      pull:
+        # @reason 'Pull' is kept as the established Docker loanword in Vietnamese.
+        # @source Pull
+        button: Pull
+        # @source Name of image to pull:
+        label: 'Tên image cần pull:'
+        # @reason Example image reference kept as-is to show the expected format.
+        # @source registry.example.com/namespace/image
+        placeholder: registry.example.com/namespace/image
+    table:
+      action:
+        # @source Delete
+        delete: Xóa
+        # @reason 'Push' is kept as the established Docker loanword in Vietnamese.
+        # @source Push
+        push: Push
+        # @source Scan...
+        scan: Quét...
+      header:
+        # @reason Docker image identifier; kept in English.
+        # @source Image ID
+        imageId: Image ID
+        # @reason 'Image' is an established loanword in Vietnamese Docker terminology.
+        # @source Image
+        imageName: Image
+        # @source Size
+        size: Kích thước
+        # @reason 'Tag' is kept as the established Docker loanword in Vietnamese.
+        # @source Tag
+        tag: Tag
+      # @source All images
+      label: Tất cả image
+    # @source Image Output
+    title: Output Image
+  scan:
+    details:
+      # @source Description
+      description: Mô tả
+      # @source Primary URL
+      primaryUrl: URL chính
+      # @source References
+      references: Tham chiếu
+    # @source Error trying to scan ''{ image }''. See console output for more information.
+    errorText: Lỗi khi quét ''{ image }''. Xem đầu ra console để biết thêm thông tin.
+    labels:
+      # @source CRITICAL
+      critical: NGHIÊM TRỌNG
+      # @source HIGH
+      high: CAO
+      # @source Issues Found
+      issuesFound: Vấn đề phát hiện
+      # @source LOW
+      low: THẤP
+      # @source MEDIUM
+      medium: TRUNG BÌNH
+    # @source Scanning ''{ image }''
+    loadingText: Đang quét ''{ image }''
+    results:
+      headers:
+        # @source Fixed
+        fixed: Đã sửa
+        # @source Installed
+        installed: Đã cài đặt
+        # @source Package
+        package: Gói
+        # @source Severity
+        severity: Mức độ nghiêm trọng
+        # @source Vulnerability ID
+        vulnerabilityId: ID lỗ hổng
+    # @source Scan details for ''{ image }''
+    title: Chi tiết quét cho ''{ image }''
+  sortableTables:
+    # @source There are no images to show
+    noRows: Không có image nào để hiển thị
+  state:
+    # @source Waiting for image manager to be ready
+    imagesUnready: Đang đợi trình quản lý image sẵn sàng
+    # @source Error: Unknown state; please reload.
+    unknown: 'Lỗi: Trạng thái không xác định; vui lòng tải lại.'
+  # @source Images
+  title: Image
+integrations:
+  windows:
+    # @source Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros
+    description: Hiển thị cấu hình Kubernetes và Docker socket của Rancher Desktop cho các bản phân phối Windows Subsystem for Linux (WSL)
+kubernetesError:
+  # @source Context:
+  context: 'Ngữ cảnh:'
+  # @source Last command run:
+  lastCommand: 'Lệnh chạy gần nhất:'
+  # @source Some recent <a href="#" data-action="showLogs">logfile</a> lines:
+  logLines: 'Một số dòng <a href="#" data-action="showLogs">logfile</a> gần đây:'
+  # @source {appName} Error
+  title: Lỗi {appName}
+kubernetesPrefs:
+  kubernetes:
+    # @source Enable Kubernetes
+    label: Bật Kubernetes
+    # @reason Kubernetes is a product name and stays in English.
+    # @source Kubernetes
+    legendText: Kubernetes
+  options:
+    # @source Options
+    legendText: Tùy chọn
+    # @source Install Spin Operator
+    spinkube: Cài đặt Spin Operator
+    # @source Spin Operator requires <a href="#" data-navigate="Container Engine,general">WebAssembly</a> to be enabled.
+    spinkubeWarning: Spin Operator yêu cầu bật <a href="#" data-navigate="Container Engine,general">WebAssembly</a>.
+    # @source Enable Traefik
+    traefik: Bật Traefik
+  port:
+    # @source Kubernetes Port
+    legendText: Cổng Kubernetes
+  version:
+    # @source Kubernetes version
+    legendText: Phiên bản Kubernetes
+    # @source Kubernetes version (cached versions only)
+    legendTextCached: Phiên bản Kubernetes (chỉ các phiên bản đã lưu trong bộ nhớ đệm)
+    # @source Other Versions
+    otherVersions: Phiên bản khác
+    # @source Recommended Versions
+    recommendedVersions: Phiên bản đề xuất
+labelSelect:
+  noOptions:
+    # @source No options
+    empty: Không có tùy chọn
+    # @source No matching options
+    noMatch: Không có tùy chọn phù hợp
+  pagination:
+    # @source {count} / {totalCount} items
+    counts: '{count} / {totalCount} mục'
+    # @source Load More...
+    more: Tải thêm...
+locale:
+  # @source German
+  de: Tiếng Đức
+  # @source English
+  en-us: Tiếng Anh
+  # @source Spanish
+  es: Tiếng Tây Ban Nha
+  # @source French
+  fr: Tiếng Pháp
+  # @source Italian
+  it: Tiếng Ý
+  # @source Japanese
+  ja: Tiếng Nhật
+  # @source Korean
+  ko: Tiếng Hàn
+  # @source Portuguese (Brazilian)
+  pt-br: Tiếng Bồ Đào Nha (Brazil)
+  # @source Vietnamese
+  vi: Tiếng Việt
+  # @source Chinese (Simplified)
+  zh-hans: Tiếng Trung (Giản thể)
+mainMenu:
+  # @source About {appName}
+  about: Giới thiệu {appName}
+  edit:
+    # @source &Copy
+    copy: '&Sao chép'
+    # @source Cu&t
+    cut: '&Cắt'
+    # @source De&lete
+    delete: '&Xóa'
+    # @source &Edit
+    label: '&Chỉnh sửa'
+    # @source &Paste
+    paste: '&Dán'
+    # @source &Redo
+    redo: '&Làm lại'
+    # @source Select &All
+    selectAll: Chọn &tất cả
+    # @source &Undo
+    undo: '&Hoàn tác'
+  file:
+    # @source Close
+    close: Đóng
+    # @source E&xit
+    exit: '&Thoát'
+    # @source &File
+    label: '&Tệp'
+  help:
+    # @source &About {appName}
+    about: '&Giới thiệu {appName}'
+    # @source &Discuss
+    discuss: '&Thảo luận'
+    # @source File a &Bug
+    fileABug: Báo &lỗi
+    # @source Get &Help
+    getHelp: Nhận &trợ giúp
+    # @source {appName} &Help
+    help: '{appName} &Trợ giúp'
+    # @source &Help
+    label: '&Trợ giúp'
+    # @source &Project Page
+    projectPage: '&Trang dự án'
+  # @source Hide {appName}
+  hide: Ẩn {appName}
+  # @source Hide Others
+  hideOthers: Ẩn các mục khác
+  # @source Preferences
+  preferences: Tùy chọn
+  # @source Quit {appName}
+  quit: Thoát {appName}
+  # @source Services
+  services: Dịch vụ
+  # @source Show All
+  showAll: Hiển thị tất cả
+  view:
+    # @source &Actual Size
+    actualSize: '&Kích thước thực'
+    # @source &Force Reload
+    forceReload: '&Buộc tải lại'
+    # @source &View
+    label: '&Xem'
+    # @source &Reload
+    reload: '&Tải lại'
+    # @source Toggle &Developer Tools
+    toggleDevTools: Bật/tắt &Công cụ nhà phát triển
+    # @source Toggle Full &Screen
+    toggleFullScreen: Bật/tắt &Toàn màn hình
+    # @source Zoom &In
+    zoomIn: '&Phóng to'
+    # @source Zoom &Out
+    zoomOut: '&Thu nhỏ'
+  window:
+    # @source Bring All to Front
+    front: Đưa tất cả ra trước
+    # @source &Window
+    label: '&Cửa sổ'
+    # @source Minimize
+    minimize: Thu nhỏ
+    # @source Zoom
+    zoom: Thu phóng
+marketplace:
+  installed:
+    table:
+      header:
+        # @source Description
+        description: Mô tả
+        # @source Name
+        name: Tên
+        # @source Vendor
+        vendor: Nhà cung cấp
+  labels:
+    # @source Install
+    install: Cài đặt
+    # @source Remove
+    uninstall: Xóa
+    # @source Upgrade
+    upgrade: Nâng cấp
+  loading:
+    # @source Installing...
+    install: Đang cài đặt...
+    # @source Removing...
+    uninstall: Đang xóa...
+    # @source Upgrading...
+    upgrade: Đang nâng cấp...
+  # @source More information
+  moreInfo: Thông tin thêm
+  # @source No extension found for the search criteria
+  noResults: Không tìm thấy tiện ích mở rộng nào phù hợp với tiêu chí tìm kiếm
+  tabs:
+    # @source Catalog
+    catalog: Danh mục
+    # @source Installed
+    installed: Đã cài đặt
+  # @source Extensions
+  title: Tiện ích mở rộng
+nav:
+  userMenu:
+    # @source Cluster Dashboard
+    clusterDashboard: Bảng điều khiển cụm
+    # @source Preferences
+    preferences: Tùy chọn
+pathManagement:
+  # @source Configure PATH
+  label: Cấu hình PATH
+  options:
+    manual:
+      # @source Rancher Desktop does not change your PATH configuration; add <code>$HOME/.rd/bin</code> to your path manually.
+      description: Rancher Desktop không thay đổi cấu hình PATH của bạn; hãy thêm <code>$HOME/.rd/bin</code> vào path theo cách thủ công.
+      # @source Manual
+      label: Thủ công
+    rcFiles:
+      # @source Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.
+      description: Rancher Desktop tự động chỉnh sửa hồ sơ shell của bạn. Hãy khởi động lại mọi shell đang mở để các thay đổi có hiệu lực.
+      # @source Automatic
+      label: Tự động
+  # @source Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, <code>$HOME/.rd/bin</code> must be in your PATH.
+  tooltip: Rancher Desktop đi kèm với các công cụ như kubectl, nerdctl, helm và docker. Để sử dụng các công cụ này, <code>$HOME/.rd/bin</code> phải nằm trong PATH của bạn.
+portForwarding:
+  # @source Include Kubernetes services
+  includeKubernetesServices: Bao gồm các dịch vụ Kubernetes
+  manage:
+    table:
+      header:
+        # @source Local Port
+        listenPort: Cổng cục bộ
+        # @source Name
+        name: Tên
+        # @source Namespace
+        namespace: Không gian tên
+        # @source Port
+        port: Cổng
+  sortableTables:
+    # @source There are no port forwarding entries to show
+    noRows: Không có mục chuyển tiếp cổng nào để hiển thị
+  # @source Port Forwarding
+  title: Chuyển tiếp cổng
+preferences:
+  actions:
+    banner:
+      # @source There's a problem with the preferences selection.
+      error: Có vấn đề với lựa chọn trong tùy chọn.
+      # @source Kubernetes will reset after applying changes.
+      reset: Kubernetes sẽ được đặt lại sau khi áp dụng các thay đổi.
+      # @source Kubernetes will restart after applying changes.
+      restart: Kubernetes sẽ khởi động lại sau khi áp dụng các thay đổi.
+  containerEngine:
+    webAssembly:
+      # @source WebAssembly must be enabled for the <a href="#" data-navigate="Kubernetes">Spin Operator</a> to be installed.
+      warning: WebAssembly phải được bật để cài đặt <a href="#" data-navigate="Kubernetes">Spin Operator</a>.
+  error:
+    # @source Reload Preferences to try again.
+    body: Tải lại Tùy chọn để thử lại.
+    # @source Unable to fetch preferences
+    heading: Không thể tải tùy chọn
+    # @source Reload preferences
+    reload: Tải lại tùy chọn
+  # @source Preferences
+  header: Tùy chọn
+  # @source or
+  incompatiblePrefWarningOr: hoặc
+  # @source to be unselected.
+  incompatibleTypeWarningPostDisabled: để bỏ chọn.
+  # @source to be selected.
+  incompatibleTypeWarningPostSelected: để được chọn.
+  # @source The option requires
+  incompatibleTypeWarningPre: Tùy chọn này yêu cầu
+  locked:
+    # @source This setting is locked by organization policy.
+    tooltip: Cài đặt này bị khóa bởi chính sách của tổ chức.
+  nav:
+    # @source Application
+    application: Ứng dụng
+    # @reason Container Engine is a product concept kept in English for consistency with the related keys.
+    # @source Container Engine
+    containerEngine: Container Engine
+    # @reason Kubernetes is a product name and stays in English.
+    # @source Kubernetes
+    kubernetes: Kubernetes
+    # @source Virtual Machine
+    virtualMachine: Máy ảo
+    # @reason WSL is a Microsoft acronym and stays in English.
+    # @source WSL
+    wsl: WSL
+  resetDialog:
+    # @source Apply and reset
+    apply: Áp dụng và đặt lại
+    # @source These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.
+    detail: Những thay đổi này sẽ đặt lại cụm Kubernetes, dẫn đến mất các workload và container image.
+    # @source Apply preferences and reset Kubernetes?
+    message: Áp dụng tùy chọn và đặt lại Kubernetes?
+    # @source Rancher Desktop - Reset Kubernetes
+    title: Rancher Desktop - Đặt lại Kubernetes
+  tabs:
+    # @source Allowed Images
+    allowedImages: Image được phép
+    # @source Behavior
+    behavior: Hành vi
+    # @source Emulation
+    emulation: Giả lập
+    # @source Environment
+    environment: Môi trường
+    # @source General
+    general: Chung
+    # @source Hardware
+    hardware: Phần cứng
+    # @source Integrations
+    integrations: Tích hợp
+    # @reason 'Proxy' is the standard term in Vietnamese.
+    # @source Proxy
+    proxy: Proxy
+    # @source Volumes
+    volumes: Volume
+preferencesWindow:
+  close:
+    # @source There are preferences with changes that have not been applied. All unsaved preferences will be lost.
+    detail: Có những tùy chọn chưa được áp dụng thay đổi. Mọi tùy chọn chưa lưu sẽ bị mất.
+    # @source Discard changes
+    discardChanges: Hủy bỏ thay đổi
+    # @source Close preferences without applying?
+    message: Đóng tùy chọn mà không áp dụng?
+    # @source Rancher Desktop - Close Preferences
+    title: Rancher Desktop - Đóng Tùy chọn
+  # @source Rancher Desktop - Preferences
+  title: Rancher Desktop - Tùy chọn
+prefs:
+  # @source Experimental
+  experimental: Thử nghiệm
+  # @source This setting requires macOS 13.3 (Ventura) or later.
+  onlyFromVentura_arm64: Cài đặt này yêu cầu macOS 13.3 (Ventura) trở lên.
+  # @source This setting requires macOS 13.0 (Ventura) or later.
+  onlyFromVentura_x64: Cài đặt này yêu cầu macOS 13.0 (Ventura) trở lên.
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.3 (Ventura) or later.
+  onlyWithVZ_arm64: Cài đặt này yêu cầu sử dụng chế độ giả lập VZ. VZ chỉ khả dụng trên macOS 13.3 (Ventura) trở lên.
+  # @source This setting requires using the VZ emulation mode. VZ is only available on macOS 13.0 (Ventura) or later.
+  onlyWithVZ_x64: Cài đặt này yêu cầu sử dụng chế độ giả lập VZ. VZ chỉ khả dụng trên macOS 13.0 (Ventura) trở lên.
+product:
+  containerEngine:
+    # @reason Abbreviation kept as-is to match the English UI.
+    # @source CE
+    abbreviation: CE
+    # @reason Container Engine is a product concept kept in English for consistency with the related keys.
+    # @source Container Engine
+    fullName: Container Engine
+  # @source deactivated
+  deactivated: đã hủy kích hoạt
+  # @reason Kubernetes is a product name and stays in English.
+  # @source Kubernetes
+  kubernetesVersion: Kubernetes
+  # @source Network status
+  networkStatus: Trạng thái mạng
+  networkStatusValues:
+    # @source checking...
+    checking: đang kiểm tra...
+    # @source offline
+    offline: ngoại tuyến
+    # @source online
+    online: trực tuyến
+  # @source Version
+  version: Phiên bản
+progress:
+  # @source Asking for permission to run tasks as administrator
+  askingPermission: Đang yêu cầu quyền chạy tác vụ với tư cách quản trị viên
+  # @source Bundling certificates
+  bundlingCertificates: Đang gộp chứng chỉ
+  # @source Checking k3s images
+  checkingK3sImages: Đang kiểm tra image k3s
+  # @source Configuring container engine
+  configuringContainerEngine: Đang cấu hình container engine
+  # @source Configuring image proxy
+  configuringImageProxy: Đang cấu hình proxy image
+  # @source Configuring logrotate
+  configuringLogrotate: Đang cấu hình logrotate
+  # @source Container engine components
+  containerEngineComponents: Các thành phần container engine
+  # @source Copying certificates
+  copyingCertificates: Đang sao chép chứng chỉ
+  # @source Deleting incompatible Kubernetes state
+  deletingIncompatibleState: Đang xóa trạng thái Kubernetes không tương thích
+  # @source Deleting Kubernetes
+  deletingKubernetes: Đang xóa Kubernetes
+  # @source Deleting virtual machine
+  deletingVirtualMachine: Đang xóa máy ảo
+  # @source DNS configuration
+  dnsConfiguration: Cấu hình DNS
+  # @source Downloading Kubernetes components
+  downloadingKubernetesComponents: Đang tải xuống các thành phần Kubernetes
+  # @source Ensuring compatible kubectl
+  ensuringCompatibleKubectl: Đang đảm bảo kubectl tương thích
+  # @source Ensuring virtualization is supported
+  ensuringVirtualizationSupported: Đang đảm bảo ảo hóa được hỗ trợ
+  # @source Expecting user permission to continue
+  expectingPermission: Đang chờ người dùng cấp quyền để tiếp tục
+  # @source Extracting certificates
+  extractingCertificates: Đang trích xuất chứng chỉ
+  # @source Fetching certificates
+  fetchingCertificates: Đang tải chứng chỉ
+  # @source Initializing Rancher Desktop
+  initializingRancherDesktop: Đang khởi tạo Rancher Desktop
+  # @source Initializing WSL data
+  initializingWslData: Đang khởi tạo dữ liệu WSL
+  # @source Installing Buildkit
+  installingBuildkit: Đang cài đặt Buildkit
+  # @source Installing CA certificates
+  installingCaCertificates: Đang cài đặt chứng chỉ CA
+  # @source Installing container engine
+  installingContainerEngine: Đang cài đặt container engine
+  # @source Installing credential helper
+  installingCredentialHelper: Đang cài đặt credential helper
+  # @source Installing the docker-credential helper
+  installingDockerCredentialHelper: Đang cài đặt credential helper docker-credential
+  # @source Installing helpers
+  installingHelpers: Đang cài đặt các helper
+  # @source Installing image scanner
+  installingImageScanner: Đang cài đặt trình quét image
+  # @source Installing k3s
+  installingK3s: Đang cài đặt k3s
+  # @source Installing Kubernetes
+  installingKubernetes: Đang cài đặt Kubernetes
+  # @source Kubernetes components
+  kubernetesComponents: Các thành phần Kubernetes
+  # @source Kubernetes dockerd compatibility
+  kubernetesDockerCompatibility: Khả năng tương thích Kubernetes dockerd
+  # @source Mounting WSL data
+  mountingWslData: Đang gắn kết dữ liệu WSL
+  # @source Preparing to start
+  preparingToStart: Đang chuẩn bị khởi động
+  # @source Proxy Config Setup
+  proxyConfigSetup: Thiết lập cấu hình proxy
+  # @source Rancher Desktop guest agent
+  rancherDesktopGuestAgent: Guest agent của Rancher Desktop
+  # @source Recovering virtual machine
+  recoveringBrokenVirtualMachine: Đang khôi phục máy ảo
+  # @source Regenerating configuration to account for lack of permissions
+  regeneratingConfiguration: Đang tạo lại cấu hình để bù đắp cho việc thiếu quyền
+  # @source Registering WSL distribution
+  registeringWslDistribution: Đang đăng ký bản phân phối WSL
+  # @source Removing existing certificates
+  removingExistingCertificates: Đang xóa các chứng chỉ hiện có
+  # @source Removing spinkube operator
+  removingSpinkubeOperator: Đang xóa spinkube operator
+  # @source Removing stale state
+  removingStaleState: Đang xóa trạng thái cũ
+  # @source Removing Traefik
+  removingTraefik: Đang xóa Traefik
+  # @source Resetting Kubernetes
+  resettingKubernetes: Đang đặt lại Kubernetes
+  # @source Running provisioning scripts
+  runningProvisioningScripts: Đang chạy các script cung cấp
+  # @source Running update-ca-certificates
+  runningUpdateCaCertificates: Đang chạy update-ca-certificates
+  # @source Setting docker context
+  settingDockerContext: Đang thiết lập docker context
+  # @source Setting Lima permissions
+  settingLimaPermissions: Đang thiết lập quyền Lima
+  # @source Setting up Docker socket
+  settingUpDockerSocket: Đang thiết lập Docker socket
+  # @source Setting up virtual ethernet
+  settingUpVirtualEthernet: Đang thiết lập ethernet ảo
+  # @source Shutting down
+  shuttingDown: Đang tắt
+  # @source Skipping node checks, flannel is disabled
+  skippingNodeChecksFlannel: Đang bỏ qua kiểm tra node, flannel bị tắt
+  # @source Starting Backend
+  startingBackend: Đang khởi động Backend
+  # @source Starting buildkit
+  startingBuildkit: Đang khởi động buildkit
+  # @source Starting container engine
+  startingContainerEngine: Đang khởi động container engine
+  # @source Starting image proxy
+  startingImageProxy: Đang khởi động image proxy
+  # @source Starting k3s
+  startingK3s: Đang khởi động k3s
+  # @source Starting Kubernetes
+  startingKubernetes: Đang khởi động Kubernetes
+  # @source Starting proxy
+  startingProxy: Đang khởi động proxy
+  # @source Starting {service}
+  startingService: Đang khởi động {service}
+  # @source Starting virtual machine
+  startingVirtualMachine: Đang khởi động máy ảo
+  # @source Starting WSL environment
+  startingWslEnvironment: Đang khởi động môi trường WSL
+  # @source Stopping existing instance
+  stoppingExistingInstance: Đang dừng instance hiện có
+  # @source Stopping mock backend
+  stoppingMockBackend: Đang dừng backend giả lập
+  # @source Stopping services
+  stoppingServices: Đang dừng các dịch vụ
+  # @source Updating cluster configuration
+  updatingClusterConfiguration: Đang cập nhật cấu hình cluster
+  # @source Updating /etc/hosts
+  updatingEtcHosts: Đang cập nhật /etc/hosts
+  # @source Updating kubeconfig
+  updatingKubeconfig: Đang cập nhật kubeconfig
+  # @source Updating outdated virtual machine
+  updatingOutdatedVm: Đang cập nhật máy ảo lỗi thời
+  # @source Updating WSL data
+  updatingWslData: Đang cập nhật dữ liệu WSL
+  # @source Upgrading WSL distribution
+  upgradingWslDistribution: Đang nâng cấp bản phân phối WSL
+  # @source Waiting for container engine to be ready
+  waitingForContainerEngine: Đang chờ container engine sẵn sàng
+  # @source Waiting for Kubernetes API
+  waitingForKubernetesApi: Đang chờ Kubernetes API
+  # @source Waiting for nodes
+  waitingForNodes: Đang chờ các node
+  # @source Waiting for services
+  waitingForServices: Đang chờ các dịch vụ
+  # @source Writing K3s configuration
+  writingK3sConfiguration: Đang ghi cấu hình K3s
+snapshots:
+  action:
+    # @source Create Snapshot
+    create: Tạo ảnh chụp nhanh
+  card:
+    action:
+      # @source Delete
+      remove: Xóa
+      # @source Restore
+      restore: Khôi phục
+    # @source Created on '<b>'{date}'</b>' at '<b>'{time}'</b>'
+    created: Đã tạo vào '<b>'{date}'</b>' lúc '<b>'{time}'</b>'
+  create:
+    actions:
+      # @source Cancel
+      back: Hủy
+      # @source Create
+      submit: Tạo
+    description:
+      # @source Description
+      label: Mô tả
+    # @source Rancher Desktop will be temporarily unavailable while creating a new Snapshot
+    info: Rancher Desktop sẽ tạm thời không khả dụng trong khi tạo ảnh chụp nhanh mới
+    name:
+      # @source Snapshot Name
+      label: Tên ảnh chụp nhanh
+    # @source Create a new Snapshot
+    title: Tạo ảnh chụp nhanh mới
+  dialog:
+    buttons:
+      # @source Close
+      error: Đóng
+    creating:
+      actions:
+        # @source Cancel
+        cancel: Hủy
+      # @source Creating {snapshot}
+      header: Đang tạo {snapshot}
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being created.'<br/>'This may take some time depending on your machine's resources.'<br/>'Rancher Desktop will be temporarily unavailable during this operation.'<br/><br/>'Once the snapshot is complete, the VM will restart.
+      message: Vui lòng đợi trong khi ảnh chụp nhanh '<b>'{snapshot}'</b>' đang được tạo.'<br/>'Quá trình này có thể mất một lúc tùy thuộc vào tài nguyên máy của bạn.'<br/>'Rancher Desktop sẽ tạm thời không khả dụng trong suốt thao tác này.'<br/><br/>'Sau khi ảnh chụp nhanh hoàn tất, máy ảo sẽ khởi động lại.
+    delete:
+      actions:
+        # @source Cancel
+        cancel: Hủy
+        # @source Delete
+        ok: Xóa
+      # @source Permanently delete snapshot?
+      header: Xóa vĩnh viễn ảnh chụp nhanh?
+      # @source Deleting a snapshot cannot be undone.
+      info: Không thể hoàn tác việc xóa ảnh chụp nhanh.
+    generic:
+      # @source Snapshot operation in progress
+      header: Đang thực hiện thao tác ảnh chụp nhanh
+      # @source Please wait while the snapshot operation is active.<br/>This may take some time depending on your machine's resources.<br/>Rancher Desktop will be temporarily unavailable during this operation.<br/><br/>Once the snapshot process is complete, the VM will restart.
+      message: Vui lòng đợi trong khi thao tác ảnh chụp nhanh đang diễn ra.<br/>Quá trình này có thể mất một lúc tùy thuộc vào tài nguyên máy của bạn.<br/>Rancher Desktop sẽ tạm thời không khả dụng trong suốt thao tác này.<br/><br/>Sau khi quá trình ảnh chụp nhanh hoàn tất, máy ảo sẽ khởi động lại.
+    restore:
+      actions:
+        # @source Cancel
+        cancel: Hủy
+        # @source Restore
+        ok: Khôi phục
+      error:
+        # @source Quit Rancher Desktop
+        buttonText: Thoát Rancher Desktop
+        # @source Failed to restore snapshot '<b>'{snapshot}'</b>'.'<br/><br/>'Rancher Desktop has performed a Factory Reset and will now exit. Please try to address the issue that led to this error before restarting Rancher Desktop and attempting to restore the snapshot again.
+        description: Không thể khôi phục ảnh chụp nhanh '<b>'{snapshot}'</b>'.'<br/><br/>'Rancher Desktop đã thực hiện Khôi phục cài đặt gốc và sẽ thoát ngay bây giờ. Vui lòng cố gắng giải quyết vấn đề dẫn đến lỗi này trước khi khởi động lại Rancher Desktop và thử khôi phục ảnh chụp nhanh lần nữa.
+        # @source Error restoring snapshot
+        header: Lỗi khôi phục ảnh chụp nhanh
+      # @source Restore snapshot?
+      header: Khôi phục ảnh chụp nhanh?
+      # @source Restoring this snapshot will replace your current installation, including preferences. If the Preferences window is open, it will be automatically closed and any unsaved changes will be discarded.
+      info: Khôi phục ảnh chụp nhanh này sẽ thay thế bản cài đặt hiện tại của bạn, bao gồm cả tùy chọn. Nếu cửa sổ Tùy chọn đang mở, nó sẽ tự động đóng và mọi thay đổi chưa lưu sẽ bị hủy bỏ.
+    restoring:
+      actions:
+        # @source Cancel
+        cancel: Hủy
+      # @source Restoring {snapshot}
+      header: Đang khôi phục {snapshot}
+      # @source Please wait while snapshot '<b>'{snapshot}'</b>' is being restored. This may take some time depending on your machine's resources.<br/><br/>Rancher Desktop will be temporarily unavailable during this operation. Once completed, the VM will restart with the {snapshot} snapshot active.
+      message: Vui lòng đợi trong khi ảnh chụp nhanh '<b>'{snapshot}'</b>' đang được khôi phục. Quá trình này có thể mất một lúc tùy thuộc vào tài nguyên máy của bạn.<br/><br/>Rancher Desktop sẽ tạm thời không khả dụng trong suốt thao tác này. Sau khi hoàn tất, máy ảo sẽ khởi động lại với ảnh chụp nhanh {snapshot} đang hoạt động.
+    # @source Show logs
+    showLogs: Hiển thị nhật ký
+  empty:
+    # @source Click on Create Snapshot to get started
+    body: Nhấp vào Tạo ảnh chụp nhanh để bắt đầu
+    # @source No snapshots found
+    heading: Không tìm thấy ảnh chụp nhanh nào
+    # @reason Icon identifier consumed by the application code; kept identical to the English source.
+    # @source icon-search
+    icon: icon-search
+  info:
+    create:
+      # @source Cancelled creation of {snapshot}
+      cancel: Đã hủy tạo {snapshot}
+      # @source Created '<b>'{snapshot}'</b>'
+      success: Đã tạo '<b>'{snapshot}'</b>'
+    delete:
+      # @source Delete error: {error}
+      error: 'Lỗi xóa: {error}'
+      # @source Deleted '<b>'{snapshot}'</b>'
+      success: Đã xóa '<b>'{snapshot}'</b>'
+    lock:
+      # @source A snapshot lock file has been detected for an unusually long time. If you believe this is an error, you can try to remove the lock file by running <code>rdctl snapshot unlock</code>.
+      info: Đã phát hiện tệp khóa ảnh chụp nhanh trong một thời gian dài bất thường. Nếu bạn cho rằng đây là lỗi, bạn có thể thử xóa tệp khóa bằng cách chạy <code>rdctl snapshot unlock</code>.
+    restore:
+      # @source Cancelled restoration of {snapshot}
+      cancel: Đã hủy khôi phục {snapshot}
+      # @source Restored '<b>'{snapshot}'</b>'
+      success: Đã khôi phục '<b>'{snapshot}'</b>'
+    # @source  at {time}
+    when: ' lúc {time}'
+  # @source Snapshots
+  title: Ảnh chụp nhanh
+sortableTable:
+  actionAvailability:
+    # @source {actionable} selected
+    selected: '{actionable} đã chọn'
+    # @source Available for {actionable} of the {total} selected
+    some: Khả dụng cho {actionable} trong số {total} đã chọn
+  # @source Add
+  add: Thêm
+  # @source Add Filter
+  addFilter: Thêm bộ lọc
+  bulkActions:
+    collapsed:
+      # @source Actions
+      label: Hành động
+  # @source Filter for...
+  filterFor: Lọc theo...
+  # @source in
+  in: trong
+  # @source No actions available
+  noActions: Không có hành động nào khả dụng
+  # @source There are no rows which match your search query.
+  noData: Không có hàng nào khớp với truy vấn tìm kiếm của bạn.
+  # @source There are no rows to show.
+  noRows: Không có hàng nào để hiển thị.
+  paging:
+    # @source {pages, plural,
+    # @source =0 {No Items}
+    # @source =1 {{count} {count, plural, =1 {Item} other {Items}}}
+    # @source other {{from} - {to} of {count} Items}}
+    generic: |-
+        {pages, plural,
+        =0 {Không có mục nào}
+        =1 {{count} {count, plural, =1 {Mục} other {Mục}}}
+        other {{from} - {to} trong {count} mục}}
+  # @source Reset
+  resetFilters: Đặt lại
+  # @source Filter
+  search: Lọc
+  # @source Select a column
+  selectCol: Chọn một cột
+  tableHeader:
+    # @source Group by
+    groupBy: Nhóm theo
+    # @source This column cannot be filtered
+    noFilter: Không thể lọc cột này
+    # @source Show
+    show: Hiển thị
+sudoPrompt:
+  # @source Always run without administrative access
+  alwaysRunWithout: Luôn chạy mà không cần quyền quản trị
+  # @reason 'OK' is the standard dialog button label in Vietnamese.
+  # @source OK
+  buttonText: OK
+  # @source This will modify the following paths:
+  explanation: 'Thao tác này sẽ sửa đổi các đường dẫn sau:'
+  # @source Rancher Desktop requires administrative access ("sudo access") for the following reasons:
+  message: 'Rancher Desktop yêu cầu quyền quản trị ("quyền sudo") vì những lý do sau:'
+  # @source The prompt will be displayed once this window is closed. Cancelling the prompt or disabling administrative access requires you to switch the docker context to rancher-desktop in order to continue using Rancher Desktop.
+  messageSecondPart: Hộp thoại sẽ hiển thị sau khi cửa sổ này đóng lại. Việc hủy hộp thoại hoặc tắt quyền quản trị yêu cầu bạn chuyển docker context sang rancher-desktop để tiếp tục sử dụng Rancher Desktop.
+  reasons:
+    dockerSocket:
+      # @source Provides compatibility with tools that use the docker socket without the ability to use docker contexts.
+      description: Cung cấp khả năng tương thích với các công cụ sử dụng docker socket mà không có khả năng sử dụng docker context.
+      # @source Set up default docker socket
+      title: Thiết lập docker socket mặc định
+    networking:
+      # @source Provides bridged networking so that it is easier to access your containers. If this is not allowed, containers will only be accessible via port forwarding.
+      description: Cung cấp mạng cầu nối để dễ dàng truy cập các container của bạn hơn. Nếu không được phép, container sẽ chỉ có thể truy cập được qua chuyển tiếp cổng.
+      # @source Configure networking
+      title: Cấu hình mạng
+  # @source Administrative Access Required
+  title: Yêu cầu quyền quản trị
+systemPreferences:
+  # @source # CPUs
+  cpus: '# CPU'
+  # @source Memory (GB)
+  memory: Bộ nhớ (GB)
+tray:
+  # @reason Container Engine is a product concept kept in English for consistency with the related keys.
+  # @source Container engine: {name}
+  containerEngine: 'Container engine: {name}'
+  # @source Kubernetes Contexts
+  kubernetesContexts: Các context Kubernetes
+  # @source Network status: {status}
+  networkStatus: 'Trạng thái mạng: {status}'
+  # @source None found
+  noneFound: Không tìm thấy
+  # @source Open cluster dashboard
+  openDashboard: Mở bảng điều khiển cluster
+  # @source Open main window
+  openMainWindow: Mở cửa sổ chính
+  # @source Open preferences dialog
+  openPreferences: Mở hộp thoại tùy chọn
+  # @source Quit Rancher Desktop
+  quitRancherDesktop: Thoát Rancher Desktop
+  state:
+    # @source Kubernetes is disabled
+    disabled: Kubernetes đã bị tắt
+    # @source Kubernetes has encountered an error
+    error: Kubernetes đã gặp lỗi
+    # @source Kubernetes is running
+    started: Kubernetes đang chạy
+    # @source Kubernetes is starting
+    starting: Kubernetes đang khởi động
+    # @source Kubernetes is stopped
+    stopped: Kubernetes đã dừng
+    # @source Kubernetes is shutting down
+    stopping: Kubernetes đang tắt
+  # @reason Product name; stays in English.
+  # @source Rancher Desktop
+  tooltip: Rancher Desktop
+troubleshooting:
+  # @source Enable debug mode
+  debugMode: Bật chế độ gỡ lỗi
+  # @source Debug mode cannot be modified because the RD_DEBUG_ENABLED environment variable is set.
+  debugModeLockedTooltip: Không thể sửa đổi chế độ gỡ lỗi vì biến môi trường RD_DEBUG_ENABLED đã được đặt.
+  general:
+    factoryReset:
+      # @source Factory Reset
+      buttonText: Khôi phục cài đặt gốc
+      # @source Factory Reset will remove all Rancher Desktop Configurations.
+      description: Khôi phục cài đặt gốc sẽ xóa tất cả cấu hình của Rancher Desktop.
+      messageBox:
+        # @source Cancel
+        cancel: Hủy
+        # @source Keep cached Kubernetes images
+        checkboxLabel: Giữ lại các image Kubernetes đã lưu vào bộ nhớ đệm
+        # @source <p>Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again.</p><p>Are you sure you want to reset everything?</p>
+        detail: <p>Việc khôi phục cài đặt gốc sẽ xóa cluster của bạn và tất cả cài đặt Rancher Desktop, đồng thời tắt Rancher Desktop. Nếu bạn định tiếp tục sử dụng Rancher Desktop, bạn sẽ cần tự khởi động nó và thực hiện lại quá trình thiết lập ban đầu.</p><p>Bạn có chắc chắn muốn đặt lại mọi thứ không?</p>
+        # @source Perform a factory reset?
+        message: Thực hiện khôi phục cài đặt gốc?
+        # @source Factory Reset
+        ok: Khôi phục cài đặt gốc
+        # @source Rancher Desktop - Factory Reset
+        title: Rancher Desktop - Khôi phục cài đặt gốc
+      # @source Factory Reset
+      title: Khôi phục cài đặt gốc
+    logs:
+      # @source Show Logs
+      buttonText: Hiển thị nhật ký
+      # @source Show Rancher Desktop logs
+      description: Hiển thị nhật ký Rancher Desktop
+      # @source Logs
+      title: Nhật ký
+  kubernetes:
+    resetKubernetes:
+      # @source Reset Kubernetes
+      buttonText: Đặt lại Kubernetes
+      # @source Resetting Kubernetes will delete all workloads and configuration.
+      description: Việc đặt lại Kubernetes sẽ xóa tất cả workload và cấu hình.
+      messageBox:
+        # @source Cancel
+        cancel: Hủy
+        # @source Delete container images
+        checkboxLabel: Xóa các image container
+        # @source Reset Kubernetes?
+        message: Đặt lại Kubernetes?
+        # @source Reset
+        ok: Đặt lại
+        # @source Rancher Desktop - Reset Kubernetes
+        title: Rancher Desktop - Đặt lại Kubernetes
+      # @source Reset Kubernetes
+      title: Đặt lại Kubernetes
+  # @source Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
+  needHelp: Vẫn gặp vấn đề? Hãy bắt đầu thảo luận trong kênh <b>#rancher-desktop</b> trên <a href="https://slack.rancher.io/">Rancher Users Slack</a> hoặc <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Báo cáo sự cố</a>.
+  # @source Troubleshooting
+  title: Khắc phục sự cố
+unmetPrerequisites:
+  # @source Please ensure all requirements are met and try again. Rancher Desktop will now close.
+  action: Vui lòng đảm bảo đáp ứng tất cả các yêu cầu và thử lại. Rancher Desktop sẽ đóng ngay bây giờ.
+  # @reason 'OK' is the standard dialog button label in Vietnamese.
+  # @source OK
+  buttonText: OK
+  # @source Rancher Desktop cannot start because requirements are missing or not configured:
+  message: 'Rancher Desktop không thể khởi động vì các yêu cầu bị thiếu hoặc chưa được cấu hình:'
+  # @source Rancher Desktop is unable to start
+  title: Rancher Desktop không thể khởi động
+updateStatus:
+  # @source Applying update...
+  applyingUpdate: Đang áp dụng bản cập nhật...
+  # @source An update to version {version} is available
+  available: Có bản cập nhật lên phiên bản {version}
+  # @source Check for updates automatically
+  checkForUpdates: Tự động kiểm tra cập nhật
+  # @source downloading... ({percent}%, {speed})
+  downloading: đang tải xuống... ({percent}%, {speed})
+  # @source There was an error checking for updates.
+  errorChecking: Đã xảy ra lỗi khi kiểm tra cập nhật.
+  # @source Release Notes
+  releaseNotes: Ghi chú phát hành
+  # @source Restart Now
+  restartNow: Khởi động lại ngay
+  # @source Restart the application to apply the update.
+  restartToApply: Khởi động lại ứng dụng để áp dụng bản cập nhật.
+  unsupported:
+    # @source A newer version of Rancher Desktop is available, but not supported on your system.
+    message: Có phiên bản Rancher Desktop mới hơn, nhưng không được hỗ trợ trên hệ thống của bạn.
+    # @source For more information please see <a href="https://docs.rancherdesktop.io/getting-started/installation">the installation documentation</a>.
+    seeDocumentation: Để biết thêm thông tin, vui lòng xem <a href="https://docs.rancherdesktop.io/getting-started/installation">tài liệu cài đặt</a>.
+    # @source Latest Version Not Supported
+    title: Phiên bản mới nhất không được hỗ trợ
+  # @source Update Available
+  updateAvailable: Có bản cập nhật
+validation:
+  # @source Cannot decrease "{field}" from {from} to {to}
+  cannotDecrease: Không thể giảm "{field}" từ {from} xuống {to}
+  # @source Cannot enable WebAssembly with classic storage for moby.
+  cannotEnableWasmClassic: Không thể bật WebAssembly với lưu trữ classic cho moby.
+  # @source Cannot switch to classic storage for moby when WebAssembly is enabled.
+  cannotSwitchClassicWasm: Không thể chuyển sang lưu trữ classic cho moby khi WebAssembly được bật.
+  # @source Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
+  cannotSwitchMobyClassicWasm: Không thể chuyển sang container engine moby với lưu trữ classic khi WebAssembly được bật.
+  # @source field "{field}" has duplicate entries: "{duplicates}"
+  duplicateEntries: 'field "{field}" có các mục trùng lặp: "{duplicates}"'
+  # @source Errors in proposed settings:
+  errorsInProposedSettings: 'Lỗi trong cài đặt đề xuất:'
+  # @source field "{field}" is locked
+  fieldLocked: field "{field}" bị khóa
+  # @source {field}: "{pattern}" does not describe an image reference
+  invalidImageReference: '{field}: "{pattern}" không mô tả một tham chiếu image'
+  # @source {field}: "{value}" is not a valid mapping
+  invalidMapping: '{field}: "{value}" không phải là ánh xạ hợp lệ'
+  # @source {field}: "{name}" is an invalid name
+  invalidName: '{field}: "{name}" là tên không hợp lệ'
+  # @source field "{field}" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "{entries}"
+  invalidNoproxyEntries: 'field "{field}" có các mục không hợp lệ (phải là địa chỉ IP, subnet CIDR hoặc tên miền): "{entries}"'
+  # @source {field}: "{value}" is not a valid page name for Preferences Dialog
+  invalidPageName: '{field}: "{value}" không phải là tên trang hợp lệ cho Hộp thoại Tùy chọn'
+  # @source {field}: tab name "{tabName}" is not a valid tab name for "{page}" Preference page
+  invalidTabName: '{field}: tên tab "{tabName}" không phải là tên tab hợp lệ cho trang Tùy chọn "{page}"'
+  # @source {field}: "{name}" has invalid tag "{tag}"
+  invalidTag: '{field}: "{name}" có tag không hợp lệ "{tag}"'
+  # @source Invalid value for "{field}": <{value}>
+  invalidValue: 'Giá trị không hợp lệ cho "{field}": <{value}>'
+  # @source Invalid value for "{field}": <{value}>; must be one of {validValues}
+  invalidValueEnum: 'Giá trị không hợp lệ cho "{field}": <{value}>; phải là một trong {validValues}'
+  # @source Kubernetes version "{version}" not found.
+  kubernetesVersionNotFound: Không tìm thấy phiên bản Kubernetes "{version}".
+  # @source {field}: "{name}" has non-string tag "{tag}"
+  nonStringTag: '{field}: "{name}" có tag không phải chuỗi "{tag}"'
+  # @source Changing field "{field}" via the API isn't supported.
+  notSupported: Không hỗ trợ thay đổi field "{field}" qua API.
+  # @source Error for field ''{field}'': expecting value of type array, got ''{value}''
+  profileExpectedArray: 'Lỗi cho field ''''{field}'''': mong đợi giá trị kiểu array, nhận được ''''{value}'''''
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got ''{value}''
+  profileExpectedType: 'Lỗi cho field ''''{field}'''': mong đợi giá trị kiểu {expectedType}, nhận được ''''{value}'''''
+  # @source Error for field ''{field}'': expecting value of type {expectedType}, got an array {value}
+  profileExpectedTypeGotArray: 'Lỗi cho field ''''{field}'''': mong đợi giá trị kiểu {expectedType}, nhận được một array {value}'
+  # @source Proposed field "{field}" should be an object, got <{value}>.
+  proposedShouldBeObject: Field đề xuất "{field}" phải là một object, nhận được <{value}>.
+  # @source Setting {field} can only be enabled on aarch64 systems.
+  requiresArm: Cài đặt {field} chỉ có thể được bật trên hệ thống aarch64.
+  # @source Setting {field} can only be changed when virtualMachine.mount.type is "{mountType}".
+  requiresNineP: Cài đặt {field} chỉ có thể được thay đổi khi virtualMachine.mount.type là "{mountType}".
+  # @source Setting {field} can only be enabled when virtual-machine.type is "{vmType}".
+  requiresVz: Cài đặt {field} chỉ có thể được bật khi virtual-machine.type là "{vmType}".
+  # @source Setting {field} can only be set when experimental.container-engine.web-assembly.enabled is set as well.
+  requiresWebAssembly: Cài đặt {field} chỉ có thể được đặt khi experimental.container-engine.web-assembly.enabled cũng được đặt.
+  # @source Setting {field} to "{value}" requires that {otherField} is "{required}".
+  settingRequires: Đặt {field} thành "{value}" yêu cầu {otherField} phải là "{required}".
+  # @source Setting {field} to "{value}" requires that {otherField} is "{option1}" or "{option2}".
+  settingRequiresEither: Đặt {field} thành "{value}" yêu cầu {otherField} phải là "{option1}" hoặc "{option2}".
+  # @source Setting "{field}" should wrap an inner object, but got <{value}>.
+  shouldBeObject: Cài đặt "{field}" phải bao bọc một object bên trong, nhưng nhận được <{value}>.
+  # @source Setting "{field}" should be a simple value, but got <{value}>.
+  shouldBeSimple: Cài đặt "{field}" phải là một giá trị đơn giản, nhưng nhận được <{value}>.
+  # @source One or more fields in this tab contain a form validation error
+  tab: Một hoặc nhiều field trong tab này có lỗi xác thực biểu mẫu
+  # @source Setting {field} to "{vmType}" on ARM requires macOS 13.3 (Ventura) or later.
+  vzArmMacOs: Đặt {field} thành "{vmType}" trên ARM yêu cầu macOS 13.3 (Ventura) trở lên.
+  # @source Setting {field} to "{vmType}" on Intel requires macOS 13.0 (Ventura) or later.
+  vzIntelMacOs: Đặt {field} thành "{vmType}" trên Intel yêu cầu macOS 13.0 (Ventura) trở lên.
+virtualMachine:
+  mount:
+    type:
+      # @source Mount Type
+      legend: Loại mount
+      options:
+        9p:
+          # @source Exposes the filesystem by using QEMU's virtio-9p-pci devices.
+          description: Hiển thị hệ thống tệp bằng cách sử dụng các thiết bị virtio-9p-pci của QEMU.
+          # @reason 9p is a filesystem protocol name and stays in English.
+          # @source 9p
+          label: 9p
+          options:
+            cacheMode:
+              # @source Cache Mode
+              legend: Chế độ cache
+              options:
+                # @reason 9p cache mode value shown as-is; kept in English.
+                # @source fscache
+                fscache: fscache
+                # @reason 9p cache mode value shown as-is; kept in English.
+                # @source loose
+                loose: loose
+                # @reason 9p cache mode value shown as-is; kept in English.
+                # @source mmap
+                mmap: mmap
+                # @reason 9p cache mode value shown as-is; kept in English.
+                # @source none
+                none: none
+              # @source Caching policy to be used
+              tooltip: Chính sách cache được sử dụng
+            mSizeInKib:
+              # @source Message Size In KiB
+              legend: Kích thước thông điệp tính bằng KiB
+              # @source Maximum message size in KiB
+              tooltip: Kích thước thông điệp tối đa tính bằng KiB
+            protocolVersion:
+              # @source Protocol Version
+              legend: Phiên bản giao thức
+              options:
+                # @reason 9P protocol version identifier; kept as-is.
+                # @source 9p2000
+                9p2000: 9p2000
+                # @reason 9P protocol version identifier; kept as-is.
+                # @source 9p2000.L
+                9p2000L: 9p2000.L
+                # @reason 9P protocol version identifier; kept as-is.
+                # @source 9p2000.u
+                9p2000u: 9p2000.u
+              # @source 9P protocol version
+              tooltip: Phiên bản giao thức 9P
+            securityModel:
+              # @source Security Model
+              legend: Mô hình bảo mật
+              options:
+                # @reason 9p security model value shown as-is; kept in English.
+                # @source mapped-file
+                mapped-file: mapped-file
+                # @reason 9p security model value shown as-is; kept in English.
+                # @source mapped-xattr
+                mapped-xattr: mapped-xattr
+                # @reason 9p security model value shown as-is; kept in English.
+                # @source none
+                none: none
+                # @reason 9p security model value shown as-is; kept in English.
+                # @source passthrough
+                passthrough: passthrough
+              # @source Security model used for the export path
+              tooltip: Mô hình bảo mật được sử dụng cho đường dẫn export
+        reverse-sshfs:
+          # @source Exposes the filesystem by running an SFTP server.
+          description: Hiển thị hệ thống tệp bằng cách chạy một máy chủ SFTP.
+          # @reason reverse-sshfs is the mount type identifier and stays in English.
+          # @source reverse-sshfs
+          label: reverse-sshfs
+        virtiofs:
+          # @source Exposes the filesystem by using an Apple Virtualization framework shared directory device.
+          description: Hiển thị hệ thống tệp bằng cách sử dụng thiết bị thư mục chia sẻ của Apple Virtualization framework.
+          # @reason virtiofs is the mount type identifier and stays in English.
+          # @source virtiofs
+          label: virtiofs
+  proxy:
+    # @source Address
+    address: Địa chỉ
+    # @source Proxy address
+    addressTitle: Địa chỉ proxy
+    # @source Authentication information
+    authTitle: Thông tin xác thực
+    # @source Enable the proxy used by rancher-desktop
+    label: Bật proxy được sử dụng bởi rancher-desktop
+    # @source WSL Proxy
+    legend: Proxy WSL
+    noproxy:
+      errors:
+        # @source This item is a duplicate.
+        duplicate: Mục này bị trùng lặp.
+      # @source Proxy bypass list
+      legend: Danh sách bỏ qua proxy
+      # @source IP, CIDR, domain, or wildcard (*.example.com) to bypass the proxy
+      placeholder: IP, CIDR, tên miền hoặc ký tự đại diện (*.example.com) để bỏ qua proxy
+    # @source Password
+    password: Mật khẩu
+    # @source Port
+    port: Cổng
+    # @source Username
+    username: Tên người dùng
+  type:
+    # @source Virtual Machine Type
+    legend: Loại máy ảo
+    options:
+      qemu:
+        # @source Use the QEMU emulator.
+        description: Sử dụng trình giả lập QEMU.
+        # @reason QEMU is the emulator name and stays in English.
+        # @source QEMU
+        label: QEMU
+      vz:
+        # @source Use the Apple Virtualization framework.
+        description: Sử dụng Apple Virtualization framework.
+        # @reason VZ is the Apple Virtualization framework abbreviation and stays in English.
+        # @source VZ
+        label: VZ
+  useRosetta:
+    # @source Enable Rosetta support
+    label: Bật hỗ trợ Rosetta
+    # @source VZ Option
+    legend: Tùy chọn VZ
+volumes:
+  files:
+    # @source Available
+    available: Khả dụng
+    # @source Error checking volume status
+    checkError: Lỗi khi kiểm tra trạng thái volume
+    # @source Invalid volume name "{name}"
+    invalidVolumeName: Tên volume không hợp lệ "{name}"
+    # @source Error listing files: {error}
+    listError: 'Lỗi khi liệt kê tệp: {error}'
+    # @source Loading volume files...
+    loading: Đang tải các tệp volume...
+    # @source This volume is empty
+    noFiles: Volume này trống
+    # @source Not Found
+    notFound: Không tìm thấy
+    table:
+      header:
+        # @source Modified
+        modified: Đã sửa đổi
+        # @source Name
+        name: Tên
+        # @source Permissions
+        permissions: Quyền
+        # @source Size
+        size: Kích thước
+    # @source Volume Files
+    title: Tệp trong volume
+    # @source Volume "{name}" not found
+    volumeNotFound: Không tìm thấy volume "{name}"
+  manage:
+    table:
+      header:
+        # @source Created
+        created: Đã tạo
+        # @source Driver
+        driver: Trình điều khiển
+        # @source Mount Point
+        mountpoint: Điểm mount
+        # @source Volume Name
+        volumeName: Tên volume
+  manager:
+    table:
+      action:
+        # @source Browse Files
+        browse: Duyệt tệp
+        # @source Delete
+        delete: Xóa
+  sortableTables:
+    # @source There are no volumes to show
+    noRows: Không có volume nào để hiển thị
+  # @source Volumes
+  title: Volume
+webAssembly:
+  # @source Please read the documentation before enabling the experimental WebAssembly feature!
+  description: Vui lòng đọc tài liệu trước khi bật tính năng WebAssembly thử nghiệm!
+  # @source Enabled
+  enabled: Đã bật
+  # @reason WebAssembly and Wasm are technology names and stay in English.
+  # @source WebAssembly (Wasm)
+  label: WebAssembly (Wasm)

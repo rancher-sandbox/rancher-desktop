@@ -898,6 +898,8 @@ locale:
   ko: 韩语
   # @source Portuguese (Brazilian)
   pt-br: 葡萄牙语（巴西）
+  # @source Vietnamese
+  vi: 越南语
   # @reason locale name for Simplified Chinese - using the Chinese name per rules for locale names
   # @source Chinese (Simplified)
   zh-hans: 简体中文
