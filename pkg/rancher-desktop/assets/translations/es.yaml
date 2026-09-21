@@ -1453,6 +1453,8 @@ sortableTable:
         =0 {Sin elementos}
         =1 {{count} {count, plural, =1 {elemento} other {elementos}}}
         other {{from} - {to} de {count} elementos}}
+    # @source Rows per page
+    perPage: Filas por página
   # @source Reset
   resetFilters: Restablecer
   # @source Filter

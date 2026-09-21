@@ -1446,6 +1446,8 @@ sortableTable:
         =0 {項目なし}
         =1 {{count} {count, plural, =1 {項目} other {項目}}}
         other {{count} 項目中 {from} - {to}}}
+    # @source Rows per page
+    perPage: 1ページあたりの行数
   # @source Reset
   resetFilters: リセット
   # @source Filter

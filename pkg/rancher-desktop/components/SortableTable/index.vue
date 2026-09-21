@@ -1470,48 +1470,71 @@ export default {
       </tbody>
     </table>
     <div
-      v-if="showPaging"
+      v-if="showPaging || showPageSizeSelector"
       class="paging"
     >
-      <button
-        type="button"
-        class="btn btn-sm role-multi-action"
-        data-testid="pagination-first"
-        :disabled="page == 1 || loading"
-        @click="goToPage('first')"
+      <template v-if="showPaging">
+        <button
+          type="button"
+          class="btn btn-sm role-multi-action"
+          data-testid="pagination-first"
+          :disabled="page == 1 || loading"
+          @click="goToPage('first')"
+        >
+          <i class="icon icon-chevron-beginning" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm role-multi-action"
+          data-testid="pagination-prev"
+          :disabled="page == 1 || loading"
+          @click="goToPage('prev')"
+        >
+          <i class="icon icon-chevron-left" />
+        </button>
+        <span>
+          {{ pagingDisplay }}
+        </span>
+        <button
+          type="button"
+          class="btn btn-sm role-multi-action"
+          data-testid="pagination-next"
+          :disabled="page == totalPages || loading"
+          @click="goToPage('next')"
+        >
+          <i class="icon icon-chevron-right" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm role-multi-action"
+          data-testid="pagination-last"
+          :disabled="page == totalPages || loading"
+          @click="goToPage('last')"
+        >
+          <i class="icon icon-chevron-end" />
+        </button>
+      </template>
+      <label
+        v-if="showPageSizeSelector"
+        class="per-page"
       >
-        <i class="icon icon-chevron-beginning" />
-      </button>
-      <button
-        type="button"
-        class="btn btn-sm role-multi-action"
-        data-testid="pagination-prev"
-        :disabled="page == 1 || loading"
-        @click="goToPage('prev')"
-      >
-        <i class="icon icon-chevron-left" />
-      </button>
-      <span>
-        {{ pagingDisplay }}
-      </span>
-      <button
-        type="button"
-        class="btn btn-sm role-multi-action"
-        data-testid="pagination-next"
-        :disabled="page == totalPages || loading"
-        @click="goToPage('next')"
-      >
-        <i class="icon icon-chevron-right" />
-      </button>
-      <button
-        type="button"
-        class="btn btn-sm role-multi-action"
-        data-testid="pagination-last"
-        :disabled="page == totalPages || loading"
-        @click="goToPage('last')"
-      >
-        <i class="icon icon-chevron-end" />
-      </button>
+        {{ t('sortableTable.paging.perPage') }}
+        <select
+          class="per-page-select"
+          data-testid="pagination-per-page"
+          :disabled="loading"
+          :value="perPage"
+          @change="setPerPage($event.target.value)"
+        >
+          <option
+            v-for="option in perPageOptions"
+            :key="option"
+            :value="option"
+          >
+            {{ option }}
+          </option>
+        </select>
+      </label>
     </div>
     <button
       v-if="search"
@@ -2046,6 +2069,18 @@ export default {
     SPAN {
       display: inline-block;
       min-width: 200px;
+    }
+
+    .per-page {
+      display: inline-block;
+      margin-bottom: 0;
+      margin-left: 10px;
+
+      .per-page-select {
+        display: inline-block;
+        margin-left: 5px;
+        width: auto;
+      }
     }
   }
 </style>

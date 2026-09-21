@@ -1518,6 +1518,8 @@ sortableTable:
     # @source =1 {{count} {count, plural, =1 {Item} other {Items}}}
     # @source other {{from} - {to} of {count} Items}}
     generic: '{pages, plural, =0 {Keine Einträge} =1 {{count} {count, plural, =1 {Eintrag} other {Einträge}}} other {{from} - {to} von {count} Einträgen}}'
+    # @source Rows per page
+    perPage: Zeilen pro Seite
   # @source Reset
   resetFilters: Zurücksetzen
   # @reason 'Filter' is the identical German word (der Filter)

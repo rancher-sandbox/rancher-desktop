@@ -1427,6 +1427,8 @@ sortableTable:
         =0 {항목 없음}
         =1 {{count}{count, plural, =1 {개 항목} other {개 항목}}}
         other {전체 {count}개 항목 중 {from} - {to}}}
+    # @source Rows per page
+    perPage: 페이지당 행 수
   # @source Reset
   resetFilters: 초기화
   # @source Filter

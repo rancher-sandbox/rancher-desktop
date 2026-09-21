@@ -36,6 +36,21 @@ export default {
       return !this.loading && havePages;
     },
 
+    perPageOptions() {
+      return this.$store.getters['prefs/options'](ROWS_PER_PAGE);
+    },
+
+    showPageSizeSelector() {
+      const callerFixedThePageSize = !!this.rowsPerPage;
+      const smallestPageSize = Math.min(...this.perPageOptions);
+
+      if (!this.paging || callerFixedThePageSize || this.externalPaginationEnabled) {
+        return false;
+      }
+
+      return this.totalRows > smallestPageSize;
+    },
+
     pagingDisplay() {
       const opt = {
         ...(this.pagingParams || {}),
@@ -90,7 +105,6 @@ export default {
 
   methods: {
     getPerPage() {
-      // perPage cannot change while the list is displayed
       let out = this.rowsPerPage || 0;
 
       if ( out <= 0 ) {
@@ -111,6 +125,18 @@ export default {
       }
 
       this.page = num;
+    },
+
+    setPerPage(selectedPageSize) {
+      const perPage = parseInt(selectedPageSize, 10);
+
+      if (!perPage || perPage === this.perPage) {
+        return;
+      }
+
+      this.perPage = perPage;
+      this.page = 1;
+      this.$store.dispatch('prefs/set', { key: ROWS_PER_PAGE, value: perPage });
     },
 
     goToPage(which) {
