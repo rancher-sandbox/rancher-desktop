@@ -907,6 +907,8 @@ locale:
   ko: Koreanisch
   # @source Portuguese (Brazilian)
   pt-br: Portugiesisch (Brasilien)
+  # @source Vietnamese
+  vi: Vietnamesisch
   # @source Chinese (Simplified)
   zh-hans: Chinesisch (vereinfacht)
 mainMenu:

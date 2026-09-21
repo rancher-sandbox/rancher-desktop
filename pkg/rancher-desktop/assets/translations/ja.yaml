@@ -853,6 +853,8 @@ locale:
   ko: 韓国語
   # @source Portuguese (Brazilian)
   pt-br: ポルトガル語（ブラジル）
+  # @source Vietnamese
+  vi: ベトナム語
   # @source Chinese (Simplified)
   zh-hans: 中国語（簡体字）
 mainMenu:

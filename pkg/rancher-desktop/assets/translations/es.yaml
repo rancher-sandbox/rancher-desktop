@@ -855,6 +855,8 @@ locale:
   ko: Coreano
   # @source Portuguese (Brazilian)
   pt-br: Portugués (Brasil)
+  # @source Vietnamese
+  vi: Vietnamita
   # @source Chinese (Simplified)
   zh-hans: Chino (simplificado)
 mainMenu:
