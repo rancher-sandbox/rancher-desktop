@@ -346,7 +346,7 @@ containerInspect:
     # @source Capabilities
     capabilities: Capabilities
     # @source Command & Args
-    commandArgs: Lệnh & Đối số
+    commandArgs: Lệnh & đối số
     # @source Environment
     environment: Môi trường
     # @source Labels
@@ -448,7 +448,7 @@ denyRoot:
   # @source Rancher Desktop cannot be run with root privileges. Please run again as a regular user.
   message: Không thể chạy Rancher Desktop với quyền root. Vui lòng chạy lại với tư cách người dùng thông thường.
   # @source Cannot run as Root
-  title: Không thể chạy với quyền Root
+  title: Không thể chạy với quyền root
 deploymentProfile:
   # @source Invalid deployment file {path}: no version specified. Add a version field to make it valid (current version is {version}).
   noVersion: 'Tệp triển khai {path} không hợp lệ: chưa chỉ định phiên bản. Hãy thêm trường version để tệp hợp lệ (phiên bản hiện tại là {version}).'
@@ -499,7 +499,7 @@ dialog:
     title: Mạng cầu nối không nhận được địa chỉ IP.
   confirmMigration:
     # @source Delete Workloads
-    delete: Xóa Workload
+    delete: Xóa workload
     # @source Downgrading from {from} to {to} will lose existing Kubernetes workloads. Delete the data?
     message: Hạ cấp từ {from} xuống {to} sẽ làm mất các workload Kubernetes hiện có. Xóa dữ liệu?
     # @source Confirming migration
@@ -909,9 +909,9 @@ mainMenu:
     # @source &Reload
     reload: '&Tải lại'
     # @source Toggle &Developer Tools
-    toggleDevTools: Bật/tắt &Công cụ nhà phát triển
+    toggleDevTools: Bật/tắt &công cụ nhà phát triển
     # @source Toggle Full &Screen
-    toggleFullScreen: Bật/tắt Toàn &màn hình
+    toggleFullScreen: Bật/tắt toàn &màn hình
     # @source Zoom &In
     zoomIn: '&Phóng to'
     # @source Zoom &Out
@@ -1228,7 +1228,7 @@ progress:
   # @source Skipping node checks, flannel is disabled
   skippingNodeChecksFlannel: Đang bỏ qua kiểm tra node vì flannel đã bị tắt
   # @source Starting Backend
-  startingBackend: Đang khởi động Backend
+  startingBackend: Đang khởi động backend
   # @source Starting buildkit
   startingBuildkit: Đang khởi động buildkit
   # @source Starting container engine
@@ -1420,7 +1420,7 @@ sortableTable:
     generic: |-
         {pages, plural,
         =0 {Không có mục nào}
-        =1 {{count} {count, plural, =1 {Mục} other {Mục}}}
+        =1 {{count} {count, plural, =1 {mục} other {mục}}}
         other {{from} - {to} trong {count} mục}}
   # @source Reset
   resetFilters: Đặt lại
