@@ -269,7 +269,7 @@ containerEngine:
   options:
     containerd:
       # @source Namespaces for container images; use with nerdctl.
-      description: Namespace cho image container; dùng với nerdctl.
+      description: Không gian tên cho image container; dùng với nerdctl.
       # @reason containerd is the project name and stays in English.
       # @source containerd
       label: containerd
@@ -553,9 +553,9 @@ firstRun:
     # @source Kubernetes Version
     legend: Phiên bản Kubernetes
     # @source Other Versions
-    otherVersions: Các phiên bản khác
+    otherVersions: Phiên bản khác
     # @source Recommended Versions
-    recommendedVersions: Các phiên bản được đề xuất
+    recommendedVersions: Phiên bản đề xuất
   # @reason 'OK' is the standard dialog button label in Vietnamese.
   # @source OK
   ok: OK
@@ -619,7 +619,7 @@ imageEvents:
   # @source
   # @source  {error}
   pushError: |-
-      Lỗi khi cố đẩy {name}:
+      Lỗi khi cố push {name}:
 
        {error}
   # @source Error trying to scan {name}:
@@ -667,7 +667,7 @@ images:
     # @source {action} image
     successText: '{action} image'
     # @source Add Image
-    title: Thêm Image
+    title: Thêm image
   confirmDelete:
     # @source Delete
     confirm: Xóa
@@ -679,7 +679,7 @@ images:
     title: Xác nhận xóa image
   manager:
     # @source Close Output to Continue
-    close: Đóng Output để tiếp tục
+    close: Đóng đầu ra để tiếp tục
     input:
       build:
         # @reason 'Build' is kept as the established Docker loanword in Vietnamese.
@@ -723,7 +723,7 @@ images:
       # @source All images
       label: Tất cả image
     # @source Image Output
-    title: Output Image
+    title: Đầu ra image
   scan:
     details:
       # @source Description
@@ -1051,7 +1051,7 @@ preferences:
     # @source Apply and reset
     apply: Áp dụng và đặt lại
     # @source These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.
-    detail: Những thay đổi này sẽ đặt lại cụm Kubernetes, dẫn đến mất các workload và container image.
+    detail: Những thay đổi này sẽ đặt lại cụm Kubernetes, dẫn đến mất các workload và image container.
     # @source Apply preferences and reset Kubernetes?
     message: Áp dụng tùy chọn và đặt lại Kubernetes?
     # @source Rancher Desktop - Reset Kubernetes
@@ -1253,7 +1253,7 @@ progress:
   # @source Stopping services
   stoppingServices: Đang dừng các dịch vụ
   # @source Updating cluster configuration
-  updatingClusterConfiguration: Đang cập nhật cấu hình cluster
+  updatingClusterConfiguration: Đang cập nhật cấu hình cụm
   # @source Updating /etc/hosts
   updatingEtcHosts: Đang cập nhật /etc/hosts
   # @source Updating kubeconfig
@@ -1475,7 +1475,7 @@ tray:
   # @source None found
   noneFound: Không tìm thấy
   # @source Open cluster dashboard
-  openDashboard: Mở bảng điều khiển cluster
+  openDashboard: Mở bảng điều khiển cụm
   # @source Open main window
   openMainWindow: Mở cửa sổ chính
   # @source Open preferences dialog
@@ -1515,7 +1515,7 @@ troubleshooting:
         # @source Keep cached Kubernetes images
         checkboxLabel: Giữ lại các image Kubernetes đã lưu vào bộ nhớ đệm
         # @source <p>Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again.</p><p>Are you sure you want to reset everything?</p>
-        detail: <p>Việc khôi phục cài đặt gốc sẽ xóa cluster của bạn và tất cả cài đặt Rancher Desktop, đồng thời tắt Rancher Desktop. Nếu bạn định tiếp tục sử dụng Rancher Desktop, bạn sẽ cần tự khởi động nó và thực hiện lại quá trình thiết lập ban đầu.</p><p>Bạn có chắc chắn muốn đặt lại mọi thứ không?</p>
+        detail: <p>Việc khôi phục cài đặt gốc sẽ xóa cụm của bạn và tất cả cài đặt Rancher Desktop, đồng thời tắt Rancher Desktop. Nếu bạn định tiếp tục sử dụng Rancher Desktop, bạn sẽ cần tự khởi động nó và thực hiện lại quá trình thiết lập ban đầu.</p><p>Bạn có chắc chắn muốn đặt lại mọi thứ không?</p>
         # @source Perform a factory reset?
         message: Thực hiện khôi phục cài đặt gốc?
         # @source Factory Reset
