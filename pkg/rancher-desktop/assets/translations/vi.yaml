@@ -23,7 +23,7 @@ application:
       legendText: Khởi động
     background:
       # @source Background
-      legendText: Nền
+      legendText: Chạy nền
       # @source Hide the app window when Rancher Desktop is running in the background. It can be opened via the Notification Icon (if visible) or by running Rancher Desktop from the Applications menu.
       # @source
       legendTooltip: |
@@ -61,11 +61,11 @@ application:
   general:
     adminAccess:
       # @source Allow administrative credentials (sudo access)
-      label: Cho phép thông tin xác thực quản trị (quyền sudo)
+      label: Cho phép dùng quyền quản trị (quyền sudo)
       # @source Administrative Access
       legendText: Quyền quản trị
       # @source If checked, {appName} will acquire administrative credentials ("sudo access") when starting. This enables bridged networking and default docker socket support. Takes effect on next start.
-      legendTooltip: Nếu được chọn, {appName} sẽ nhận thông tin xác thực quản trị ("quyền sudo") khi khởi động. Điều này bật hỗ trợ mạng bridged và socket docker mặc định. Có hiệu lực từ lần khởi động tiếp theo.
+      legendTooltip: Nếu được chọn, {appName} sẽ yêu cầu quyền quản trị ("quyền sudo") khi khởi động. Quyền này cho phép dùng mạng cầu nối và docker socket mặc định. Có hiệu lực từ lần khởi động tiếp theo.
     automaticUpdates:
       # @source Check for updates automatically
       label: Tự động kiểm tra cập nhật
@@ -78,7 +78,7 @@ application:
       legendText: Thống kê
   locale:
     # @source Community and AI tools provide translations. English is the canonical language. Report translation issues on GitHub.
-    disclaimer: Các công cụ cộng đồng và AI cung cấp bản dịch. Tiếng Anh là ngôn ngữ chính. Báo cáo sự cố dịch thuật trên GitHub.
+    disclaimer: Bản dịch do cộng đồng và các công cụ AI cung cấp. Tiếng Anh là ngôn ngữ gốc. Báo cáo sự cố dịch thuật trên GitHub.
     # @source Language
     legendText: Ngôn ngữ
 asyncButton:
@@ -193,7 +193,7 @@ asyncButton:
     # @source Installing
     success: Đang cài đặt
     # @source Starting&hellip;
-    waiting: Đang khởi động&hellip;
+    waiting: Đang bắt đầu&hellip;
   refresh:
     # @source
     action: ''
@@ -231,11 +231,11 @@ asyncButton:
     waiting: Đang khôi phục&hellip;
   snapshot:
     # @source Snapshot Now
-    action: Chụp ảnh nhanh ngay
+    action: Tạo ảnh chụp nhanh ngay
     # @source Creating Snapshot
     success: Đang tạo ảnh chụp nhanh
     # @source Snapshotting&hellip;
-    waiting: Đang chụp ảnh nhanh&hellip;
+    waiting: Đang tạo ảnh chụp nhanh&hellip;
   uninstall:
     # @source Uninstall
     action: Gỡ cài đặt
@@ -256,7 +256,7 @@ asyncButton:
     # @source Upgrading
     success: Đang nâng cấp
     # @source Starting&hellip;
-    waiting: Đang khởi động&hellip;
+    waiting: Đang bắt đầu&hellip;
 blogFeed:
   # @source Read more
   readMore: Đọc thêm
@@ -342,8 +342,9 @@ containerInspect:
   # @source None
   none: Không có
   sections:
+    # @reason Linux capabilities (CAP_*) is a kernel term; kept in English like Entrypoint.
     # @source Capabilities
-    capabilities: Khả năng
+    capabilities: Capabilities
     # @source Command & Args
     commandArgs: Lệnh & Đối số
     # @source Environment
@@ -379,7 +380,7 @@ containerStats:
     # @source Memory
     memory: Bộ nhớ
     # @source Network I/O (bytes/s)
-    network: Network I/O (byte/giây)
+    network: I/O mạng (byte/giây)
   interval:
     # @source {minutes} min
     minutes: '{minutes} phút'
@@ -394,7 +395,7 @@ containerStats:
   # @source Processes
   processes: Tiến trình
   # @source Refresh
-  refresh: Làm mới
+  refresh: Làm mới mỗi
   series:
     # @source Limit
     limit: Giới hạn
@@ -419,7 +420,7 @@ containers:
         # @source Restart
         restart: Khởi động lại
         # @source Start
-        start: Bắt đầu
+        start: Khởi động
         # @source Stop
         stop: Dừng
       header:
@@ -450,18 +451,18 @@ denyRoot:
   title: Không thể chạy với quyền Root
 deploymentProfile:
   # @source Invalid deployment file {path}: no version specified. Add a version field to make it valid (current version is {version}).
-  noVersion: 'Tệp triển khai không hợp lệ {path}: chưa chỉ định phiên bản. Thêm trường version để hợp lệ hóa (phiên bản hiện tại là {version}).'
+  noVersion: 'Tệp triển khai {path} không hợp lệ: chưa chỉ định phiên bản. Hãy thêm trường version để tệp hợp lệ (phiên bản hiện tại là {version}).'
   # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
-  noVersionRegistry: 'Triển khai không hợp lệ: chưa chỉ định phiên bản tại {path}. Thêm trường version để hợp lệ hóa (phiên bản hiện tại là {version}).'
+  noVersionRegistry: 'Cấu hình triển khai không hợp lệ: chưa chỉ định phiên bản tại {path}. Hãy thêm trường version để cấu hình hợp lệ (phiên bản hiện tại là {version}).'
 diagnostics:
   # @source {count} failed plus {muted} muted
   failedCount: '{count} lỗi và {muted} đã bỏ qua'
   # @source Last run:
-  lastRun: 'Lần chạy cuối:'
+  lastRun: 'Lần chạy gần nhất:'
   # @source (Never)
-  never: (Chưa bao giờ)
+  never: (Chưa chạy)
   # @source (No fixes available)
-  noFixes: (Không có bản sửa nào)
+  noFixes: (Không có cách khắc phục)
   results:
     muted:
       # @source Try showing muted diagnostics.
@@ -491,7 +492,7 @@ diagnostics:
 dialog:
   bridgedNetwork:
     # @source Shared network isn't available either. Only network access is via port forwarding to the host.
-    noNetwork: Mạng chia sẻ cũng không khả dụng. Cách duy nhất để truy cập mạng là chuyển tiếp cổng tới máy chủ.
+    noNetwork: Mạng chia sẻ cũng không khả dụng. Chỉ có thể truy cập mạng qua chuyển tiếp cổng tới máy chủ.
     # @source Using shared network address {ip}
     sharedFallback: Đang dùng địa chỉ mạng chia sẻ {ip}
     # @source Bridged network did not get an IP address.
@@ -505,7 +506,7 @@ dialog:
     title: Xác nhận di chuyển
   invalidK8sVersion:
     # @source Falling back to recommended minimum upgrade version of {version}
-    detail: Quay về phiên bản nâng cấp tối thiểu được đề xuất là {version}
+    detail: 'Sẽ dùng phiên bản nâng cấp tối thiểu được đề xuất: {version}'
     # @source Requested Kubernetes version ''{version}'' is not a supported version.
     message: Phiên bản Kubernetes được yêu cầu ''{version}'' không phải là phiên bản được hỗ trợ.
     # @source Invalid Kubernetes Version
@@ -571,7 +572,7 @@ general:
   # @source General
   navLabel: Chung
   # @source Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack
-  projectDiscussions: 'Thảo luận dự án: <b>#rancher-desktop</b> trong <a href="https://slack.rancher.io/">Rancher Users</a> Slack'
+  projectDiscussions: 'Thảo luận dự án: kênh <b>#rancher-desktop</b> trên Slack <a href="https://slack.rancher.io/">Rancher Users</a>'
   # @source Project Links:
   projectLinks: 'Liên kết dự án:'
   # @source Welcome to Rancher Desktop by SUSE
@@ -607,26 +608,26 @@ imageEvents:
   # @source Pick the build directory
   buildTitle: Chọn thư mục build
   # @source Error trying to delete images {ids}
-  deleteBatchError: Lỗi khi cố xóa các image {ids}
+  deleteBatchError: Lỗi khi xóa các image {ids}
   # @source Error trying to delete image {name} ({id}):
   # @source
   # @source  {error}
   deleteError: |-
-      Lỗi khi cố xóa image {name} ({id}):
+      Lỗi khi xóa image {name} ({id}):
 
        {error}
   # @source Error trying to push {name}:
   # @source
   # @source  {error}
   pushError: |-
-      Lỗi khi cố push {name}:
+      Lỗi khi push {name}:
 
        {error}
   # @source Error trying to scan {name}:
   # @source
   # @source  {error}
   scanError: |-
-      Lỗi khi cố quét {name}:
+      Lỗi khi quét {name}:
 
        {error}
 images:
@@ -731,7 +732,7 @@ images:
       # @source Primary URL
       primaryUrl: URL chính
       # @source References
-      references: Tham chiếu
+      references: Tài liệu tham khảo
     # @source Error trying to scan ''{ image }''. See console output for more information.
     errorText: Lỗi khi quét ''{ image }''. Xem đầu ra console để biết thêm thông tin.
     labels:
@@ -740,7 +741,7 @@ images:
       # @source HIGH
       high: CAO
       # @source Issues Found
-      issuesFound: Vấn đề phát hiện
+      issuesFound: Vấn đề đã phát hiện
       # @source LOW
       low: THẤP
       # @source MEDIUM
@@ -760,7 +761,7 @@ images:
         # @source Vulnerability ID
         vulnerabilityId: ID lỗ hổng
     # @source Scan details for ''{ image }''
-    title: Chi tiết quét cho ''{ image }''
+    title: Chi tiết quét ''{ image }''
   sortableTables:
     # @source There are no images to show
     noRows: Không có image nào để hiển thị
@@ -781,7 +782,7 @@ kubernetesError:
   # @source Last command run:
   lastCommand: 'Lệnh chạy gần nhất:'
   # @source Some recent <a href="#" data-action="showLogs">logfile</a> lines:
-  logLines: 'Một số dòng <a href="#" data-action="showLogs">logfile</a> gần đây:'
+  logLines: 'Một số dòng gần đây trong <a href="#" data-action="showLogs">tệp nhật ký</a>:'
   # @source {appName} Error
   title: Lỗi {appName}
 kubernetesPrefs:
@@ -846,7 +847,7 @@ locale:
   zh-hans: Tiếng Trung (Giản thể)
 mainMenu:
   # @source About {appName}
-  about: Giới thiệu {appName}
+  about: Giới thiệu về {appName}
   edit:
     # @source &Copy
     copy: '&Sao chép'
@@ -873,7 +874,7 @@ mainMenu:
     label: '&Tệp'
   help:
     # @source &About {appName}
-    about: '&Giới thiệu {appName}'
+    about: '&Giới thiệu về {appName}'
     # @source &Discuss
     discuss: '&Thảo luận'
     # @source File a &Bug
@@ -881,7 +882,7 @@ mainMenu:
     # @source Get &Help
     getHelp: '&Nhận trợ giúp'
     # @source {appName} &Help
-    help: '{appName} &Trợ giúp'
+    help: '&Trợ giúp {appName}'
     # @source &Help
     label: Trợ &giúp
     # @source &Project Page
@@ -889,7 +890,7 @@ mainMenu:
   # @source Hide {appName}
   hide: Ẩn {appName}
   # @source Hide Others
-  hideOthers: Ẩn các mục khác
+  hideOthers: Ẩn các ứng dụng khác
   # @source Preferences
   preferences: Tùy chọn
   # @source Quit {appName}
@@ -971,12 +972,12 @@ pathManagement:
   options:
     manual:
       # @source Rancher Desktop does not change your PATH configuration; add <code>$HOME/.rd/bin</code> to your path manually.
-      description: Rancher Desktop không thay đổi cấu hình PATH của bạn; hãy thêm <code>$HOME/.rd/bin</code> vào path theo cách thủ công.
+      description: Rancher Desktop không thay đổi cấu hình PATH của bạn; hãy tự thêm <code>$HOME/.rd/bin</code> vào PATH.
       # @source Manual
       label: Thủ công
     rcFiles:
       # @source Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.
-      description: Rancher Desktop tự động chỉnh sửa hồ sơ shell của bạn. Hãy khởi động lại mọi shell đang mở để các thay đổi có hiệu lực.
+      description: Rancher Desktop tự động chỉnh sửa tệp cấu hình shell (shell profile) của bạn. Hãy khởi động lại mọi shell đang mở để các thay đổi có hiệu lực.
       # @source Automatic
       label: Tự động
   # @source Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, <code>$HOME/.rd/bin</code> must be in your PATH.
@@ -1004,7 +1005,7 @@ preferences:
   actions:
     banner:
       # @source There's a problem with the preferences selection.
-      error: Có vấn đề với lựa chọn trong tùy chọn.
+      error: Có vấn đề với các tùy chọn đã chọn.
       # @source Kubernetes will reset after applying changes.
       reset: Kubernetes sẽ được đặt lại sau khi áp dụng các thay đổi.
       # @source Kubernetes will restart after applying changes.
@@ -1032,7 +1033,7 @@ preferences:
   incompatibleTypeWarningPre: Tùy chọn này yêu cầu
   locked:
     # @source This setting is locked by organization policy.
-    tooltip: Cài đặt này bị khóa bởi chính sách của tổ chức.
+    tooltip: Cài đặt này đã bị khóa theo chính sách của tổ chức.
   nav:
     # @source Application
     application: Ứng dụng
@@ -1079,9 +1080,9 @@ preferences:
 preferencesWindow:
   close:
     # @source There are preferences with changes that have not been applied. All unsaved preferences will be lost.
-    detail: Có những tùy chọn chưa được áp dụng thay đổi. Mọi tùy chọn chưa lưu sẽ bị mất.
+    detail: Một số tùy chọn đã thay đổi nhưng chưa được áp dụng. Mọi thay đổi chưa lưu sẽ bị mất.
     # @source Discard changes
-    discardChanges: Hủy bỏ thay đổi
+    discardChanges: Bỏ các thay đổi
     # @source Close preferences without applying?
     message: Đóng tùy chọn mà không áp dụng?
     # @source Rancher Desktop - Close Preferences
@@ -1108,7 +1109,7 @@ product:
     # @source Container Engine
     fullName: Container Engine
   # @source deactivated
-  deactivated: đã hủy kích hoạt
+  deactivated: đã tắt
   # @reason Kubernetes is a product name and stays in English.
   # @source Kubernetes
   kubernetesVersion: Kubernetes
@@ -1153,7 +1154,7 @@ progress:
   # @source Ensuring compatible kubectl
   ensuringCompatibleKubectl: Đang đảm bảo kubectl tương thích
   # @source Ensuring virtualization is supported
-  ensuringVirtualizationSupported: Đang đảm bảo ảo hóa được hỗ trợ
+  ensuringVirtualizationSupported: Đang kiểm tra hỗ trợ ảo hóa
   # @source Expecting user permission to continue
   expectingPermission: Đang chờ người dùng cấp quyền để tiếp tục
   # @source Extracting certificates
@@ -1175,7 +1176,7 @@ progress:
   # @source Installing the docker-credential helper
   installingDockerCredentialHelper: Đang cài đặt credential helper docker-credential
   # @source Installing helpers
-  installingHelpers: Đang cài đặt các helper
+  installingHelpers: Đang cài đặt các công cụ hỗ trợ
   # @source Installing image scanner
   installingImageScanner: Đang cài đặt trình quét image
   # @source Installing k3s
@@ -1185,7 +1186,7 @@ progress:
   # @source Kubernetes components
   kubernetesComponents: Các thành phần Kubernetes
   # @source Kubernetes dockerd compatibility
-  kubernetesDockerCompatibility: Khả năng tương thích Kubernetes dockerd
+  kubernetesDockerCompatibility: Khả năng tương thích giữa Kubernetes và dockerd
   # @source Mounting WSL data
   mountingWslData: Đang gắn kết dữ liệu WSL
   # @source Preparing to start
@@ -1197,7 +1198,7 @@ progress:
   # @source Recovering virtual machine
   recoveringBrokenVirtualMachine: Đang khôi phục máy ảo
   # @source Regenerating configuration to account for lack of permissions
-  regeneratingConfiguration: Đang tạo lại cấu hình để bù đắp cho việc thiếu quyền
+  regeneratingConfiguration: Đang tạo lại cấu hình do thiếu quyền quản trị
   # @source Registering WSL distribution
   registeringWslDistribution: Đang đăng ký bản phân phối WSL
   # @source Removing existing certificates
@@ -1211,7 +1212,7 @@ progress:
   # @source Resetting Kubernetes
   resettingKubernetes: Đang đặt lại Kubernetes
   # @source Running provisioning scripts
-  runningProvisioningScripts: Đang chạy các script cung cấp
+  runningProvisioningScripts: Đang chạy các script provisioning
   # @source Running update-ca-certificates
   runningUpdateCaCertificates: Đang chạy update-ca-certificates
   # @source Setting docker context
@@ -1225,7 +1226,7 @@ progress:
   # @source Shutting down
   shuttingDown: Đang tắt
   # @source Skipping node checks, flannel is disabled
-  skippingNodeChecksFlannel: Đang bỏ qua kiểm tra node, flannel bị tắt
+  skippingNodeChecksFlannel: Đang bỏ qua kiểm tra node vì flannel đã bị tắt
   # @source Starting Backend
   startingBackend: Đang khởi động Backend
   # @source Starting buildkit
@@ -1285,7 +1286,7 @@ snapshots:
       # @source Restore
       restore: Khôi phục
     # @source Created on '<b>'{date}'</b>' at '<b>'{time}'</b>'
-    created: Đã tạo vào '<b>'{date}'</b>' lúc '<b>'{time}'</b>'
+    created: Tạo ngày '<b>'{date}'</b>' lúc '<b>'{time}'</b>'
   create:
     actions:
       # @source Cancel
@@ -1345,7 +1346,7 @@ snapshots:
       # @source Restore snapshot?
       header: Khôi phục ảnh chụp nhanh?
       # @source Restoring this snapshot will replace your current installation, including preferences. If the Preferences window is open, it will be automatically closed and any unsaved changes will be discarded.
-      info: Khôi phục ảnh chụp nhanh này sẽ thay thế bản cài đặt hiện tại của bạn, bao gồm cả tùy chọn. Nếu cửa sổ Tùy chọn đang mở, nó sẽ tự động đóng và mọi thay đổi chưa lưu sẽ bị hủy bỏ.
+      info: Khôi phục ảnh chụp nhanh này sẽ thay thế bản cài đặt hiện tại của bạn, bao gồm cả tùy chọn. Nếu cửa sổ Tùy chọn đang mở, cửa sổ này sẽ tự động đóng và mọi thay đổi chưa lưu sẽ bị hủy bỏ.
     restoring:
       actions:
         # @source Cancel
@@ -1372,7 +1373,7 @@ snapshots:
       success: Đã tạo '<b>'{snapshot}'</b>'
     delete:
       # @source Delete error: {error}
-      error: 'Lỗi xóa: {error}'
+      error: 'Lỗi khi xóa: {error}'
       # @source Deleted '<b>'{snapshot}'</b>'
       success: Đã xóa '<b>'{snapshot}'</b>'
     lock:
@@ -1384,15 +1385,15 @@ snapshots:
       # @source Restored '<b>'{snapshot}'</b>'
       success: Đã khôi phục '<b>'{snapshot}'</b>'
     # @source  at {time}
-    when: ' lúc {time}'
+    when: ' vào {time}'
   # @source Snapshots
   title: Ảnh chụp nhanh
 sortableTable:
   actionAvailability:
     # @source {actionable} selected
-    selected: '{actionable} đã chọn'
+    selected: Đã chọn {actionable}
     # @source Available for {actionable} of the {total} selected
-    some: Khả dụng cho {actionable} trong số {total} đã chọn
+    some: Khả dụng cho {actionable} trong số {total} mục đã chọn
   # @source Add
   add: Thêm
   # @source Add Filter
@@ -1402,7 +1403,7 @@ sortableTable:
       # @source Actions
       label: Hành động
   # @source Filter for...
-  filterFor: Lọc theo...
+  filterFor: Giá trị cần lọc...
   # @source in
   in: trong
   # @source No actions available
@@ -1445,11 +1446,11 @@ sudoPrompt:
   # @source Rancher Desktop requires administrative access ("sudo access") for the following reasons:
   message: 'Rancher Desktop yêu cầu quyền quản trị ("quyền sudo") vì những lý do sau:'
   # @source The prompt will be displayed once this window is closed. Cancelling the prompt or disabling administrative access requires you to switch the docker context to rancher-desktop in order to continue using Rancher Desktop.
-  messageSecondPart: Hộp thoại sẽ hiển thị sau khi cửa sổ này đóng lại. Việc hủy hộp thoại hoặc tắt quyền quản trị yêu cầu bạn chuyển docker context sang rancher-desktop để tiếp tục sử dụng Rancher Desktop.
+  messageSecondPart: Hộp thoại sẽ hiển thị sau khi cửa sổ này đóng lại. Nếu bạn hủy hộp thoại hoặc tắt quyền quản trị, bạn sẽ cần chuyển docker context sang rancher-desktop để tiếp tục sử dụng Rancher Desktop.
   reasons:
     dockerSocket:
       # @source Provides compatibility with tools that use the docker socket without the ability to use docker contexts.
-      description: Cung cấp khả năng tương thích với các công cụ sử dụng docker socket mà không có khả năng sử dụng docker context.
+      description: Giúp tương thích với các công cụ dùng docker socket nhưng không hỗ trợ docker context.
       # @source Set up default docker socket
       title: Thiết lập docker socket mặc định
     networking:
@@ -1458,10 +1459,10 @@ sudoPrompt:
       # @source Configure networking
       title: Cấu hình mạng
   # @source Administrative Access Required
-  title: Yêu cầu quyền quản trị
+  title: Cần quyền quản trị
 systemPreferences:
   # @source # CPUs
-  cpus: '# CPU'
+  cpus: Số CPU
   # @source Memory (GB)
   memory: Bộ nhớ (GB)
 tray:
@@ -1469,7 +1470,7 @@ tray:
   # @source Container engine: {name}
   containerEngine: 'Container engine: {name}'
   # @source Kubernetes Contexts
-  kubernetesContexts: Các context Kubernetes
+  kubernetesContexts: Context Kubernetes
   # @source Network status: {status}
   networkStatus: 'Trạng thái mạng: {status}'
   # @source None found
@@ -1513,7 +1514,7 @@ troubleshooting:
         # @source Cancel
         cancel: Hủy
         # @source Keep cached Kubernetes images
-        checkboxLabel: Giữ lại các image Kubernetes đã lưu vào bộ nhớ đệm
+        checkboxLabel: Giữ lại các image Kubernetes đã lưu trong bộ nhớ đệm
         # @source <p>Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again.</p><p>Are you sure you want to reset everything?</p>
         detail: <p>Việc khôi phục cài đặt gốc sẽ xóa cụm của bạn và tất cả cài đặt Rancher Desktop, đồng thời tắt Rancher Desktop. Nếu bạn định tiếp tục sử dụng Rancher Desktop, bạn sẽ cần tự khởi động nó và thực hiện lại quá trình thiết lập ban đầu.</p><p>Bạn có chắc chắn muốn đặt lại mọi thứ không?</p>
         # @source Perform a factory reset?
@@ -1600,25 +1601,25 @@ validation:
   # @source Cannot switch to moby container engine with classic storage when WebAssembly is enabled.
   cannotSwitchMobyClassicWasm: Không thể chuyển sang container engine moby với lưu trữ classic khi WebAssembly được bật.
   # @source field "{field}" has duplicate entries: "{duplicates}"
-  duplicateEntries: 'field "{field}" có các mục trùng lặp: "{duplicates}"'
+  duplicateEntries: 'Trường "{field}" có các mục trùng lặp: "{duplicates}"'
   # @source Errors in proposed settings:
   errorsInProposedSettings: 'Lỗi trong cài đặt đề xuất:'
   # @source field "{field}" is locked
-  fieldLocked: field "{field}" bị khóa
+  fieldLocked: Trường "{field}" bị khóa
   # @source {field}: "{pattern}" does not describe an image reference
-  invalidImageReference: '{field}: "{pattern}" không mô tả một tham chiếu image'
+  invalidImageReference: '{field}: "{pattern}" không phải là tham chiếu image hợp lệ'
   # @source {field}: "{value}" is not a valid mapping
   invalidMapping: '{field}: "{value}" không phải là ánh xạ hợp lệ'
   # @source {field}: "{name}" is an invalid name
   invalidName: '{field}: "{name}" là tên không hợp lệ'
   # @source field "{field}" has invalid entries (must be IP addresses, CIDR subnets, or domain names): "{entries}"
-  invalidNoproxyEntries: 'field "{field}" có các mục không hợp lệ (phải là địa chỉ IP, subnet CIDR hoặc tên miền): "{entries}"'
+  invalidNoproxyEntries: 'Trường "{field}" có các mục không hợp lệ (phải là địa chỉ IP, subnet CIDR hoặc tên miền): "{entries}"'
   # @source {field}: "{value}" is not a valid page name for Preferences Dialog
   invalidPageName: '{field}: "{value}" không phải là tên trang hợp lệ cho Hộp thoại Tùy chọn'
   # @source {field}: tab name "{tabName}" is not a valid tab name for "{page}" Preference page
   invalidTabName: '{field}: tên tab "{tabName}" không phải là tên tab hợp lệ cho trang Tùy chọn "{page}"'
   # @source {field}: "{name}" has invalid tag "{tag}"
-  invalidTag: '{field}: "{name}" có tag không hợp lệ "{tag}"'
+  invalidTag: '{field}: "{name}" có tag "{tag}" không hợp lệ'
   # @source Invalid value for "{field}": <{value}>
   invalidValue: 'Giá trị không hợp lệ cho "{field}": <{value}>'
   # @source Invalid value for "{field}": <{value}>; must be one of {validValues}
@@ -1626,17 +1627,17 @@ validation:
   # @source Kubernetes version "{version}" not found.
   kubernetesVersionNotFound: Không tìm thấy phiên bản Kubernetes "{version}".
   # @source {field}: "{name}" has non-string tag "{tag}"
-  nonStringTag: '{field}: "{name}" có tag không phải chuỗi "{tag}"'
+  nonStringTag: '{field}: "{name}" có tag "{tag}" không phải là chuỗi'
   # @source Changing field "{field}" via the API isn't supported.
-  notSupported: Không hỗ trợ thay đổi field "{field}" qua API.
+  notSupported: Không hỗ trợ thay đổi trường "{field}" qua API.
   # @source Error for field ''{field}'': expecting value of type array, got ''{value}''
-  profileExpectedArray: 'Lỗi cho field ''''{field}'''': mong đợi giá trị kiểu array, nhận được ''''{value}'''''
+  profileExpectedArray: 'Lỗi ở trường ''''{field}'''': cần giá trị kiểu array nhưng nhận được ''''{value}'''''
   # @source Error for field ''{field}'': expecting value of type {expectedType}, got ''{value}''
-  profileExpectedType: 'Lỗi cho field ''''{field}'''': mong đợi giá trị kiểu {expectedType}, nhận được ''''{value}'''''
+  profileExpectedType: 'Lỗi ở trường ''''{field}'''': cần giá trị kiểu {expectedType} nhưng nhận được ''''{value}'''''
   # @source Error for field ''{field}'': expecting value of type {expectedType}, got an array {value}
-  profileExpectedTypeGotArray: 'Lỗi cho field ''''{field}'''': mong đợi giá trị kiểu {expectedType}, nhận được một array {value}'
+  profileExpectedTypeGotArray: 'Lỗi ở trường ''''{field}'''': cần giá trị kiểu {expectedType} nhưng nhận được một array {value}'
   # @source Proposed field "{field}" should be an object, got <{value}>.
-  proposedShouldBeObject: Field đề xuất "{field}" phải là một object, nhận được <{value}>.
+  proposedShouldBeObject: Trường đề xuất "{field}" phải là một object, nhưng nhận được <{value}>.
   # @source Setting {field} can only be enabled on aarch64 systems.
   requiresArm: Cài đặt {field} chỉ có thể được bật trên hệ thống aarch64.
   # @source Setting {field} can only be changed when virtualMachine.mount.type is "{mountType}".
@@ -1650,11 +1651,11 @@ validation:
   # @source Setting {field} to "{value}" requires that {otherField} is "{option1}" or "{option2}".
   settingRequiresEither: Đặt {field} thành "{value}" yêu cầu {otherField} phải là "{option1}" hoặc "{option2}".
   # @source Setting "{field}" should wrap an inner object, but got <{value}>.
-  shouldBeObject: Cài đặt "{field}" phải bao bọc một object bên trong, nhưng nhận được <{value}>.
+  shouldBeObject: Cài đặt "{field}" phải chứa một object bên trong, nhưng nhận được <{value}>.
   # @source Setting "{field}" should be a simple value, but got <{value}>.
   shouldBeSimple: Cài đặt "{field}" phải là một giá trị đơn giản, nhưng nhận được <{value}>.
   # @source One or more fields in this tab contain a form validation error
-  tab: Một hoặc nhiều field trong tab này có lỗi xác thực biểu mẫu
+  tab: Một hoặc nhiều trường trong tab này có lỗi xác thực biểu mẫu
   # @source Setting {field} to "{vmType}" on ARM requires macOS 13.3 (Ventura) or later.
   vzArmMacOs: Đặt {field} thành "{vmType}" trên ARM yêu cầu macOS 13.3 (Ventura) trở lên.
   # @source Setting {field} to "{vmType}" on Intel requires macOS 13.0 (Ventura) or later.
@@ -1692,7 +1693,7 @@ virtualMachine:
               tooltip: Chính sách cache được sử dụng
             mSizeInKib:
               # @source Message Size In KiB
-              legend: Kích thước thông điệp tính bằng KiB
+              legend: Kích thước thông điệp (KiB)
               # @source Maximum message size in KiB
               tooltip: Kích thước thông điệp tối đa tính bằng KiB
             protocolVersion:
@@ -1748,7 +1749,7 @@ virtualMachine:
     # @source Authentication information
     authTitle: Thông tin xác thực
     # @source Enable the proxy used by rancher-desktop
-    label: Bật proxy được sử dụng bởi rancher-desktop
+    label: Bật proxy mà rancher-desktop sử dụng
     # @source WSL Proxy
     legend: Proxy WSL
     noproxy:
@@ -1793,7 +1794,7 @@ volumes:
     # @source Error checking volume status
     checkError: Lỗi khi kiểm tra trạng thái volume
     # @source Invalid volume name "{name}"
-    invalidVolumeName: Tên volume không hợp lệ "{name}"
+    invalidVolumeName: Tên volume "{name}" không hợp lệ
     # @source Error listing files: {error}
     listError: 'Lỗi khi liệt kê tệp: {error}'
     # @source Loading volume files...
@@ -1843,7 +1844,7 @@ webAssembly:
   # @source Please read the documentation before enabling the experimental WebAssembly feature!
   description: Vui lòng đọc tài liệu trước khi bật tính năng WebAssembly thử nghiệm!
   # @source Enabled
-  enabled: Đã bật
+  enabled: Bật
   # @reason WebAssembly and Wasm are technology names and stay in English.
   # @source WebAssembly (Wasm)
   label: WebAssembly (Wasm)
