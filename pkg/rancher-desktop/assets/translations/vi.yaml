@@ -369,7 +369,7 @@ containerInspect:
     # @source Name
     name: Tên
     # @source Started
-    started: Thời điểm khởi động
+    started: Đã bắt đầu vào
 containerStats:
   charts:
     # @source Block I/O (bytes/s)
