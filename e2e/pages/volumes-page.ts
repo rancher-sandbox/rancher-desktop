@@ -66,6 +66,7 @@ export class VolumesPage {
     return await rows.count();
   }
 
+  // Waits only for the table element; its rows can arrive after this returns.
   async waitForTableToLoad() {
     await expect(this.table).toBeVisible();
   }
