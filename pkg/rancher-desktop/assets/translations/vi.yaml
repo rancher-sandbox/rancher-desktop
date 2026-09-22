@@ -65,7 +65,7 @@ application:
       # @source Administrative Access
       legendText: Quyền quản trị
       # @source If checked, {appName} will acquire administrative credentials ("sudo access") when starting. This enables bridged networking and default docker socket support. Takes effect on next start.
-      legendTooltip: Nếu được chọn, {appName} sẽ yêu cầu quyền quản trị ("quyền sudo") khi khởi động. Quyền này cho phép dùng mạng cầu nối và docker socket mặc định. Có hiệu lực từ lần khởi động tiếp theo.
+      legendTooltip: Nếu được chọn, {appName} sẽ yêu cầu quyền quản trị ("quyền sudo") khi khởi động. Điều này cho phép dùng mạng cầu nối và docker socket mặc định. Có hiệu lực từ lần khởi động tiếp theo.
     automaticUpdates:
       # @source Check for updates automatically
       label: Tự động kiểm tra cập nhật
@@ -231,7 +231,7 @@ asyncButton:
     waiting: Đang khôi phục&hellip;
   snapshot:
     # @source Snapshot Now
-    action: Tạo ảnh chụp nhanh ngay
+    action: Chụp ảnh nhanh
     # @source Creating Snapshot
     success: Đang tạo ảnh chụp nhanh
     # @source Snapshotting&hellip;
@@ -269,7 +269,7 @@ containerEngine:
   options:
     containerd:
       # @source Namespaces for container images; use with nerdctl.
-      description: Không gian tên cho image container; dùng với nerdctl.
+      description: Namespace cho image container; dùng với nerdctl.
       # @reason containerd is the project name and stays in English.
       # @source containerd
       label: containerd
@@ -357,7 +357,7 @@ containerInspect:
     ports: Cổng
   summary:
     # @source Created
-    created: Thời điểm tạo
+    created: Đã tạo vào
     # @reason 'ID' is the standard abbreviation in Vietnamese.
     # @source ID
     id: ID
@@ -593,8 +593,9 @@ generic:
   forward: Chuyển tiếp
   # @source Loading&hellip;
   loading: Đang tải&hellip;
+  # @reason Vietnamese has no established term for namespace; kept in English like Image.
   # @source Namespace
-  namespace: Không gian tên
+  namespace: Namespace
   # @reason 'OK' is the standard dialog button label in Vietnamese.
   # @source OK
   ok: OK
@@ -992,8 +993,9 @@ portForwarding:
         listenPort: Cổng cục bộ
         # @source Name
         name: Tên
+        # @reason Vietnamese has no established term for namespace; kept in English like Image.
         # @source Namespace
-        namespace: Không gian tên
+        namespace: Namespace
         # @source Port
         port: Cổng
   sortableTables:
