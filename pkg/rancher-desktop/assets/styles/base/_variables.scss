@@ -1,5 +1,6 @@
 $header-font: 'Poppins', sans-serif;
-$body-font: 'Lato', arial, helvetica, sans-serif;
+$local-body-font: arial, helvetica, sans-serif;
+$body-font: 'Lato', $local-body-font;
 $mono-font: 'Roboto Mono', monospace;
 
 $max-width: 1440px !default;
