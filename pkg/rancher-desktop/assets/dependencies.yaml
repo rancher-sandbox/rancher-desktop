@@ -375,14 +375,14 @@ spinOperator:
 spinShim:
   assets:
     - arch: amd64
-      checksum: sha256:1755fbeb2dec7d026faf8c37031d8a025975f5e194b782da10188206a386d6e4
+      checksum: sha256:392945ca82c11abc7006a32c4e5dc12821954b5e2c35cb28e924aeea6bad5286
       platform: linux
-      url: https://github.com/spinframework/containerd-shim-spin/releases/download/v0.25.1/containerd-shim-spin-v2-linux-x86_64.tar.gz
+      url: https://github.com/spinframework/containerd-shim-spin/releases/download/v0.26.0/containerd-shim-spin-v2-linux-x86_64.tar.gz
     - arch: arm64
-      checksum: sha256:5ca9c9207a146a182dc9c870eaaad1afbf64e1d9a4781228dbf6e7ef90ff2e1f
+      checksum: sha256:dfe430d65f9b67b4b82470a1f5e390b4ff396bb3c917e189e1ed375614e6deb5
       platform: linux
-      url: https://github.com/spinframework/containerd-shim-spin/releases/download/v0.25.1/containerd-shim-spin-v2-linux-aarch64.tar.gz
-  version: 0.25.1
+      url: https://github.com/spinframework/containerd-shim-spin/releases/download/v0.26.0/containerd-shim-spin-v2-linux-aarch64.tar.gz
+  version: 0.26.0
 steve:
   assets:
     - arch: amd64
