@@ -171,7 +171,7 @@ func runAgent(
 				if err != nil {
 					return fmt.Errorf("error initializing containerd event monitor: %w", err)
 				}
-				if err := tryConnectAPI(ctx, containerdSocketFile, eventMonitor.IsServing); err != nil {
+				if err := tryConnectAPI(ctx, containerdSock, eventMonitor.IsServing); err != nil {
 					return err
 				}
 

@@ -68,6 +68,8 @@ updates:
   open-pull-requests-limit: 12
   labels: ["component/dependencies"]
   groups:
+    containerd:
+      patterns: ["github.com/containerd/containerd/*"]
     golang-x:
       patterns: ["golang.org/x/*"]
     k8s:

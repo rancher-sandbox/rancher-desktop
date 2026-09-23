@@ -29,10 +29,10 @@ import (
 	"strings"
 
 	"github.com/Masterminds/log-go"
-	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/namespaces"
+	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
+	"github.com/containerd/errdefs"
 	cnutils "github.com/containernetworking/plugins/pkg/utils"
 	"github.com/docker/go-connections/nat"
 	"google.golang.org/protobuf/proto"
