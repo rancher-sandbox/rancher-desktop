@@ -142,10 +142,11 @@ import { mapGetters } from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
 import { mapTypedGetters, mapTypedState } from '@pkg/entry/store';
+import { showDeleteConfirmation } from '@pkg/utils/deleteConfirmation';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
 /**
- * @import { Container } from '@pk/store/containers'
+ * @import { Container } from '@pkg/store/container-engine'
  */
 
 /**
@@ -163,7 +164,7 @@ import { ipcRenderer } from '@pkg/utils/ipcRenderer';
  * @property { (this: Container, containers?: Container[]) => void } [stopContainer]
  * @property { (this: Container, containers?: Container[]) => void } [restartContainer]
  * @property { (this: Container, containers?: Container[]) => void } [startContainer]
- * @property { (this: Container, containers?: Container[]) => void } [deleteContainer]
+ * @property { (this: Container, containers?: Container[]) => Promise<void> } [deleteContainer]
  * @property { (this: Container) => void } [viewInfo]
  * @property { (readonly [number, number])[] } portList
  */
@@ -249,8 +250,12 @@ export default defineComponent({
           startContainer:   (args) => {
             this.execCommand('start', this.containerCommandTarget(container, args));
           },
-          deleteContainer:   (args) => {
-            this.execCommand('rm', this.containerCommandTarget(container, args));
+          deleteContainer:   async(args) => {
+            const targets = this.containerCommandTarget(container, args);
+
+            if (await this.confirmDelete(targets)) {
+              await this.execCommand('rm', targets);
+            }
           },
           viewInfo: () => {
             this.viewInfo(container);
@@ -292,8 +297,27 @@ export default defineComponent({
     clearTimeout(this.subscribeTimer);
   },
   methods: {
+    /**
+     * @param container {Container} The container in this row.
+     * @param args {Container[] | undefined} The bulk selection from the table's action bar, if any.
+     * @returns {Container[]} The bulk selection if there is one, otherwise the row's container.
+     */
     containerCommandTarget(container, args) {
-      return args?.length ? args : container;
+      return args?.length ? args : [container];
+    },
+    /**
+     * Ask the user to confirm deleting the given containers.
+     * @param containers {Container[]} The containers to delete, listed by name in the dialog.
+     * @returns {Promise<boolean>} Whether the user chose to delete them.
+     */
+    async confirmDelete(containers) {
+      return await showDeleteConfirmation({
+        title:   this.t('containers.confirmDelete.title'),
+        message: this.t('containers.confirmDelete.message', { count: containers.length }),
+        confirm: this.t('containers.confirmDelete.confirm'),
+        cancel:  this.t('generic.cancel'),
+        names:   containers.map(container => container.containerName),
+      });
     },
     getContainerActions(container) {
       return [
@@ -424,11 +448,11 @@ export default defineComponent({
     /**
      * Execute a command against some containers
      * @param command {string} The command to run
-     * @param _ids {Container | Container[]} The containers to affect
+     * @param containers {Container[]} The containers to affect
      */
-    async execCommand(command, _ids) {
+    async execCommand(command, containers) {
       try {
-        const ids = Array.isArray(_ids) ? _ids.map(c => c.id) : [_ids.id];
+        const ids = containers.map(container => container.id);
         const options = { cwd: '/' };
 
         console.info(`Executing command ${ command } on container ${ ids }`);
