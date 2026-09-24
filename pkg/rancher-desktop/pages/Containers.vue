@@ -16,7 +16,6 @@
       no-rows-key="containers.sortableTables.noRows"
       :row-actions="true"
       :paging="true"
-      :rows-per-page="10"
       :has-advanced-filtering="false"
       :loading="containers === null"
       group-by="projectGroup"
