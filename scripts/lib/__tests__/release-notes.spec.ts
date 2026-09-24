@@ -81,4 +81,15 @@ describe('formatReleaseNotes', () => {
       '',
     ].join('\n'));
   });
+
+  it.each([null, ''])('names a release named %p after its tag', (name) => {
+    const releases = [{ ...release('v1.1.0', ''), name }];
+
+    expect(formatReleaseNotes(releases, 'v1.0.0', 'upstream', 'project')).toEqual([
+      '## v1.1.0 (v1.1.0)',
+      'Release v1.1.0 does not have release notes.',
+      '[Compare between v1.0.0 and v1.1.0](https://github.com/upstream/project/compare/v1.0.0...v1.1.0)',
+      '',
+    ].join('\n'));
+  });
 });
