@@ -11117,13 +11117,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"intl-messageformat@npm:12.0.0":
-  version: 12.0.0
-  resolution: "intl-messageformat@npm:12.0.0"
+"intl-messageformat@npm:12.1.0":
+  version: 12.1.0
+  resolution: "intl-messageformat@npm:12.1.0"
   dependencies:
     "@formatjs/fast-memoize": "npm:3.1.7"
     "@formatjs/icu-messageformat-parser": "npm:3.5.19"
-  checksum: 10c0/5c35ce5ab022eea66c3fadfb46a1132f1141133a859e1c49914a18f5ce9ba836f424b4b5b1ddf574ea0e62808edcc86f096772d156b1274610a3bb250ca28b14
+  checksum: 10c0/f8e0bf332395d0dcd313d1b4e22491cf2fee1104347e05f2c79299fa88053535e2b6b89d1eb659d8b2016754dd9efbadde8d4042cd17c9a9fd7f4a0a254c4bd4
   languageName: node
   linkType: hard
 
@@ -14954,7 +14954,7 @@ __metadata:
     fs-extra: "npm:11.4.0"
     glob: "npm:^13.0.3"
     globals: "npm:17.12.0"
-    intl-messageformat: "npm:12.0.0"
+    intl-messageformat: "npm:12.1.0"
     jest: "npm:30.5.1"
     jest-environment-jsdom: "npm:30.5.1"
     jquery: "npm:4.0.0"
