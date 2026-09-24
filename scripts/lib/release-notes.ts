@@ -85,6 +85,8 @@ export function formatReleaseNotes(releases: Release[], previousTag: string, own
   let lastVersion = previousTag;
 
   return releases.map((release, index) => {
+    // GitHub titles an unnamed release with its tag.
+    const name = release.name || release.tag_name;
     // GitHub rejects a pull request body over 65,536 characters, which the
     // notes of several releases can exceed, so link all but the newest.
     let body = `[Release notes](${ release.html_url })`;
@@ -92,7 +94,7 @@ export function formatReleaseNotes(releases: Release[], previousTag: string, own
     if (index === releases.length - 1) {
       body = release.body
         ? quoteReleaseNotes(release.body, owner, repo)
-        : `Release ${ release.name } does not have release notes.`;
+        : `Release ${ name } does not have release notes.`;
     }
     const compareLink = [
       `[Compare between ${ lastVersion } and ${ release.tag_name }]`,
@@ -101,6 +103,6 @@ export function formatReleaseNotes(releases: Release[], previousTag: string, own
 
     lastVersion = release.tag_name;
 
-    return `## ${ release.name } (${ release.tag_name })\n${ body }\n${ compareLink }\n`;
+    return `## ${ name } (${ release.tag_name })\n${ body }\n${ compareLink }\n`;
   }).join('\n');
 }
