@@ -1,6 +1,7 @@
 name: "Release: Merge to main"
-# A pull request or issue created with github.token triggers no other
-# workflow, so this uses vault (upstream) or RUN_WORKFLOW_FROM_WORKFLOW.
+# A pull request or issue created with github.token does not trigger
+# subsequent workflows, so this uses vault (upstream) or
+# RUN_WORKFLOW_FROM_WORKFLOW.
 
 on:
   release:

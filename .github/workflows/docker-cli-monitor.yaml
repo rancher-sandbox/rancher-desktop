@@ -1,10 +1,13 @@
 name: Check for new releases of docker/cli
-# A pull request or issue created with github.token triggers no other
-# workflow, so this uses vault (upstream) or RUN_WORKFLOW_FROM_WORKFLOW.
+# A pull request or issue created with github.token does not trigger
+# subsequent workflows, so this uses vault (upstream) or
+# RUN_WORKFLOW_FROM_WORKFLOW.
 on:
   schedule:
     - cron: '55 8 * * *'
   workflow_dispatch: {}
+
+permissions: {}
 
 jobs:
   check-for-token:

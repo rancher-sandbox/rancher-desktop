@@ -1,14 +1,13 @@
 name: Check for unreleased changes
-# A pull request or issue created with github.token triggers no other
-# workflow, so this uses vault (upstream) or RUN_WORKFLOW_FROM_WORKFLOW.
+# A pull request or issue created with github.token does not trigger
+# subsequent workflows, so this uses vault (upstream) or
+# RUN_WORKFLOW_FROM_WORKFLOW.
 on:
   schedule:
     - cron: '48 8 * * *'
   workflow_dispatch: {}
 
-permissions:
-  contents: read
-  id-token: write # Required for $/.github/actions/get-token
+permissions: {}
 
 jobs:
   check-for-token:
@@ -26,6 +25,9 @@ jobs:
     needs: check-for-token
     if: needs.check-for-token.outputs.has-token == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for $/.github/actions/get-token
     steps:
       - id: get-token
         uses: $/.github/actions/get-token
