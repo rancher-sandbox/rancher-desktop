@@ -5,7 +5,7 @@ go 1.26.6
 require (
 	github.com/Masterminds/log-go v1.0.0
 	github.com/containerd/containerd/api v1.12.0
-	github.com/containerd/containerd/v2 v2.4.0
+	github.com/containerd/containerd/v2 v2.4.1
 	github.com/containerd/errdefs v1.0.0
 	github.com/containernetworking/plugins v1.9.1
 	github.com/containers/gvisor-tap-vsock v0.8.9
@@ -41,7 +41,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
-	github.com/fxamacker/cbor/v2 v2.9.1 // indirect
+	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
