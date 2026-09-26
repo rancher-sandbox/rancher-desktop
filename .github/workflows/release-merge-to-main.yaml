@@ -1,4 +1,7 @@
 name: "Release: Merge to main"
+# A pull request or issue created with github.token does not trigger
+# subsequent workflows, so this uses vault (upstream) or
+# RUN_WORKFLOW_FROM_WORKFLOW.
 
 on:
   release:
@@ -16,13 +19,14 @@ permissions: {}
 jobs:
   check-for-token:
     outputs:
-      has-token: ${{ steps.calc.outputs.HAS_SECRET }}
+      has-token: ${{ steps.calc.outputs.HAS_TOKEN }}
     runs-on: ubuntu-latest
     steps:
     - id: calc
-      run: echo "HAS_SECRET=${HAS_SECRET}" >> "${GITHUB_OUTPUT}"
+      run: echo "HAS_TOKEN=${HAS_TOKEN}" >> "${GITHUB_OUTPUT}"
       env:
-        HAS_SECRET: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
+        HAS_TOKEN: ${{ github.repository_owner == 'rancher-sandbox'
+          || secrets.RUN_WORKFLOW_FROM_WORKFLOW != '' }}
 
   create-pr:
     needs: check-for-token
@@ -30,10 +34,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write # Required for $/.github/actions/get-token
     steps:
+    - id: get-token
+      uses: $/.github/actions/get-token
+      with:
+        token-secret: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: $/.github/actions/yarn-install
     - run: node scripts/ts-wrapper.js scripts/release-merge-to-main.ts
       env:
         GITHUB_WRITE_TOKEN: ${{ github.token }}
-        GITHUB_PR_TOKEN: ${{ secrets.RUN_WORKFLOW_FROM_WORKFLOW }}
+        GITHUB_PR_TOKEN: ${{ steps.get-token.outputs.token }}

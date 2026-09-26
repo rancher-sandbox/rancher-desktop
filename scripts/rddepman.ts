@@ -311,7 +311,9 @@ async function checkDependencies(dependencies: VersionedDependency[]): Promise<v
     git('checkout', '-b', branchName, MAIN_BRANCH);
     git('add', ...await dependency.updateManifest(latestVersion, newAssets));
     git('commit', '--signoff', '--message', commitMessage);
-    git('push', '--force', `https://${ process.env.GITHUB_TOKEN }@github.com/${ GITHUB_OWNER }/${ GITHUB_REPO }`);
+    // The token is a GitHub App installation token, so git wants it as the
+    // password of the `x-access-token` user; a bare `token@host` fails.
+    git('push', '--force', `https://x-access-token:${ process.env.GITHUB_TOKEN }@github.com/${ GITHUB_OWNER }/${ GITHUB_REPO }`);
     await createDependencyBumpPR(dependency, currentVersion, latestVersion);
   }
 }
