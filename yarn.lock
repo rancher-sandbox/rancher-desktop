@@ -15096,7 +15096,7 @@ __metadata:
     "@yarnpkg/types": "npm:^4.0.1"
     async-mutex: "npm:^0.5.0"
     babel-core: "npm:7.0.0-bridge.0"
-    babel-jest: "npm:30.5.1"
+    babel-jest: "npm:30.5.2"
     babel-loader: "npm:10.1.1"
     chart.js: "npm:4.5.1"
     cookie-universal: "npm:2.2.2"
