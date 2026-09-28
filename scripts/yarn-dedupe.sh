@@ -20,7 +20,9 @@ done
 
 BRANCH_NAME="yarn-dedupe"
 
-yarn dedupe
+# update-lockfile rewrites yarn.lock without linking node_modules, so the
+# project's postinstall (asset downloads, Go builds) does not run.
+yarn dedupe --mode=update-lockfile
 
 # Exit if yarn.lock is unchanged
 if git diff --quiet yarn.lock; then
