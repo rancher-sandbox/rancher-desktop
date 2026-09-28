@@ -2194,12 +2194,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/icu-messageformat-parser@npm:3.5.19":
-  version: 3.5.19
-  resolution: "@formatjs/icu-messageformat-parser@npm:3.5.19"
+"@formatjs/icu-messageformat-parser@npm:3.5.20":
+  version: 3.5.20
+  resolution: "@formatjs/icu-messageformat-parser@npm:3.5.20"
   dependencies:
     "@formatjs/icu-skeleton-parser": "npm:2.1.12"
-  checksum: 10c0/806a7b6567fd7277dfeaa2dcaf562cdd4c1c590014bc16657dad22ee2c954cfc63f5256ca8b0b4bdcdf8268f643eca9fecb6678e6161d8936f88923446496422
+  checksum: 10c0/15e2f3e5ae350ce160bbe6e799f304ad532ca7e86c9e2b73b28413181c992f5c4afca5c76939c54b5e60a42a70318165407a22a68271812df549f02487106cc2
   languageName: node
   linkType: hard
 
@@ -2655,28 +2655,6 @@ __metadata:
     jest-haste-map: "npm:30.5.1"
     slash: "npm:^3.0.0"
   checksum: 10c0/de92712f0ce196a0e36ea1beb1b70aa12c76ccf31e4017f1377473d41c76a672a5b810b054f53ecbd8b3d085208aad56fa60d4574b823958d279175c9fc6ad31
-  languageName: node
-  linkType: hard
-
-"@jest/transform@npm:30.5.1":
-  version: 30.5.1
-  resolution: "@jest/transform@npm:30.5.1"
-  dependencies:
-    "@babel/core": "npm:^7.27.4"
-    "@jest/types": "npm:30.5.1"
-    "@jridgewell/trace-mapping": "npm:^0.3.31"
-    babel-plugin-istanbul: "npm:^8.0.0"
-    chalk: "npm:^4.1.2"
-    convert-source-map: "npm:^2.0.0"
-    fast-json-stable-stringify: "npm:^2.1.0"
-    graceful-fs: "npm:^4.2.11"
-    jest-haste-map: "npm:30.5.1"
-    jest-regex-util: "npm:30.5.0"
-    jest-util: "npm:30.5.1"
-    pirates: "npm:^4.0.7"
-    slash: "npm:^3.0.0"
-    write-file-atomic: "npm:^5.0.1"
-  checksum: 10c0/560f48993ede78507dc53eb6e063d1decf139faa8267ed1900541fbe98dce684cc0d70897d09ab976c2bbe4dc4fe3844e4798221da65e40fa93c87ac9efc60f4
   languageName: node
   linkType: hard
 
@@ -6934,23 +6912,6 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 10c0/f57576e30267be4607d163b7288031d332cf9200ea35efe9fb33c97f834e304376774c28c1f9d6928d6733fcde7041e4010f1248a0519e7730c590d4b07b9608
-  languageName: node
-  linkType: hard
-
-"babel-jest@npm:30.5.1":
-  version: 30.5.1
-  resolution: "babel-jest@npm:30.5.1"
-  dependencies:
-    "@jest/transform": "npm:30.5.1"
-    "@types/babel__core": "npm:^7.20.5"
-    babel-plugin-istanbul: "npm:^8.0.0"
-    babel-preset-jest: "npm:30.5.0"
-    chalk: "npm:^4.1.2"
-    graceful-fs: "npm:^4.2.11"
-    slash: "npm:^3.0.0"
-  peerDependencies:
-    "@babel/core": ^7.11.0 || ^8.0.0-0
-  checksum: 10c0/ce3d18eb45443cb9351074fede247fc6ba7845e18ab4b9ee239a1c47560c939d8194d58f7a08d4ebc7fc1060b33189dd62d41972c68ccec3d82261313b98c6dc
   languageName: node
   linkType: hard
 
@@ -11248,13 +11209,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"intl-messageformat@npm:12.1.0":
-  version: 12.1.0
-  resolution: "intl-messageformat@npm:12.1.0"
+"intl-messageformat@npm:12.1.2":
+  version: 12.1.2
+  resolution: "intl-messageformat@npm:12.1.2"
   dependencies:
     "@formatjs/fast-memoize": "npm:3.1.7"
-    "@formatjs/icu-messageformat-parser": "npm:3.5.19"
-  checksum: 10c0/f8e0bf332395d0dcd313d1b4e22491cf2fee1104347e05f2c79299fa88053535e2b6b89d1eb659d8b2016754dd9efbadde8d4042cd17c9a9fd7f4a0a254c4bd4
+    "@formatjs/icu-messageformat-parser": "npm:3.5.20"
+  checksum: 10c0/390b9f7415ba0a5fe88955bbde5942924b5aea7f92bcd77ad982123e8981e738436528c5fbcf545263616bb138e7e35c5ebe20f432ca8098cfa8b804abe9eb77
   languageName: node
   linkType: hard
 
@@ -15118,7 +15079,7 @@ __metadata:
     fs-extra: "npm:11.4.0"
     glob: "npm:^13.0.3"
     globals: "npm:17.12.0"
-    intl-messageformat: "npm:12.1.0"
+    intl-messageformat: "npm:12.1.2"
     jest: "npm:30.5.2"
     jest-environment-jsdom: "npm:30.5.1"
     jquery: "npm:4.0.0"
