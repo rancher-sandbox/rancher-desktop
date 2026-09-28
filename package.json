@@ -129,7 +129,7 @@
     "ejs": "6.0.1",
     "electron": "44.4.3",
     "electron-builder": "26.16.1",
-    "eslint": "10.10.0",
+    "eslint": "10.11.0",
     "eslint-plugin-vue": "10.11.0",
     "extract-zip": "2.0.1",
     "floating-vue": "5.4.0",
