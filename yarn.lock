@@ -2645,6 +2645,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jest/transform@npm:30.5.2":
+  version: 30.5.2
+  resolution: "@jest/transform@npm:30.5.2"
+  dependencies:
+    "@babel/core": "npm:^7.27.4"
+    "@jest/types": "npm:30.5.1"
+    "@jridgewell/trace-mapping": "npm:^0.3.31"
+    babel-plugin-istanbul: "npm:^8.0.0"
+    chalk: "npm:^4.1.2"
+    convert-source-map: "npm:^2.0.0"
+    fast-json-stable-stringify: "npm:^2.1.0"
+    graceful-fs: "npm:^4.2.11"
+    jest-haste-map: "npm:30.5.1"
+    jest-regex-util: "npm:30.5.0"
+    jest-util: "npm:30.5.1"
+    pirates: "npm:^4.0.7"
+    slash: "npm:^3.0.0"
+    write-file-atomic: "npm:^5.0.1"
+  checksum: 10c0/be3f9aa812a442402ed41a37d0f11d174a0a9037038dc1326c32d1d55e22fc7bc5f5146284c5a18db3da572afb81739f0a93d3f1d519e811d25dacaeb380c647
+  languageName: node
+  linkType: hard
+
 "@jest/types@npm:30.4.1":
   version: 30.4.1
   resolution: "@jest/types@npm:30.4.1"
@@ -6894,6 +6916,23 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.11.0 || ^8.0.0-0
   checksum: 10c0/ce3d18eb45443cb9351074fede247fc6ba7845e18ab4b9ee239a1c47560c939d8194d58f7a08d4ebc7fc1060b33189dd62d41972c68ccec3d82261313b98c6dc
+  languageName: node
+  linkType: hard
+
+"babel-jest@npm:30.5.2":
+  version: 30.5.2
+  resolution: "babel-jest@npm:30.5.2"
+  dependencies:
+    "@jest/transform": "npm:30.5.2"
+    "@types/babel__core": "npm:^7.20.5"
+    babel-plugin-istanbul: "npm:^8.0.0"
+    babel-preset-jest: "npm:30.5.0"
+    chalk: "npm:^4.1.2"
+    graceful-fs: "npm:^4.2.11"
+    slash: "npm:^3.0.0"
+  peerDependencies:
+    "@babel/core": ^7.11.0 || ^8.0.0-0
+  checksum: 10c0/1bba4a4068a5de10dc9d1300c7f22170ffa5e51af8ec145c3efa06c4703994b245cfc212f9961a60b53a6657334fd7266998340edaa65c195eaad37bd62fc43b
   languageName: node
   linkType: hard
 
@@ -15009,7 +15048,7 @@ __metadata:
     "@yarnpkg/types": "npm:^4.0.1"
     async-mutex: "npm:^0.5.0"
     babel-core: "npm:7.0.0-bridge.0"
-    babel-jest: "npm:30.5.1"
+    babel-jest: "npm:30.5.2"
     babel-loader: "npm:10.1.1"
     chart.js: "npm:4.5.1"
     cookie-universal: "npm:2.2.2"
