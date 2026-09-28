@@ -752,12 +752,24 @@ export function getOctokit(personalAccessToken?: string): Octokit {
     };
   }
 
-  _octokit = new Octokit({
-    auth:     personalAccessToken,
-    throttle: {
-      onRateLimit:          makeLimitHandler('primary', 3),
-      onSecondaryRateLimit: makeLimitHandler('secondary', 3),
-    },
+  const throttle = {
+    onRateLimit:          makeLimitHandler('primary', 3),
+    onSecondaryRateLimit: makeLimitHandler('secondary', 3),
+  };
+
+  _octokit = new Octokit({ auth: personalAccessToken, throttle });
+  // An organization with an IP allow list, such as aquasecurity, refuses
+  // GitHub App installation tokens from addresses outside the list, even
+  // for public repositories, but answers the same read anonymously.
+  _octokit.hook.error('request', (error, options) => {
+    if (options.method === 'GET' && 'status' in error && error.status === 403 && error.message.includes('IP allow list')) {
+      // Keeping request.hook would route the retry through _octokit's hooks,
+      // which add the token again.
+      const { hook, ...request } = options.request ?? {};
+
+      return new Octokit({ throttle }).request({ ...options, request });
+    }
+    throw error;
   });
   _octokitAuthToken = personalAccessToken;
 
