@@ -54,6 +54,10 @@ updates:
     # vue pins @vue/compiler-sfc exactly, so separate bumps break the lockfile.
     vue:
       patterns: ["vue", "@vue/compiler-sfc"]
+    # These pin shared @jest/* packages exactly, so separate bumps break the
+    # lockfile.
+    jest:
+      patterns: ["jest", "babel-jest", "jest-environment-jsdom"]
 
 # Maintain dependencies for Golang
 - package-ecosystem: "gomod"
