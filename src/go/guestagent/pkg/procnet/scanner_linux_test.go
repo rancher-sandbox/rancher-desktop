@@ -457,10 +457,9 @@ func TestRollbackAfterForwarderAddFailure(t *testing.T) {
 	}
 }
 
-// TestOwnershipRecheckDerivedFromScanInterval pins the recheck to
-// wall-clock time rather than to a tick count. A tick count would drift
-// silently the day the scan interval changes, turning the re-probe back
-// into the per-tick retry the delegation mechanism replaced.
+// TestOwnershipRecheckDerivedFromScanInterval checks that newScanner
+// converts ownershipRecheckInterval to a Tick count for the given scan
+// interval, and never to fewer than one Tick.
 func TestOwnershipRecheckDerivedFromScanInterval(t *testing.T) {
 	for _, tc := range []struct {
 		scanInterval time.Duration
@@ -478,10 +477,9 @@ func TestOwnershipRecheckDerivedFromScanInterval(t *testing.T) {
 	}
 }
 
-// TestPublishedPortReassertedPeriodically covers the scanner's own
-// ports going quiet, with nothing in /proc/net to mark them as no
-// longer forwarded. Re-asserting must not disturb the forwarder or
-// unexpose anything.
+// TestPublishedPortReassertedPeriodically checks that the scanner asks
+// host-switch again to expose a published port once the recheck falls
+// due, without touching the loopback forwarder or unexposing anything.
 func TestPublishedPortReassertedPeriodically(t *testing.T) {
 	tr := &fakeTracker{}
 	fwd := &fakeForwarder{}
@@ -519,10 +517,9 @@ func TestPublishedPortReassertedPeriodically(t *testing.T) {
 	}
 }
 
-// TestDelegatedPortRepublishedAfterOwnerLosesExpose covers ownership
-// ending without the listener changing, which the scanner cannot
-// observe, so the delegation has to expire on its own or the port
-// stays exposed by nobody.
+// TestDelegatedPortRepublishedAfterOwnerLosesExpose checks that the
+// scanner publishes a delegated port itself once the delegation expires
+// and the owner no longer exposes it.
 func TestDelegatedPortRepublishedAfterOwnerLosesExpose(t *testing.T) {
 	tr := &fakeTracker{addErr: tracker.ErrPortAlreadyExposed}
 	fwd := &fakeForwarder{}
@@ -535,9 +532,8 @@ func TestDelegatedPortRepublishedAfterOwnerLosesExpose(t *testing.T) {
 		t.Fatalf("tracker.Add expected exactly once, got %v", tr.added)
 	}
 
-	// While the delegation is young the scanner must leave it alone;
-	// re-probing sooner is the retry storm this whole mechanism exists
-	// to stop.
+	// Until the delegation expires, the scanner must not ask
+	// host-switch again.
 	for range s.ownershipRecheckTicks - 1 {
 		s.Tick(scan)
 	}
@@ -557,10 +553,10 @@ func TestDelegatedPortRepublishedAfterOwnerLosesExpose(t *testing.T) {
 	}
 }
 
-// TestAlreadyExposedPortDelegatesInsteadOfRetrying pins the moby
-// scenario from issue 10737, where docker-proxy holds a persistent
-// listener for a published port that the docker events handler has
-// already exposed.
+// TestAlreadyExposedPortDelegatesInsteadOfRetrying checks that the
+// scanner delegates a port that another component already exposes,
+// instead of asking host-switch to expose it again on every Tick; see
+// https://github.com/rancher-sandbox/rancher-desktop/issues/10737.
 func TestAlreadyExposedPortDelegatesInsteadOfRetrying(t *testing.T) {
 	tr := &fakeTracker{addErr: tracker.ErrPortAlreadyExposed}
 	fwd := &fakeForwarder{}
@@ -586,11 +582,9 @@ func TestAlreadyExposedPortDelegatesInsteadOfRetrying(t *testing.T) {
 	}
 }
 
-// TestDelegatedPortReleasedWhenListenerVanishes verifies that a
-// delegated port is dropped without any unexpose traffic when its
-// listener disappears -- cleanup belongs to the owning component --
-// and that a later listener on the same port goes through the normal
-// gate-then-publish path again.
+// TestDelegatedPortReleasedWhenListenerVanishes checks that the scanner
+// drops a delegated port without unexposing it when the listener
+// disappears, and publishes a new listener only after the stability gate.
 func TestDelegatedPortReleasedWhenListenerVanishes(t *testing.T) {
 	tr := &fakeTracker{addErr: tracker.ErrPortAlreadyExposed}
 	fwd := &fakeForwarder{}
@@ -622,10 +616,9 @@ func TestDelegatedPortReleasedWhenListenerVanishes(t *testing.T) {
 	}
 }
 
-// TestDelegatedPortReleasedOnBindingShapeChange verifies that a
-// binding-shape change releases the delegation even while a listener
-// on the port persists, so the scanner re-evaluates ownership on the
-// next tick.
+// TestDelegatedPortReleasedOnBindingShapeChange checks that new bind
+// addresses end a delegation while the port still has a listener, and
+// that the scanner then publishes the port after the stability gate.
 func TestDelegatedPortReleasedOnBindingShapeChange(t *testing.T) {
 	tr := &fakeTracker{addErr: tracker.ErrPortAlreadyExposed}
 	fwd := &fakeForwarder{}
