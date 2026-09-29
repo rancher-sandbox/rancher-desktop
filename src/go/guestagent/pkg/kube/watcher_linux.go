@@ -179,9 +179,8 @@ func WatchForServices(
 						log.Debugf("kubernetes service: port mapping added %s/%s:%v",
 							event.namespace, event.name, event.portMapping)
 					case errors.Is(err, tracker.ErrPortAlreadyExposed):
-						// Debug, unlike the other scanners, which log this
-						// at Info once per port: this fires on every
-						// watcher event for as long as the Service exists.
+						// Debug, because this repeats on every Service
+						// event, the informer's periodic resync included.
 						log.Debugf("kubernetes service: port mapping already exposed elsewhere %s/%s:%v",
 							event.namespace, event.name, event.portMapping)
 					default:

@@ -685,8 +685,7 @@ func TestNonAdminInstall(t *testing.T) {
 
 // TestAddReturnsPortAlreadyExposedSentinel verifies that when host-switch
 // rejects every Expose with the "proxy already running" body, Add returns
-// the typed sentinel so callers can downgrade the result to a delegation
-// no-op.
+// ErrPortAlreadyExposed.
 func TestAddReturnsPortAlreadyExposedSentinel(t *testing.T) {
 	t.Parallel()
 
@@ -709,14 +708,13 @@ func TestAddReturnsPortAlreadyExposedSentinel(t *testing.T) {
 	require.NotErrorIs(t, err, forwarder.ErrExposeAPI,
 		"the sentinel must replace the generic ErrExposeAPI wrap, not be joined with it")
 
-	// portStorage stays empty: no port was successfully forwarded.
+	// portStorage stays empty because no port was forwarded.
 	assert.Empty(t, apiTracker.Get(containerID))
 }
 
-// TestAddPartialAlreadyExposedReturnsNil verifies that when some ports
-// succeed and others are already exposed elsewhere, Add returns nil --
-// the call did real work and the sentinel only applies when nothing was
-// forwarded.
+// TestAddPartialAlreadyExposedReturnsNil verifies that when some bindings
+// succeed and others are already exposed elsewhere, Add returns nil,
+// because the sentinel applies only when nothing was forwarded.
 func TestAddPartialAlreadyExposedReturnsNil(t *testing.T) {
 	t.Parallel()
 
@@ -750,9 +748,7 @@ func TestAddPartialAlreadyExposedReturnsNil(t *testing.T) {
 }
 
 // TestAddAlreadyExposedPlusRealFailureReturnsRealFailure verifies that a
-// real Expose failure beats the "already exposed" signal: callers must
-// see the genuine ErrExposeAPI wrap so they retry, not the sentinel that
-// would have them treat the call as delegation.
+// real Expose failure wins over an "already exposed" answer.
 func TestAddAlreadyExposedPlusRealFailureReturnsRealFailure(t *testing.T) {
 	t.Parallel()
 
@@ -788,10 +784,9 @@ func TestAddAlreadyExposedPlusRealFailureReturnsRealFailure(t *testing.T) {
 		"the sentinel only applies when every port was already exposed")
 }
 
-// TestAddAcrossPortsOneAlreadyExposed covers a request spanning two
-// distinct nat.Ports rather than two bindings of one port: the
-// alreadyExposed tally is per binding but the sentinel is decided
-// against successfullyForwarded, which is keyed by port.
+// TestAddAcrossPortsOneAlreadyExposed verifies that when one of two
+// nat.Ports gets an already-exposed answer, Add returns nil and stores
+// only the forwarded port.
 func TestAddAcrossPortsOneAlreadyExposed(t *testing.T) {
 	t.Parallel()
 

@@ -111,9 +111,9 @@ func (i *Iptables) ForwardPorts() error {
 				log.Errorf("failed to create a corresponding key for the portMap: %s", err)
 				continue
 			}
-			// One map per entry: Remove is keyed by this entry's own
-			// id, so a shared map would unexpose ports belonging to
-			// the other entries stored under it.
+			// One map per entry, so each Add exposes only this entry's
+			// port and a Remove by this entry's id unexposes only that
+			// port.
 			portMap := nat.PortMap{portMapKey: []nat.PortBinding{{
 				HostIP:   i.listenerIP.String(),
 				HostPort: port,

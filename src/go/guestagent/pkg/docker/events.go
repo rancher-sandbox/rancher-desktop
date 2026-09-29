@@ -165,9 +165,10 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 
 				continue
 			}
-			// A port another component already exposes still needs the
-			// loopback DNAT rules below: they route bindIP:port to the
-			// container's 127.0.0.1 listener whoever called expose.
+			// Create the loopback DNAT rules even when another component
+			// exposed the port. Host-switch sends its traffic to the tap
+			// IP, and for a 127.0.0.1 publish these rules route it to the
+			// container.
 			switch err := e.portTracker.Add(container.ID, portMap); {
 			case err == nil:
 			case errors.Is(err, tracker.ErrPortAlreadyExposed):
