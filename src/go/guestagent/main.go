@@ -250,7 +250,13 @@ func runAgent(
 		return procScanner.ForwardPorts()
 	})
 
-	return group.Wait()
+	err := group.Wait()
+	// Only the SIGTERM handler cancels groupCtx, so a goroutine's
+	// context.Canceled after SIGTERM is a clean stop.
+	if errors.Is(err, context.Canceled) && groupCtx.Err() != nil {
+		return nil
+	}
+	return err
 }
 
 func tryConnectAPI(ctx context.Context, socketFile string, verify func(context.Context) error) error {
