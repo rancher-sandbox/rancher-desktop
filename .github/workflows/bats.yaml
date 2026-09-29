@@ -116,6 +116,7 @@ jobs:
         sparse-checkout-cone-mode: false
         sparse-checkout: |
           scripts/install-latest-ci.sh
+          scripts/patch-guest-iso.sh
           .github/actions/setup-environment/action.yaml
           .github/workflows/bats/sanitize-artifact-name.sh
 
@@ -152,6 +153,15 @@ jobs:
       if: runner.os == 'macOS'
       shell: bash
       run: brew install --force bash coreutils
+
+    - name: "macOS: Give the guest the host's TSC frequency"
+      if: runner.os == 'macOS'
+      shell: bash
+      # The runner is itself a VM, so the guest cannot calibrate its TSC and
+      # falls back to the HPET, where every clock read traps out to the
+      # hypervisor.  tsc_early_khz= hands the kernel the frequency instead,
+      # and tsc=reliable stops the watchdog demoting it again.
+      run: scripts/patch-guest-iso.sh tsc_early_khz=auto tsc=reliable
 
     - name: "Windows: Install WSL2 Distribution"
       if: runner.os == 'Windows'
