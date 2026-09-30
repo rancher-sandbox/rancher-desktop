@@ -17,14 +17,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
+	gvforwarder "github.com/containers/gvisor-tap-vsock/pkg/services/forwarder"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
@@ -710,6 +714,41 @@ func TestAddReturnsPortAlreadyExposedSentinel(t *testing.T) {
 
 	// portStorage stays empty because no port was forwarded.
 	assert.Empty(t, apiTracker.Get(containerID))
+}
+
+// TestAddRecognizesUpstreamAlreadyExposedError verifies that Add returns
+// ErrPortAlreadyExposed when gvisor-tap-vsock's real expose handler
+// refuses a port it already forwards, so it fails if upstream rewords
+// that error.
+func TestAddRecognizesUpstreamAlreadyExposedError(t *testing.T) {
+	t.Parallel()
+
+	ports := gvforwarder.NewPortsForwarder(stack.New(stack.Options{}))
+	mux := http.NewServeMux()
+	mux.Handle("/services/forwarder/", http.StripPrefix("/services/forwarder", ports.Mux()))
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	// Use UDP, because gvisor-tap-vsock logs an error when it closes a
+	// TCP proxy but not when it closes a UDP one.
+	conn, err := (&net.ListenConfig{}).ListenPacket(context.Background(), protocolUDP, net.JoinHostPort(hostIP, "0"))
+	require.NoError(t, err)
+	freePort := strconv.Itoa(conn.LocalAddr().(*net.UDPAddr).Port)
+	require.NoError(t, conn.Close())
+
+	protoPort, err := nat.NewPort(protocolUDP, freePort)
+	require.NoError(t, err)
+	portMapping := nat.PortMap{
+		protoPort: []nat.PortBinding{{HostIP: hostIP, HostPort: freePort}},
+	}
+
+	require.NoError(t, apiTracker.Add(containerID, portMapping))
+	defer func() { assert.NoError(t, apiTracker.Remove(containerID)) }()
+
+	err = apiTracker.Add(containerID2, portMapping)
+	require.ErrorIs(t, err, tracker.ErrPortAlreadyExposed)
 }
 
 // TestAddPartialAlreadyExposedReturnsNil verifies that when some bindings
