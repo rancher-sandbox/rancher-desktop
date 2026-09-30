@@ -16,6 +16,7 @@ package iptables
 
 import (
 	"context"
+	"errors"
 	"net"
 	"strconv"
 	"strings"
@@ -99,8 +100,6 @@ func (i *Iptables) ForwardPorts() error {
 			log.Infof("iptables scanner removed portmap for %s", name)
 		}
 
-		portMap := make(nat.PortMap)
-
 		// Add new forwards
 		for _, p := range added {
 			if !p.TCP {
@@ -112,19 +111,22 @@ func (i *Iptables) ForwardPorts() error {
 				log.Errorf("failed to create a corresponding key for the portMap: %s", err)
 				continue
 			}
-			portBinding := nat.PortBinding{
+			// One map per entry, so each Add exposes only this entry's
+			// port and a Remove by this entry's id unexposes only that
+			// port.
+			portMap := nat.PortMap{portMapKey: []nat.PortBinding{{
 				HostIP:   i.listenerIP.String(),
 				HostPort: port,
-			}
-			if _, ok := portMap[portMapKey]; !ok {
-				portMap[portMapKey] = []nat.PortBinding{portBinding}
-			}
+			}}}
 			name := entryToString(p)
-			if err := i.apiTracker.Add(utils.GenerateID(name), portMap); err != nil {
+			switch err := i.apiTracker.Add(utils.GenerateID(name), portMap); {
+			case err == nil:
+				log.Infof("iptables scanner forwarded portmap for %s", name)
+			case errors.Is(err, tracker.ErrPortAlreadyExposed):
+				log.Infof("iptables scanner: portmap for %s already exposed elsewhere", name)
+			default:
 				log.Errorf("iptables scanner failed to forward portmap for %s: %s", name, err)
-				continue
 			}
-			log.Infof("iptables scanner forwarded portmap for %s", name)
 		}
 	}
 }

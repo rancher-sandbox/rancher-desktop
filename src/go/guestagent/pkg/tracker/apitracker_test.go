@@ -17,14 +17,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
+	gvforwarder "github.com/containers/gvisor-tap-vsock/pkg/services/forwarder"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
@@ -681,6 +685,177 @@ func TestNonAdminInstall(t *testing.T) {
 
 	portMapping = apiTracker.Get(containerID)
 	assert.Nil(t, portMapping)
+}
+
+// TestAddReturnsPortAlreadyExposedSentinel verifies that when host-switch
+// rejects every Expose with the "proxy already running" body, Add returns
+// ErrPortAlreadyExposed.
+func TestAddReturnsPortAlreadyExposedSentinel(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "host port forwarding: cannot expose 127.0.0.1:80: proxy already running", http.StatusInternalServerError)
+	})
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	err = apiTracker.Add(containerID, nat.PortMap{
+		protoPort: []nat.PortBinding{{HostIP: hostIP, HostPort: hostPort}},
+	})
+	require.ErrorIs(t, err, tracker.ErrPortAlreadyExposed)
+	require.NotErrorIs(t, err, forwarder.ErrExposeAPI,
+		"the sentinel must replace the generic ErrExposeAPI wrap, not be joined with it")
+
+	// portStorage stays empty because no port was forwarded.
+	assert.Empty(t, apiTracker.Get(containerID))
+}
+
+// TestAddRecognizesUpstreamAlreadyExposedError verifies that Add returns
+// ErrPortAlreadyExposed when gvisor-tap-vsock's real expose handler
+// refuses a port it already forwards, so it fails if upstream rewords
+// that error.
+func TestAddRecognizesUpstreamAlreadyExposedError(t *testing.T) {
+	t.Parallel()
+
+	ports := gvforwarder.NewPortsForwarder(stack.New(stack.Options{}))
+	mux := http.NewServeMux()
+	mux.Handle("/services/forwarder/", http.StripPrefix("/services/forwarder", ports.Mux()))
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	// Use UDP, because gvisor-tap-vsock logs an error when it closes a
+	// TCP proxy but not when it closes a UDP one.
+	conn, err := (&net.ListenConfig{}).ListenPacket(context.Background(), protocolUDP, net.JoinHostPort(hostIP, "0"))
+	require.NoError(t, err)
+	freePort := strconv.Itoa(conn.LocalAddr().(*net.UDPAddr).Port)
+	require.NoError(t, conn.Close())
+
+	protoPort, err := nat.NewPort(protocolUDP, freePort)
+	require.NoError(t, err)
+	portMapping := nat.PortMap{
+		protoPort: []nat.PortBinding{{HostIP: hostIP, HostPort: freePort}},
+	}
+
+	require.NoError(t, apiTracker.Add(containerID, portMapping))
+	defer func() { assert.NoError(t, apiTracker.Remove(containerID)) }()
+
+	err = apiTracker.Add(containerID2, portMapping)
+	require.ErrorIs(t, err, tracker.ErrPortAlreadyExposed)
+}
+
+// TestAddPartialAlreadyExposedReturnsNil verifies that when some bindings
+// succeed and others are already exposed elsewhere, Add returns nil,
+// because the sentinel applies only when nothing was forwarded.
+func TestAddPartialAlreadyExposedReturnsNil(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+		var req *types.ExposeRequest
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+		if req.Local == ipPortBuilder(hostIP2, hostPort) {
+			http.Error(w, "proxy already running", http.StatusInternalServerError)
+		}
+	})
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	err = apiTracker.Add(containerID, nat.PortMap{
+		protoPort: []nat.PortBinding{
+			{HostIP: hostIP, HostPort: hostPort},  // succeeds
+			{HostIP: hostIP2, HostPort: hostPort}, // already exposed
+		},
+	})
+	require.NoError(t, err)
+
+	stored := apiTracker.Get(containerID)
+	require.Len(t, stored[protoPort], 1)
+	assert.Equal(t, hostIP, stored[protoPort][0].HostIP)
+}
+
+// TestAddAlreadyExposedPlusRealFailureReturnsRealFailure verifies that a
+// real Expose failure wins over an "already exposed" answer.
+func TestAddAlreadyExposedPlusRealFailureReturnsRealFailure(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+		var req *types.ExposeRequest
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+		switch req.Local {
+		case ipPortBuilder(hostIP, hostPort):
+			http.Error(w, "proxy already running", http.StatusInternalServerError)
+		case ipPortBuilder(hostIP2, hostPort):
+			http.Error(w, "transient backend error", http.StatusInternalServerError)
+		}
+	})
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+
+	err = apiTracker.Add(containerID, nat.PortMap{
+		protoPort: []nat.PortBinding{
+			{HostIP: hostIP, HostPort: hostPort},  // already exposed
+			{HostIP: hostIP2, HostPort: hostPort}, // real failure
+		},
+	})
+	require.Error(t, err)
+	require.ErrorIs(t, err, forwarder.ErrExposeAPI,
+		"a real Expose failure must surface, not be masked by the sentinel")
+	require.NotErrorIs(t, err, tracker.ErrPortAlreadyExposed,
+		"the sentinel only applies when every port was already exposed")
+}
+
+// TestAddAcrossPortsOneAlreadyExposed verifies that when one of two
+// nat.Ports gets an already-exposed answer, Add returns nil and stores
+// only the forwarded port.
+func TestAddAcrossPortsOneAlreadyExposed(t *testing.T) {
+	t.Parallel()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/services/forwarder/expose", func(w http.ResponseWriter, r *http.Request) {
+		var req *types.ExposeRequest
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+		if req.Local == ipPortBuilder(hostIP, hostPort2) {
+			http.Error(w, "proxy already running", http.StatusInternalServerError)
+		}
+	})
+	testSrv := httptest.NewServer(mux)
+	defer testSrv.Close()
+
+	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
+
+	protoPort, err := nat.NewPort(protocolTCP, hostPort)
+	require.NoError(t, err)
+	protoPort2, err := nat.NewPort(protocolTCP, hostPort2)
+	require.NoError(t, err)
+
+	err = apiTracker.Add(containerID, nat.PortMap{
+		protoPort:  []nat.PortBinding{{HostIP: hostIP, HostPort: hostPort}},  // forwarded
+		protoPort2: []nat.PortBinding{{HostIP: hostIP, HostPort: hostPort2}}, // already exposed
+	})
+	require.NoError(t, err, "one forwarded port means the call did real work")
+
+	stored := apiTracker.Get(containerID)
+	require.Len(t, stored[protoPort], 1)
+	assert.Empty(t, stored[protoPort2], "an already-exposed port must not be recorded as forwarded")
 }
 
 func ipPortBuilder(ip, port string) string {
