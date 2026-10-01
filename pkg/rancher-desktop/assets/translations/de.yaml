@@ -488,6 +488,9 @@ containers:
         start: Starten
         # @source Stop
         stop: Stoppen
+      group:
+        # @source Standalone Containers
+        standalone: Eigenständige Container
       header:
         # @reason 'Name' is the identical German word
         # @source Name

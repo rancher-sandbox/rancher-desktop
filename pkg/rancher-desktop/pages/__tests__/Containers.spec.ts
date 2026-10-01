@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 
+import { STANDALONE_CONTAINERS_GROUP } from '@pkg/store/container-engine';
 import mockModules from '@pkg/utils/testUtils/mockModules';
 import { t } from '@pkg/utils/testUtils/translations';
 
@@ -41,7 +42,7 @@ describe('Containers methods', () => {
       started:       undefined,
       labels:        {},
       ports:         {},
-      projectGroup:  'Standalone Containers',
+      projectGroup:  STANDALONE_CONTAINERS_GROUP,
     };
   }
 
@@ -68,6 +69,19 @@ describe('Containers methods', () => {
     expect(stoppedRestart).toMatchObject({
       label:   'Restart',
       enabled: false,
+    });
+  });
+
+  describe('group labels', () => {
+    // Wrap the English text so a translated label is told apart from a raw group key.
+    const marked = { t: (key: string) => `[${ t(key) }]` };
+
+    it('translates the standalone group', () => {
+      expect(methods.groupLabel.call(marked, STANDALONE_CONTAINERS_GROUP)).toBe('[Standalone Containers]');
+    });
+
+    it.each(['shop', 'default/web-0'])('shows the %s group name as is', (group) => {
+      expect(methods.groupLabel.call(marked, group)).toBe(group);
     });
   });
 

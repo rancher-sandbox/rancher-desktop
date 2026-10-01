@@ -121,7 +121,7 @@
                 }"
                 @click.stop="toggleExpand(group.ref)"
               />
-              {{ group.ref }}
+              {{ groupLabel(group.ref) }}
               <span v-if="!!collapsed[group.ref]"> ({{ group.rows.length }})</span>
             </div>
           </td>
@@ -141,6 +141,7 @@ import { mapGetters } from 'vuex';
 
 import SortableTable from '@pkg/components/SortableTable';
 import { mapTypedGetters, mapTypedState } from '@pkg/entry/store';
+import { STANDALONE_CONTAINERS_GROUP } from '@pkg/store/container-engine';
 import { showDeleteConfirmation } from '@pkg/utils/deleteConfirmation';
 import { ipcRenderer } from '@pkg/utils/ipcRenderer';
 
@@ -548,6 +549,16 @@ export default defineComponent({
 
     toggleExpand(group) {
       this.collapsed[group] = !this.collapsed[group];
+    },
+
+    /**
+     * @param group {string} The group key (a container's projectGroup).
+     * @returns {string} The text shown in the group's header row.
+     */
+    groupLabel(group) {
+      // Compose project and pod names are user data; only the standalone group
+      // has a fixed English key that needs a translated label.
+      return group === STANDALONE_CONTAINERS_GROUP ? this.t('containers.manage.table.group.standalone') : group;
     },
 
     clearError() {

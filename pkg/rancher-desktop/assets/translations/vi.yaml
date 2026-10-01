@@ -431,6 +431,9 @@ containers:
         start: Khởi động
         # @source Stop
         stop: Dừng
+      group:
+        # @source Standalone Containers
+        standalone: Container độc lập
       header:
         # @source Name
         containerName: Tên

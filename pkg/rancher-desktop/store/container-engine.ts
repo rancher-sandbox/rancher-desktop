@@ -95,6 +95,13 @@ interface NerdctlContainer extends ApiContainer {
 }
 
 /**
+ * The projectGroup of containers outside any compose project or Kubernetes pod.
+ * It doubles as the grouping and sort key, so it stays untranslated here; the
+ * Containers page shows a translated label in its place.
+ */
+export const STANDALONE_CONTAINERS_GROUP = 'Standalone Containers';
+
+/**
  * Each container is an object to be described in the UI.
  */
 export interface Container {
@@ -350,7 +357,7 @@ export const actions = {
         const k8sNamespace = container.Labels?.['io.kubernetes.pod.namespace'];
         const composeProject = container.Labels?.['com.docker.compose.project'];
         let state = container.State;
-        let projectGroup = 'Standalone Containers';
+        let projectGroup = STANDALONE_CONTAINERS_GROUP;
 
         if (k8sPodName && k8sNamespace) {
           projectGroup = `${ k8sNamespace }/${ k8sPodName }`;

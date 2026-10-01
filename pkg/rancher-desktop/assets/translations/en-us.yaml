@@ -172,6 +172,10 @@ containers:
         stop: Stop
         restart: Restart
         start: Start
+      group:
+        # @context Containers page, header row of the table group
+        # @meaning Containers that belong to no compose project and no Kubernetes pod
+        standalone: Standalone Containers
   confirmDelete:
     # @meaning '&' marks the access key, not literal text; see the README.
     confirm: '&Delete'
