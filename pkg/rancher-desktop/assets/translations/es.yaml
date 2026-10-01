@@ -436,6 +436,9 @@ containers:
         start: Iniciar
         # @source Stop
         stop: Detener
+      group:
+        # @source Standalone Containers
+        standalone: Contenedores independientes
       header:
         # @source Name
         containerName: Nombre

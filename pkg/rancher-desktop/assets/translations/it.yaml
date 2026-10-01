@@ -444,6 +444,9 @@ containers:
         start: Avvia
         # @source Stop
         stop: Arresta
+      group:
+        # @source Standalone Containers
+        standalone: Container autonomi
       header:
         # @source Name
         containerName: Nome

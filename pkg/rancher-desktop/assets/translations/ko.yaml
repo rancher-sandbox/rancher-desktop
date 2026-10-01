@@ -432,6 +432,9 @@ containers:
         start: 시작
         # @source Stop
         stop: 중지
+      group:
+        # @source Standalone Containers
+        standalone: 독립 실행형 컨테이너
       header:
         # @source Name
         containerName: 이름

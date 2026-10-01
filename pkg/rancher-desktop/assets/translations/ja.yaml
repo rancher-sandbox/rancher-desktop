@@ -434,6 +434,9 @@ containers:
         start: 開始
         # @source Stop
         stop: 停止
+      group:
+        # @source Standalone Containers
+        standalone: スタンドアロンのコンテナー
       header:
         # @source Name
         containerName: 名前

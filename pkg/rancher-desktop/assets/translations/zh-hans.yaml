@@ -501,6 +501,9 @@ containers:
         start: 启动
         # @source Stop
         stop: 停止
+      group:
+        # @source Standalone Containers
+        standalone: 独立容器
       header:
         # @source Name
         containerName: 名称
