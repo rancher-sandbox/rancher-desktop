@@ -198,12 +198,23 @@ export default {
       return document.getElementsByTagName('main')[0];
     },
     keyedImages() {
+      const rowsPerImage: Record<string, number> = {};
+
       return this.images
-        .map((image, index) => {
+        .map((image) => {
+          // The key has to name the image rather than its place in the list:
+          // SortableTable matches a selected row to the refreshed table by key,
+          // and a position would hand the selection to whichever image moved in.
+          const identity = `${ image.imageName }:${ image.tag }@${ image.imageID }`;
+
+          rowsPerImage[identity] = (rowsPerImage[identity] ?? 0) + 1;
+
+          const occurrence = rowsPerImage[identity];
+
           return {
             ...image,
             si:   parseSi(image.size),
-            _key: `${ index }-${ image.imageID }-${ this.imageTag(image.tag) }`,
+            _key: occurrence > 1 ? `${ identity }#${ occurrence }` : identity,
           };
         });
     },

@@ -26,6 +26,10 @@ export function isRange(event) {
   return !!event[rangeKey];
 }
 
+export function isSelectionClick(event) {
+  return isMore(event) || isRange(event);
+}
+
 export function suppressContextMenu(event) {
   return event.ctrlKey && event.button === 2;
 }

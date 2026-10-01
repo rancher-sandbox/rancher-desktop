@@ -1,7 +1,7 @@
 import { filterBy } from '@pkg/utils/array';
 import { getParent } from '@pkg/utils/dom';
 import { get } from '@pkg/utils/object';
-import { isMore, isRange, suppressContextMenu, isAlternate } from '@pkg/utils/platform';
+import { isMore, isRange, isSelectionClick, suppressContextMenu, isAlternate } from '@pkg/utils/platform';
 
 export const ALL = 'all';
 export const SOME = 'some';
@@ -9,7 +9,7 @@ export const NONE = 'none';
 
 export default {
   mounted() {
-    const table = this.$el.querySelector('TABLE');
+    const table = this.$el.querySelector('table');
 
     this._onRowClickBound = this.onRowClick.bind(this);
     this._onRowMousedownBound = this.onRowMousedown.bind(this);
@@ -21,7 +21,7 @@ export default {
   },
 
   beforeUnmount() {
-    const table = this.$el.querySelector('TABLE');
+    const table = this.$el.querySelector('table');
 
     table.removeEventListener('click', this._onRowClickBound);
     table.removeEventListener('mousedown', this._onRowMousedownBound);
@@ -119,25 +119,26 @@ export default {
   },
 
   watch: {
-    // On page change
     pagedRows() {
-      // When the table contents changes:
-      // - Remove items that are in the selection but no longer in the table.
-
-      const content = this.pagedRows;
-      const toRemove = [];
-
-      for (const node of this.selectedRows) {
-        if (!content.includes(node) ) {
-          toRemove.push(node);
-        }
-      }
-
-      this.update([], toRemove);
+      this.reselectRowsStillInTable();
     },
   },
 
   methods: {
+    /**
+     * Most of the selection compares rows by identity, so selectedRows has to
+     * hold the objects the table is currently rendering: a page that rebuilds
+     * its rows on refresh hands us new objects for the same rows.
+     */
+    reselectRowsStillInTable() {
+      const currentRows = this.pagedRows;
+      const rowsStillInTable = this.selectedRows
+        .map((selectedRow) => currentRows.find((row) => this.isSameRow(row, selectedRow)))
+        .filter((row) => !!row);
+
+      this.update(rowsStillInTable, this.selectedRows.slice());
+    },
+
     onToggleAll(value) {
       if ( value ) {
         this.update(this.pagedRows, []);
@@ -157,7 +158,7 @@ export default {
     },
 
     onRowMouseEnter(e) {
-      const tr = e.target.closest('TR');
+      const tr = e.target.closest('tr');
 
       if (tr.classList.contains('sub-row')) {
         const trMainRow = tr.previousElementSibling;
@@ -167,7 +168,7 @@ export default {
     },
 
     onRowMouseLeave(e) {
-      const tr = e.target.closest('TR');
+      const tr = e.target.closest('tr');
 
       if (tr.classList.contains('sub-row')) {
         const trMainRow = tr.previousElementSibling;
@@ -185,17 +186,13 @@ export default {
         return;
       }
 
-      if ( !actionElement ) {
-        if (
-          tagName === 'A' ||
-          tagName === 'BUTTON' ||
-          getParent(tgt, '.btn')
-        ) {
-          return;
-        }
+      const isCellControl = tagName === 'A' || tagName === 'BUTTON' || !!getParent(tgt, '.btn');
+
+      if ( !actionElement && !isSelectionClick(e) && isCellControl ) {
+        return;
       }
 
-      const tgtRow = e.target.closest('TR');
+      const tgtRow = e.target.closest('tr');
 
       return this.nodeForRow(tgtRow);
     },
@@ -226,7 +223,7 @@ export default {
 
     async onRowClick(e) {
       const node = this.nodeForEvent(e);
-      const td = e.target.closest('TD');
+      const td = e.target.closest('td');
       const skipSelect = td?.classList.contains('skip-select');
 
       if (skipSelect) {
@@ -280,17 +277,12 @@ export default {
       }
 
       const isSelected = selection.includes(node);
-      let prevNode = this.prevNode;
-
-      // PrevNode is only valid if it's in the current content
-      if ( !prevNode || !content.includes(prevNode) ) {
-        prevNode = node;
-      }
+      const rangeAnchor = content.find((row) => this.isSameRow(row, this.prevNode)) ?? node;
 
       if ( isMore(e) ) {
         this.toggle(node);
       } else if ( isRange(e) ) {
-        const toToggle = this.nodesBetween(prevNode, node);
+        const toToggle = this.nodesBetween(rangeAnchor, node);
 
         if ( isSelected ) {
           this.update([], toToggle);
@@ -362,6 +354,12 @@ export default {
         element.closest('.selection-checkbox') !== null;
     },
 
+    isSameRow(row, otherRow) {
+      const key = get(row, this.keyField);
+
+      return key === undefined ? row === otherRow : key === get(otherRow, this.keyField);
+    },
+
     nodesBetween(a, b) {
       let toToggle = [];
       const key = this.groupBy;
@@ -401,9 +399,6 @@ export default {
         toToggle = content.slice(from, to + 1);
       }
 
-      // check if there is already duplicate content selected (selectedRows) on the list to toggle...
-      toToggle = toToggle.filter((item) => !this.selectedRows.includes(item));
-
       return toToggle;
     },
 
@@ -441,7 +436,7 @@ export default {
 
     update(toAdd, toRemove) {
       toRemove.forEach((row) => {
-        const index = this.selectedRows.findIndex((r) => r._key === row._key);
+        const index = this.selectedRows.findIndex((selectedRow) => this.isSameRow(selectedRow, row));
 
         if (index !== -1) {
           this.selectedRows.splice(index, 1);
@@ -449,7 +444,9 @@ export default {
       });
 
       if ( toAdd ) {
-        this.selectedRows.push(...toAdd);
+        const notYetSelected = toAdd.filter((row) => !this.selectedRows.some((selectedRow) => this.isSameRow(selectedRow, row)));
+
+        this.selectedRows.push(...notYetSelected);
       }
 
       // Uncheck and check the checkboxes of nodes that have been added/removed
