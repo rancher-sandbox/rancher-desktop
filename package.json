@@ -130,7 +130,7 @@
     "electron": "44.4.5",
     "electron-builder": "26.16.1",
     "eslint": "10.11.0",
-    "eslint-plugin-vue": "10.11.0",
+    "eslint-plugin-vue": "10.11.1",
     "extract-zip": "2.0.1",
     "floating-vue": "5.4.0",
     "glob": "^13.0.3",
