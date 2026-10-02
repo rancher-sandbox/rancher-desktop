@@ -11952,7 +11952,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonpath-plus@npm:10.4.0, jsonpath-plus@npm:^10.3.0":
+"jsonpath-plus@npm:11.0.0":
+  version: 11.0.0
+  resolution: "jsonpath-plus@npm:11.0.0"
+  dependencies:
+    "@jsep-plugin/assignment": "npm:^1.3.0"
+    "@jsep-plugin/regex": "npm:^1.0.4"
+    jsep: "npm:^1.4.0"
+  bin:
+    jsonpath: ./bin/jsonpath-cli.js
+    jsonpath-plus: ./bin/jsonpath-cli.js
+  checksum: 10c0/18c599b5485fb6ec77e278a46ae8da66041dc1de652df2e01bc903360d1079a3d397c5f251293cb977da523440f842fb64c14f10b99016d8f6d4ff02e9788a9d
+  languageName: node
+  linkType: hard
+
+"jsonpath-plus@npm:^10.3.0":
   version: 10.4.0
   resolution: "jsonpath-plus@npm:10.4.0"
   dependencies:
@@ -14619,7 +14633,7 @@ __metadata:
     jest-environment-jsdom: "npm:30.5.2"
     jquery: "npm:4.0.0"
     js-yaml-loader: "npm:1.2.2"
-    jsonpath-plus: "npm:10.4.0"
+    jsonpath-plus: "npm:11.0.0"
     lodash: "npm:4.18.1"
     marked: "npm:18.0.14"
     mustache: "npm:4.2.0"
