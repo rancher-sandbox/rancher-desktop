@@ -14655,7 +14655,7 @@ __metadata:
     sass-loader: "npm:17.0.1"
     semver: "npm:7.8.5"
     tar-stream: "npm:3.2.1"
-    ts-jest: "npm:29.4.13"
+    ts-jest: "npm:29.4.14"
     ts-loader: "npm:^9.6.2"
     tsconfig-paths: "npm:4.2.0"
     tsx: "npm:4.23.15"
@@ -16468,9 +16468,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-jest@npm:29.4.13":
-  version: 29.4.13
-  resolution: "ts-jest@npm:29.4.13"
+"ts-jest@npm:29.4.14":
+  version: 29.4.14
+  resolution: "ts-jest@npm:29.4.14"
   dependencies:
     bs-logger: "npm:^0.2.6"
     fast-json-stable-stringify: "npm:^2.1.0"
@@ -16504,7 +16504,7 @@ __metadata:
       optional: true
   bin:
     ts-jest: cli.js
-  checksum: 10c0/8c0c445ec8793fb877edd1ab9091eee148e2ebbbd678b58f4dfa46ad2c440356ec942ac38591477ef1389256389019fc6b946caf0411f17f2bf9ddc52e711b2f
+  checksum: 10c0/58780804871e5752d7f42e69a38ea0716d0a6330272f3a253cf10dbf8c59390f64f2da6fff3d93dcb1bc514d8fa5d02963d8ef6d062fdfa96113b3aad0fd9331
   languageName: node
   linkType: hard
 
