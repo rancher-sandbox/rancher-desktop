@@ -20,6 +20,8 @@ import (
 
 	"github.com/docker/go-connections/nat"
 	"github.com/lima-vm/lima/pkg/guestagent/procnettcp"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 )
 
 // fakeTracker records Add/Remove calls keyed by the containerID the
@@ -452,6 +454,197 @@ func TestRollbackAfterForwarderAddFailure(t *testing.T) {
 	}
 	if _, published := s.published[mustPort(t, "tcp", 8009)]; published {
 		t.Fatal("port recorded as published despite forwarder.Add error")
+	}
+}
+
+// TestOwnershipRecheckDerivedFromScanInterval checks that newScanner
+// converts ownershipRecheckInterval to a Tick count for the given scan
+// interval, and never to fewer than one Tick.
+func TestOwnershipRecheckDerivedFromScanInterval(t *testing.T) {
+	for _, tc := range []struct {
+		scanInterval time.Duration
+		want         int
+	}{
+		{time.Second, 300},
+		{3 * time.Second, 100},
+		{time.Hour, 1},
+	} {
+		s := newScanner(context.Background(), &fakeTracker{}, &fakeForwarder{}, nil, tc.scanInterval)
+		if s.ownershipRecheckTicks != tc.want {
+			t.Errorf("scanInterval %v: ownershipRecheckTicks = %d, want %d",
+				tc.scanInterval, s.ownershipRecheckTicks, tc.want)
+		}
+	}
+}
+
+// TestPublishedPortReassertedPeriodically checks that the scanner asks
+// host-switch again to expose a published port once the recheck falls
+// due, without touching the loopback forwarder or unexposing anything.
+func TestPublishedPortReassertedPeriodically(t *testing.T) {
+	tr := &fakeTracker{}
+	fwd := &fakeForwarder{}
+	s := newScanner(context.Background(), tr, fwd, nil, time.Second)
+
+	scan := loopbackPortMap(t, 8009)
+	s.Tick(scan)
+	s.Tick(scan)
+	if len(tr.added) != 1 {
+		t.Fatalf("tracker.Add expected exactly once, got %v", tr.added)
+	}
+
+	for range s.ownershipRecheckTicks - 1 {
+		s.Tick(scan)
+	}
+	if len(tr.added) != 1 {
+		t.Fatalf("tracker.Add = %v, want no re-assert before the recheck falls due", tr.added)
+	}
+
+	s.Tick(scan)
+	if len(tr.added) != 2 {
+		t.Fatalf("tracker.Add = %v, want the expose re-asserted once", tr.added)
+	}
+	if len(tr.removed) != 0 {
+		t.Fatalf("tracker.Remove called while re-asserting: %v", tr.removed)
+	}
+	if got, want := fwd.added, []string{"tcp/8009"}; !equalStringSlices(got, want) {
+		t.Fatalf("forwarder.Add = %v, want the original bind untouched %v", got, want)
+	}
+	if len(fwd.removed) != 0 {
+		t.Fatalf("forwarder.Remove called while re-asserting: %v", fwd.removed)
+	}
+	if _, ok := s.published[mustPort(t, "tcp", 8009)]; !ok {
+		t.Fatal("port dropped from published by the re-assert")
+	}
+}
+
+// TestDelegatedPortRepublishedAfterOwnerLosesExpose checks that the
+// scanner publishes a delegated port itself once the delegation expires
+// and the owner no longer exposes it.
+func TestDelegatedPortRepublishedAfterOwnerLosesExpose(t *testing.T) {
+	tr := &fakeTracker{addErr: tracker.ErrPortAlreadyExposed}
+	fwd := &fakeForwarder{}
+	s := newScanner(context.Background(), tr, fwd, nil, time.Second)
+
+	scan := loopbackPortMap(t, 8009)
+	s.Tick(scan)
+	s.Tick(scan)
+	if len(tr.added) != 1 {
+		t.Fatalf("tracker.Add expected exactly once, got %v", tr.added)
+	}
+
+	// Until the delegation expires, the scanner must not ask
+	// host-switch again.
+	for range s.ownershipRecheckTicks - 1 {
+		s.Tick(scan)
+	}
+	if len(tr.added) != 1 {
+		t.Fatalf("tracker.Add = %v, want no re-probe before the delegation ages out", tr.added)
+	}
+
+	// The owner's expose is gone and host-switch accepts the port
+	// again.
+	tr.addErr = nil
+	s.Tick(scan)
+	if len(tr.added) != 2 {
+		t.Fatalf("tracker.Add = %v, want the port republished exactly once", tr.added)
+	}
+	if got, want := fwd.added, []string{"tcp/8009"}; !equalStringSlices(got, want) {
+		t.Fatalf("forwarder.Add = %v, want %v", got, want)
+	}
+}
+
+// TestAlreadyExposedPortDelegatesInsteadOfRetrying checks that the
+// scanner delegates a port that another component already exposes,
+// instead of asking host-switch to expose it again on every Tick; see
+// https://github.com/rancher-sandbox/rancher-desktop/issues/10737.
+func TestAlreadyExposedPortDelegatesInsteadOfRetrying(t *testing.T) {
+	tr := &fakeTracker{addErr: tracker.ErrPortAlreadyExposed}
+	fwd := &fakeForwarder{}
+	s := newScanner(context.Background(), tr, fwd, nil, time.Second)
+
+	scan := loopbackPortMap(t, 8009)
+	s.Tick(scan)
+	s.Tick(scan)
+	if len(tr.added) != 1 {
+		t.Fatalf("tracker.Add expected exactly once, got %v", tr.added)
+	}
+
+	s.Tick(scan)
+	s.Tick(scan)
+	if len(tr.added) != 1 {
+		t.Fatalf("tracker.Add retried for delegated port: %v", tr.added)
+	}
+	if len(fwd.added) != 0 {
+		t.Fatalf("forwarder.Add called for delegated port: %v", fwd.added)
+	}
+	if len(tr.removed) != 0 {
+		t.Fatalf("tracker.Remove called to roll back a delegation: %v", tr.removed)
+	}
+}
+
+// TestDelegatedPortReleasedWhenListenerVanishes checks that the scanner
+// drops a delegated port without unexposing it when the listener
+// disappears, and publishes a new listener only after the stability gate.
+func TestDelegatedPortReleasedWhenListenerVanishes(t *testing.T) {
+	tr := &fakeTracker{addErr: tracker.ErrPortAlreadyExposed}
+	fwd := &fakeForwarder{}
+	s := newScanner(context.Background(), tr, fwd, nil, time.Second)
+
+	scan := wildcardPortMap(t, 8009)
+	s.Tick(scan)
+	s.Tick(scan)
+	if len(tr.added) != 1 {
+		t.Fatalf("tracker.Add expected exactly once, got %v", tr.added)
+	}
+
+	s.Tick(nat.PortMap{})
+	if len(tr.removed) != 0 {
+		t.Fatalf("tracker.Remove called for delegated port: %v", tr.removed)
+	}
+	if len(fwd.removed) != 0 {
+		t.Fatalf("forwarder.Remove called for delegated port: %v", fwd.removed)
+	}
+
+	tr.addErr = nil
+	s.Tick(scan)
+	if len(tr.added) != 1 {
+		t.Fatalf("gate skipped for re-appearing port: %v", tr.added)
+	}
+	s.Tick(scan)
+	if len(tr.added) != 2 {
+		t.Fatalf("tracker.Add not retried after delegation released: %v", tr.added)
+	}
+}
+
+// TestDelegatedPortReleasedOnBindingShapeChange checks that new bind
+// addresses end a delegation while the port still has a listener, and
+// that the scanner then publishes the port after the stability gate.
+func TestDelegatedPortReleasedOnBindingShapeChange(t *testing.T) {
+	tr := &fakeTracker{addErr: tracker.ErrPortAlreadyExposed}
+	fwd := &fakeForwarder{}
+	s := newScanner(context.Background(), tr, fwd, nil, time.Second)
+
+	wildcard := wildcardPortMap(t, 8009)
+	s.Tick(wildcard)
+	s.Tick(wildcard)
+	if len(tr.added) != 1 {
+		t.Fatalf("tracker.Add expected exactly once, got %v", tr.added)
+	}
+
+	// The owner's 0.0.0.0 listener is replaced by a loopback-only
+	// listener (e.g. a --network=host process reusing the port).
+	tr.addErr = nil
+	loopback := loopbackPortMap(t, 8009)
+	s.Tick(loopback)
+	if len(tr.added) != 1 {
+		t.Fatalf("publish fired on the shape-change tick, before re-pend: %v", tr.added)
+	}
+	s.Tick(loopback)
+	if len(tr.added) != 2 {
+		t.Fatalf("tracker.Add not retried after shape change: %v", tr.added)
+	}
+	if got, want := fwd.added, []string{"tcp/8009"}; !equalStringSlices(got, want) {
+		t.Fatalf("forwarder.Add = %v, want %v", got, want)
 	}
 }
 
