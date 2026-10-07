@@ -8,6 +8,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import stream from 'stream';
+import util from 'util';
 
 import { simpleSpawn } from '@/scripts/simple_process';
 
@@ -49,17 +50,57 @@ export type ArchiveDownloadOptions = DownloadOptions & {
   entryName?: string;
 };
 
-async function fetchWithRetry(url: string) {
-  while (true) {
+/** Network error codes worth retrying: DNS hiccups and dropped connections. */
+const RETRYABLE_CODES = new Set([
+  'EAI_AGAIN',               // DNS lookup timed out
+  'ECONNRESET',              // connection reset by peer mid-transfer
+  'ECONNREFUSED',            // connection refused
+  'ETIMEDOUT',               // connection timed out
+  'EPIPE',                   // broken pipe
+  'UND_ERR_CONNECT_TIMEOUT', // undici connect timeout
+  'UND_ERR_SOCKET',          // undici socket closed early
+]);
+
+/**
+ * Returns the retryable network error code carried by `ex`, if any.  `fetch`
+ * wraps the underlying socket error as `TypeError: fetch failed` with the real
+ * error in `cause`, so we walk the `cause` chain to any depth.
+ */
+function retryableNetworkError(ex: any): string | undefined {
+  for (const prop of ['code', 'errno']) {
+    if (typeof ex?.[prop] === 'string' && RETRYABLE_CODES.has(ex[prop])) {
+      return ex[prop];
+    }
+  }
+  if (ex?.cause) {
+    return retryableNetworkError(ex.cause);
+  }
+}
+
+/**
+ * Fetches `url`, retrying transient network failures (a DNS hiccup or a dropped
+ * connection such as ECONNRESET) with exponential backoff.  The default
+ * schedule — 1s, 2s, 4s, 8s, 16s, then 30s — spans ~2 minutes before giving up,
+ * after which a CI re-run covers a longer outage.  Non-transient errors
+ * propagate immediately.
+ */
+export async function fetchWithRetry(
+  url: string,
+  { retries = 8, baseDelayMs = 1_000, maxDelayMs = 30_000 } = {},
+): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
     try {
       return await fetch(url, { redirect: 'follow' });
     } catch (ex: any) {
-      if (ex?.errno === 'EAI_AGAIN') {
-        console.log(`Recoverable error downloading ${ url }, retrying...`);
-        continue;
+      const code = retryableNetworkError(ex);
+
+      if (!code || attempt >= retries) {
+        throw ex;
       }
-      console.dir(ex);
-      throw ex;
+      const delayMs = Math.min(baseDelayMs * 2 ** attempt, maxDelayMs);
+
+      console.log(`Recoverable error (${ code }) downloading ${ url }, retrying in ${ Math.round(delayMs / 1_000) }s (${ attempt + 1 }/${ retries })...`);
+      await util.promisify(setTimeout)(delayMs);
     }
   }
 }
