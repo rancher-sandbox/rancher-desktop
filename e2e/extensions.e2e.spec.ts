@@ -184,7 +184,7 @@ test.describe.serial('Extensions', () => {
           } = event;
           const outputMessage = `[${ level }] ${ message } @${ sourceId }:${ lineNumber }`;
 
-          window.webContents.executeJavaScript(`console.log(${ JSON.stringify(outputMessage) })`);
+          window.webContents.executeJavaScript(`console.log(${ JSON.stringify(outputMessage) })`).catch(console.error);
         });
       }, { window });
     });

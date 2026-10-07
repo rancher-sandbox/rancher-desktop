@@ -394,7 +394,7 @@ describe(K3sHelper, () => {
       // We want to check that initialize() returns before updateCache() does.
 
       const subject = new K3sHelper('x86_64');
-      const pendingInit = new Promise((resolve) => {
+      const pendingInit = new Promise((resolve, reject) => {
         // We need a cast on updateCache here since it's a protected method.
         jest.spyOn(subject, 'updateCache' as any).mockImplementation(async() => {
           // This will be called, but will not block initialization.
@@ -402,7 +402,7 @@ describe(K3sHelper, () => {
 
           return [];
         });
-        subject.initialize().then(resolve);
+        subject.initialize().then(resolve, reject);
       });
 
       expect(await subject.availableVersions).toContainEqual({
