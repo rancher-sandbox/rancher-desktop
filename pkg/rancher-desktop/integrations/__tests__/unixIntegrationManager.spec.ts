@@ -280,21 +280,21 @@ describeUnix('UnixIntegrationManager', () => {
       await fs.promises.symlink(resourcesPath, srcPath);
 
       await fs.promises.symlink(srcPath, dstPath);
-      expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(true);
+      await expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(true);
     });
 
     test("should return true when the symlink's target matches the resources directory", async() => {
       const srcPath = path.join(dockerCLIPluginSource, credHelper);
 
       await fs.promises.symlink(srcPath, dstPath);
-      expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(true);
+      await expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(true);
     });
 
     test('should return true when the file is a dangling symlink', async() => {
       const srcPath = path.join(testDir, 'testfilethatdoesntexist');
 
       await fs.promises.symlink(srcPath, dstPath);
-      expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(true);
+      await expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(true);
     });
 
     test("should return false when the symlink's target doesn't match the integration or resources directory", async() => {
@@ -302,14 +302,14 @@ describeUnix('UnixIntegrationManager', () => {
 
       await fs.promises.writeFile(srcPath, 'some content', 'utf-8');
       await fs.promises.symlink(srcPath, dstPath);
-      expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(false);
+      await expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(false);
     });
 
     test('should return false when the file is not a symlink', async() => {
       const contents = 'this is a regular file for testing';
 
       await fs.promises.writeFile(dstPath, contents, 'utf-8');
-      expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(false);
+      await expect(integrationManager['weOwnDockerCliFile'](dstPath)).resolves.toEqual(false);
     });
   });
 });
