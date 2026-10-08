@@ -195,10 +195,9 @@ describe('Latch', () => {
   it('runs finally callback on resolve', async() => {
     const latch = Latch();
     let finallyCalled = false;
-    latch.finally(() => {
+    const assertion = expect(latch.finally(() => {
       finallyCalled = true;
-    });
-    const assertion = expect(latch).resolves.toBe(undefined);
+    })).resolves.toBe(undefined);
     setTimeout(() => {
       expect(finallyCalled).toBe(false);
       latch.resolve();

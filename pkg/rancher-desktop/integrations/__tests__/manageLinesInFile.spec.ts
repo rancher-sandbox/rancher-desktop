@@ -189,9 +189,9 @@ describe('manageLinesInFile', () => {
       await manageLinesInFile(rcFilePath, [TEST_LINE_1], true);
       expect(spyWriteFile).not.toHaveBeenCalledWith(rcFilePath, expect.anything());
       expect(spyRename).toHaveBeenCalledWith(tempFilePath, rcFilePath);
-      expect(fs.promises.readFile(tempFilePath)).rejects.toHaveProperty('code', 'ENOENT');
-      expect(fs.promises.readFile(backupFilePath)).rejects.toHaveProperty('code', 'ENOENT');
-      expect(fs.promises.readFile(rcFilePath, 'utf-8')).resolves
+      await expect(fs.promises.readFile(tempFilePath)).rejects.toHaveProperty('code', 'ENOENT');
+      await expect(fs.promises.readFile(backupFilePath)).rejects.toHaveProperty('code', 'ENOENT');
+      await expect(fs.promises.readFile(rcFilePath, 'utf-8')).resolves
         .toEqual([unmanagedContents, START_LINE, TEST_LINE_1, END_LINE, ''].join('\n'));
     });
 
@@ -214,9 +214,9 @@ describe('manageLinesInFile', () => {
       await expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], true)).rejects.not.toBeUndefined();
       expect(spyWriteFile).toHaveBeenCalledWith(tempFilePath, expect.anything(), expect.anything());
       // The file should not have been modified
-      expect(fs.promises.readFile(rcFilePath, 'utf-8')).resolves.toEqual(unmanagedContents);
-      expect(fs.promises.readFile(tempFilePath)).rejects.toHaveProperty('code', 'ENOENT');
-      expect(fs.promises.readFile(backupFilePath)).rejects.toHaveProperty('code', 'ENOENT');
+      await expect(fs.promises.readFile(rcFilePath, 'utf-8')).resolves.toEqual(unmanagedContents);
+      await expect(fs.promises.readFile(tempFilePath)).rejects.toHaveProperty('code', 'ENOENT');
+      await expect(fs.promises.readFile(backupFilePath)).rejects.toHaveProperty('code', 'ENOENT');
     });
   });
 

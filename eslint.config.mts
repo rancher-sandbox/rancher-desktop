@@ -189,4 +189,15 @@ export default defineConfigWithVueTs(
       'vue/require-explicit-emits':                      'off',
     },
   },
+  {
+    // An un-awaited `.resolves` or `.rejects` assertion keeps running after its
+    // test returns and races afterEach cleanup, so it can fail another test or
+    // check nothing. This block must follow rancher-desktop-compatibility, which
+    // turns the rule off everywhere.
+    name:  'rancher-desktop-spec-promises',
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+    },
+  },
 );
