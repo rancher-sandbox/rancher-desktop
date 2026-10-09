@@ -3,7 +3,7 @@ module github.com/rancher-sandbox/rancher-desktop/src/go/networking
 go 1.26.6
 
 require (
-	github.com/Microsoft/go-winio v0.6.3-0.20251027160822-ad3df93bed29
+	github.com/Microsoft/go-winio v0.6.3
 	github.com/containers/gvisor-tap-vsock v0.8.9
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/docker/go-connections v0.8.1
@@ -40,7 +40,7 @@ require (
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/mod v0.41.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
-	golang.org/x/tools v0.49.0 // indirect
+	golang.org/x/tools v0.50.0 // indirect
 )
 
 // Dependabot does not read go.work, so without this it pins a remote version.
