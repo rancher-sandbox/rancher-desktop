@@ -33,10 +33,6 @@ import (
 // default.
 const DefaultEndpoint = "npipe:////./pipe/docker_engine"
 
-// ErrListenerClosed is the error that is returned when we attempt to call
-// Accept() on a closed listener.
-var ErrListenerClosed = winio.ErrPipeListenerClosed
-
 // MakeDialer computes the dial function.
 func MakeDialer(port uint32) (func(ctx context.Context) (net.Conn, error), error) {
 	vmGUID, err := probeVMGUID(port)

@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/Microsoft/go-winio v0.6.2
+	github.com/Microsoft/go-winio v0.6.3
 	github.com/adrg/xdg v0.5.3
 	github.com/go-openapi/errors v0.22.9
 	github.com/go-openapi/runtime v0.33.3

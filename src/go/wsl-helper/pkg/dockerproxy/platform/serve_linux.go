@@ -33,10 +33,6 @@ import (
 // default.
 const DefaultEndpoint = "unix:///var/run/docker.sock"
 
-// ErrListenerClosed is the error that is returned when we attempt to call
-// Accept() on a closed listener.
-var ErrListenerClosed = net.ErrClosed
-
 // MakeDialer computes the dial function.
 func MakeDialer(proxyEndpoint string) (func(ctx context.Context) (net.Conn, error), error) {
 	dialer := net.Dialer{}
