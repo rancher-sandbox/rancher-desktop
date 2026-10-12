@@ -532,7 +532,7 @@
     many others in one place.
 - slug: bsankarganesh/rover-slim-extension
   version: 1.1.0
-  containerd_compatible: true
+  containerd_compatible: false
   labels:
     com.docker.desktop.extension.api.version: ">= 0.3.4"
     com.docker.desktop.extension.icon: https://raw.githubusercontent.com/SankarGaneshb/rover-slim/main/extension/icon.svg

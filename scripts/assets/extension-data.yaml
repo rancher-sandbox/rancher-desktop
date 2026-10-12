@@ -29,4 +29,5 @@ harpooncorp/harpoon-ext:0.0.6: {}
 vklokun/docker-desktop-extension:0.1.1: {}
 caretdev/intersystems-extension:0.1.7: {}
 bsankarganesh/rover-slim-extension:1.1.0:
+  containerd_compatible: false
   github_repo: SankarGaneshb/rover-slim
