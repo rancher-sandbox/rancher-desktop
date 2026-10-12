@@ -531,7 +531,7 @@
     public and private images of such products as IRIS and IRIS for Health and
     many others in one place.
 - slug: bsankarganesh/rover-slim-extension
-  version: latest
+  version: 1.1.0
   containerd_compatible: true
   labels:
     com.docker.desktop.extension.api.version: ">= 0.3.4"
