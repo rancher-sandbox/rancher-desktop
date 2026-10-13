@@ -380,6 +380,10 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
       ALLPLATFORMS:    semver.lt(desiredVersion, allPlatformsThresholdVersion) ? '--all-platforms' : '',
     };
 
+    // The VM's DHCP leases can include the host network's DNS search domains;
+    // service-k3s.initd keeps them out of pods.
+    config.KUBELET_RESOLV_CONF = '/etc/rancher/k3s/resolv.conf';
+
     if (os.platform() === 'darwin') {
       if (cfg.kubernetes.options.flannel) {
         const { iface, addr } = await this.vm.getListeningInterface(allowSudo);

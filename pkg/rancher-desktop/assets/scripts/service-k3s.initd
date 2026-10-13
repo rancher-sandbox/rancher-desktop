@@ -36,6 +36,12 @@ depend() {
 start_pre() {
   rm -f /tmp/k3s.*
   checkpath --file --mode 0644 --owner root "${output_log_unquoted}" "${error_log_unquoted}"
+  if [ -n "${KUBELET_RESOLV_CONF:-}" ]; then
+    # Pods use ndots:5, so they try each search domain before the name itself,
+    # and a host search domain that answers for names it does not hold hijacks
+    # their external lookups. Kubelet gets a copy without the search domains.
+    grep -v -E '^(search|domain)[[:space:]]' /etc/resolv.conf >"${KUBELET_RESOLV_CONF}"
+  fi
   ARCH=amd64
   if [ "$(uname -m)" = "aarch64" ]; then
     ARCH=arm64
@@ -68,6 +74,9 @@ if [ "${ENGINE}" == "moby" ]; then
   fi
 elif [ "${ENGINE}" == "containerd" ]; then
   command_args="${command_args} --container-runtime-endpoint /run/k3s/containerd/containerd.sock"
+fi
+if [ -n "${KUBELET_RESOLV_CONF:-}" ]; then
+  command_args="${command_args} --resolv-conf ${KUBELET_RESOLV_CONF}"
 fi
 command_args="${command_args} ${K3S_EXEC:-}"
 K3S_LOGFILE="${K3S_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
