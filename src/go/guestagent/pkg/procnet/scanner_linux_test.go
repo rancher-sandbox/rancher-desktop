@@ -20,7 +20,7 @@ import (
 
 	"github.com/lima-vm/lima/pkg/guestagent/procnettcp"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 // fakeTracker records Add/Remove calls keyed by the containerID the
@@ -34,7 +34,7 @@ type fakeTracker struct {
 	removeErr error
 }
 
-func (t *fakeTracker) Add(id string, _ wslproxy.PortMap) error {
+func (t *fakeTracker) Add(id string, _ ports.PortMap) error {
 	t.added = append(t.added, id)
 	return t.addErr
 }
@@ -43,8 +43,8 @@ func (t *fakeTracker) Remove(id string) error {
 	t.removed = append(t.removed, id)
 	return t.removeErr
 }
-func (t *fakeTracker) Get(string) wslproxy.PortMap { return nil }
-func (t *fakeTracker) RemoveAll() error            { return nil }
+func (t *fakeTracker) Get(string) ports.PortMap { return nil }
+func (t *fakeTracker) RemoveAll() error         { return nil }
 
 // fakeForwarder records the proto/port pairs the scanner asks to bind
 // or release. addErr, when non-nil, is returned from Add so tests can
@@ -67,35 +67,35 @@ func (f *fakeForwarder) Remove(proto string, port uint16) error {
 
 func (f *fakeForwarder) Close() error { return nil }
 
-func loopbackPortMap(t *testing.T, port int) wslproxy.PortMap {
+func loopbackPortMap(t *testing.T, port int) ports.PortMap {
 	t.Helper()
-	p, err := wslproxy.NewPort("tcp", fmt.Sprint(port))
+	p, err := ports.NewPort("tcp", fmt.Sprint(port))
 	if err != nil {
-		t.Fatalf("wslproxy.NewPort: %v", err)
+		t.Fatalf("ports.NewPort: %v", err)
 	}
-	return wslproxy.PortMap{p: []wslproxy.PortBinding{{HostIP: "127.0.0.1", HostPort: fmt.Sprint(port)}}}
+	return ports.PortMap{p: []ports.PortBinding{{HostIP: "127.0.0.1", HostPort: fmt.Sprint(port)}}}
 }
 
-func wildcardPortMap(t *testing.T, port int) wslproxy.PortMap {
+func wildcardPortMap(t *testing.T, port int) ports.PortMap {
 	t.Helper()
-	p, err := wslproxy.NewPort("tcp", fmt.Sprint(port))
+	p, err := ports.NewPort("tcp", fmt.Sprint(port))
 	if err != nil {
-		t.Fatalf("wslproxy.NewPort: %v", err)
+		t.Fatalf("ports.NewPort: %v", err)
 	}
-	return wslproxy.PortMap{p: []wslproxy.PortBinding{{HostIP: "0.0.0.0", HostPort: fmt.Sprint(port)}}}
+	return ports.PortMap{p: []ports.PortBinding{{HostIP: "0.0.0.0", HostPort: fmt.Sprint(port)}}}
 }
 
-func loopbackUDPPortMap(t *testing.T, port int) wslproxy.PortMap {
+func loopbackUDPPortMap(t *testing.T, port int) ports.PortMap {
 	t.Helper()
-	p, err := wslproxy.NewPort("udp", fmt.Sprint(port))
+	p, err := ports.NewPort("udp", fmt.Sprint(port))
 	if err != nil {
-		t.Fatalf("wslproxy.NewPort: %v", err)
+		t.Fatalf("ports.NewPort: %v", err)
 	}
-	return wslproxy.PortMap{p: []wslproxy.PortBinding{{HostIP: "127.0.0.1", HostPort: fmt.Sprint(port)}}}
+	return ports.PortMap{p: []ports.PortBinding{{HostIP: "127.0.0.1", HostPort: fmt.Sprint(port)}}}
 }
 
-func mergeScans(scans ...wslproxy.PortMap) wslproxy.PortMap {
-	out := wslproxy.PortMap{}
+func mergeScans(scans ...ports.PortMap) ports.PortMap {
+	out := ports.PortMap{}
 	for _, s := range scans {
 		for k, v := range s {
 			out[k] = v
@@ -112,7 +112,7 @@ func TestStabilityGateSuppressesTransientPort(t *testing.T) {
 	// Tick 1: port observed.
 	s.Tick(loopbackPortMap(t, 8009))
 	// Tick 2: port gone.
-	s.Tick(wslproxy.PortMap{})
+	s.Tick(ports.PortMap{})
 
 	if len(tr.added) != 0 {
 		t.Fatalf("tracker.Add called for transient port: %v", tr.added)
@@ -167,7 +167,7 @@ func TestRemovalTakesEffectImmediately(t *testing.T) {
 	}
 
 	// Port vanishes -> remove on this tick, no second-scan delay.
-	s.Tick(wslproxy.PortMap{})
+	s.Tick(ports.PortMap{})
 	if len(tr.removed) != 1 {
 		t.Fatalf("tracker.Remove not fired immediately: %v", tr.removed)
 	}
@@ -192,7 +192,7 @@ func TestWildcardBindingSkipsForwarder(t *testing.T) {
 		t.Fatalf("forwarder.Add fired for wildcard binding: %v", fwd.added)
 	}
 
-	s.Tick(wslproxy.PortMap{})
+	s.Tick(ports.PortMap{})
 	if len(fwd.removed) != 0 {
 		t.Fatalf("forwarder.Remove fired for wildcard binding: %v", fwd.removed)
 	}
@@ -231,7 +231,7 @@ func TestMixedBindingsSkipForwarderAndKeepTracker(t *testing.T) {
 	fwd := &fakeForwarder{addErr: fmt.Errorf("synthetic forwarder failure")}
 	s := newScanner(context.Background(), tr, fwd, nil, time.Second)
 	port := mustPort(t, "tcp", 8009)
-	scan := wslproxy.PortMap{port: []wslproxy.PortBinding{
+	scan := ports.PortMap{port: []ports.PortBinding{
 		{HostIP: "127.0.0.1", HostPort: "8009"},
 		{HostIP: "0.0.0.0", HostPort: "8009"},
 	}}
@@ -254,7 +254,7 @@ func TestMixedBindingsSkipForwarderAndKeepTracker(t *testing.T) {
 
 	// Port vanishes: unpublish must skip forwarder.Remove for the
 	// loopback binding, matching publish's short-circuit.
-	s.Tick(wslproxy.PortMap{})
+	s.Tick(ports.PortMap{})
 	if len(fwd.removed) != 0 {
 		t.Fatalf("forwarder.Remove fired during mixed-binding unpublish: %v", fwd.removed)
 	}
@@ -289,7 +289,7 @@ func TestUDPListenerThroughTick(t *testing.T) {
 		t.Fatal("udp port not recorded as published")
 	}
 
-	s.Tick(wslproxy.PortMap{})
+	s.Tick(ports.PortMap{})
 	if got, want := fwd.removed, []string{"udp/9000"}; !equalStringSlices(got, want) {
 		t.Fatalf("forwarder.Remove = %v, want %v", got, want)
 	}
@@ -388,7 +388,7 @@ func TestAddErrorLoggedSweptWhenPortVanishes(t *testing.T) {
 		t.Fatalf("addErrorLogged not set after publish failure")
 	}
 
-	s.Tick(wslproxy.PortMap{}) // port vanishes from /proc/net
+	s.Tick(ports.PortMap{}) // port vanishes from /proc/net
 	if s.addErrorLogged[port] {
 		t.Fatalf("addErrorLogged[%s] not swept after port vanished", port)
 	}
@@ -517,8 +517,8 @@ func TestGateRestartsAfterAbsence(t *testing.T) {
 	s := newScanner(context.Background(), tr, fwd, nil, time.Second)
 
 	scan := loopbackPortMap(t, 8009)
-	s.Tick(scan)               // pending: first sighting
-	s.Tick(wslproxy.PortMap{}) // gone before second sighting
+	s.Tick(scan)            // pending: first sighting
+	s.Tick(ports.PortMap{}) // gone before second sighting
 	if len(tr.added) != 0 {
 		t.Fatalf("tracker.Add fired for transient port: %v", tr.added)
 	}
@@ -573,11 +573,11 @@ func TestEndToEndForwardingThroughTick(t *testing.T) {
 	tr := &fakeTracker{}
 	s := newScanner(context.Background(), tr, fwd, bindIP, time.Second)
 
-	p, err := wslproxy.NewPort("tcp", fmt.Sprint(upstreamPort))
+	p, err := ports.NewPort("tcp", fmt.Sprint(upstreamPort))
 	if err != nil {
-		t.Fatalf("wslproxy.NewPort: %v", err)
+		t.Fatalf("ports.NewPort: %v", err)
 	}
-	scan := wslproxy.PortMap{p: []wslproxy.PortBinding{{HostIP: "127.0.0.1", HostPort: fmt.Sprint(upstreamPort)}}}
+	scan := ports.PortMap{p: []ports.PortBinding{{HostIP: "127.0.0.1", HostPort: fmt.Sprint(upstreamPort)}}}
 
 	// Two Ticks promote the port through the stability gate; the
 	// second opens the forwarder listener on bindIP:upstreamPort.
@@ -621,11 +621,11 @@ func TestEndToEndUDPAndRemovalThroughTick(t *testing.T) {
 	tr := &fakeTracker{}
 	s := newScanner(context.Background(), tr, fwd, bindIP, time.Second)
 
-	p, err := wslproxy.NewPort("udp", fmt.Sprint(upstreamPort))
+	p, err := ports.NewPort("udp", fmt.Sprint(upstreamPort))
 	if err != nil {
-		t.Fatalf("wslproxy.NewPort: %v", err)
+		t.Fatalf("ports.NewPort: %v", err)
 	}
-	scan := wslproxy.PortMap{p: []wslproxy.PortBinding{{HostIP: "127.0.0.1", HostPort: fmt.Sprint(upstreamPort)}}}
+	scan := ports.PortMap{p: []ports.PortBinding{{HostIP: "127.0.0.1", HostPort: fmt.Sprint(upstreamPort)}}}
 
 	s.Tick(scan)
 	s.Tick(scan) // promote past the stability gate; UDP forwarder bound
@@ -655,7 +655,7 @@ func TestEndToEndUDPAndRemovalThroughTick(t *testing.T) {
 	// Port vanishes from /proc/net: Tick must drive forwarder.Remove,
 	// closing the UDP listener. A fresh dial+write+read should fail to
 	// round-trip because the forwarder no longer accepts datagrams.
-	s.Tick(wslproxy.PortMap{})
+	s.Tick(ports.PortMap{})
 	if len(tr.removed) != 1 {
 		t.Fatalf("tracker.Remove = %v, want one call after port vanished", tr.removed)
 	}
@@ -679,11 +679,11 @@ func TestEndToEndUDPAndRemovalThroughTick(t *testing.T) {
 	}
 }
 
-func mustPort(t *testing.T, proto string, port int) wslproxy.Port {
+func mustPort(t *testing.T, proto string, port int) ports.Port {
 	t.Helper()
-	p, err := wslproxy.NewPort(proto, fmt.Sprint(port))
+	p, err := ports.NewPort(proto, fmt.Sprint(port))
 	if err != nil {
-		t.Fatalf("wslproxy.NewPort: %v", err)
+		t.Fatalf("ports.NewPort: %v", err)
 	}
 	return p
 }

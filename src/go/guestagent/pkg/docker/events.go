@@ -32,7 +32,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 // EventMonitor monitors the Docker engine's Event API
@@ -96,15 +96,15 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 			switch event.Action {
 			case events.ActionStart:
-				ports := portMapFromDocker(container.NetworkSettings.Ports)
-				if len(ports) != 0 {
-					validatePortMapping(ports)
-					err = e.portTracker.Add(container.ID, ports)
+				portMap := portMapFromDocker(container.NetworkSettings.Ports)
+				if len(portMap) != 0 {
+					validatePortMapping(portMap)
+					err = e.portTracker.Add(container.ID, portMap)
 					if err != nil {
 						log.Errorf("adding port mapping to tracker failed: %s", err)
 					}
 
-					e.createIptablesRuleForContainer(ctx, container, ports)
+					e.createIptablesRuleForContainer(ctx, container, portMap)
 				}
 			case events.ActionStop, events.ActionDie:
 				err := e.portTracker.Remove(container.ID)
@@ -180,32 +180,32 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
 }
 
 // portMapFromDocker converts the port map that Docker reports for a container.
-func portMapFromDocker(ports nat.PortMap) wslproxy.PortMap {
-	portMap := make(wslproxy.PortMap, len(ports))
-	for port, bindings := range ports {
-		converted := make([]wslproxy.PortBinding, 0, len(bindings))
+func portMapFromDocker(dockerPorts nat.PortMap) ports.PortMap {
+	portMap := make(ports.PortMap, len(dockerPorts))
+	for port, bindings := range dockerPorts {
+		converted := make([]ports.PortBinding, 0, len(bindings))
 		for _, binding := range bindings {
-			converted = append(converted, wslproxy.PortBinding{HostIP: binding.HostIP, HostPort: binding.HostPort})
+			converted = append(converted, ports.PortBinding{HostIP: binding.HostIP, HostPort: binding.HostPort})
 		}
-		portMap[wslproxy.Port(port)] = converted
+		portMap[ports.Port(port)] = converted
 	}
 	return portMap
 }
 
-func createPortMapping(ports []containerapi.Port) (wslproxy.PortMap, error) {
-	portMap := make(wslproxy.PortMap)
+func createPortMapping(containerPorts []containerapi.Port) (ports.PortMap, error) {
+	portMap := make(ports.PortMap)
 
-	for _, port := range ports {
+	for _, port := range containerPorts {
 		if port.IP == "" || port.PublicPort == 0 {
 			continue
 		}
 
-		portMapKey, err := wslproxy.NewPort(strings.ToLower(port.Type), strconv.Itoa(int(port.PrivatePort)))
+		portMapKey, err := ports.NewPort(strings.ToLower(port.Type), strconv.Itoa(int(port.PrivatePort)))
 		if err != nil {
 			return nil, err
 		}
 
-		portBinding := wslproxy.PortBinding{
+		portBinding := ports.PortBinding{
 			HostIP:   utils.NormalizeHostIP(port.IP),
 			HostPort: strconv.Itoa(int(port.PublicPort)),
 		}
@@ -213,7 +213,7 @@ func createPortMapping(ports []containerapi.Port) (wslproxy.PortMap, error) {
 		if pb, ok := portMap[portMapKey]; ok {
 			portMap[portMapKey] = append(pb, portBinding)
 		} else {
-			portMap[portMapKey] = []wslproxy.PortBinding{portBinding}
+			portMap[portMapKey] = []ports.PortBinding{portBinding}
 		}
 	}
 
@@ -222,7 +222,7 @@ func createPortMapping(ports []containerapi.Port) (wslproxy.PortMap, error) {
 
 // Removes entries in port mapping that do not hold any values
 // for IP and Port e.g 9000/tcp:[].
-func validatePortMapping(portMap wslproxy.PortMap) {
+func validatePortMapping(portMap ports.PortMap) {
 	for k, v := range portMap {
 		if len(v) == 0 {
 			log.Debugf("removing entry: %v from the portmappings: %v", k, portMap)
@@ -247,7 +247,7 @@ func validatePortMapping(portMap wslproxy.PortMap) {
 // The following rule is entered after the existing rule:
 //
 //	DNAT       tcp  --  anywhere             anywhere             tcp dpt:9119 to:10.4.0.22:80.
-func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containerID, containerIP string, portMappings wslproxy.PortMap) error {
+func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containerID, containerIP string, portMappings ports.PortMap) error {
 	var errs []error
 
 	for portProto, portBindings := range portMappings {
@@ -286,13 +286,13 @@ func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containe
 	return nil
 }
 
-func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, container containerapi.InspectResponse, ports wslproxy.PortMap) {
+func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, container containerapi.InspectResponse, portMappings ports.PortMap) {
 	// If the container's NetworkSettings.Networks map is not empty, it indicates that the container
 	// is connected to a Docker Compose network. In this case, we should inspect the map and
 	// configure the loopback address for each container's assigned IP address.
 	if len(container.NetworkSettings.Networks) != 0 {
 		// delete the IPv6 rule first
-		if err := deleteComposeNetworkIPv6Rule(ctx, ports); err != nil {
+		if err := deleteComposeNetworkIPv6Rule(ctx, portMappings); err != nil {
 			log.Errorf("removing docker compose IPv6 rule from DOCKER chain failed: %v", err)
 		}
 		for networkName, network := range container.NetworkSettings.Networks {
@@ -300,7 +300,7 @@ func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, conta
 				ctx,
 				container.ID,
 				network.IPAddress,
-				ports)
+				portMappings)
 			if err != nil {
 				log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain for docker compose network: %s failed: %v", networkName, err)
 			}
@@ -314,7 +314,7 @@ func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, conta
 				ctx,
 				container.ID,
 				bridgeNetwork.IPAddress,
-				ports)
+				portMappings)
 			if err != nil {
 				log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain failed: %v", err)
 			}
@@ -350,7 +350,7 @@ func iptablesDeleteLoopbackRuleCmd(ctx context.Context, protocol, dport, toDesti
 // Note: Even if the `enable_ipv6` property is set to `false` in Docker's compose configuration,
 // Docker still creates the wildcard IPv6 rule in iptables. Therefore, we need to manually
 // remove it to avoid this issue.
-func deleteComposeNetworkIPv6Rule(ctx context.Context, portMappings wslproxy.PortMap) error {
+func deleteComposeNetworkIPv6Rule(ctx context.Context, portMappings ports.PortMap) error {
 	var errs []error
 
 	for portProto, portBindings := range portMappings {

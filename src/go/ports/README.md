@@ -1,6 +1,6 @@
 # wsl-proxy port mappings
 
-The wslproxy module defines the JSON that the WSL guest agent (`src/go/guestagent`) sends to wsl-proxy (`src/go/networking/cmd/proxy`) to add or remove port forwards.
+The ports module defines the JSON that the WSL guest agent (`src/go/guestagent`) sends to wsl-proxy (`src/go/networking/cmd/proxy`) to add or remove port forwards.
 
 Below is the json schema for PortMapping:
 

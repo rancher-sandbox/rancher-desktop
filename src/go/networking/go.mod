@@ -9,7 +9,7 @@ require (
 	github.com/dustin/go-humanize v1.1.0
 	github.com/google/gopacket v1.1.19
 	github.com/linuxkit/virtsock v0.0.0-20241009230534-cb6a20cc0422
-	github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy v0.0.0-00010101000000-000000000000
+	github.com/rancher-sandbox/rancher-desktop/src/go/ports v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.10.2
 	github.com/songgao/packets v0.0.0-20160404182456-549a10cd4091
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
@@ -41,4 +41,4 @@ require (
 )
 
 // Dependabot does not read go.work, so without this it pins a remote version.
-replace github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy => ../wslproxy
+replace github.com/rancher-sandbox/rancher-desktop/src/go/ports => ../ports

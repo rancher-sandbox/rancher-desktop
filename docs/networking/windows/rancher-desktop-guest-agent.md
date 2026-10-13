@@ -53,7 +53,7 @@ end
 
 ## PortMapping
 
-Is a struct object that represents an exposed container or a service. [Portmapping](../../../src/go/wslproxy/portmapping.go#L12) objects consist of the following fields:
+Is a struct object that represents an exposed container or a service. [Portmapping](../../../src/go/ports/portmapping.go#L12) objects consist of the following fields:
 
 ```
 type PortMapping struct {
@@ -130,10 +130,10 @@ Additionally, if network tunnel mode is enabled along with the WSL integration o
 
 Below port mapping is an example of what is emitted to `wsl-proxy`:
 ```
-wslproxy.PortMapping {
+ports.PortMapping {
     Remove: false,
-    Ports: wslproxy.PortMap {
-        port: [] wslproxy.PortBinding {
+    Ports: ports.PortMap {
+        port: [] ports.PortBinding {
             {
                 HostIP: "127.0.0.1",
                 HostPort: 6443,

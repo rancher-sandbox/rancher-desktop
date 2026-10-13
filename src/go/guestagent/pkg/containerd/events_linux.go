@@ -38,7 +38,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 const (
@@ -107,20 +107,20 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 				if err != nil {
 					log.Errorf("failed to get the container %s from namespace %s: %s", startTask.ContainerID, envelope.Namespace, err)
 				}
-				ports, err := createPortMappingFromContainer(container.ID, container.Labels)
+				portMap, err := createPortMappingFromContainer(container.ID, container.Labels)
 				if err != nil {
 					log.Errorf("failed to create port mapping from container's start task: %v", err)
 				}
 
-				if len(ports) == 0 {
+				if len(portMap) == 0 {
 					continue
 				}
-				err = execIptablesRules(ctx, ports, startTask.ContainerID, container.Labels[networkKey], envelope.Namespace, strconv.Itoa(int(startTask.Pid)))
+				err = execIptablesRules(ctx, portMap, startTask.ContainerID, container.Labels[networkKey], envelope.Namespace, strconv.Itoa(int(startTask.Pid)))
 				if err != nil {
 					log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
 				}
 
-				err = e.portTracker.Add(startTask.ContainerID, ports)
+				err = e.portTracker.Add(startTask.ContainerID, portMap)
 				if err != nil {
 					log.Errorf("adding port mapping to tracker failed: %v", err)
 
@@ -139,24 +139,24 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					log.Errorf("failed to get the container %s from namespace %s: %s", cuEvent.ID, envelope.Namespace, err)
 				}
 
-				ports, err := createPortMappingFromContainer(container.ID, container.Labels)
+				portMap, err := createPortMappingFromContainer(container.ID, container.Labels)
 				if err != nil {
 					log.Errorf("failed to create port mapping from container's start task: %v", err)
 				}
 
-				if len(ports) == 0 {
+				if len(portMap) == 0 {
 					continue
 				}
 
 				existingPortMap := e.portTracker.Get(cuEvent.ID)
 				if existingPortMap != nil {
-					if !reflect.DeepEqual(ports, existingPortMap) {
+					if !reflect.DeepEqual(portMap, existingPortMap) {
 						err := e.portTracker.Remove(cuEvent.ID)
 						if err != nil {
 							log.Errorf("failed to remove port mapping from container update event: %v", err)
 						}
 
-						err = e.portTracker.Add(cuEvent.ID, ports)
+						err = e.portTracker.Add(cuEvent.ID, portMap)
 						if err != nil {
 							log.Errorf("failed to add port mapping from container update event: %v", err)
 
@@ -167,7 +167,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					continue
 				}
 				// Not 100% sure if we ever get here...
-				if err = e.portTracker.Add(cuEvent.ID, ports); err != nil {
+				if err = e.portTracker.Add(cuEvent.ID, portMap); err != nil {
 					log.Errorf("failed to add port mapping from container update event: %v", err)
 				}
 
@@ -271,27 +271,27 @@ func (e *EventMonitor) initializeRunningContainers(ctx context.Context) {
 			continue
 		}
 
-		ports, err := createPortMappingFromContainer(c.ID(), labels)
+		portMap, err := createPortMappingFromContainer(c.ID(), labels)
 		if err != nil {
 			log.Errorf("failed to create port mapping for container %s: %v", c.ID(), err)
 		}
-		if len(ports) == 0 {
+		if len(portMap) == 0 {
 			continue
 		}
 
-		err = execIptablesRules(ctx, ports, c.ID(), labels[networkKey], labels[namespaceKey], strconv.Itoa(int(t.Pid())))
+		err = execIptablesRules(ctx, portMap, c.ID(), labels[networkKey], labels[namespaceKey], strconv.Itoa(int(t.Pid())))
 		if err != nil {
 			log.Errorf("failed running iptable rules to update DNAT rule in CNI-HOSTPORT-DNAT chain: %v", err)
 		}
 
-		err = e.portTracker.Add(c.ID(), ports)
+		err = e.portTracker.Add(c.ID(), portMap)
 		if err != nil {
 			log.Errorf("adding port mapping to tracker failed: %v", err)
 
 			continue
 		}
 
-		log.Debugf("initialized container %s task status: %+v with ports: %+v", c.ID(), status, ports)
+		log.Debugf("initialized container %s task status: %+v with ports: %+v", c.ID(), status, portMap)
 	}
 }
 
@@ -312,7 +312,7 @@ func (e *EventMonitor) Close() error {
 
 // execIptablesRules creates an additional DNAT rule to allow service exposure on
 // other network addresses if port binding is bound to 127.0.0.1.
-func execIptablesRules(ctx context.Context, portMappings wslproxy.PortMap, containerID, networks, namespace, pid string) error {
+func execIptablesRules(ctx context.Context, portMappings ports.PortMap, containerID, networks, namespace, pid string) error {
 	var errs []error
 
 	var containerNetworks []string
@@ -411,12 +411,12 @@ func createLoopbackIPtablesRules(ctx context.Context, networks []string, contain
 	return nil
 }
 
-func createPortMappingFromContainer(id string, labels map[string]string) (wslproxy.PortMap, error) {
+func createPortMappingFromContainer(id string, labels map[string]string) (ports.PortMap, error) {
 	var err error
 	var data struct {
 		PortMappings []Port `json:"portMappings"`
 	}
-	portMap := make(wslproxy.PortMap)
+	portMap := make(ports.PortMap)
 
 	portString := labels[portsKey]
 	if portString != "" {
@@ -440,19 +440,19 @@ func createPortMappingFromContainer(id string, labels map[string]string) (wslpro
 	}
 
 	for _, port := range data.PortMappings {
-		portMapKey, err := wslproxy.NewPort(strings.ToLower(port.Protocol), strconv.Itoa(port.ContainerPort))
+		portMapKey, err := ports.NewPort(strings.ToLower(port.Protocol), strconv.Itoa(port.ContainerPort))
 		if err != nil {
 			return nil, err
 		}
 
-		portBinding := wslproxy.PortBinding{
+		portBinding := ports.PortBinding{
 			HostIP:   utils.NormalizeHostIP(port.HostIP),
 			HostPort: strconv.Itoa(port.HostPort),
 		}
 		if pb, ok := portMap[portMapKey]; ok {
 			portMap[portMapKey] = append(pb, portBinding)
 		} else {
-			portMap[portMapKey] = []wslproxy.PortBinding{portBinding}
+			portMap[portMapKey] = []ports.PortBinding{portBinding}
 		}
 	}
 

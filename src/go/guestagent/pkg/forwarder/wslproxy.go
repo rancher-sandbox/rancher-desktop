@@ -21,7 +21,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 // WSLProxyForwarder forwards the PortMappings to Rancher Desktop WSLProxy process in
@@ -43,7 +43,7 @@ func NewWSLProxyForwarder(ctx context.Context, proxySocket string) *WSLProxyForw
 }
 
 // Send forwards the port mappings to WSL Proxy.
-func (v *WSLProxyForwarder) Send(portMapping wslproxy.PortMapping) error {
+func (v *WSLProxyForwarder) Send(portMapping ports.PortMapping) error {
 	conn, err := v.dialer.DialContext(v.ctx, "unix", v.proxySocket)
 	if err != nil {
 		return err

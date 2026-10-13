@@ -10,9 +10,9 @@ use (
 	./src/go/nerdctl-stub
 	./src/go/nerdctl-stub/generate
 	./src/go/networking
+	./src/go/ports
 	./src/go/rdctl
 	./src/go/spin-stub
 	./src/go/startup-profile
 	./src/go/wsl-helper
-	./src/go/wslproxy
 )

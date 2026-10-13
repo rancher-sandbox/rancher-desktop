@@ -16,7 +16,7 @@ limitations under the License.
 package forwarder
 
 import (
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 // Forwarder is the interface that wraps the Send method which
@@ -24,5 +24,5 @@ import (
 type Forwarder interface {
 	// Send sends the give port mappings to the Peer via
 	// a tcp connection.
-	Send(portMapping wslproxy.PortMapping) error
+	Send(portMapping ports.PortMapping) error
 }

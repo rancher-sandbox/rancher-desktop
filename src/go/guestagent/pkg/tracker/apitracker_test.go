@@ -27,7 +27,7 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 const (
@@ -61,11 +61,11 @@ func TestBasicAdd(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
-	protoPort, err := wslproxy.NewPort(protocolTCP, hostPort)
+	protoPort, err := ports.NewPort(protocolTCP, hostPort)
 	require.NoError(t, err)
 
-	portMapping := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
@@ -101,20 +101,20 @@ func TestAddOverride(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
-	protoPort, err := wslproxy.NewPort(protocolTCP, hostPort)
+	protoPort, err := ports.NewPort(protocolTCP, hostPort)
 	require.NoError(t, err)
 
-	protoPort2, err := wslproxy.NewPort(protocolTCP, hostPort2)
+	protoPort2, err := ports.NewPort(protocolTCP, hostPort2)
 	require.NoError(t, err)
 
-	portMapping := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
 			},
 		},
-		protoPort2: []wslproxy.PortBinding{
+		protoPort2: []ports.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
@@ -144,17 +144,17 @@ func TestAddOverride(t *testing.T) {
 	// reset the exposeReq slice
 	expectedExposeReq = nil
 
-	protoPort3, err := wslproxy.NewPort(protocolUDP, additionalPort)
+	protoPort3, err := ports.NewPort(protocolUDP, additionalPort)
 	require.NoError(t, err)
 
-	portMapping2 := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping2 := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
 			},
 		},
-		protoPort3: []wslproxy.PortBinding{
+		protoPort3: []ports.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: additionalPort,
@@ -206,11 +206,11 @@ func TestAddWithError(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
-	protoPort, err := wslproxy.NewPort(protocolTCP, hostPort)
+	protoPort, err := ports.NewPort(protocolTCP, hostPort)
 	require.NoError(t, err)
 
-	portMapping := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
@@ -229,7 +229,7 @@ func TestAddWithError(t *testing.T) {
 	err = apiTracker.Add(containerID, portMapping)
 	require.Error(t, err)
 
-	errPortBinding := wslproxy.PortBinding{
+	errPortBinding := ports.PortBinding{
 		HostIP:   hostIP2,
 		HostPort: hostPort,
 	}
@@ -264,12 +264,12 @@ func TestAddWithError(t *testing.T) {
 
 	actualPortMapping := apiTracker.Get(containerID)
 	assert.Len(t, actualPortMapping[protoPort], 2)
-	assert.NotContains(t, actualPortMapping[protoPort], wslproxy.PortBinding{
+	assert.NotContains(t, actualPortMapping[protoPort], ports.PortBinding{
 		HostIP:   hostIP2,
 		HostPort: hostPort,
 	})
 	assert.Equal(t,
-		[]wslproxy.PortBinding{
+		[]ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
@@ -284,11 +284,11 @@ func TestAddWithError(t *testing.T) {
 func TestGet(t *testing.T) {
 	t.Parallel()
 
-	protoPort, err := wslproxy.NewPort(protocolTCP, hostPort2)
+	protoPort, err := ports.NewPort(protocolTCP, hostPort2)
 	require.NoError(t, err)
 
-	portMapping := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort2,
@@ -339,22 +339,22 @@ func TestRemove(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
-	protoPort, err := wslproxy.NewPort(protocolTCP, hostPort)
+	protoPort, err := ports.NewPort(protocolTCP, hostPort)
 	require.NoError(t, err)
 
-	protoPort2, err := wslproxy.NewPort(protocolTCP, hostPort2)
+	protoPort2, err := ports.NewPort(protocolTCP, hostPort2)
 	require.NoError(t, err)
 
-	portMapping := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
 			},
 		},
 	}
-	portMapping2 := wslproxy.PortMap{
-		protoPort2: []wslproxy.PortBinding{
+	portMapping2 := ports.PortMap{
+		protoPort2: []ports.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
@@ -412,11 +412,11 @@ func TestRemoveWithError(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
-	protoPort, err := wslproxy.NewPort(protocolTCP, hostPort)
+	protoPort, err := ports.NewPort(protocolTCP, hostPort)
 	require.NoError(t, err)
 
-	portMapping := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
@@ -438,7 +438,7 @@ func TestRemoveWithError(t *testing.T) {
 	err = apiTracker.Remove(containerID)
 	require.Error(t, err)
 
-	errPortBinding := wslproxy.PortBinding{
+	errPortBinding := ports.PortBinding{
 		HostIP:   hostIP2,
 		HostPort: hostPort,
 	}
@@ -482,22 +482,22 @@ func TestRemoveAll(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
-	protoPort, err := wslproxy.NewPort(protocolTCP, hostPort)
+	protoPort, err := ports.NewPort(protocolTCP, hostPort)
 	require.NoError(t, err)
 
-	protoPort2, err := wslproxy.NewPort(protocolTCP, hostPort2)
+	protoPort2, err := ports.NewPort(protocolTCP, hostPort2)
 	require.NoError(t, err)
 
-	portMapping := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
 			},
 		},
 	}
-	portMapping2 := wslproxy.PortMap{
-		protoPort2: []wslproxy.PortBinding{
+	portMapping2 := ports.PortMap{
+		protoPort2: []ports.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
@@ -553,22 +553,22 @@ func TestRemoveAllWithError(t *testing.T) {
 
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, true)
 
-	protoPort, err := wslproxy.NewPort(protocolTCP, hostPort)
+	protoPort, err := ports.NewPort(protocolTCP, hostPort)
 	require.NoError(t, err)
 
-	protoPort2, err := wslproxy.NewPort(protocolTCP, hostPort2)
+	protoPort2, err := ports.NewPort(protocolTCP, hostPort2)
 	require.NoError(t, err)
 
-	portMapping := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   hostIP,
 				HostPort: hostPort,
 			},
 		},
 	}
-	portMapping2 := wslproxy.PortMap{
-		protoPort2: []wslproxy.PortBinding{
+	portMapping2 := ports.PortMap{
+		protoPort2: []ports.PortBinding{
 			{
 				HostIP:   hostIP2,
 				HostPort: hostPort2,
@@ -589,7 +589,7 @@ func TestRemoveAllWithError(t *testing.T) {
 	err = apiTracker.RemoveAll()
 	require.Error(t, err)
 
-	errPortBinding := wslproxy.PortBinding{
+	errPortBinding := ports.PortBinding{
 		HostIP:   hostIP2,
 		HostPort: hostPort2,
 	}
@@ -641,11 +641,11 @@ func TestNonAdminInstall(t *testing.T) {
 	apiTracker := tracker.NewAPITracker(context.Background(), &testForwarder{}, testSrv.URL, hostSwitchIP, false)
 
 	publishedPort := "1025"
-	protoPort, err := wslproxy.NewPort(protocolTCP, publishedPort)
+	protoPort, err := ports.NewPort(protocolTCP, publishedPort)
 	require.NoError(t, err)
 
-	portMapping := wslproxy.PortMap{
-		protoPort: []wslproxy.PortBinding{
+	portMapping := ports.PortMap{
+		protoPort: []ports.PortBinding{
 			{
 				HostIP:   "192.168.0.124",
 				HostPort: publishedPort,
@@ -687,12 +687,12 @@ func ipPortBuilder(ip, port string) string {
 }
 
 type testForwarder struct {
-	receivedPortMappings []wslproxy.PortMapping
+	receivedPortMappings []ports.PortMapping
 	sendErr              error
-	failCondition        func(wslproxy.PortMapping) error
+	failCondition        func(ports.PortMapping) error
 }
 
-func (v *testForwarder) Send(portMapping wslproxy.PortMapping) error {
+func (v *testForwarder) Send(portMapping ports.PortMapping) error {
 	if v.failCondition != nil {
 		if err := v.failCondition(portMapping); err != nil {
 			return err

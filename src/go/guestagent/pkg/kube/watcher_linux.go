@@ -38,7 +38,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 // watcherState is an enumeration to track the state of the watcher.
@@ -227,18 +227,18 @@ func isAPINotReady(err error) bool {
 	return strings.Contains(err.Error(), "apiserver not ready")
 }
 
-func createPortMapping(ports map[int32]corev1.Protocol, k8sServiceListenerIP net.IP) (wslproxy.PortMap, error) {
-	portMap := make(wslproxy.PortMap)
+func createPortMapping(servicePorts map[int32]corev1.Protocol, k8sServiceListenerIP net.IP) (ports.PortMap, error) {
+	portMap := make(ports.PortMap)
 
-	for port, proto := range ports {
+	for port, proto := range servicePorts {
 		protocol := strings.ToLower(string(proto))
 		log.Debugf("create port mapping for port %d, protocol %s", port, protocol)
-		portMapKey, err := wslproxy.NewPort(protocol, strconv.Itoa(int(port)))
+		portMapKey, err := ports.NewPort(protocol, strconv.Itoa(int(port)))
 		if err != nil {
 			return nil, err
 		}
 
-		portBinding := wslproxy.PortBinding{
+		portBinding := ports.PortBinding{
 			HostIP:   k8sServiceListenerIP.String(),
 			HostPort: strconv.Itoa(int(port)),
 		}
@@ -246,7 +246,7 @@ func createPortMapping(ports map[int32]corev1.Protocol, k8sServiceListenerIP net
 		if pb, ok := portMap[portMapKey]; ok {
 			portMap[portMapKey] = append(pb, portBinding)
 		} else {
-			portMap[portMapKey] = []wslproxy.PortBinding{portBinding}
+			portMap[portMapKey] = []ports.PortBinding{portBinding}
 		}
 	}
 

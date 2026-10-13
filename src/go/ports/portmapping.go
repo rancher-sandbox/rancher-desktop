@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: SUSE LLC
 // SPDX-FileCopyrightText: The Rancher Desktop Authors
 
-// Package wslproxy defines the port mappings that the WSL guest agent sends
+// Package ports defines the port mappings that the WSL guest agent sends
 // to wsl-proxy, and the port types both programs build them from.
-package wslproxy
+package ports
 
 // PortMapping represents the mapping of ports and addresses to be communicated
 // over the network. It includes a flag (remove) on whether to add or remove port mappings

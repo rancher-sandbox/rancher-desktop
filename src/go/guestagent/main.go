@@ -39,7 +39,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/kube"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/procnet"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 const (
@@ -142,14 +142,14 @@ func runAgent(
 	// 1) if kubernetes is enabled
 	// 2) when wsl-proxy for wsl-integration is enabled
 	if enableKubernetes {
-		port, err := wslproxy.NewPort("tcp", k8sAPIPort)
+		port, err := ports.NewPort("tcp", k8sAPIPort)
 		if err != nil {
 			return fmt.Errorf("failed to parse port for k8s API: %w", err)
 		}
-		k8sAPIPortMapping := wslproxy.PortMapping{
+		k8sAPIPortMapping := ports.PortMapping{
 			Remove: false,
-			Ports: wslproxy.PortMap{
-				port: []wslproxy.PortBinding{
+			Ports: ports.PortMap{
+				port: []ports.PortBinding{
 					{
 						HostIP:   "127.0.0.1",
 						HostPort: k8sAPIPort,
