@@ -14,4 +14,5 @@ use (
 	./src/go/spin-stub
 	./src/go/startup-profile
 	./src/go/wsl-helper
+	./src/go/wslproxy
 )
