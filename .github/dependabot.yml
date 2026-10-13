@@ -78,3 +78,12 @@ updates:
       patterns: ["golang.org/x/*"]
     k8s:
       patterns: ["k8s.io/*"]
+    # guestagent and networking both require the next three modules, and
+    # networking requires guestagent from ../guestagent, so a bump in
+    # guestagent alone fails the go mod tidy check.
+    gvisor-tap-vsock:
+      patterns: ["github.com/containers/gvisor-tap-vsock"]
+    go-connections:
+      patterns: ["github.com/docker/go-connections"]
+    testify:
+      patterns: ["github.com/stretchr/testify"]
