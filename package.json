@@ -126,7 +126,7 @@
     "css-loader": "7.1.5",
     "dayjs": "1.11.23",
     "dompurify": "3.4.16",
-    "ejs": "6.0.1",
+    "ejs": "7.0.1",
     "electron": "44.5.1",
     "electron-builder": "26.17.0",
     "eslint": "10.11.0",
