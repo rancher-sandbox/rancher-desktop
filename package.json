@@ -70,7 +70,7 @@
     "node-forge": "1.4.0",
     "proxy-agent": "^8.0.2",
     "semver": "7.8.5",
-    "tar-stream": "3.2.1",
+    "tar-stream": "3.2.2",
     "which": "7.0.0",
     "yaml": "2.9.1"
   },
