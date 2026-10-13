@@ -22,11 +22,11 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
-	"github.com/docker/go-connections/nat"
 	limaiptables "github.com/lima-vm/lima/pkg/guestagent/iptables"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
 )
 
 // Iptables manages port forwarding for ports identified in iptables DNAT rules.
@@ -99,7 +99,7 @@ func (i *Iptables) ForwardPorts() error {
 			log.Infof("iptables scanner removed portmap for %s", name)
 		}
 
-		portMap := make(nat.PortMap)
+		portMap := make(wslproxy.PortMap)
 
 		// Add new forwards
 		for _, p := range added {
@@ -107,17 +107,17 @@ func (i *Iptables) ForwardPorts() error {
 				continue
 			}
 			port := strconv.Itoa(p.Port)
-			portMapKey, err := nat.NewPort("tcp", port)
+			portMapKey, err := wslproxy.NewPort("tcp", port)
 			if err != nil {
 				log.Errorf("failed to create a corresponding key for the portMap: %s", err)
 				continue
 			}
-			portBinding := nat.PortBinding{
+			portBinding := wslproxy.PortBinding{
 				HostIP:   i.listenerIP.String(),
 				HostPort: port,
 			}
 			if _, ok := portMap[portMapKey]; !ok {
-				portMap[portMapKey] = []nat.PortBinding{portBinding}
+				portMap[portMapKey] = []wslproxy.PortBinding{portBinding}
 			}
 			name := entryToString(p)
 			if err := i.apiTracker.Add(utils.GenerateID(name), portMap); err != nil {

@@ -20,12 +20,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-connections/nat"
 	limaiptables "github.com/lima-vm/lima/pkg/guestagent/iptables"
 	"github.com/stretchr/testify/require"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
 )
 
 func TestForwardPorts(t *testing.T) {
@@ -90,7 +90,7 @@ func TestForwardPorts(t *testing.T) {
 			testTracker := fakeTracker{
 				receivedID:          make(chan string),
 				receivedRemoveID:    make(chan string),
-				receivedPortMapping: make(chan nat.PortMap),
+				receivedPortMapping: make(chan wslproxy.PortMap),
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -110,10 +110,10 @@ func TestForwardPorts(t *testing.T) {
 				require.Equal(t, expectedID, id)
 
 				pm := <-testTracker.receivedPortMapping
-				portProto, err := nat.NewPort("tcp", strconv.Itoa(expectedEntry.Port))
+				portProto, err := wslproxy.NewPort("tcp", strconv.Itoa(expectedEntry.Port))
 				require.NoError(t, err)
 
-				expectedPortBinding := nat.PortBinding{
+				expectedPortBinding := wslproxy.PortBinding{
 					HostIP:   tt.listenerIP.String(),
 					HostPort: strconv.Itoa(expectedEntry.Port),
 				}
@@ -143,11 +143,11 @@ func TestForwardPorts(t *testing.T) {
 				require.Equal(t, expectedID, id)
 
 				pm := <-testTracker.receivedPortMapping
-				portProto, err := nat.NewPort("tcp", strconv.Itoa(addedElement.Port))
+				portProto, err := wslproxy.NewPort("tcp", strconv.Itoa(addedElement.Port))
 				require.NoError(t, err)
 
-				expectedPortMap := nat.PortMap{
-					portProto: []nat.PortBinding{
+				expectedPortMap := wslproxy.PortMap{
+					portProto: []wslproxy.PortBinding{
 						{
 							HostIP:   tt.listenerIP.String(),
 							HostPort: strconv.Itoa(addedElement.Port),
@@ -192,7 +192,7 @@ func TestForwardPortsSamePortDifferentIP(t *testing.T) {
 			testTracker := fakeTracker{
 				receivedID:          make(chan string),
 				receivedRemoveID:    make(chan string),
-				receivedPortMapping: make(chan nat.PortMap),
+				receivedPortMapping: make(chan wslproxy.PortMap),
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -212,7 +212,7 @@ func TestForwardPortsSamePortDifferentIP(t *testing.T) {
 				require.Equal(t, expectedID, id)
 
 				pm := <-testTracker.receivedPortMapping
-				portProto, err := nat.NewPort("tcp", strconv.Itoa(expectedEntry.Port))
+				portProto, err := wslproxy.NewPort("tcp", strconv.Itoa(expectedEntry.Port))
 				require.NoError(t, err)
 
 				// Port bindings for the same port on different IP addresses should appear only once
@@ -223,7 +223,7 @@ func TestForwardPortsSamePortDifferentIP(t *testing.T) {
 					require.Len(t, pm[portProto], 1)
 				}
 
-				expectedPortBinding := nat.PortBinding{
+				expectedPortBinding := wslproxy.PortBinding{
 					HostIP:   tt.listenerIP.String(),
 					HostPort: strconv.Itoa(expectedEntry.Port),
 				}
@@ -237,15 +237,15 @@ func TestForwardPortsSamePortDifferentIP(t *testing.T) {
 type fakeTracker struct {
 	receivedID          chan string
 	receivedRemoveID    chan string
-	receivedPortMapping chan nat.PortMap
+	receivedPortMapping chan wslproxy.PortMap
 	expectedAddFuncErr  error
 }
 
-func (f *fakeTracker) Get(containerID string) nat.PortMap {
+func (f *fakeTracker) Get(containerID string) wslproxy.PortMap {
 	return nil
 }
 
-func (f *fakeTracker) Add(containerID string, portMapping nat.PortMap) error {
+func (f *fakeTracker) Add(containerID string, portMapping wslproxy.PortMap) error {
 	f.receivedID <- containerID
 	f.receivedPortMapping <- portMapping
 	return f.expectedAddFuncErr

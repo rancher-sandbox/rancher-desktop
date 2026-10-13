@@ -34,11 +34,11 @@ import (
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/errdefs"
 	cnutils "github.com/containernetworking/plugins/pkg/utils"
-	"github.com/docker/go-connections/nat"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
 )
 
 const (
@@ -312,7 +312,7 @@ func (e *EventMonitor) Close() error {
 
 // execIptablesRules creates an additional DNAT rule to allow service exposure on
 // other network addresses if port binding is bound to 127.0.0.1.
-func execIptablesRules(ctx context.Context, portMappings nat.PortMap, containerID, networks, namespace, pid string) error {
+func execIptablesRules(ctx context.Context, portMappings wslproxy.PortMap, containerID, networks, namespace, pid string) error {
 	var errs []error
 
 	var containerNetworks []string
@@ -411,12 +411,12 @@ func createLoopbackIPtablesRules(ctx context.Context, networks []string, contain
 	return nil
 }
 
-func createPortMappingFromContainer(id string, labels map[string]string) (nat.PortMap, error) {
+func createPortMappingFromContainer(id string, labels map[string]string) (wslproxy.PortMap, error) {
 	var err error
 	var data struct {
 		PortMappings []Port `json:"portMappings"`
 	}
-	portMap := make(nat.PortMap)
+	portMap := make(wslproxy.PortMap)
 
 	portString := labels[portsKey]
 	if portString != "" {
@@ -440,19 +440,19 @@ func createPortMappingFromContainer(id string, labels map[string]string) (nat.Po
 	}
 
 	for _, port := range data.PortMappings {
-		portMapKey, err := nat.NewPort(strings.ToLower(port.Protocol), strconv.Itoa(port.ContainerPort))
+		portMapKey, err := wslproxy.NewPort(strings.ToLower(port.Protocol), strconv.Itoa(port.ContainerPort))
 		if err != nil {
 			return nil, err
 		}
 
-		portBinding := nat.PortBinding{
+		portBinding := wslproxy.PortBinding{
 			HostIP:   utils.NormalizeHostIP(port.HostIP),
 			HostPort: strconv.Itoa(port.HostPort),
 		}
 		if pb, ok := portMap[portMapKey]; ok {
 			portMap[portMapKey] = append(pb, portBinding)
 		} else {
-			portMap[portMapKey] = []nat.PortBinding{portBinding}
+			portMap[portMapKey] = []wslproxy.PortBinding{portBinding}
 		}
 	}
 

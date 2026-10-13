@@ -30,7 +30,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
-	"github.com/docker/go-connections/nat"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/containerd"
@@ -40,7 +39,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/kube"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/procnet"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
 )
 
 const (
@@ -143,14 +142,14 @@ func runAgent(
 	// 1) if kubernetes is enabled
 	// 2) when wsl-proxy for wsl-integration is enabled
 	if enableKubernetes {
-		port, err := nat.NewPort("tcp", k8sAPIPort)
+		port, err := wslproxy.NewPort("tcp", k8sAPIPort)
 		if err != nil {
 			return fmt.Errorf("failed to parse port for k8s API: %w", err)
 		}
-		k8sAPIPortMapping := types.PortMapping{
+		k8sAPIPortMapping := wslproxy.PortMapping{
 			Remove: false,
-			Ports: nat.PortMap{
-				port: []nat.PortBinding{
+			Ports: wslproxy.PortMap{
+				port: []wslproxy.PortBinding{
 					{
 						HostIP:   "127.0.0.1",
 						HostPort: k8sAPIPort,
