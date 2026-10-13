@@ -26,12 +26,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/nettest"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/networking/pkg/portproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy"
 )
 
 func TestNewPortProxyUDP(t *testing.T) {
@@ -60,13 +59,13 @@ func TestNewPortProxyUDP(t *testing.T) {
 	_, testPort, err := net.SplitHostPort(targetConn.LocalAddr().String())
 	require.NoError(t, err)
 
-	port, err := nat.NewPort("udp", testPort)
+	port, err := wslproxy.NewPort("udp", testPort)
 	require.NoError(t, err)
 
-	portMapping := types.PortMapping{
+	portMapping := wslproxy.PortMapping{
 		Remove: false,
-		Ports: nat.PortMap{
-			port: []nat.PortBinding{
+		Ports: wslproxy.PortMap{
+			port: []wslproxy.PortBinding{
 				{
 					HostIP:   "127.0.0.1",
 					HostPort: testPort,
@@ -149,13 +148,13 @@ func TestNewPortProxyTCP(t *testing.T) {
 		resp.Body.Close()
 	}
 
-	port, err := nat.NewPort("tcp", testPort)
+	port, err := wslproxy.NewPort("tcp", testPort)
 	require.NoError(t, err)
 
-	portMapping := types.PortMapping{
+	portMapping := wslproxy.PortMapping{
 		Remove: false,
-		Ports: nat.PortMap{
-			port: []nat.PortBinding{
+		Ports: wslproxy.PortMap{
+			port: []wslproxy.PortBinding{
 				{
 					HostIP:   "127.0.0.1",
 					HostPort: testPort,
@@ -175,10 +174,10 @@ func TestNewPortProxyTCP(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, string(bodyBytes), expectedResponse)
 
-	portMapping = types.PortMapping{
+	portMapping = wslproxy.PortMapping{
 		Remove: true,
-		Ports: nat.PortMap{
-			port: []nat.PortBinding{
+		Ports: wslproxy.PortMap{
+			port: []wslproxy.PortBinding{
 				{
 					HostIP:   "127.0.0.1",
 					HostPort: testPort,
@@ -213,7 +212,7 @@ func httpGetRequest(ctx context.Context, url string) (*http.Response, error) {
 	return resp, nil
 }
 
-func marshalAndSend(ctx context.Context, listener net.Listener, portMapping types.PortMapping) error {
+func marshalAndSend(ctx context.Context, listener net.Listener, portMapping wslproxy.PortMapping) error {
 	b, err := json.Marshal(portMapping)
 	if err != nil {
 		return err

@@ -6,11 +6,10 @@ require (
 	github.com/Microsoft/go-winio v0.6.3
 	github.com/containers/gvisor-tap-vsock v0.9.0
 	github.com/coreos/go-systemd/v22 v22.7.0
-	github.com/docker/go-connections v0.8.2
 	github.com/dustin/go-humanize v1.1.0
 	github.com/google/gopacket v1.1.19
 	github.com/linuxkit/virtsock v0.0.0-20241009230534-cb6a20cc0422
-	github.com/rancher-sandbox/rancher-desktop/src/go/guestagent v0.0.0-20240911164922-5443d1a11011
+	github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.10.2
 	github.com/songgao/packets v0.0.0-20160404182456-549a10cd4091
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
@@ -42,4 +41,4 @@ require (
 )
 
 // Dependabot does not read go.work, so without this it pins a remote version.
-replace github.com/rancher-sandbox/rancher-desktop/src/go/guestagent => ../guestagent
+replace github.com/rancher-sandbox/rancher-desktop/src/go/wslproxy => ../wslproxy
