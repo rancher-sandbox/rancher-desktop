@@ -6,9 +6,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"strings"
 
-	"golang.org/x/exp/slices"
 	"golang.org/x/text/encoding/unicode"
 )
 

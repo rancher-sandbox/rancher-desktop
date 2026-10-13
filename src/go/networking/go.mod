@@ -9,7 +9,7 @@ require (
 	github.com/docker/go-connections v0.8.2
 	github.com/dustin/go-humanize v1.1.0
 	github.com/google/gopacket v1.1.19
-	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
+	github.com/linuxkit/virtsock v0.0.0-20241009230534-cb6a20cc0422
 	github.com/rancher-sandbox/rancher-desktop/src/go/guestagent v0.0.0-20240911164922-5443d1a11011
 	github.com/sirupsen/logrus v1.10.2
 	github.com/songgao/packets v0.0.0-20160404182456-549a10cd4091
@@ -32,11 +32,10 @@ require (
 	github.com/mdlayher/vsock v1.3.0 // indirect
 	github.com/miekg/dns v1.1.73 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
-	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
+	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
 	golang.org/x/mod v0.42.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.51.0 // indirect
