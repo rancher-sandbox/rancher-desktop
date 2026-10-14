@@ -110,7 +110,7 @@ func (f *loopbackForwarder) Add(ctx context.Context, proto string, port uint16) 
 		// be a forwarder-lifetime context (in production, the
 		// scanner's lifetime context); a request-scoped or per-tick
 		// ctx would silently break new-flow dialing once cancelled.
-		proxy, err := forwarder.NewUDPProxy(pc, func() (net.Conn, error) {
+		proxy, err := forwarder.NewUDPProxy(pc, func(_ net.Addr) (net.Conn, error) {
 			return f.dialer.DialContext(ctx, protoUDP, target)
 		})
 		if err != nil {
