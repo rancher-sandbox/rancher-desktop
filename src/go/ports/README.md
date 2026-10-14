@@ -1,6 +1,6 @@
-# Rancher Desktop Agent Types
+# wsl-proxy port mappings
 
-The Rancher Desktop types package represent the shared contract (json structure) that is used for communicating to the upstream Rancher Desktop Privileged Service.
+The ports module defines the JSON that the WSL guest agent (`src/go/guestagent`) sends to wsl-proxy (`src/go/networking/cmd/proxy`) to add or remove port forwards.
 
 Below is the json schema for PortMapping:
 

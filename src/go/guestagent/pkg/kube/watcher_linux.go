@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
-	"github.com/docker/go-connections/nat"
 	"golang.org/x/sys/unix"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -39,6 +38,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 // watcherState is an enumeration to track the state of the watcher.
@@ -227,18 +227,18 @@ func isAPINotReady(err error) bool {
 	return strings.Contains(err.Error(), "apiserver not ready")
 }
 
-func createPortMapping(ports map[int32]corev1.Protocol, k8sServiceListenerIP net.IP) (nat.PortMap, error) {
-	portMap := make(nat.PortMap)
+func createPortMapping(servicePorts map[int32]corev1.Protocol, k8sServiceListenerIP net.IP) (ports.PortMap, error) {
+	portMap := make(ports.PortMap)
 
-	for port, proto := range ports {
+	for port, proto := range servicePorts {
 		protocol := strings.ToLower(string(proto))
 		log.Debugf("create port mapping for port %d, protocol %s", port, protocol)
-		portMapKey, err := nat.NewPort(protocol, strconv.Itoa(int(port)))
+		portMapKey, err := ports.NewPort(protocol, strconv.Itoa(int(port)))
 		if err != nil {
 			return nil, err
 		}
 
-		portBinding := nat.PortBinding{
+		portBinding := ports.PortBinding{
 			HostIP:   k8sServiceListenerIP.String(),
 			HostPort: strconv.Itoa(int(port)),
 		}
@@ -246,7 +246,7 @@ func createPortMapping(ports map[int32]corev1.Protocol, k8sServiceListenerIP net
 		if pb, ok := portMap[portMapKey]; ok {
 			portMap[portMapKey] = append(pb, portBinding)
 		} else {
-			portMap[portMapKey] = []nat.PortBinding{portBinding}
+			portMap[portMapKey] = []ports.PortBinding{portBinding}
 		}
 	}
 

@@ -12,6 +12,7 @@ require (
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.8.2
 	github.com/lima-vm/lima v1.0.0-beta.0
+	github.com/rancher-sandbox/rancher-desktop/src/go/ports v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/sync v0.24.0
 	golang.org/x/sys v0.49.0
@@ -127,3 +128,6 @@ replace github.com/lima-vm/lima => github.com/rancher-sandbox/lima v1.0.3-0.2025
 // both modules, and fail with an ambiguous import. Remove this once
 // gvisor-tap-vsock pins a gvisor that requires a post-split genproto.
 exclude google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f
+
+// Dependabot does not read go.work, so without this it pins a remote version.
+replace github.com/rancher-sandbox/rancher-desktop/src/go/ports => ../ports

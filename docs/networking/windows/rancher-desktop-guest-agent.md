@@ -53,14 +53,14 @@ end
 
 ## PortMapping
 
-Is a struct object that represents an exposed container or a service. [Portmapping](../../../src/go/guestagent/pkg/types/portmapping.go#L23) objects consist of the following fields:
+Is a struct object that represents an exposed container or a service. [Portmapping](../../../src/go/ports/portmapping.go#L12) objects consist of the following fields:
 
 ```
 type PortMapping struct {
 	// Remove indicates whether to remove or add the entry
 	Remove bool `json:"remove"`
 	// Ports are the port mappings for both IPV4 and IPV6
-	Ports nat.PortMap `json:"ports"`
+	Ports PortMap `json:"ports"`
 	// ConnectAddrs are the backend addresses to connect to
 	ConnectAddrs []ConnectAddrs `json:"connectAddrs"`
 }
@@ -130,10 +130,10 @@ Additionally, if network tunnel mode is enabled along with the WSL integration o
 
 Below port mapping is an example of what is emitted to `wsl-proxy`:
 ```
-types.PortMapping {
+ports.PortMapping {
     Remove: false,
-    Ports: nat.PortMap {
-        port: [] nat.PortBinding {
+    Ports: ports.PortMap {
+        port: [] ports.PortBinding {
             {
                 HostIP: "127.0.0.1",
                 HostPort: 6443,

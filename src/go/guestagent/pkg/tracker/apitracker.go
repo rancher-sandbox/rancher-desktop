@@ -22,10 +22,9 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/containers/gvisor-tap-vsock/pkg/types"
-	"github.com/docker/go-connections/nat"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/forwarder"
-	guestagentTypes "github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/types"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 const (
@@ -80,13 +79,13 @@ func NewAPITracker(ctx context.Context, wslProxyForwarder forwarder.Forwarder, b
 
 // Add a container ID and port mapping to the tracker and calls the
 // /services/forwarder/expose endpoint to forward the port mappings.
-func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
+func (a *APITracker) Add(containerID string, portMap ports.PortMap) error {
 	var errs []error
 
-	successfullyForwarded := make(nat.PortMap)
+	successfullyForwarded := make(ports.PortMap)
 
 	for portProto, portBindings := range portMap {
-		var tmpPortBinding []nat.PortBinding
+		var tmpPortBinding []ports.PortBinding
 
 		log.Debugf("called add with portProto: %+v, portBindings: %+v\n", portProto, portBindings)
 
@@ -122,7 +121,7 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 
 	if len(successfullyForwarded) != 0 {
 		a.portStorage.add(containerID, successfullyForwarded)
-		portMapping := guestagentTypes.PortMapping{
+		portMapping := ports.PortMapping{
 			Remove: false,
 			Ports:  successfullyForwarded,
 		}
@@ -141,7 +140,7 @@ func (a *APITracker) Add(containerID string, portMap nat.PortMap) error {
 }
 
 // Get looks up the port mapping by containerID and returns the result.
-func (a *APITracker) Get(containerID string) nat.PortMap {
+func (a *APITracker) Get(containerID string) ports.PortMap {
 	return a.portStorage.get(containerID)
 }
 
@@ -179,7 +178,7 @@ func (a *APITracker) Remove(containerID string) error {
 	}
 
 	if len(portMap) != 0 {
-		portMapping := guestagentTypes.PortMapping{
+		portMapping := ports.PortMapping{
 			Remove: true,
 			Ports:  portMap,
 		}
@@ -226,7 +225,7 @@ func (a *APITracker) RemoveAll() error {
 			}
 		}
 
-		portMapping := guestagentTypes.PortMapping{
+		portMapping := ports.PortMapping{
 			Remove: true,
 			Ports:  portMapping,
 		}

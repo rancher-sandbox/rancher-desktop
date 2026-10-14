@@ -44,11 +44,11 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
-	"github.com/docker/go-connections/nat"
 	"github.com/lima-vm/lima/pkg/guestagent/procnettcp"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 const (
@@ -76,8 +76,8 @@ type ProcNetScanner struct {
 	bindIP       net.IP
 	scanInterval time.Duration
 
-	published nat.PortMap
-	pending   map[nat.Port]struct{}
+	published ports.PortMap
+	pending   map[ports.Port]struct{}
 
 	// addErrorLogged throttles publish-failure logs to one Error line
 	// per port; subsequent failures for the same port log at Debug
@@ -85,7 +85,7 @@ type ProcNetScanner struct {
 	// pending and published. Without this, every tick (~3s) emits two
 	// Error lines per stuck port when wsl-proxy or host-switch is
 	// down, drowning the log.
-	addErrorLogged map[nat.Port]bool
+	addErrorLogged map[ports.Port]bool
 }
 
 // NewProcNetScanner constructs a /proc/net scanner that publishes
@@ -108,9 +108,9 @@ func newScanner(ctx context.Context, t tracker.Tracker, f loopbackController, bi
 		forwarder:      f,
 		bindIP:         bindIP,
 		scanInterval:   scanInterval,
-		published:      make(nat.PortMap),
-		pending:        make(map[nat.Port]struct{}),
-		addErrorLogged: make(map[nat.Port]bool),
+		published:      make(ports.PortMap),
+		pending:        make(map[ports.Port]struct{}),
+		addErrorLogged: make(map[ports.Port]bool),
 	}
 }
 
@@ -142,7 +142,7 @@ func (p *ProcNetScanner) ForwardPorts() error {
 // two consecutive Ticks (~3 s at the default interval). The gate
 // filters the transient OCI-hook reservation socket. Removals take
 // effect immediately: a vanished listener is unambiguous.
-func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
+func (p *ProcNetScanner) Tick(scanned ports.PortMap) {
 	for port, bindings := range p.published {
 		if newBindings, ok := scanned[port]; ok && bindingsEqual(bindings, newBindings) {
 			continue
@@ -166,7 +166,7 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 		p.published[port] = bindings
 	}
 
-	p.pending = make(map[nat.Port]struct{})
+	p.pending = make(map[ports.Port]struct{})
 	for port := range scanned {
 		if _, ok := p.published[port]; ok {
 			continue
@@ -194,9 +194,9 @@ func (p *ProcNetScanner) Tick(scanned nat.PortMap) {
 // if either step fails after rolling back the tracker entry, so the
 // caller can leave the port in pending for next-tick retry instead
 // of recording it as published.
-func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) error {
+func (p *ProcNetScanner) publish(port ports.Port, bindings []ports.PortBinding) error {
 	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
-	if err := p.tracker.Add(id, nat.PortMap{port: bindings}); err != nil {
+	if err := p.tracker.Add(id, ports.PortMap{port: bindings}); err != nil {
 		p.logAddFailure(port, fmt.Sprintf("failed to add: %s", err))
 		if removeErr := p.tracker.Remove(id); removeErr != nil {
 			p.logAddFailure(port, fmt.Sprintf("rollback after tracker.Add failure: %s", removeErr))
@@ -209,7 +209,7 @@ func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) erro
 	// forwarder; the tracker entry alone keeps the port reachable from
 	// Windows.
 	if !hasWildcardBinding(bindings) {
-		// Every binding under a given nat.Port carries the same HostPort
+		// Every binding under a given ports.Port carries the same HostPort
 		// (addEntryToPortMap derives both from entry.Port), so forwarder.Add
 		// sees one key and rollback unwinds at most one listener.
 		for _, b := range bindings {
@@ -253,7 +253,7 @@ func (p *ProcNetScanner) publish(port nat.Port, bindings []nat.PortBinding) erro
 // Error level and subsequent messages at Debug. addErrorLogged
 // resets when publish succeeds or when the sweep at the end of Tick
 // observes the port has left both pending and published.
-func (p *ProcNetScanner) logAddFailure(port nat.Port, msg string) {
+func (p *ProcNetScanner) logAddFailure(port ports.Port, msg string) {
 	if p.addErrorLogged[port] {
 		log.Debugf("/proc/net scanner %s: %s", port, msg)
 		return
@@ -262,7 +262,7 @@ func (p *ProcNetScanner) logAddFailure(port nat.Port, msg string) {
 	p.addErrorLogged[port] = true
 }
 
-func (p *ProcNetScanner) unpublish(port nat.Port, bindings []nat.PortBinding) {
+func (p *ProcNetScanner) unpublish(port ports.Port, bindings []ports.PortBinding) {
 	id := utils.GenerateID(fmt.Sprintf("%s/%s", port.Proto(), port.Port()))
 	if err := p.tracker.Remove(id); err != nil {
 		log.Errorf("/proc/net scanner failed to remove %s: %s", port, err)
@@ -295,7 +295,7 @@ func (p *ProcNetScanner) unpublish(port nat.Port, bindings []nat.PortBinding) {
 // procnettcp.ParseFiles. See addValidProtoEntryToPortMap for the
 // IPv6 drop and entriesToPortMap for the filter that drops the
 // forwarder's own sockets.
-func (p *ProcNetScanner) scanListeners() (nat.PortMap, error) {
+func (p *ProcNetScanner) scanListeners() (ports.PortMap, error) {
 	entries, err := procnettcp.ParseFiles()
 	if err != nil {
 		return nil, err
@@ -317,8 +317,8 @@ func (p *ProcNetScanner) scanListeners() (nat.PortMap, error) {
 // bindIP -- so the gap is acceptable. A tighter filter would require
 // procnettcp to expose inode-level ownership so the forwarder's
 // sockets can be identified without overlap.
-func (p *ProcNetScanner) entriesToPortMap(entries []procnettcp.Entry) nat.PortMap {
-	out := make(nat.PortMap)
+func (p *ProcNetScanner) entriesToPortMap(entries []procnettcp.Entry) ports.PortMap {
+	out := make(ports.PortMap)
 	for _, entry := range entries {
 		if entry.IP.Equal(p.bindIP) {
 			continue
@@ -330,7 +330,7 @@ func (p *ProcNetScanner) entriesToPortMap(entries []procnettcp.Entry) nat.PortMa
 	return out
 }
 
-func addValidProtoEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
+func addValidProtoEntryToPortMap(entry procnettcp.Entry, portMap ports.PortMap) error {
 	switch entry.Kind {
 	case procnettcp.TCP:
 		if entry.State == procnettcp.TCPListen {
@@ -344,9 +344,9 @@ func addValidProtoEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) er
 	return nil
 }
 
-func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
+func addEntryToPortMap(entry procnettcp.Entry, portMap ports.PortMap) error {
 	port := strconv.Itoa(int(entry.Port))
-	portMapKey, err := nat.NewPort(strings.ToLower(entry.Kind), port)
+	portMapKey, err := ports.NewPort(strings.ToLower(entry.Kind), port)
 	if err != nil {
 		return fmt.Errorf("generating portMapKey protocol: %s, port: %d failed: %w",
 			entry.Kind, entry.Port, err)
@@ -363,7 +363,7 @@ func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
 	} else {
 		hostIP = inAddrAny
 	}
-	portMap[portMapKey] = append(portMap[portMapKey], nat.PortBinding{
+	portMap[portMapKey] = append(portMap[portMapKey], ports.PortBinding{
 		HostIP:   hostIP.String(),
 		HostPort: port,
 	})
@@ -375,7 +375,7 @@ func addEntryToPortMap(entry procnettcp.Entry, portMap nat.PortMap) error {
 // traffic on every IP in that namespace, including bindIP, so opening
 // a forwarder on bindIP:port would just duplicate the wildcard's
 // claim and fail with EADDRINUSE.
-func hasWildcardBinding(bindings []nat.PortBinding) bool {
+func hasWildcardBinding(bindings []ports.PortBinding) bool {
 	for _, b := range bindings {
 		if b.HostIP == wildcardIP {
 			return true
@@ -388,11 +388,11 @@ func hasWildcardBinding(bindings []nat.PortBinding) bool {
 // of (HostIP, HostPort) pairs. Order does not matter, but duplicates
 // must match in multiplicity so a list with two identical entries
 // does not compare equal to one with a single entry.
-func bindingsEqual(a, b []nat.PortBinding) bool {
+func bindingsEqual(a, b []ports.PortBinding) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	counts := make(map[nat.PortBinding]int, len(a))
+	counts := make(map[ports.PortBinding]int, len(a))
 	for _, x := range a {
 		counts[x]++
 	}

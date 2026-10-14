@@ -22,11 +22,11 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
-	"github.com/docker/go-connections/nat"
 	limaiptables "github.com/lima-vm/lima/pkg/guestagent/iptables"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/tracker"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/guestagent/pkg/utils"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 // Iptables manages port forwarding for ports identified in iptables DNAT rules.
@@ -59,7 +59,7 @@ func New(ctx context.Context, apiTracker tracker.Tracker, iptablesScanner Scanne
 // as part of the normal forwarding system. This function detects those ports
 // and binds them to k8sServiceListenerAddr so that they are picked up.
 func (i *Iptables) ForwardPorts() error {
-	var ports []limaiptables.Entry
+	var currentPorts []limaiptables.Entry
 
 	ticker := time.NewTicker(i.updateInterval)
 	defer ticker.Stop()
@@ -86,8 +86,8 @@ func (i *Iptables) ForwardPorts() error {
 		}
 
 		// Diff from existing forwarded ports
-		added, removed := comparePorts(ports, newPorts)
-		ports = newPorts
+		added, removed := comparePorts(currentPorts, newPorts)
+		currentPorts = newPorts
 
 		// Remove old forwards
 		for _, p := range removed {
@@ -99,7 +99,7 @@ func (i *Iptables) ForwardPorts() error {
 			log.Infof("iptables scanner removed portmap for %s", name)
 		}
 
-		portMap := make(nat.PortMap)
+		portMap := make(ports.PortMap)
 
 		// Add new forwards
 		for _, p := range added {
@@ -107,17 +107,17 @@ func (i *Iptables) ForwardPorts() error {
 				continue
 			}
 			port := strconv.Itoa(p.Port)
-			portMapKey, err := nat.NewPort("tcp", port)
+			portMapKey, err := ports.NewPort("tcp", port)
 			if err != nil {
 				log.Errorf("failed to create a corresponding key for the portMap: %s", err)
 				continue
 			}
-			portBinding := nat.PortBinding{
+			portBinding := ports.PortBinding{
 				HostIP:   i.listenerIP.String(),
 				HostPort: port,
 			}
 			if _, ok := portMap[portMapKey]; !ok {
-				portMap[portMapKey] = []nat.PortBinding{portBinding}
+				portMap[portMapKey] = []ports.PortBinding{portBinding}
 			}
 			name := entryToString(p)
 			if err := i.apiTracker.Add(utils.GenerateID(name), portMap); err != nil {

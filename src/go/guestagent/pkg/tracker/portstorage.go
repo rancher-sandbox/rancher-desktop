@@ -18,30 +18,31 @@ import (
 	"sync"
 
 	"github.com/Masterminds/log-go"
-	"github.com/docker/go-connections/nat"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/ports"
 )
 
 // portStorage is responsible for storing all the port mappings.
 type portStorage struct {
 	// container ID is the key for both docker and containerd
-	portmap map[string]nat.PortMap
+	portmap map[string]ports.PortMap
 	mutex   sync.Mutex
 }
 
 func newPortStorage() *portStorage {
 	return &portStorage{
-		portmap: make(map[string]nat.PortMap),
+		portmap: make(map[string]ports.PortMap),
 	}
 }
 
-func (p *portStorage) add(containerID string, portMap nat.PortMap) {
+func (p *portStorage) add(containerID string, portMap ports.PortMap) {
 	p.mutex.Lock()
 	p.portmap[containerID] = portMap
 	p.mutex.Unlock()
 	log.Debugf("portStorage add status: %+v", p.portmap)
 }
 
-func (p *portStorage) get(containerID string) nat.PortMap {
+func (p *portStorage) get(containerID string) ports.PortMap {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -64,11 +65,11 @@ func (p *portStorage) removeAll() {
 	}
 }
 
-func (p *portStorage) getAll() map[string]nat.PortMap {
+func (p *portStorage) getAll() map[string]ports.PortMap {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	portMappings := make(map[string]nat.PortMap, len(p.portmap))
+	portMappings := make(map[string]ports.PortMap, len(p.portmap))
 
 	for k, v := range p.portmap {
 		portMappings[k] = maps.Clone(v)
