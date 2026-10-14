@@ -242,6 +242,20 @@ interface SPNetworkDataType {
 type SudoReason = 'networking' | 'docker-socket';
 
 /**
+ * Double-quote a path for the shell command that runs as root.  The path comes
+ * from the environment (TMPDIR, HOME), so refuse the characters that the shell
+ * still interprets inside double quotes, and the single quote that delimits
+ * the whole command.
+ */
+export function quotePathForShell(fsPath: string): string {
+  if (/["$`\\']/.test(fsPath)) {
+    throw new Error(`Refusing to use path ${ fsPath } in a privileged command because it contains a shell special character.`);
+  }
+
+  return `"${ fsPath }"`;
+}
+
+/**
  * SudoCommand describes an operation that will be run under sudo.  This is
  * returned from various methods that need to determine what commands we need to
  * run under sudo to have all functionality.
@@ -1208,6 +1222,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
 
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vmnet-install-'));
+    const quotedWorkdir = quotePathForShell(workdir);
     const tarPath = path.join(workdir, 'vmnet.tar');
     const commands: string[] = [];
 
@@ -1269,12 +1284,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       archive.finalize();
       await archiveFinished;
-      const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`;
+      const command = `tar -xf ${ quotePathForShell(tarPath) } -C "${ path.dirname(installedPath) }"`;
 
       console.log(`VMNET tools install required: ${ command }`);
       commands.push(command);
     } finally {
-      commands.push(`rm -fr ${ workdir }`);
+      commands.push(`rm -fr ${ quotedWorkdir }`);
     }
 
     return {
@@ -1375,9 +1390,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     if (updateSudoers) {
       const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
+      const quotedTmpFile = quotePathForShell(tmpFile);
 
       await fs.promises.writeFile(tmpFile, sudoers, { mode: 0o644 });
-      commands.push(`mkdir -p "${ path.dirname(LIMA_SUDOERS_LOCATION) }" && cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
+      commands.push(`mkdir -p "${ path.dirname(LIMA_SUDOERS_LOCATION) }" && cp ${ quotedTmpFile } ${ LIMA_SUDOERS_LOCATION } && rm -f ${ quotedTmpFile }`);
       paths.push(LIMA_SUDOERS_LOCATION);
       console.debug(`Sudoers file ${ LIMA_SUDOERS_LOCATION } needs to be updated.`);
     }
@@ -1435,7 +1451,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     return {
       reason:   'docker-socket',
-      commands: [`ln -sf "${ targetPath }" "${ DEFAULT_DOCKER_SOCK_LOCATION }"`],
+      commands: [`ln -sf ${ quotePathForShell(targetPath) } "${ DEFAULT_DOCKER_SOCK_LOCATION }"`],
       paths:    [DEFAULT_DOCKER_SOCK_LOCATION],
     };
   }
