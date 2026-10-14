@@ -281,37 +281,18 @@ func (e *EventMonitor) createLoopbackIPtablesRules(ctx context.Context, containe
 }
 
 func (e *EventMonitor) createIptablesRuleForContainer(ctx context.Context, container containerapi.InspectResponse, portMappings ports.PortMap) {
-	// If the container's NetworkSettings.Networks map is not empty, it indicates that the container
-	// is connected to a Docker Compose network. In this case, we should inspect the map and
-	// configure the loopback address for each container's assigned IP address.
-	if len(container.NetworkSettings.Networks) != 0 {
-		// delete the IPv6 rule first
-		if err := deleteComposeNetworkIPv6Rule(ctx, portMappings); err != nil {
-			log.Errorf("removing docker compose IPv6 rule from DOCKER chain failed: %v", err)
-		}
-		for networkName, network := range container.NetworkSettings.Networks {
-			err := e.createLoopbackIPtablesRules(
-				ctx,
-				container.ID,
-				network.IPAddress,
-				portMappings)
-			if err != nil {
-				log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain for docker compose network: %s failed: %v", networkName, err)
-			}
-		}
-	} else {
-		bridgeNetwork, ok := container.NetworkSettings.Networks["bridge"]
-		if !ok {
-			log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain failed: failed to find bridge network")
-		} else {
-			err := e.createLoopbackIPtablesRules(
-				ctx,
-				container.ID,
-				bridgeNetwork.IPAddress,
-				portMappings)
-			if err != nil {
-				log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain failed: %v", err)
-			}
+	// delete the IPv6 rule first
+	if err := deleteComposeNetworkIPv6Rule(ctx, portMappings); err != nil {
+		log.Errorf("removing docker compose IPv6 rule from DOCKER chain failed: %v", err)
+	}
+	for networkName, network := range container.NetworkSettings.Networks {
+		err := e.createLoopbackIPtablesRules(
+			ctx,
+			container.ID,
+			network.IPAddress,
+			portMappings)
+		if err != nil {
+			log.Errorf("creating iptable rules to update DNAT rule in DOCKER chain for network: %s failed: %v", networkName, err)
 		}
 	}
 }
