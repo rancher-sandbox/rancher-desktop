@@ -199,6 +199,22 @@ interface LimaNetworkConfiguration {
 }
 
 /**
+ * Check that every host and shared network has IPv4 addresses.  These values
+ * end up in a sudoers file installed as root, so anything else could inject
+ * sudoers rules.  Lima parses them as IP addresses, and socket_vmnet takes
+ * only IPv4 for them.
+ */
+function hasValidNetworkAddresses(config: LimaNetworkConfiguration): boolean {
+  return Object.values(config.networks ?? {}).every((network) => {
+    if (network.mode !== 'host' && network.mode !== 'shared') {
+      return true;
+    }
+
+    return [network.gateway, network.dhcpEnd, network.netmask].every(addr => typeof addr === 'string' && net.isIPv4(addr));
+  });
+}
+
+/**
  * One entry from `limactl list --json`
  */
 interface LimaListResult {
@@ -1485,7 +1501,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * Provide a default network config file with rancher-desktop specific settings.
    *
    * If there's an existing file, replace it if it doesn't contain a
-   * paths.varRun setting for rancher-desktop
+   * paths.varRun setting for rancher-desktop, or if a host or shared network
+   * has an address that is not IPv4.
    */
   protected async installCustomLimaNetworkConfig(allowRoot = true): Promise<LimaNetworkConfiguration> {
     const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
@@ -1494,7 +1511,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     try {
       config = yaml.parse(await fs.promises.readFile(networkPath, 'utf8'));
-      if (config?.paths?.varRun !== NETWORKS_CONFIG.paths.varRun) {
+      if (config?.paths?.varRun !== NETWORKS_CONFIG.paths.varRun || !hasValidNetworkAddresses(config)) {
         const backupName = networkPath.replace(/\.yaml$/, '.orig.yaml');
 
         await fs.promises.rename(networkPath, backupName);
