@@ -19,9 +19,15 @@ package process
 import "golang.org/x/sys/windows"
 
 var (
-	kernel32Dll           = windows.NewLazySystemDLL("kernel32.dll")
-	openProcess           = kernel32Dll.NewProc("OpenProcess")
-	attachConsole         = kernel32Dll.NewProc("AttachConsole")
-	freeConsole           = kernel32Dll.NewProc("FreeConsole")
-	setConsoleCtrlHandler = kernel32Dll.NewProc("SetConsoleCtrlHandler")
+	kernel32Dll               = windows.NewLazySystemDLL("kernel32.dll")
+	openProcess               = kernel32Dll.NewProc("OpenProcess")
+	attachConsole             = kernel32Dll.NewProc("AttachConsole")
+	freeConsole               = kernel32Dll.NewProc("FreeConsole")
+	setConsoleCtrlHandler     = kernel32Dll.NewProc("SetConsoleCtrlHandler")
+	createJobObject           = kernel32Dll.NewProc("CreateJobObjectW")
+	queryInformationJobObject = kernel32Dll.NewProc("QueryInformationJobObject")
+	setInformationJobObject   = kernel32Dll.NewProc("SetInformationJobObject")
+	getProcessHeap            = kernel32Dll.NewProc("GetProcessHeap")
+	heapAlloc                 = kernel32Dll.NewProc("HeapAlloc")
+	heapFree                  = kernel32Dll.NewProc("HeapFree")
 )
