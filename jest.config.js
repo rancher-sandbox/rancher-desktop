@@ -55,6 +55,7 @@ export default {
   },
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
-    '<rootDir>/pkg/rancher-desktop/sudo-prompt/',
+    // sudo-prompt's own tests wait for someone to enter a password.
+    '<rootDir>/pkg/rancher-desktop/sudo-prompt/test',
   ],
 };
