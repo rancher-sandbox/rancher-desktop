@@ -13016,12 +13016,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-abi@npm:^4.36.0":
-  version: 4.36.0
-  resolution: "node-abi@npm:4.36.0"
+"node-abi@npm:^4.37.0":
+  version: 4.37.0
+  resolution: "node-abi@npm:4.37.0"
   dependencies:
     semver: "npm:^7.6.3"
-  checksum: 10c0/1ffaf83b8b560d9371f1d9deac1b0c18abcd42e5eed34fe8b143ea2b48e0142e946b0df159e3a1d4e7545c92cf27f8ba47265712d630f08735785a334bc8a00d
+  checksum: 10c0/4cd09e2439e1917cff2ae108364099be58b1f40b6e6585977e809afd679653800000e5dfef8c9e934d34977ca1a4e488800d9b45d106f849482201d1fffdba97
   languageName: node
   linkType: hard
 
@@ -14770,7 +14770,7 @@ __metadata:
     marked: "npm:18.1.0"
     mustache: "npm:4.2.0"
     native-reg: "npm:1.1.1"
-    node-abi: "npm:^4.36.0"
+    node-abi: "npm:^4.37.0"
     node-addon-api: "npm:8"
     node-forge: "npm:1.4.0"
     node-gyp: "npm:13.1.0"
