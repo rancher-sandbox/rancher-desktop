@@ -40,7 +40,9 @@ start_pre() {
     # Pods use ndots:5, so they try each search domain before the name itself,
     # and a host search domain that answers for names it does not hold hijacks
     # their external lookups. Kubelet gets a copy without the search domains.
-    grep -v -E '^(search|domain)[[:space:]]' /etc/resolv.conf >"${KUBELET_RESOLV_CONF}"
+    # Without the copy, kubelet cannot create pods, and an empty copy (grep
+    # exits 1) leaves CoreDNS without an upstream server, so fail the start.
+    grep -v -E '^(search|domain)[[:space:]]' /etc/resolv.conf >"${KUBELET_RESOLV_CONF}" || return 1
   fi
   ARCH=amd64
   if [ "$(uname -m)" = "aarch64" ]; then
