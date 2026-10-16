@@ -150,7 +150,8 @@ factory_reset() {
 # it, so a leak lands in whichever test runs next. electron-updater names the
 # staging directory after the build: a `-updater` sibling of the cache when
 # packaged, the cache itself in dev mode, and the app home on Windows. Factory
-# reset removes only the Windows one.
+# reset removes the packaged and Windows ones, and the dev-mode one only along
+# with the cache.
 delete_pending_update() {
     rm -rf "$PATH_CACHE/updater-longhorn.json" "$PATH_CACHE/pending" \
         "$PATH_CACHE/update.zip" "$PATH_CACHE/current.blockmap" \
@@ -192,6 +193,7 @@ start_container_engine() {
             --application.admin-access="$admin_access"
             --application.path-management-strategy rcfiles
             --virtual-machine.memory-in-gb 6
+            --virtual-machine.number-cpus="$RD_VM_CPUS"
             --virtual-machine.mount.type="$RD_MOUNT_TYPE"
         )
     fi
@@ -472,7 +474,7 @@ wait_for_container_engine() {
 wait_for_extension_manager() {
     trace "waiting for extension manager to be ready"
     # We want to match specific error strings, so we can't use try() directly.
-    local count=0 max=30 message
+    local count=0 max=$((30 * RD_WAIT_FACTOR)) message
     while true; do
         run --separate-stderr rdctl api /extensions
         if ((status == 0 || ++count >= max)); then

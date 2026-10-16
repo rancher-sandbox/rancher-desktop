@@ -1,7 +1,42 @@
+# The suite runs inside a WSL distro, and HOST_IP is the host's
+# `vEthernet (WSL)` address, so 'binding to 0.0.0.0' sends the datagram
+# across the WSL NAT to host-switch.exe on the host.  Whether it arrives
+# depends on a firewall exception for host-switch.exe that permits UDP on the
+# profile the traffic arrives on.  The first test checks the protocol and
+# records the network categories.  The 'binding to localhost' case never
+# leaves the distro: wsl-proxy answers it, so it passes even when the
+# exception is wrong.
 load '../helpers/load'
 
 local_setup() {
     skip_on_unix
+}
+
+powershell_output() { # <script>
+    # errexit is in effect, and a failing powershell.exe must not abort the
+    # test before it can report what it found.
+    powershell.exe -NoProfile -Command "$1" 2>&1 || :
+}
+
+@test 'the firewall exception permits UDP' {
+    if ! using_windows_exe; then
+        skip "The host firewall only governs traffic leaving the WSL distro"
+    fi
+    if [[ $RD_LOCATION != "system" ]]; then
+        skip "Only a machine-wide install creates the exception"
+    fi
+    # Record what the runner gives us, so a change of network category shows
+    # up here rather than as a datagram that silently never arrives.
+    # shellcheck disable=SC2016 # the $() are PowerShell, not shell
+    trace "network categories: $(powershell_output 'Get-NetConnectionProfile | ForEach-Object { "$($_.InterfaceAlias)=$($_.NetworkCategory)" }')"
+
+    run powershell_output "Get-NetFirewallRule -DisplayName 'Rancher Desktop Networking*' | ForEach-Object { \"\$(\$_.DisplayName): \$((\$_ | Get-NetFirewallPortFilter).Protocol) \$(\$_.Profile)\" }"
+    trace "firewall rules: ${output//$'\n'/ | }"
+    # build/wix/main.wxs creates these two, and omitting Protocol leaves them
+    # at any.  A tcp-only exception drops every published UDP port.
+    assert_line --regexp 'Rancher Desktop Networking Private Exception: Any '
+    assert_line --regexp 'Rancher Desktop Networking Domain Exception: Any '
+    refute_output --regexp 'Rancher Desktop Networking.*: *TCP'
 }
 
 @test 'factory reset' {

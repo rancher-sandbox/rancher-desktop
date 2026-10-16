@@ -27,7 +27,8 @@ local_setup() {
 @test 'deploy app to kubernetes' {
     # Newer versions of the sample app have moved from "deislabs" to "spinkube":
     # ghcr.io/spinkube/containerd-shim-spin/examples/spin-rust-hello:v0.13.0
-    spin kube deploy --context rancher-desktop --from ghcr.io/deislabs/containerd-wasm-shims/examples/spin-rust-hello:v0.10.0
+    spin kube deploy --context rancher-desktop --replicas 1 --from ghcr.io/deislabs/containerd-wasm-shims/examples/spin-rust-hello:v0.10.0
+    wait_for_kube_deployment_available --namespace default spin-rust-hello
 }
 
 # TODO replace ingress with port-forwarding
