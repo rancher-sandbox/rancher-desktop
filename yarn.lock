@@ -1814,13 +1814,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/notarize@npm:3.1.1":
-  version: 3.1.1
-  resolution: "@electron/notarize@npm:3.1.1"
+"@electron/notarize@npm:3.1.2":
+  version: 3.1.2
+  resolution: "@electron/notarize@npm:3.1.2"
   dependencies:
     debug: "npm:^4.4.0"
     promise-retry: "npm:^2.0.1"
-  checksum: 10c0/1e9adc0cafc1c2e79c39a41c97de912d6a899d661de506301310e17c569dc2885c9729c21840ceb70871f2e648ab983d3731149c6dc4ea354a001ad463c83e7e
+  checksum: 10c0/131c96223171e4cb58714136e94d325407d1e8570f95ccac86e5abb97b79c1ae43df0db2006136b181db0abb3ddc029a4dce3b321a42ca34362d601a3ec878a4
   languageName: node
   linkType: hard
 
@@ -14702,7 +14702,7 @@ __metadata:
     "@docker/extension-api-client-types": "npm:0.4.2"
     "@electron/asar": "npm:4.3.1"
     "@electron/fuses": "npm:^2.1.3"
-    "@electron/notarize": "npm:3.1.1"
+    "@electron/notarize": "npm:3.1.2"
     "@eslint/config-helpers": "npm:0.7.0"
     "@eslint/js": "npm:10.0.1"
     "@kubernetes/client-node": "npm:2.0.0"
