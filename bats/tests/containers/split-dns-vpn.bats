@@ -38,6 +38,7 @@ local_setup() {
 }
 
 @test 'Verify that a container can ping host.rancher-desktop.internal when the VPN is enabled' {
+    skip_unless_host_answers_ping
     run ctrctl run --rm "$IMAGE_BUSYBOX" timeout -s INT 10 ping -c 5 host.rancher-desktop.internal
     assert_success
     assert_output --partial "5 packets transmitted, 5 packets received, 0% packet loss"

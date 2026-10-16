@@ -440,6 +440,13 @@ skip_unless_host_ip() {
     fi
 }
 
+# On Windows, gvisor-tap-vsock 0.9.0 answers a container's ping of the host
+# from 127.0.0.1, the address that host-switch translates it to, so the guest
+# drops the reply. Remove this with the gvisor-tap-vsock bump that fixes it.
+skip_unless_host_answers_ping() {
+    skip_on_windows "Pings to the host go unanswered on Windows with gvisor-tap-vsock 0.9.0"
+}
+
 ########################################################################
 
 # Register one or more test commands for each k3s version in RD_K3S_VERSIONS.

@@ -40,9 +40,11 @@ skip_unless_network_allows_ping() {
 }
 
 @test 'ping host.docker.internal from a container' {
+    skip_unless_host_answers_ping
     verify_host_connectivity "host.docker.internal"
 }
 
 @test 'ping host.rancher-desktop.internal from a container' {
+    skip_unless_host_answers_ping
     verify_host_connectivity "host.rancher-desktop.internal"
 }
