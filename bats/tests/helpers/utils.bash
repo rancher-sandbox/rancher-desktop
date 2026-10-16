@@ -244,7 +244,9 @@ trace() {
 }
 
 # try runs the specified command until it either succeeds, or --max attempts
-# have been made (with a --delay seconds sleep in between).
+# have been made (with a --delay seconds sleep in between).  RD_WAIT_FACTOR
+# multiplies --max, so a slow machine gets more attempts; --no-scale leaves
+# --max as given, for a retry whose command already scales its own waits.
 #
 # Right now the command is **always** run with --separate-stderr, and stderr
 # is output after all of stdout. This is subject to change, if we can figure
@@ -252,6 +254,7 @@ trace() {
 try() {
     local max=24
     local delay=5
+    local scale=$RD_WAIT_FACTOR
 
     while [[ $# -gt 0 ]] && [[ $1 == -* ]]; do
         case "$1" in
@@ -262,6 +265,9 @@ try() {
         --delay)
             delay=$2
             shift
+            ;;
+        --no-scale)
+            scale=1
             ;;
         --)
             shift
@@ -274,6 +280,8 @@ try() {
         esac
         shift
     done
+
+    max=$((max * scale))
 
     local count=0
     while true; do
@@ -388,11 +396,12 @@ capture_logs() {
         logdir=$(unique_filename "${PATH_BATS_LOGS}/${RD_TEST_FILENAME}")
         mkdir -p "$logdir"
         # On Linux/macOS, the symlinks to the lima logs might be dangling.
-        # Remove any dangling ones before doing the copy.
+        # Remove them before the copy. An empty file left in their place
+        # makes lima.ts's symlink() fail, blanking lima logs until Rancher
+        # Desktop next starts.
         find -L "${PATH_LOGS}/" -type l \
             -exec rm -f -- '{}' ';' \
-            -exec touch -- '{}' ';' \
-            -exec echo 'Replaced dangling symlink with empty file:' '{}' ';'
+            -exec echo 'Removed dangling symlink:' '{}' ';'
         cp -LR "${PATH_LOGS}/" "$logdir"
         echo "${BATS_TEST_DESCRIPTION:-teardown}" >"${logdir}/test_description"
         # Capture settings.json

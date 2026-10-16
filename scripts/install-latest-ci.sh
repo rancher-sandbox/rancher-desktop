@@ -92,6 +92,60 @@ wslpath_from_win32_env() {
     fi
 }
 
+# The MSI marks a machine-wide install with a registry key and opens the
+# firewall for host-switch.exe (build/wix/main.wxs).  Rancher Desktop reads that
+# key to decide whether to publish container ports on all interfaces, so without
+# it a zip install silently behaves like a per-user one.  The rules below copy
+# main.wxs by hand, protocol included, so a change there needs the same change
+# here.
+configure_admin_install() {
+    local app_dir=$1
+    local host_switch profile
+
+    host_switch=$(cygpath --windows "$app_dir/resources/resources/win32/internal/host-switch.exe")
+
+    MSYS2_ARG_CONV_EXCL='*' reg.exe add 'HKLM\SOFTWARE\SUSE\RancherDesktop' \
+        /v AdminInstall /t REG_SZ /d true /f
+
+    # The MSI opens the private and domain profiles, but not public.  A
+    # hosted runner gives the WSL adapter no connection profile at all, so
+    # Windows treats its traffic as public and neither shipped rule matches;
+    # a published UDP port is then unreachable from the distro the tests run
+    # in.  Categorizing the adapter is not an option, because
+    # Set-NetConnectionProfile needs a profile that does not exist.  So open
+    # public as well, and only here: the installed product keeps the two
+    # profiles it ships with.
+    for profile in Private Domain Public; do
+        MSYS2_ARG_CONV_EXCL='*' netsh.exe advfirewall firewall delete rule \
+            name="Rancher Desktop Networking ${profile} Exception" >/dev/null 2>&1 || :
+        MSYS2_ARG_CONV_EXCL='*' netsh.exe advfirewall firewall add rule \
+            name="Rancher Desktop Networking ${profile} Exception" \
+            dir=in action=allow protocol=any profile="${profile}" \
+            program="$host_switch"
+    done
+}
+
+# A package artifact is around 200 MB, and one stalled read fails the job
+# before a single test runs.  Every job in the matrix fetches it, so retry
+# rather than lose a job to one bad connection.  The directory must be
+# dedicated to this download; it is emptied before each attempt so a truncated
+# file cannot be mistaken for the artifact.
+download_artifact() { # $name $workdir
+    local name=$1 workdir=$2 attempt
+    for attempt in 1 2 3; do
+        rm -rf "${workdir:?}"/*
+        if gh run download --repo "$OWNER/$REPO" "$ID" --dir "$workdir" --name "$name"; then
+            return
+        fi
+        echo "Failed to download $name (attempt $attempt)" >&2
+        if [[ $attempt -lt 3 ]]; then
+            sleep $((attempt * 10))
+        fi
+    done
+    echo "Giving up on $name after 3 attempts" >&2
+    exit 1
+}
+
 install_application() {
     local archive workdir
 
@@ -125,7 +179,7 @@ install_application() {
         archive="Rancher Desktop-linux.zip"
         ;;
     esac
-    gh run download --repo "$OWNER/$REPO" "$ID" --dir "$workdir" --name "$archive"
+    download_artifact "$archive" "$workdir"
 
     # `gh run download` extracts the artifact into the provided directory.
     local zip=("$workdir"/*)
@@ -175,6 +229,9 @@ install_application() {
             # subdirectory like Linux & macOS do.
             mkdir -p "$dest/$app"
             unzip -o "$zip_abspath" -d "$dest/$app" >/dev/null
+            if [[ $RD_LOCATION == system ]]; then
+                configure_admin_install "$dest/$app"
+            fi
             ;;
         installer)
             local allusers=1
@@ -237,8 +294,9 @@ install_application() {
 download_bats() {
     # Download the BATS archive; it's automatically extracted one level, i.e.
     # the wrapper zip file.
-    rm -f "$TMPDIR/bats.tar.gz"
-    gh run download --repo "$OWNER/$REPO" "$ID" --dir "$TMPDIR" --name bats.tar.gz
+    local workdir
+    workdir=$(mktemp -d "$TMPDIR/rd-bats.XXXXXXXXXX")
+    download_artifact bats.tar.gz "$workdir"
 
     # Unpack bats into $BATS_DIR
     rm -rf "$BATS_DIR"
@@ -247,8 +305,9 @@ download_bats() {
     # So instead of using tar -C, enter that directory first.
     (
         cd "$BATS_DIR"
-        tar xfz "$TMPDIR/bats.tar.gz"
+        tar xfz "$workdir/bats.tar.gz"
     )
+    rm -rf "$workdir"
 }
 
 determine_run_id
