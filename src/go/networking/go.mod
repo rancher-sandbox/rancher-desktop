@@ -3,7 +3,7 @@ module github.com/rancher-sandbox/rancher-desktop/src/go/networking
 go 1.26.6
 
 require (
-	github.com/Microsoft/go-winio v0.6.3
+	github.com/Microsoft/go-winio v0.6.4
 	github.com/containers/gvisor-tap-vsock v0.9.0
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/dustin/go-humanize v1.1.0
