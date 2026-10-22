@@ -36,10 +36,10 @@ ECRCredentialHelper:
   version: 0.12.0
 WSLDistro:
   assets:
-    - checksum: sha256:9063dfd3b7d5a750b03f5b5bdafacd84c25a5ac51e012f2f59aa91653e4ab438
+    - checksum: sha256:879548518480df10b40b4501469e5bf648ff6e4f9936e082550c8704e00c3da1
       platform: wsl
-      url: https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v0.100/distro-0.100.tar
-  version: "0.100"
+      url: https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v0.101/distro-0.101.tar
+  version: "0.101"
 alpineLimaISO:
   assets:
     - arch: amd64
