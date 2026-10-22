@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import dns from 'dns';
 import http from 'http';
 import https from 'https';
@@ -6,6 +7,7 @@ import util from 'util';
 
 import Electron from 'electron';
 
+import { isDistrusted } from './distrusted-cas';
 import getLinuxCertificates from './linux-ca';
 import getMacCertificates from './mac-ca';
 import ElectronProxyAgent from './proxy';
@@ -100,9 +102,19 @@ export default async function setupNetworking() {
 }
 
 /**
- * Get the system certificates in PEM format.
+ * Get the system certificates in PEM format, without the distrusted ones.
  */
 export async function * getSystemCertificates(): AsyncIterable<string> {
+  for await (const cert of getPlatformCertificates()) {
+    if (isDistrusted(cert)) {
+      console.debug('Skipping distrusted certificate', new crypto.X509Certificate(cert).subject.replace(/[\r\n]+/g, ' '));
+    } else {
+      yield cert;
+    }
+  }
+}
+
+async function * getPlatformCertificates(): AsyncIterable<string> {
   const platform = os.platform();
 
   if (platform.startsWith('win')) {
