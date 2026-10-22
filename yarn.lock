@@ -3592,14 +3592,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.64.0":
-  version: 1.64.0
-  resolution: "@playwright/test@npm:1.64.0"
+"@playwright/test@npm:1.64.1":
+  version: 1.64.1
+  resolution: "@playwright/test@npm:1.64.1"
   dependencies:
-    playwright: "npm:1.64.0"
+    playwright: "npm:1.64.1"
   bin:
     playwright: cli.js
-  checksum: 10c0/96db203daa9e5aa5fcbec3f8bc92074346334980961dcc2ef6e660add5ad4647037f98f3a84ba1ec431bfb6e6368df0fd53e7dbdd427560627deef978c762f0c
+  checksum: 10c0/0a1a853d76d6c532cafaf0366a5448584b766737ebd39bbd23dc0580f3d3b6ef4c833082af47a792e7fc2501f444debdfaad37a87a76cc5b195f3803fc80ea3c
   languageName: node
   linkType: hard
 
@@ -14020,23 +14020,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.64.0":
-  version: 1.64.0
-  resolution: "playwright-core@npm:1.64.0"
+"playwright-core@npm:1.64.1":
+  version: 1.64.1
+  resolution: "playwright-core@npm:1.64.1"
   bin:
     playwright-core: cli.js
-  checksum: 10c0/fe3237282ada99d634e4d002efd3db6aa51218f7f4f3b1bc31515d30fa6eec5ec940d425e035db2af4e2856d9cae30b7a27bd167870b3285d40bdffd399ab286
+  checksum: 10c0/91c4f5ed1cff4b0e18b6ac62f66770f5f1b6c204d4aebd6a321c07466dca18a70822ac692597c6059705a703f9768097ac551df179fb49294d639509148e04f3
   languageName: node
   linkType: hard
 
-"playwright@npm:1.64.0":
-  version: 1.64.0
-  resolution: "playwright@npm:1.64.0"
+"playwright@npm:1.64.1":
+  version: 1.64.1
+  resolution: "playwright@npm:1.64.1"
   dependencies:
-    playwright-core: "npm:1.64.0"
+    playwright-core: "npm:1.64.1"
   bin:
     playwright: cli.js
-  checksum: 10c0/f1ee856c280af2ac256225a1cc5e957847f0d2c56a039c89f02e31b0c9928c44e04311923a1b315bea16e3b26e5124e7c296644ad3c05e4c0a6aaa9584009933
+  checksum: 10c0/edf52d0a79feca37bf383e841a467aa68750684128218eac560063991c9e4b615a94901f580cd8a088bb05fd53008ab4a0e5e8d976067698b60ae5d1de2459f3
   languageName: node
   linkType: hard
 
@@ -14813,7 +14813,7 @@ __metadata:
     "@eslint/js": "npm:10.0.1"
     "@kubernetes/client-node": "npm:2.0.0"
     "@napi-rs/xattr": "npm:^1.0.3"
-    "@playwright/test": "npm:1.64.0"
+    "@playwright/test": "npm:1.64.1"
     "@rancher/components": "npm:0.3.0-alpha.1"
     "@types/cross-spawn": "npm:6.0.6"
     "@types/dompurify": "npm:3.2.0"
