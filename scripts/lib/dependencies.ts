@@ -587,8 +587,8 @@ export abstract class VersionedDependency implements Dependency {
       throw new TypeError(`default rcompareVersions only handles string versions (got ${ version1 } / ${ version2 })`);
     }
 
-    const semver1 = semver.coerce(version1);
-    const semver2 = semver.coerce(version2);
+    const semver1 = semver.coerce(version1, { includePrerelease: true });
+    const semver2 = semver.coerce(version2, { includePrerelease: true });
 
     if (semver1 === null || semver2 === null) {
       throw new Error(`One of ${ version1 } and ${ version2 } failed to be coerced to semver`);
@@ -841,7 +841,7 @@ export async function getPublishedReleaseTagNames(owner: string, repo: string, r
   let tagNames = releases.map(release => release.tag_name);
 
   if (releaseFilter === 'semver') {
-    tagNames = tagNames.filter(tag => !semver.coerce(tag)?.prerelease?.length);
+    tagNames = tagNames.filter(tag => !semver.coerce(tag, { includePrerelease: true })?.prerelease?.length);
   }
 
   return tagNames;

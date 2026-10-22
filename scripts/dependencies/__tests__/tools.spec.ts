@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-import { DockerProvidedCredHelpers } from '../tools';
+import { DockerProvidedCredHelpers, Steve } from '../tools';
 
 import { DependencyManifest, DownloadContext, parseSha256Checksum } from '@/scripts/lib/dependencies';
 
@@ -43,5 +43,11 @@ describe('DockerProvidedCredHelpers.download', () => {
     });
 
     await expect(new DockerProvidedCredHelpers().download(context)).rejects.toThrow(/expected 2 .*found 1/i);
+  });
+});
+
+describe('Steve.rcompareVersions', () => {
+  it('orders pre-release versions of the same release', () => {
+    expect(new Steve().rcompareVersions('0.1.0-beta9.3', '0.1.0-beta9.4')).toBe(1);
   });
 });
