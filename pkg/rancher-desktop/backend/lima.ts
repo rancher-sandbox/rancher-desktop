@@ -584,10 +584,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     const locations = ['~', '/tmp/rancher-desktop'];
     const homeDir = `${ os.homedir() }/`;
     const extraDirs = [paths.cache, paths.logs, paths.resources];
+    const readOnlyDirs = []
 
     if (os.platform() === 'darwin') {
       // /var and /tmp are symlinks to /private/var and /private/tmp
-      locations.push('/Volumes', '/var/folders', '/private/tmp', '/private/var/folders');
+      locations.push('/Volumes', '/var/folders', '/private/etc', '/private/tmp', '/private/var/folders');
+      readOnlyDirs.push('/private/etc')
     }
     for (const extraDir of extraDirs) {
       const found = locations.some((loc) => {
@@ -602,7 +604,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
 
     for (const location of locations) {
-      const mount: LimaMount = { location, writable: true };
+      const mount: LimaMount = { location, writable: !readOnlyDirs.includes(location) };
 
       if (this.cfg?.virtualMachine.mount.type === MountType.NINEP) {
         const nineP = this.cfg.experimental.virtualMachine.mount['9p'];
