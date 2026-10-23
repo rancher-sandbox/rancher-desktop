@@ -120,8 +120,7 @@ verify_default_credStore() {
 @test 'verify allowed-images config' {
     run ctrctl pull --quiet "$IMAGE_BUSYBOX"
     if using_image_allow_list; then
-        assert_failure
-        assert_output --regexp "(UNAUTHORIZED|Forbidden)"
+        assert_refused_by_allow_list
     else
         assert_success
     fi
@@ -185,7 +184,9 @@ restart_container_engine() {
 @test 'restart container engine to refresh certs' {
     skip_for_insecure_registry
 
-    try restart_container_engine
+    # Each attempt runs wait_for_container_engine, whose waits already
+    # scale, so scaling the retry as well would square RD_WAIT_FACTOR.
+    try --no-scale restart_container_engine
 
     wait_for_registry
 }

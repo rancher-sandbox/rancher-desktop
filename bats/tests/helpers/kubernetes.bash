@@ -108,6 +108,7 @@ traefik_hostname() {
 }
 
 wait_for_traefik() {
+    trace "waiting for the traefik service to get an IP address"
     try traefik_ip
 }
 
