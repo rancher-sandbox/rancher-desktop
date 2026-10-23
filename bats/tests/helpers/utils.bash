@@ -345,6 +345,15 @@ EOF
     fi
 }
 
+# Assert that the last `run ctrctl pull` failed because the allowed-images
+# proxy refused the image.
+assert_refused_by_allow_list() {
+    assert_failure
+    # Moby prints the proxy's message. nerdctl sends only a HEAD request, never
+    # sees the message, and prints just "403 Forbidden".
+    assert_output --regexp "(Forbidden|not covered by the Rancher Desktop allowed-images list)"
+}
+
 # create_file path/to/file <<< "contents"
 # Create a new file with the provided path; the contents of standard input will
 # be written to that file.  Analogous to `cat >$1`.  Will create any parent
