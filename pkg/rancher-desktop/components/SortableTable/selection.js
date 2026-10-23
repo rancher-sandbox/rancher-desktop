@@ -29,14 +29,30 @@ export default {
   },
 
   computed: {
+    // The full set of rows selection can cover, independent of the current page.
+    // For client-side pagination this is every row that matches the filter; for
+    // server-side pagination only the current page is available locally.
+    selectableRows() {
+      return this.externalPaginationEnabled
+        ? (this.rows || [])
+        : (this.filteredRows || []);
+    },
+
     // Used for the table-level selection check-box to show checked (all selected)/intermediate (some selected)/unchecked (none selected)
     howMuchSelected() {
       const total = this.pagedRows.length;
-      const selected = this.selectedRows.length;
 
-      if ( selected >= total && total > 0 ) {
+      if ( !total ) {
+        return NONE;
+      }
+
+      const selectedOnPage = this.pagedRows.filter((row) => {
+        return this.selectedRows.some((selectedRow) => this.isSameRow(row, selectedRow));
+      }).length;
+
+      if ( selectedOnPage >= total ) {
         return ALL;
-      } else if ( selected > 0 ) {
+      } else if ( selectedOnPage > 0 ) {
         return SOME;
       }
 
@@ -119,7 +135,9 @@ export default {
   },
 
   watch: {
-    pagedRows() {
+    // Selection belongs to the row set, not to the page, so it survives paging.
+    // Pruning on the full row set still drops rows that were removed or filtered out.
+    selectableRows() {
       this.reselectRowsStillInTable();
     },
   },
@@ -131,7 +149,7 @@ export default {
      * its rows on refresh hands us new objects for the same rows.
      */
     reselectRowsStillInTable() {
-      const currentRows = this.pagedRows;
+      const currentRows = this.selectableRows;
       const rowsStillInTable = this.selectedRows
         .map((selectedRow) => currentRows.find((row) => this.isSameRow(row, selectedRow)))
         .filter((row) => !!row);

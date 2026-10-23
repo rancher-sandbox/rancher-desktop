@@ -115,8 +115,22 @@ function selectedRowsOf(wrapper: any) {
   return wrapper.vm.selectedRows;
 }
 
+function goToPage(wrapper: any, which: 'first' | 'prev' | 'next' | 'last') {
+  wrapper.vm.goToPage(which);
+
+  return wrapper.vm.$nextTick();
+}
+
+function howMuchSelectedOf(wrapper: any) {
+  return wrapper.vm.howMuchSelected;
+}
+
 function threeRows() {
   return [row('a'), row('b'), row('c')];
+}
+
+function fourRows() {
+  return [row('a'), row('b'), row('c'), row('d')];
 }
 
 describe('SortableTable selection', () => {
@@ -226,5 +240,51 @@ describe('SortableTable selection', () => {
     await clickCell(wrapper, 2, EXTENDS_SELECTION);
 
     expect(selectedRowsOf(wrapper)).toEqual(rebuiltRows);
+  });
+
+  it('keeps the selection when moving to another page and back', async() => {
+    const rows = fourRows();
+    const wrapper = mountTable(rows, { paging: true, rowsPerPage: 2 });
+
+    await clickCell(wrapper, 0);
+
+    await goToPage(wrapper, 'next');
+
+    expect(selectedRowsOf(wrapper)).toEqual([rows[0]]);
+
+    await goToPage(wrapper, 'prev');
+
+    expect(selectedRowsOf(wrapper)).toEqual([rows[0]]);
+  });
+
+  it('keeps selections from multiple pages', async() => {
+    const rows = fourRows();
+    const wrapper = mountTable(rows, { paging: true, rowsPerPage: 2 });
+
+    await clickCell(wrapper, 0);
+
+    await goToPage(wrapper, 'next');
+
+    await clickCell(wrapper, 1);
+
+    expect(selectedRowsOf(wrapper)).toEqual([rows[0], rows[3]]);
+  });
+
+  it('shows the header checkbox state for the current page only', async() => {
+    const rows = fourRows();
+    const wrapper = mountTable(rows, { paging: true, rowsPerPage: 2 });
+
+    await clickCell(wrapper, 0);
+
+    await goToPage(wrapper, 'next');
+
+    // One row is selected, but it is not on this page.
+    expect(howMuchSelectedOf(wrapper)).toBe('none');
+
+    await clickCell(wrapper, 0);
+    expect(howMuchSelectedOf(wrapper)).toBe('some');
+
+    await clickCell(wrapper, 1, ADDS_TO_SELECTION);
+    expect(howMuchSelectedOf(wrapper)).toBe('all');
   });
 });
