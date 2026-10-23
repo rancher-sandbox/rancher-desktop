@@ -123,11 +123,5 @@ require (
 
 replace github.com/lima-vm/lima => github.com/rancher-sandbox/lima v1.0.3-0.20250115235144-24eb898b3a96
 
-// gvisor requires a genproto from before googleapis/rpc became its own module.
-// Workspace builds load the full module graph, find googleapis/rpc/status in
-// both modules, and fail with an ambiguous import. Remove this once
-// gvisor-tap-vsock pins a gvisor that requires a post-split genproto.
-exclude google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f
-
 // Dependabot does not read go.work, so without this it pins a remote version.
 replace github.com/rancher-sandbox/rancher-desktop/src/go/ports => ../ports
