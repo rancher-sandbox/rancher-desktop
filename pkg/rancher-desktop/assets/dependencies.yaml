@@ -386,30 +386,30 @@ spinShim:
 steve:
   assets:
     - arch: amd64
-      checksum: sha256:83534629e8c3c356a3a57a697145d1abe0d1704217ffb4bc4268514d85820c6f
+      checksum: sha256:b55f2c6a264482b7404adb1e5552aa567c1fe8f00759f3f96a37842c2b5ae95f
       platform: linux
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.3/steve-linux-amd64.tar.gz
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.4/steve-linux-amd64.tar.gz
     - arch: arm64
-      checksum: sha256:f19c955808923c1be2175abb9278148af3b41ff6126d7d7bc6b03083d283b6de
+      checksum: sha256:1a44b4b429fd850c386167026d6471a8e2e79d93435f46aadad1970ca5ba7d9b
       platform: linux
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.3/steve-linux-arm64.tar.gz
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.4/steve-linux-arm64.tar.gz
     - arch: amd64
-      checksum: sha256:600e04c98dcf3a12d389a857a2e274b295f460aaa15e5ef85fba6cfe17e41d49
+      checksum: sha256:dc28db15bb4a0c6706df9baae09a5c67f91ac2373e0c243422348ba5ef15004f
       platform: darwin
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.3/steve-darwin-amd64.tar.gz
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.4/steve-darwin-amd64.tar.gz
     - arch: arm64
-      checksum: sha256:b0284d1d6b48753c70e991219b65064a704973d69c76a9fe3fc9d8ad48c9665c
+      checksum: sha256:ae47147b70904c101e54f26f2cecd5bfbe900b7b0b48f513a54d57f72b5ecc93
       platform: darwin
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.3/steve-darwin-arm64.tar.gz
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.4/steve-darwin-arm64.tar.gz
     - arch: amd64
-      checksum: sha256:103d183a14cf706f870d83b4d75f30ac09baaed89d663ce311adb2544f3eecb2
+      checksum: sha256:3d6199981ab3af3cf3fb862c327877aafd6d4a9810657f336552f42e1f5116ea
       platform: windows
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.3/steve-windows-amd64.tar.gz
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.4/steve-windows-amd64.tar.gz
     - arch: arm64
-      checksum: sha256:1681462778e9874aa77a87e643ab0ef11bdadac2456c44e322ea146552baf802
+      checksum: sha256:9bb3f98856a8edccfa7cf66cde18656c8c5ec4c7c43a92493c1ea3900a76cb01
       platform: windows
-      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.3/steve-windows-arm64.tar.gz
-  version: 0.1.0-beta9.3
+      url: https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v0.1.0-beta9.4/steve-windows-arm64.tar.gz
+  version: 0.1.0-beta9.4
 trivy:
   assets:
     - arch: amd64
