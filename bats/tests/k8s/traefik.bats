@@ -35,6 +35,26 @@ assert_traefik_pods_are_down() {
     return 0
 }
 
+# The traefik pods go away long before the k3s uninstall Jobs finish. Enabling
+# traefik again in that window reinstalls the traefik chart while traefik-crd
+# is still being uninstalled, and helm-install-traefik then crash-loops on
+# "Required CRDs are missing".
+assert_traefik_charts_are_gone() {
+    local charts count
+    run --separate-stderr kubectl get --all-namespaces --output 'jsonpath={.items}' helmcharts
+    assert_success
+
+    charts=$(jq_output 'map(select(.metadata.name | contains("traefik")))')
+    count="$(output=$charts jq_output length)"
+    if [[ $count -gt 0 ]]; then
+        trace "Found $count traefik HelmChart resources"
+        return 1
+    fi
+
+    trace "No traefik HelmChart resources"
+    return 0
+}
+
 assert_traefik_pods_are_up() {
     ip_regex="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
     run kubectl -n kube-system get service traefik -o jsonpath="{.status.loadBalancer.ingress[0].ip}"
@@ -97,6 +117,9 @@ assert_traefik_on_localhost() {
 
     trace "Check if the traefik pods go down"
     try --max 30 --delay 10 assert_traefik_pods_are_down
+
+    trace "Wait for the uninstall jobs to remove the traefik charts"
+    try --max 30 --delay 10 assert_traefik_charts_are_gone
 }
 
 @test 'no connection on localhost' {

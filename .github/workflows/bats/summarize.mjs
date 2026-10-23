@@ -111,7 +111,7 @@ async function readRuns() {
           run.skipped++;
         } else if (line.startsWith('ok ')) {
           run.passed++;
-        } else if (line.startsWith('no ok ')) {
+        } else if (line.startsWith('not ok ')) {
           run.failed++;
         }
       }

@@ -3,3 +3,6 @@
 resources/linux/** text=auto eol=lf
 resources/setup-spin text=auto eol=lf
 pkg/rancher-desktop/assets/scripts/** text=auto eol=lf
+# On Windows the BATS suite runs inside the WSL distribution, whose bash
+# rejects CRLF outright ("set: pipefail\r: invalid option name").
+bats/** text=auto eol=lf
