@@ -1,12 +1,21 @@
+import child from 'child_process';
+import crypto from 'crypto';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import util from 'util';
+
+import Electron from 'electron';
+
 const Node = {
-  child:    require('child_process'),
-  crypto:   require('crypto'),
-  electron: require('electron'),
-  fs:       require('fs'),
-  os:       require('os'),
-  path:     require('path'),
+  child,
+  crypto,
+  electron: Electron,
+  fs,
+  os,
+  path,
   process,
-  util:     require('util'),
+  util,
 };
 
 function Attempt(instance, end) {
@@ -24,12 +33,14 @@ function Attempt(instance, end) {
   end(new Error('Platform not yet supported.'));
 }
 
-function EscapeDoubleQuotes(string) {
+// Escape the characters that the shell still interprets inside double quotes,
+// so the string reaches the command unchanged.
+export function EscapeDoubleQuotes(string) {
   if (typeof string !== 'string') {
     throw new TypeError('Expected a string.');
   }
 
-  return string.replace(/"/g, '\\"');
+  return string.replace(/["$`\\]/g, '\\$&');
 }
 
 function Exec() {
