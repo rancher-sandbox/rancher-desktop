@@ -43,16 +43,16 @@ WSLDistro:
 alpineLimaISO:
   assets:
     - arch: amd64
-      checksum: sha256:51325294e5e150081472f058b54db0a067918ec186543b4eaaf4beb8d1f73533
+      checksum: sha256:b0deb120f3b6f42cd825bf79aad7d4c1c09fa7d9aa1d6356de43be3b7ba6b4a6
       platform: linux
-      url: https://github.com/rancher-sandbox/alpine-lima/releases/download/v0.2.47.rd10/alpine-lima-rd-3.24.1-x86_64.iso
+      url: https://github.com/rancher-sandbox/alpine-lima/releases/download/v0.2.47.rd11/alpine-lima-rd-3.24.1-x86_64.iso
     - arch: arm64
-      checksum: sha256:1e41dd1743e7a44f8b1ee0b2b97ee2d2539b86dd8f479f50d1d863d4bc1a2a5e
+      checksum: sha256:8d9c99e216af7457897814677f593dff8a33297d4e180cc93c10c31da2ed8b38
       platform: linux
-      url: https://github.com/rancher-sandbox/alpine-lima/releases/download/v0.2.47.rd10/alpine-lima-rd-3.24.1-aarch64.iso
+      url: https://github.com/rancher-sandbox/alpine-lima/releases/download/v0.2.47.rd11/alpine-lima-rd-3.24.1-aarch64.iso
   version:
     alpineVersion: 3.24.1
-    isoVersion: 0.2.47.rd10
+    isoVersion: 0.2.47.rd11
 certManager:
   assets:
     - checksum: sha256:262fef78478492cd35b73a1b227106b7802f9c056361d1f561d04b32d751337f
