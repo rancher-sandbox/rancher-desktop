@@ -197,18 +197,22 @@ async function getRunMetadata(infoType) {
   /** @type any[] */
   const items = [];
 
-  for (let page = 1; ; page++) {
-    const response = await fetch(`${ url }&page=${ page }`, { headers });
+  try {
+    for (let page = 1; ; page++) {
+      const response = await fetch(`${ url }&page=${ page }`, { headers });
 
-    if (!response.ok) {
-      throw new Error(`Failed to get GitHub ${ infoType } info:` + await response.text());
-    }
-    const data = await response.json();
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      const data = await response.json();
 
-    items.push(...data[infoType]);
-    if (data[infoType].length === 0 || items.length >= data.total_count) {
-      return { ...data, [infoType]: items };
+      items.push(...data[infoType]);
+      if (data[infoType].length === 0 || items.length >= data.total_count) {
+        return { ...data, [infoType]: items };
+      }
     }
+  } catch (ex) {
+    console.error(`Failed to get GitHub ${ infoType } info:`, ex);
   }
 }
 
