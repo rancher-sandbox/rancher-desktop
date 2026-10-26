@@ -128,7 +128,7 @@
     "dayjs": "1.11.23",
     "dompurify": "3.4.17",
     "ejs": "7.0.2",
-    "electron": "44.8.0",
+    "electron": "44.9.0",
     "electron-builder": "26.17.0",
     "eslint": "10.13.0",
     "eslint-plugin-vue": "10.11.1",
