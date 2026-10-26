@@ -14,7 +14,7 @@ import mainEvents from '@pkg/main/mainEvents';
 import paths from '@pkg/utils/paths';
 
 import type { AppAdapter } from 'electron-updater/out/AppAdapter';
-import type { DownloadUpdateOptions } from 'electron-updater/out/AppUpdater';
+import type { DownloadExecutorResult, DownloadUpdateOptions } from 'electron-updater/out/AppUpdater';
 
 /**
  * MsiUpdater implements updating for Rancher Desktop's MSI-based installer.
@@ -28,7 +28,7 @@ export default class MsiUpdater extends NsisUpdater {
   }
 
   // This implements an abstract method in BaseUpdater.
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<string[]> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const { info, provider } = downloadUpdateOptions.updateInfoAndProvider;
     const fileInfo = findFile(provider.resolveFiles(info), 'msi');
 
