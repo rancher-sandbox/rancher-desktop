@@ -8772,12 +8772,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ejs@npm:7.0.1":
-  version: 7.0.1
-  resolution: "ejs@npm:7.0.1"
+"ejs@npm:7.0.2":
+  version: 7.0.2
+  resolution: "ejs@npm:7.0.2"
   bin:
     ejs: bin/cli.js
-  checksum: 10c0/683485e8f4d1db361fe4c6b3906733555460eb7f858ad4ca7f7c0e0e7925d83e6b6e55edda9baf0701213c2e9a7e08e83c2ec116ba71a98affdf5638e8ba8067
+  checksum: 10c0/f5f8b44411766186e38aec59a4974612cc259121e58a6af40c04a5613218503a92386cedc9fe7faf474bf928596c4ede9b7ce98babcf08d6d2e55c7189617259
   languageName: node
   linkType: hard
 
@@ -14854,7 +14854,7 @@ __metadata:
     dayjs: "npm:1.11.23"
     dmg-license: "npm:1.0.11"
     dompurify: "npm:3.4.17"
-    ejs: "npm:7.0.1"
+    ejs: "npm:7.0.2"
     electron: "npm:44.8.0"
     electron-builder: "npm:26.17.0"
     electron-updater: "npm:6.8.9"
