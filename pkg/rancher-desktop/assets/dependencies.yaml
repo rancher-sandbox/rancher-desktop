@@ -251,30 +251,30 @@ helm:
 kuberlr:
   assets:
     - arch: amd64
-      checksum: sha256:a330f89c89dfdfb9f01a18bd29a679918354f98d654e587d833473c2e343b737
+      checksum: sha256:089fb94e6bf67e541e65fa8becfe7f705ef32fab9001bee8c803b24982a50e3d
       platform: linux
-      url: https://github.com/flavio/kuberlr/releases/download/v0.8.0/kuberlr_0.8.0_linux_amd64.tar.gz
+      url: https://github.com/flavio/kuberlr/releases/download/v0.9.0/kuberlr_0.9.0_linux_amd64.tar.gz
     - arch: arm64
-      checksum: sha256:2e444b62b985db46b6ed3b2f8ebfcea95c7c2ab4bbb36c6faea43a5228e89cc6
+      checksum: sha256:57e5fb485b08fa97e0beafd431292159dbaa332dded96dfb2cb8476b0b012a44
       platform: linux
-      url: https://github.com/flavio/kuberlr/releases/download/v0.8.0/kuberlr_0.8.0_linux_arm64.tar.gz
+      url: https://github.com/flavio/kuberlr/releases/download/v0.9.0/kuberlr_0.9.0_linux_arm64.tar.gz
     - arch: amd64
-      checksum: sha256:f9c731c606229143bb90f1ea7430c622ffcf6034aa7696f0c683df903375bff3
+      checksum: sha256:ced0de303ef32c67e928fd0bdbf9f0adda8772476303ad89d6dce0f20370f9fc
       platform: darwin
-      url: https://github.com/flavio/kuberlr/releases/download/v0.8.0/kuberlr_0.8.0_darwin_amd64.tar.gz
+      url: https://github.com/flavio/kuberlr/releases/download/v0.9.0/kuberlr_0.9.0_darwin_amd64.tar.gz
     - arch: arm64
-      checksum: sha256:4d605c71e62ddac1642e8d428ec8e00b03f4e61431db45e7a8a0135ceedbce7e
+      checksum: sha256:6a8450cb0d36468786d990dd6c5dd4851278f16ef4f523fbda4a8754ac46c793
       platform: darwin
-      url: https://github.com/flavio/kuberlr/releases/download/v0.8.0/kuberlr_0.8.0_darwin_arm64.tar.gz
+      url: https://github.com/flavio/kuberlr/releases/download/v0.9.0/kuberlr_0.9.0_darwin_arm64.tar.gz
     - arch: amd64
-      checksum: sha256:13229a0d72316822785691ed1e768dc5f33370ae35f803b0e81fa06c0617d084
+      checksum: sha256:6058a79679e3a2e911dc0e0b9cbcd2fa4bd7d28f2c839f975108b106bfdaef62
       platform: windows
-      url: https://github.com/flavio/kuberlr/releases/download/v0.8.0/kuberlr_0.8.0_windows_amd64.zip
+      url: https://github.com/flavio/kuberlr/releases/download/v0.9.0/kuberlr_0.9.0_windows_amd64.zip
     - arch: arm64
-      checksum: sha256:f24920c44f7b95f427f95abce445403b6ca950841a3ce8ff07097fbab0953fb9
+      checksum: sha256:d0c0d8e05311bf7e6c26f8b0daf75ad176b2d9465ea49bd14c76a4d1eb85d9f4
       platform: windows
-      url: https://github.com/flavio/kuberlr/releases/download/v0.8.0/kuberlr_0.8.0_windows_arm64.zip
-  version: 0.8.0
+      url: https://github.com/flavio/kuberlr/releases/download/v0.9.0/kuberlr_0.9.0_windows_arm64.zip
+  version: 0.9.0
 lima:
   assets:
     - arch: amd64
