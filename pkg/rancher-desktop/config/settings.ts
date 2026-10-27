@@ -163,8 +163,8 @@ export const defaultSettings = {
         noproxy:  ['0.0.0.0/8', '10.0.0.0/8', '127.0.0.0/8', '169.254.0.0/16', '172.16.0.0/12', '192.168.0.0/16',
           '224.0.0.0/4', '240.0.0.0/4'],
       },
-      /** Lima only: use SSH port forwarding instead of gRPC. */
-      sshPortForwarder: true,
+      /** Lima only: when true, use SSH port forwarding instead of gRPC. */
+      sshPortForwarder: false,
     },
   },
 };
