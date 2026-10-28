@@ -111,7 +111,7 @@ async function readRuns() {
           run.skipped++;
         } else if (line.startsWith('ok ')) {
           run.passed++;
-        } else if (line.startsWith('no ok ')) {
+        } else if (line.startsWith('not ok ')) {
           run.failed++;
         }
       }
@@ -185,19 +185,35 @@ async function getRunMetadata(infoType) {
       return;
     }
   }
-  const url = `${ env.GITHUB_API_URL }/repos/${ env.GITHUB_REPOSITORY }/actions/runs/${ env.GITHUB_RUN_ID }/${ infoType }?per_page=100`;
+  // For a re-run, GitHub can take so long to list a page of 100 jobs that it
+  // answers 502. Smaller pages finish in time.
+  const url = `${ env.GITHUB_API_URL }/repos/${ env.GITHUB_REPOSITORY }/actions/runs/${ env.GITHUB_RUN_ID }/${ infoType }?per_page=20`;
   /** @type Record<string, string> */
   const headers = {};
 
   if ('GITHUB_TOKEN' in env) {
     headers.Authorization = `Bearer ${ env.GITHUB_TOKEN }`;
   }
-  const response = await fetch(url, { headers })
+  /** @type any[] */
+  const items = [];
 
-  if (!response.ok) {
-    throw new Error(`Failed to get GitHub ${ infoType } info:` + await response.text());
+  try {
+    for (let page = 1; ; page++) {
+      const response = await fetch(`${ url }&page=${ page }`, { headers });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      const data = await response.json();
+
+      items.push(...data[infoType]);
+      if (data[infoType].length === 0 || items.length >= data.total_count) {
+        return { ...data, [infoType]: items };
+      }
+    }
+  } catch (ex) {
+    console.error(`Failed to get GitHub ${ infoType } info:`, ex);
   }
-  return await response.json();
 }
 
 /**

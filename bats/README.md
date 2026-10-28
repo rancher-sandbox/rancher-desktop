@@ -200,6 +200,15 @@ that may be set when triggering a run manually:
     to test.  This allows to test code from runs where it failed to build on
     platforms that don't need to be tested, or in-process runs as long as the
     relevant platforms have already completed.
+  <tr><td><code>tests-from</code>
+    <td>Take the tests from the package build (<code>package</code>) or from
+    the branch that the run was dispatched on (<code>checkout</code>).
+    Either way, bats-core, its helper libraries, and the bundled jq come
+    from the package build.
+  <tr><td><code>ramdisk</code>
+    <td>macOS only: put the VM on a ramdisk.
+  <tr><td><code>vz</code>
+    <td>macOS only: use the Virtualization framework instead of QEMU.
   </tbody>
 </table>
 
@@ -210,11 +219,12 @@ when the same test doesn't fail locally).  Some things might be helpful:
 
 - Logs for failing runs can be downloaded by clicking on the :file_folder: icon
   in the summary table at the bottom of the run.
-- If changes to the application or BATS tests are required, a new [package
-  action] run will need to be manually triggered.  In that case, setting `sign`
-  to `false` in that run will speed it up by a few minutes, by skipping the
-  check for properly signed installers — that can be dealt with when the actual
-  PR is made.
+- If changes to the application are required, a new [package action] run will
+  need to be manually triggered.  In that case, setting `sign` to `false` in
+  that run will speed it up by a few minutes, by skipping the check for
+  properly signed installers; that can be dealt with when the actual PR is
+  made.  To try a change to the BATS tests alone, set `tests-from` to
+  `checkout` and reuse an existing package build instead.
 - When focusing on a particular failing platform, it may be possible to shave
   off a few minutes by setting the `package-id` field (see above) when starting
   the BATS run; this lets you start the run once the platform you're interested

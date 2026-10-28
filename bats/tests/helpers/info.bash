@@ -33,11 +33,11 @@ show_info() { # @test
         fi
         printf "$format" "Using image allow list:" "$(bool using_image_allow_list)"
         if is_unix; then
+            printf "$format" "Host CPUs:" "$(getconf _NPROCESSORS_ONLN)"
             printf "$format" "VM CPUs:" "$RD_VM_CPUS"
         fi
         printf "$format" "Wait factor:" "$RD_WAIT_FACTOR"
         if is_macos; then
-            printf "$format" "Host CPUs:" "$(sysctl -n hw.ncpu)"
             printf "$format" "Using VZ emulation:" "$(bool using_vz_emulation)"
             printf "$format" "Using ramdisk:" "$(bool using_ramdisk)"
         fi

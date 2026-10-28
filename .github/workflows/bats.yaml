@@ -25,7 +25,7 @@ on:
         type: string
       kubernetes-version:
         description: Primary Kubernetes version to test
-        default: '1.22.7' # Must also change in calculate step
+        default: '1.25.16' # Must also change in calculate step
         type: string
       kubernetes-alt-version:
         description: Secondary Kubernetes version to test (e.g. for upgrades)
@@ -39,6 +39,25 @@ on:
         description: Run with experimental settings (WSL)
         default: false
         type: boolean
+      # The tests ship inside the package build's bats.tar.gz, so iterating on
+      # a test normally needs a full package rebuild.  'checkout' replaces
+      # only tests/; bats-core, its helper libraries, and the bundled jq still
+      # come from the package.
+      tests-from:
+        description: Take the tests from the package build or from this checkout
+        default: 'package'
+        type: choice
+        options: [ 'package', 'checkout' ]
+      ramdisk:
+        description: Put the VM on a ramdisk (macOS only)
+        default: 'false'
+        type: choice
+        options: [ 'true', 'false' ]
+      vz:
+        description: Use the Virtualization framework rather than QEMU (macOS only)
+        default: 'true'
+        type: choice
+        options: [ 'true', 'false' ]
   schedule:
   - cron: '0 8 * * 1-5' # 8AM UTC weekdays as a baseline
 
@@ -53,6 +72,9 @@ env:
 jobs:
   get-tests:
     name: Calculate tests to run
+    # A fork that enables this workflow wants the runs it dispatches, not the
+    # full nightly matrix against whatever build it last made.
+    if: github.event_name != 'schedule' || !github.event.repository.fork
     runs-on: ubuntu-latest
     steps:
     - name: Fetch install script
@@ -63,6 +85,17 @@ jobs:
         sparse-checkout: |
           scripts/install-latest-ci.sh
           .github/workflows/bats/get-tests.py
+
+    - name: Fetch tests from this checkout
+      if: inputs.tests-from == 'checkout'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        sparse-checkout-cone-mode: false
+        sparse-checkout: |
+          /.gitattributes
+          /bats/tests/
+        path: checkout
 
     - id: repo
       name: Calculate short repository
@@ -85,6 +118,13 @@ jobs:
         BATS_DIR:     ${{ github.workspace }}/bats
         INSTALL_MODE: skip
 
+    - name: Use the tests from this checkout
+      if: inputs.tests-from == 'checkout'
+      shell: bash
+      run: |
+        rm -rf bats/tests
+        mv checkout/bats/tests bats/tests
+
     - name: Calculate tests
       id: calculate
       # This script is not inline to make local testing easier
@@ -93,7 +133,7 @@ jobs:
         TESTS:                  ${{ inputs.tests }}
         PLATFORMS:              ${{ inputs.platforms }}
         ENGINES:                ${{ inputs.engines }}
-        KUBERNETES_VERSION:     ${{ inputs.kubernetes-version || '1.22.7' }}
+        KUBERNETES_VERSION:     ${{ inputs.kubernetes-version || '1.25.16' }}
         # rancher/rancher helm chart 2.8.5 supports up to 1.28.*
         KUBERNETES_ALT_VERSION: ${{ inputs.kubernetes-alt-version || '1.28.11' }}
       working-directory: bats/tests
@@ -108,6 +148,10 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.get-tests.outputs.tests )}}
     runs-on: ${{ matrix.host }}
+    # A wedged setup or install step would otherwise inherit GitHub's 6-hour
+    # default.  Keep this above the Run BATS step's own 120-minute cap so that
+    # step times out first and the log collection still runs.
+    timeout-minutes: 150
     steps:
     - name: Fetch install script
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -119,6 +163,17 @@ jobs:
           scripts/patch-guest-iso.sh
           .github/actions/setup-environment/action.yaml
           .github/workflows/bats/sanitize-artifact-name.sh
+
+    - name: Fetch tests from this checkout
+      if: inputs.tests-from == 'checkout'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        sparse-checkout-cone-mode: false
+        sparse-checkout: |
+          /.gitattributes
+          /bats/tests/
+        path: checkout
 
     - name: Install latest CI build
       run: |
@@ -140,8 +195,35 @@ jobs:
         ZIP_NAME:     ${{ github.workspace }}/version.txt
         RD_LOCATION:  system
 
+    - name: "Windows: Open host-switch on the public profile"
+      if: runner.os == 'Windows'
+      shell: pwsh
+      # A hosted runner's WSL adapter has no connection profile, so traffic
+      # from the distro arrives on the public profile.  But the MSI opens
+      # host-switch.exe only on the private and domain profiles.
+      # published-udp-ports.bats checks the MSI's rules by their "Rancher
+      # Desktop Networking" name prefix, so this rule uses another name.
+      run: >-
+        New-NetFirewallRule -DisplayName 'BATS host-switch Public Exception'
+        -Direction Inbound -Action Allow -Profile Public
+        -Program "$env:ProgramFiles\Rancher Desktop\resources\resources\win32\internal\host-switch.exe"
+
+    - name: Use the tests from this checkout
+      if: inputs.tests-from == 'checkout'
+      shell: bash
+      run: |
+        rm -rf bats/tests
+        mv checkout/bats/tests bats/tests
+
+    - name: "Linux: Identify the user that runs the tests"
+      if: runner.os == 'Linux'
+      shell: bash
+      run: echo "TEST_USER=$(id --user --name)" >> "$GITHUB_ENV"
+
     - name: Set up environment
       uses: $/.github/actions/setup-environment
+      with:
+        user: ${{ env.TEST_USER }}
 
     - name: "Linux: Install prerequisites"
       if: runner.os == 'Linux'
@@ -163,12 +245,32 @@ jobs:
       # and tsc=reliable stops the watchdog demoting it again.
       run: scripts/patch-guest-iso.sh tsc_early_khz=auto tsc=reliable
 
+    - name: "macOS: Disable Spotlight indexing"
+      if: runner.os == 'macOS'
+      shell: bash
+      # Spotlight indexing takes so much of the runner's four cores that it
+      # leaves the VM too little CPU to boot in time.
+      run: sudo mdutil -a -i off
+
+    - name: "Linux: Size the VM for the runner"
+      if: runner.os == 'Linux'
+      shell: bash
+      # Give the guest every core except the one that the runner agent needs.
+      run: echo "RD_VM_CPUS=$(( $(nproc) - 1 ))" >> "$GITHUB_ENV"
+
+    - name: "macOS: Size the VM for the runner"
+      if: runner.os == 'macOS'
+      shell: bash
+      # The 2-vCPU default starves the guest on the 4-core macos-15-intel
+      # runners.  Drop this to 3 if jobs start losing their runner.
+      run: echo "RD_VM_CPUS=4" >> "$GITHUB_ENV"
+
     - name: "Windows: Install WSL2 Distribution"
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
         # Install a "modern" WSL distribution
-        wsl --install --no-launch --web-download --name openSUSE openSUSE-Leap-15.6
+        wsl --install --no-launch --web-download --name openSUSE openSUSE-Leap-16.0
         # Prevent first-boot from running
         wsl --distribution openSUSE --user root --exec sed -i -e '/^command/d' /etc/wsl-distribution.conf
         # Create the initial user
@@ -177,11 +279,23 @@ jobs:
     - name: "Windows: Install prerequisites in WSL"
       if: runner.os == 'Windows'
       shell: pwsh
-      run: >-
-        wsl.exe --distribution openSUSE --user root --exec
-        zypper --non-interactive install
-        curl
-        util-linux
+      run: |
+        # cdn.opensuse.org intermittently answers 403 for the repo metadata.
+        # zypper carries on, reports every package as missing, and exits 1,
+        # which loses the job before any test runs.
+        #
+        # Actions prepends "$ErrorActionPreference = 'stop'", under which a
+        # failing native command throws and would abort the loop on the first
+        # attempt, so turn that off for the retry.
+        $ErrorActionPreference = 'Continue'
+        $PSNativeCommandUseErrorActionPreference = $false
+        foreach ($attempt in 1..3) {
+            wsl.exe --distribution openSUSE --user root --exec zypper --non-interactive install curl netcat-openbsd openssl util-linux
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            Write-Host "zypper install failed (attempt $attempt)"
+            if ($attempt -lt 3) { Start-Sleep -Seconds ($attempt * 15) }
+        }
+        exit 1
 
     - name: "Windows: Enable experimental WSL settings"
       if: runner.os == 'Windows' && inputs.experimental
@@ -271,8 +385,14 @@ jobs:
         RD_TAKE_SCREENSHOTS:       "true"
         RD_TRACE:                  "true"
         RD_USE_GHCR_IMAGES:        "true"
-        RD_USE_RAMDISK:            "true"
+        RD_USE_RAMDISK:            ${{ inputs.ramdisk || 'false' }}
+        # Empty everywhere but macOS: defaults.bash rejects the variable on a
+        # platform that has no Virtualization framework.
+        RD_USE_VZ_EMULATION:       ${{ runner.os == 'macOS' && inputs.vz || '' }}
         RD_USE_WINDOWS_EXE:        "${{ runner.os == 'Windows' }}"
+        # The macOS runners are the slow ones; see RD_WAIT_FACTOR in
+        # bats/tests/helpers/defaults.bash.
+        RD_WAIT_FACTOR:            ${{ runner.os == 'macOS' && '2' || '1' }}
         WSLENV: "\
           GITHUB_TOKEN:\
           RD_CAPTURE_LOGS:\
@@ -284,6 +404,7 @@ jobs:
           RD_USE_GHCR_IMAGES:\
           RD_USE_RAMDISK:\
           RD_USE_WINDOWS_EXE:\
+          RD_WAIT_FACTOR:\
           "
       working-directory: bats
       timeout-minutes: 120
@@ -333,7 +454,9 @@ jobs:
   summarize:
     name: Summarize output
     needs: [ get-tests, bats ]
-    if: ${{ !cancelled() }}
+    # The fork guard skips get-tests on a fork's nightly, and then there is
+    # nothing to summarize.
+    if: ${{ !cancelled() && needs.get-tests.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
     - name: Fetch summarizer script
@@ -353,3 +476,4 @@ jobs:
     - run: node .github/workflows/bats/summarize.mjs
       env:
         EXPECTED_TESTS: ${{ needs.get-tests.outputs.tests }}
+        GITHUB_TOKEN:   ${{ github.token }}

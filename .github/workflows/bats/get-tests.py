@@ -37,32 +37,36 @@ class Result:
 
     key = staticmethod(attrgetter("name", "host", "engine"))
 
+# The macOS runners are too slow for these suites to finish in a single job.
+# A job that hits the Run BATS step's two-hour timeout does not report the
+# tests that it never reached.
+SPLIT_PER_FILE_ON_MAC = ("k8s", "containers")
+
 def resolve_test(test: str, platform: Platforms) -> Iterator[str]:
     """
     Given a test spec, convert that to a list of tests.
     """
     # If we can't glob the test, use it as-is.
     for test in glob.glob(test) or (test,):
-        if platform == "mac" and test == "k8s":
-            # The macOS runners on CI are extra slow; for this test suite,
-            # run each test individually.
-            for name in glob.glob("k8s/*.bats"):
+        if platform == "mac" and test in SPLIT_PER_FILE_ON_MAC:
+            for name in glob.glob(f"{test}/*.bats"):
                 yield name.removesuffix(".bats")
         else:
             yield test.removesuffix(".bats")
+
+# The extensions test images compile Go inside the guest, and macos-15-intel
+# corrupts CPU-bound processes there.  So the suite fails on macOS for reasons
+# that say nothing about Rancher Desktop.  Building the binaries outside
+# the guest would let it run there again.
+SKIP_ON_MACOS = ("extensions",)
 
 def skip_test(test: Result) -> bool:
     """
     Check if a given test should be skipped.
     We skip some tests because the CI machines can't handle them.
     """
-    if test.host == "macos-15-intel" and test.name.startswith("k8s/"):
-        # The macOS CI runners are slow; skip some tests that can be tested on
-        # other OSes.
-        skipped_tests = ("verify-cached-images",)
-        if any(test.name == f"k8s/{t}" for t in skipped_tests):
-            return True
-    return False
+    suite = test.name.split("/")[0]
+    return test.host == "macos-15-intel" and suite in SKIP_ON_MACOS
 
 results: List[Result] = list()
 errors: bool = False
