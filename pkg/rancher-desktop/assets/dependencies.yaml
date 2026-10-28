@@ -278,22 +278,22 @@ kuberlr:
 lima:
   assets:
     - arch: amd64
-      checksum: sha256:f0817612337ca633223adb4ad8d7a8482426dd2302d6639b40f1508099cc4b54
+      checksum: sha256:992db5cd8cc6b71d150523a699e86f36c59de7b59e2b8b2b68924933a0793d7d
       platform: darwin
-      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.3.0.rd0/lima.macos-15.amd64.tar.gz
+      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.3.0.rd1/lima.macos-15.amd64.tar.gz
     - arch: arm64
-      checksum: sha256:9a486ee3d35745e106631db38db53ef347b55a4fe4dba3501ab8d011c4ea59d2
+      checksum: sha256:85e1fa08e64075301acee0994af44521a8bac7e27066edc716e48ab4cc13179d
       platform: darwin
-      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.3.0.rd0/lima.macos-15.arm64.tar.gz
+      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.3.0.rd1/lima.macos-15.arm64.tar.gz
     - arch: amd64
-      checksum: sha256:e3890e95ea61c55f638480c06bb02ab7715ba91c2b90f294e1c673fa2ee7422f
+      checksum: sha256:0028c2d1390265d8ac101a7c988ce641325b60eb28091d6bc542e60ea064920c
       platform: linux
-      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.3.0.rd0/lima.linux.amd64.tar.gz
+      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.3.0.rd1/lima.linux.amd64.tar.gz
     - arch: arm64
-      checksum: sha256:a8104a6d10dcdc28e13cb657dc715e4b923ed173a0ede9726fe0e2834401de64
+      checksum: sha256:87e56c84ae2d1761855fe7ddf5f73d1cfd969d3c9cc8179f454b4241fc10b4c4
       platform: linux
-      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.3.0.rd0/lima.linux.arm64.tar.gz
-  version: 2.3.0.rd0
+      url: https://github.com/rancher-sandbox/rancher-desktop-lima/releases/download/v2.3.0.rd1/lima.linux.arm64.tar.gz
+  version: 2.3.0.rd1
 mobyOpenAPISpec:
   assets:
     - checksum: sha256:f09a22ad220d551dca5d6c402052204d3e9fd1f16943cd78ba6677ea1266616f
