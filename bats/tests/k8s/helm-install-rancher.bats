@@ -96,8 +96,13 @@ deploy_rancher() {
         fail "Could not restore Rancher chart version"
     fi
 
+    # v1.16.5 is the newest cert-manager that still supports Kubernetes 1.25.
+    # Unpinned pulls the latest chart, whose CRDs declare selectableFields;
+    # the apiservers we test against reject that field.  An OCI registry has
+    # no index to search, so helm only accepts an exact version here.
     helm upgrade \
         --install cert-manager oci://quay.io/jetstack/charts/cert-manager \
+        --version v1.16.5 \
         --namespace cert-manager \
         --set installCRDs=true \
         --set "extraArgs[0]=--enable-certificate-owner-ref=true" \
@@ -107,10 +112,16 @@ deploy_rancher() {
     host=$(traefik_hostname)
 
     comment "Installing rancher $rancher_chart_version"
+    # Kubernetes 1.25 removed the PodSecurityPolicy API, but chart 2.7.2, the
+    # oldest one determine_chart_version accepts for 1.25, still defaults
+    # global.cattle.psp.enabled to true and then refuses to install.  2.7.5 and
+    # later derive the value from the cluster version, so the flag is a no-op
+    # there.
     helm upgrade \
         --install rancher rancher-latest/rancher \
         --version "$rancher_chart_version" \
         --namespace cattle-system \
+        --set global.cattle.psp.enabled=false \
         --set hostname="$host" \
         --set replicas=1 \
         --create-namespace
