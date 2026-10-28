@@ -182,7 +182,11 @@ install_application() {
             local app='Rancher Desktop'
             case "$RD_LOCATION" in
             system)
-                dest="$(wslpath_from_win32_env ProgramFiles)";;
+                # Only the MSI writes the AdminInstall key and the firewall
+                # rules, so a zip unpacked into Program Files would still run
+                # as a per-user install.
+                echo "On Windows, RD_LOCATION=system needs INSTALL_MODE=installer" >&2
+                exit 1;;
             user)
                 dest="$(wslpath_from_win32_env LOCALAPPDATA)/Programs";;
             *)
