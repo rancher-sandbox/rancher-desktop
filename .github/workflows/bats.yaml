@@ -195,6 +195,19 @@ jobs:
         ZIP_NAME:     ${{ github.workspace }}/version.txt
         RD_LOCATION:  system
 
+    - name: "Windows: Open host-switch on the public profile"
+      if: runner.os == 'Windows'
+      shell: pwsh
+      # A hosted runner's WSL adapter has no connection profile, so traffic
+      # from the distro arrives on the public profile.  But the MSI opens
+      # host-switch.exe only on the private and domain profiles.
+      # published-udp-ports.bats checks the MSI's rules by their "Rancher
+      # Desktop Networking" name prefix, so this rule uses another name.
+      run: >-
+        New-NetFirewallRule -DisplayName 'BATS host-switch Public Exception'
+        -Direction Inbound -Action Allow -Profile Public
+        -Program "$env:ProgramFiles\Rancher Desktop\resources\resources\win32\internal\host-switch.exe"
+
     - name: Use the tests from this checkout
       if: inputs.tests-from == 'checkout'
       shell: bash
