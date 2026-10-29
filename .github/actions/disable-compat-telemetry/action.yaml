@@ -7,6 +7,18 @@ description: >-
 runs:
   using: composite
   steps:
+  - name: Log telemetry state before the changes
+    if: runner.os == 'Windows'
+    shell: pwsh
+    run: |
+      # Shows whether the steps below had anything to stop.
+      Write-Output "--- CompatTelRunner processes ---"
+      Get-Process CompatTelRunner -ErrorAction SilentlyContinue |
+        Format-Table -AutoSize Id, CPU, StartTime
+      Write-Output "--- DiagTrack service ---"
+      Get-Service DiagTrack -ErrorAction SilentlyContinue |
+        Format-List Name, Status, StartType
+
   - name: Block CompatTelRunner via Image File Execution Options redirect
     if: runner.os == 'Windows'
     shell: pwsh
