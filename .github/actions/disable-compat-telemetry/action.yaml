@@ -34,7 +34,8 @@ runs:
     run: |
       # DiagTrack (Connected User Experiences and Telemetry) is
       # CompatTelRunner's sibling chatty process.
-      Set-Service DiagTrack -StartupType Disabled -Status Stopped
+      Set-Service DiagTrack -StartupType Disabled -Status Stopped `
+        -ErrorAction SilentlyContinue
 
   - name: Log telemetry state for debugging
     if: runner.os == 'Windows'
