@@ -1,0 +1,51 @@
+name: Unix Resource Sampler
+description: >-
+  Collect host counters on macOS and Linux at low cost. Samples cumulative
+  disk, memory and load counters into a TSV, and takes a process listing every
+  sixth tick. The counterpart to windows-typeperf-sampler.
+
+inputs:
+  command:
+    description: '"start" to launch the sampler, "stop" to terminate it.'
+    required: true
+  output-dir:
+    description: Directory for the TSV and process listing.
+    required: true
+  interval:
+    description: Seconds between samples.
+    required: false
+    default: '5'
+
+runs:
+  using: composite
+  steps:
+  - name: Start sampler
+    if: runner.os != 'Windows' && inputs.command == 'start'
+    shell: bash
+    run: |
+      mkdir -p "${{ inputs.output-dir }}"
+      nohup "${{ github.action_path }}/sample.sh" \
+        "${{ inputs.output-dir }}" "${{ inputs.interval }}" \
+        >"${{ inputs.output-dir }}/sampler.log" 2>&1 &
+      echo $! >"${{ inputs.output-dir }}/sampler.pid"
+      echo "sampler started, pid=$(cat "${{ inputs.output-dir }}/sampler.pid")"
+
+  - name: Stop sampler
+    if: runner.os != 'Windows' && inputs.command == 'stop'
+    shell: bash
+    run: |
+      pid_file="${{ inputs.output-dir }}/sampler.pid"
+      if [ -f "${pid_file}" ]; then
+        kill "$(cat "${pid_file}")" 2>/dev/null || true
+        rm -f "${pid_file}"
+      fi
+      samples="${{ inputs.output-dir }}/resource-samples.tsv"
+      if [ -f "${samples}" ]; then
+        echo "collected $(($(wc -l <"${samples}") - 1)) samples"
+        awk -F'\t' 'NR == 2 {first = $5; start = $1}
+                    {last = $5; end = $1}
+                    END {
+                      printf "disk total moved over the run: %.2f GB in %d s\n",
+                             (last - first) / 1073741824, end - start
+                    }' "${samples}"
+      fi

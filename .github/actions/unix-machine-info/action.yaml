@@ -1,0 +1,50 @@
+name: Unix Machine Info
+description: >-
+  Record the runner's CPU, memory, disk and OS build. Runner-to-runner
+  variation is the largest confounder in any CI timing comparison, and
+  nothing else in the job records it. The counterpart to
+  windows-machine-info.
+
+inputs:
+  output-path:
+    description: File to write the machine description to.
+    required: true
+
+runs:
+  using: composite
+  steps:
+  - name: Capture machine info
+    if: runner.os != 'Windows'
+    shell: bash
+    run: |
+      set -o errexit -o nounset
+      mkdir -p "$(dirname "${{ inputs.output-path }}")"
+      {
+        echo "=== uname ==="
+        uname -a
+        echo
+        echo "=== CPU ==="
+        if [ "$(uname)" = Darwin ]; then
+          sysctl -n machdep.cpu.brand_string
+          echo "physical cores: $(sysctl -n hw.physicalcpu)"
+          echo "logical cores:  $(sysctl -n hw.logicalcpu)"
+          echo "page size:      $(sysctl -n hw.pagesize)"
+          echo "memory:         $(sysctl -n hw.memsize) bytes"
+          sw_vers
+        else
+          lscpu || cat /proc/cpuinfo
+          echo
+          free -b || true
+        fi
+        echo
+        echo "=== Disk ==="
+        df -h
+        echo
+        if [ "$(uname)" = Darwin ]; then
+          echo "=== APFS containers ==="
+          diskutil apfs list 2>/dev/null | head -40 || true
+          echo
+          echo "=== Virtualization ==="
+          sysctl -n kern.hv_support 2>/dev/null || true
+        fi
+      } >"${{ inputs.output-path }}" 2>&1
