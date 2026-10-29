@@ -47,9 +47,11 @@ case "$(uname)" in
         }
         sample_processes() {
             # macOS top does not report per-process disk counters; pageins
-            # and csw are the closest proxies it does report.
-            top -l 1 -n 15 -o cpu \
-                -stats pid,command,cpu,mem,rsize,pageins,csw,state 2>/dev/null || true
+            # and csw are the closest proxies it does report. Its first
+            # sample shows 0.0 %CPU for every process, so keep the second.
+            top -l 2 -n 15 -o cpu \
+                -stats pid,command,cpu,mem,rsize,pageins,csw,state 2>/dev/null |
+                awk '/^Processes:/ {n++} n == 2' || true
         }
         ;;
     *)
