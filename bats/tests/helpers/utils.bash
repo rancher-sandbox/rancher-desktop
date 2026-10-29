@@ -317,11 +317,14 @@ update_allowed_patterns() {
     local patterns
     patterns=$(join_map ", " image_without_tag_as_json_string "$@")
 
-    # If the enabled state changes, then the container engine will be restarted.
-    # Record PID of the current daemon process so we can wait for it to be ready again.
-    local pid
-    if [ "$enabled" != "$(get_setting .containerEngine.allowedImages.enabled)" ]; then
-        pid=$(get_service_pid "$CONTAINER_ENGINE_SERVICE")
+    # Changing the enabled state restarts the backend. A failed read inside
+    # the comparison would count as a change, so read the setting first.
+    local current
+    current=$(get_setting .containerEngine.allowedImages.enabled)
+    local restart=false
+    if [[ ${enabled} != "${current}" ]]; then
+        restart=true
+        wait_for_backend
     fi
 
     rdctl api settings -X PUT --input - <<EOF
@@ -336,8 +339,8 @@ update_allowed_patterns() {
 }
 EOF
     # Wait for container engine (and Kubernetes) to be ready again
-    if [[ -n ${pid:-} ]]; then
-        try --max 15 --delay 5 refute_service_pid "$CONTAINER_ENGINE_SERVICE" "$pid"
+    if [[ ${restart} == true ]]; then
+        wait_for_backend_restart
         wait_for_container_engine
         if [[ $(get_setting .kubernetes.enabled) == "true" ]]; then
             wait_for_kubelet

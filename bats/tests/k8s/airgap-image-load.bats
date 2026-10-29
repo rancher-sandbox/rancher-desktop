@@ -62,7 +62,7 @@ assert_no_dangling_records() {
 
 # The k3s init script loads the airgap images from start_pre, on every start.
 @test 'restart kubernetes to load the airgap images again' {
-    rdctl set --kubernetes.enabled=false
+    set_and_wait_for_restart --kubernetes.enabled=false
     wait_for_service_status k3s stopped
     rdctl set --kubernetes.enabled=true
     wait_for_kubelet
@@ -99,7 +99,7 @@ assert_no_dangling_records() {
         fail "could not remove any of the ${#lines[@]} images"
     fi
 
-    rdctl set --kubernetes.enabled=false
+    set_and_wait_for_restart --kubernetes.enabled=false
     wait_for_service_status k3s stopped
     rdctl set --kubernetes.enabled=true
     wait_for_kubelet
