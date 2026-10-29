@@ -1,0 +1,18 @@
+name: Windows Machine Info
+description: >-
+  Capture CPU, memory, disk, Defender, and WSL state into a text file.
+  Useful for diagnosing flaky timeouts that depend on runner hardware.
+
+inputs:
+  output-path:
+    description: Path for the machine-info text file.
+    required: true
+
+runs:
+  using: composite
+  steps:
+  - if: runner.os == 'Windows'
+    shell: pwsh
+    run: >-
+      pwsh -File "${{ github.action_path }}/machine-info.ps1"
+      -OutputPath "${{ inputs.output-path }}"

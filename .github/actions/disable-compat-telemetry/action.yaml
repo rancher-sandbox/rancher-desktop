@@ -1,0 +1,55 @@
+name: Disable Compatibility Telemetry
+description: >-
+  Block CompatTelRunner.exe via Image File Execution Options debugger redirect
+  and disable the DiagTrack service. Runs only on Windows; harmless no-op
+  otherwise.
+
+runs:
+  using: composite
+  steps:
+  - name: Block CompatTelRunner via Image File Execution Options redirect
+    if: runner.os == 'Windows'
+    shell: pwsh
+    run: |
+      # Use Image File Execution Options to redirect CompatTelRunner.exe
+      # to where.exe (which just looks up args on PATH and exits).
+      # This is a documented Windows mechanism that works regardless of
+      # what launches the binary (scheduled task, service, WMI, etc.).
+      # See https://github.com/adolfintel/Windows10-Privacy/issues/4
+      #
+      # When it runs, CompatTelRunner competes with the tests for CPU.
+      $key = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe'
+      New-Item -Path $key -Force | Out-Null
+      New-ItemProperty -Path $key -Name Debugger `
+        -Value "$env:WINDIR\System32\where.exe" `
+        -PropertyType String -Force | Out-Null
+
+      # Kill any instance already running.
+      Get-Process CompatTelRunner -ErrorAction SilentlyContinue |
+        Stop-Process -Force -ErrorAction SilentlyContinue
+
+  - name: Disable DiagTrack service
+    if: runner.os == 'Windows'
+    shell: pwsh
+    run: |
+      # DiagTrack (Connected User Experiences and Telemetry) is
+      # CompatTelRunner's sibling chatty process.
+      Set-Service DiagTrack -StartupType Disabled -Status Stopped
+
+  - name: Log telemetry state for debugging
+    if: runner.os == 'Windows'
+    shell: pwsh
+    run: |
+      $key = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\CompatTelRunner.exe'
+
+      # Log scheduled tasks referencing CompatTel so we have data
+      # if the IFEO trick stops working on a future Windows image.
+      Write-Output "--- Scheduled tasks referencing CompatTel ---"
+      Get-ScheduledTask -ErrorAction SilentlyContinue | Where-Object {
+        $_.Actions | Where-Object { $_.Execute -match 'CompatTel' }
+      } | Select-Object TaskPath, TaskName, State | Format-Table -AutoSize
+
+      Write-Output "--- Verification ---"
+      Get-ItemProperty -Path $key -Name Debugger | Select-Object Debugger
+      Get-Service DiagTrack -ErrorAction SilentlyContinue |
+        Format-List Name, Status, StartType
