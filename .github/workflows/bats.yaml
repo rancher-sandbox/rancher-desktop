@@ -330,6 +330,21 @@ jobs:
         | Out-File -Encoding ASCII -Append "$ENV:GITHUB_ENV"
       working-directory: logs
 
+    - name: "Unix: Capture machine info"
+      if: runner.os != 'Windows'
+      uses: $/.github/actions/unix-machine-info
+      with:
+        output-path: diag/machine-info.txt
+      continue-on-error: true
+
+    - name: "Unix: Start resource sampler"
+      if: runner.os != 'Windows'
+      uses: $/.github/actions/unix-resource-sampler
+      with:
+        command: start
+        output-dir: diag
+      continue-on-error: true
+
     - name: Normalize test name
       id: normalize
       shell: bash
@@ -409,6 +424,14 @@ jobs:
       working-directory: bats
       timeout-minutes: 120
 
+    - name: "Unix: Stop resource sampler"
+      if: always() && runner.os != 'Windows'
+      uses: $/.github/actions/unix-resource-sampler
+      with:
+        command: stop
+        output-dir: diag
+      continue-on-error: true
+
     - name: Calculate log name
       id: log_name
       if: ${{ !cancelled() }}
@@ -430,6 +453,11 @@ jobs:
             cp -R "bats/logs/" logs
         fi
         cp "bats/report.tap" logs
+        # The samplers write outside logs/ because bats requires that
+        # directory to be empty when it starts.
+        if [ -d diag ]; then
+            cp -R diag logs/_diag
+        fi
         .github/workflows/bats/sanitize-artifact-name.sh logs
         echo "$NAME" > logs/name.txt
         echo "$OS" > logs/os.txt
