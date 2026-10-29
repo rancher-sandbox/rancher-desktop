@@ -1,6 +1,7 @@
 name: Windows Machine Info
 description: >-
-  Capture CPU, memory, disk, Defender, and WSL state into a text file.
+  Capture CPU, memory, disk, Defender, firewall, and WSL state into a
+  text file.
   Useful for diagnosing flaky timeouts that depend on runner hardware.
 
 inputs:

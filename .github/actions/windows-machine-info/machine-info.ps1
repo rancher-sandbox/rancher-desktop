@@ -2,7 +2,8 @@
 # SPDX-FileCopyrightText: SUSE LLC
 # SPDX-FileCopyrightText: The Rancher Desktop Authors
 
-# Capture Windows hardware, OS, disk, memory, Defender, and WSL state.
+# Capture Windows hardware, OS, disk, memory, Defender, firewall, and
+# WSL state.
 # Output is plain text for human reading from a CI artifact.
 #
 # Called by the windows-machine-info composite action; not intended for
@@ -163,6 +164,33 @@ try {
     Write-Output "=== Hyper-V services ==="
     Get-Service vmms, vmcompute, hns, WslService -ErrorAction SilentlyContinue |
         Select-Object Name, Status, StartType | Format-Table -AutoSize
+
+    # Published container ports arrive at host-switch.exe over the WSL
+    # adapter, so a rule that names the wrong protocol or profile breaks a
+    # port test with nothing else in the logs to explain it.
+    Write-Output "=== Firewall profiles ==="
+    Get-NetFirewallProfile -ErrorAction SilentlyContinue |
+        Select-Object Name, Enabled, DefaultInboundAction, DefaultOutboundAction |
+        Format-Table -AutoSize
+
+    Write-Output "=== Network connection profiles ==="
+    Get-NetConnectionProfile -ErrorAction SilentlyContinue |
+        Select-Object InterfaceAlias, NetworkCategory, IPv4Connectivity |
+        Format-Table -AutoSize
+
+    Write-Output "=== Rancher Desktop and BATS firewall rules ==="
+    Get-NetFirewallRule -DisplayName 'Rancher Desktop*', 'BATS*' -ErrorAction SilentlyContinue |
+        ForEach-Object {
+            [PSCustomObject]@{
+                DisplayName = $_.DisplayName
+                Enabled     = $_.Enabled
+                Direction   = $_.Direction
+                Action      = $_.Action
+                Profile     = $_.Profile
+                Protocol    = ($_ | Get-NetFirewallPortFilter).Protocol
+                Program     = ($_ | Get-NetFirewallApplicationFilter).Program
+            }
+        } | Format-List
 
     Write-Output "=== Top 20 processes by working set ==="
     Get-Process | Sort-Object -Property WS -Descending | Select-Object -First 20 |
