@@ -125,7 +125,7 @@ func main() {
 		}
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "read row %d: %v\n", rowNum+1, err)
-			break
+			os.Exit(1)
 		}
 		rowNum++
 
