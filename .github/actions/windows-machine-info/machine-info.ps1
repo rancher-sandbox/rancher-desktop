@@ -144,12 +144,16 @@ try {
                       ScanAvgCPULoadFactor, ExclusionPath, ExclusionProcess |
         Format-List
 
+    # wsl.exe writes UTF-16LE unless WSL_UTF8 is set. It also writes
+    # straight to the console, which the transcript does not record, so
+    # each call goes through Out-String.
+    $env:WSL_UTF8 = 1
     Write-Output "=== WSL ==="
-    & wsl.exe --status
+    & wsl.exe --status | Out-String
     Write-Output ''
-    & wsl.exe --list --verbose
+    & wsl.exe --list --verbose | Out-String
     Write-Output ''
-    & wsl.exe --version 2>&1
+    & wsl.exe --version 2>&1 | Out-String
     Write-Output ''
     Write-Output "--- .wslconfig (if present) ---"
     $wslconfig = Join-Path $env:USERPROFILE '.wslconfig'
