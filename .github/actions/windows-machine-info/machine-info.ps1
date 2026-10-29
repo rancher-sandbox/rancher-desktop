@@ -58,7 +58,7 @@ try {
                       @{N='SizeGB';E={[math]::Round($_.Size/1GB,1)}},
                       @{N='AllocatedGB';E={[math]::Round($_.AllocatedSize/1GB,1)}},
                       HealthStatus, OperationalStatus, SpindleSpeed |
-        Format-Table -AutoSize
+        Format-List
 
     Write-Output "=== Logical Disks ==="
     Get-CimInstance Win32_LogicalDisk |
@@ -201,7 +201,7 @@ try {
 
     Write-Output "=== Environment ==="
     Get-ChildItem env: | Where-Object { $_.Name -match '^(LOCALAPPDATA|TEMP|TMP|USERPROFILE|HOMEDRIVE|PATH|GITHUB_.*|RUNNER_.*)$' } |
-        Sort-Object Name | Format-Table -AutoSize Name, Value
+        Sort-Object Name | Format-List Name, Value
 }
 finally {
     Stop-Transcript | Out-Null
