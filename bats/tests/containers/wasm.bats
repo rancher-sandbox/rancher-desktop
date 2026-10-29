@@ -73,9 +73,7 @@ hello() {
 }
 
 @test 'enable wasm support' {
-    pid=$(get_service_pid "$CONTAINER_ENGINE_SERVICE")
-    rdctl set --experimental.container-engine.web-assembly.enabled
-    try --max 15 --delay 5 refute_service_pid "$CONTAINER_ENGINE_SERVICE" "$pid"
+    set_and_wait_for_restart --experimental.container-engine.web-assembly.enabled
     wait_for_container_engine
 }
 

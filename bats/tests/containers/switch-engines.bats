@@ -6,10 +6,7 @@ RD_CONTAINER_ENGINE=moby
 switch_container_engine() {
     local name=$1
     RD_CONTAINER_ENGINE="${name}"
-    # Make sure the backend is idle, to prevent wait_for_container_engine from
-    # erroring because the wrong engine is up.
-    wait_for_backend
-    rdctl set --container-engine.name="${name}"
+    set_and_wait_for_restart --container-engine.name="${name}"
     wait_for_container_engine
 }
 
