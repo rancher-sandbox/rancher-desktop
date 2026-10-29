@@ -1,0 +1,15 @@
+\Processor(_Total)\% Processor Time
+\System\Processor Queue Length
+\Memory\Available MBytes
+\Memory\% Committed Bytes In Use
+\PhysicalDisk(_Total)\% Disk Time
+\PhysicalDisk(_Total)\Disk Read Bytes/sec
+\PhysicalDisk(_Total)\Disk Write Bytes/sec
+\PhysicalDisk(_Total)\Avg. Disk sec/Read
+\PhysicalDisk(_Total)\Avg. Disk sec/Write
+\PhysicalDisk(_Total)\Current Disk Queue Length
+\Process(*)\% Processor Time
+\Process(*)\Working Set
+\Process(*)\ID Process
+\Process(*)\Handle Count
+\Process(*)\Thread Count
