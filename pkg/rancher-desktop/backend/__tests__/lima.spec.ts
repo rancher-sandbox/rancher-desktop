@@ -47,20 +47,8 @@ const CUSTOM_NETWORKS = HOSTILE_NETWORKS
   .replace(/192\.168\.206/g, '192.168.107')
   .replace(/netmask: ".*"/, 'netmask: 255.255.255.0');
 
-/** Exposes the protected methods under test and stubs the host network lookup. */
+/** Stubs the host network lookup. */
 class TestBackend extends LimaBackend {
-  installCustomLimaNetworkConfig(allowRoot?: boolean) {
-    return super.installCustomLimaNetworkConfig(allowRoot);
-  }
-
-  sudoersFile(config: Awaited<ReturnType<TestBackend['installCustomLimaNetworkConfig']>>) {
-    return super.sudoersFile(config);
-  }
-
-  createLimaSudoersFile(randomTag: string) {
-    return super.createLimaSudoersFile(randomTag);
-  }
-
   getDarwinHostNetworks() {
     return Promise.resolve([]);
   }
@@ -76,7 +64,7 @@ describe('LimaBackend root command inputs', () => {
     modules['@pkg/utils/paths'].lima = path.join(workdir, 'lima');
     networkPath = path.join(workdir, 'lima', '_config', 'networks.yaml');
     await fs.promises.mkdir(path.dirname(networkPath), { recursive: true });
-    // The constructor registers a process exit hook that runs limactl.
+    // Avoid the constructor, because it registers a process exit hook that runs limactl.
     subj = Object.create(TestBackend.prototype);
   });
 
@@ -86,19 +74,19 @@ describe('LimaBackend root command inputs', () => {
 
   it('replaces a networks.yaml with an invalid netmask', async() => {
     await fs.promises.writeFile(networkPath, HOSTILE_NETWORKS);
-    const config = await subj.installCustomLimaNetworkConfig(false);
+    const config = await subj['installCustomLimaNetworkConfig'](false);
 
     expect(config.networks.host).toEqual({
       mode: 'host', gateway: '192.168.206.1', dhcpEnd: '192.168.206.254', netmask: '255.255.255.0',
     });
-    expect(subj.sudoersFile(config)).not.toContain('ALL ALL=');
+    expect(subj['sudoersFile'](config)).not.toContain('ALL ALL=');
     await expect(fs.promises.readFile(networkPath.replace(/\.yaml$/, '.orig.yaml'), 'utf-8'))
       .resolves.toEqual(HOSTILE_NETWORKS);
   });
 
   it('keeps a valid custom subnet', async() => {
     await fs.promises.writeFile(networkPath, CUSTOM_NETWORKS);
-    const config = await subj.installCustomLimaNetworkConfig(false);
+    const config = await subj['installCustomLimaNetworkConfig'](false);
 
     expect(config.networks).toEqual(yaml.parse(CUSTOM_NETWORKS).networks);
   });
@@ -119,7 +107,7 @@ describe('LimaBackend root command inputs', () => {
       await fs.promises.writeFile(networkPath, CUSTOM_NETWORKS);
       tmpdir = path.join(workdir, 'plain tmp');
       await fs.promises.mkdir(tmpdir);
-      const result = await subj.createLimaSudoersFile('tag');
+      const result = await subj['createLimaSudoersFile']('tag');
 
       expect(result?.commands.join('; ')).toContain(`"${ path.join(tmpdir, 'rd-sudoerstag.txt') }"`);
     });
@@ -129,7 +117,7 @@ describe('LimaBackend root command inputs', () => {
       tmpdir = path.join(workdir, '$(touch marker)');
       await fs.promises.mkdir(tmpdir);
 
-      await expect(subj.createLimaSudoersFile('tag')).rejects.toThrow('$(touch marker)');
+      await expect(subj['createLimaSudoersFile']('tag')).rejects.toThrow('$(touch marker)');
     });
   });
 
