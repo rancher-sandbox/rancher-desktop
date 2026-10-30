@@ -199,6 +199,22 @@ interface LimaNetworkConfiguration {
 }
 
 /**
+ * Check that every host and shared network has IPv4 addresses.  These values
+ * end up in a sudoers file installed as root, so anything else could inject
+ * sudoers rules.  Lima parses them as IP addresses, and socket_vmnet takes
+ * only IPv4 for them.
+ */
+function hasValidNetworkAddresses(config: LimaNetworkConfiguration): boolean {
+  return Object.values(config.networks ?? {}).every((network) => {
+    if (network.mode !== 'host' && network.mode !== 'shared') {
+      return true;
+    }
+
+    return [network.gateway, network.dhcpEnd, network.netmask].every(addr => typeof addr === 'string' && net.isIPv4(addr));
+  });
+}
+
+/**
  * One entry from `limactl list --json`
  */
 interface LimaListResult {
@@ -224,6 +240,20 @@ interface SPNetworkDataType {
 }
 
 type SudoReason = 'networking' | 'docker-socket';
+
+/**
+ * Double-quote a path for the shell command that runs as root.  The path comes
+ * from the environment (TMPDIR, HOME), so refuse the characters that the shell
+ * still interprets inside double quotes, and the single quote that delimits
+ * the whole command.
+ */
+export function quotePathForShell(fsPath: string): string {
+  if (/["$`\\']/.test(fsPath)) {
+    throw new Error(`Refusing to use path ${ fsPath } in a privileged command because it contains a shell special character.`);
+  }
+
+  return `"${ fsPath }"`;
+}
 
 /**
  * SudoCommand describes an operation that will be run under sudo.  This is
@@ -1192,6 +1222,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     }
 
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vmnet-install-'));
+    const quotedWorkdir = quotePathForShell(workdir);
     const tarPath = path.join(workdir, 'vmnet.tar');
     const commands: string[] = [];
 
@@ -1253,12 +1284,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       archive.finalize();
       await archiveFinished;
-      const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`;
+      const command = `tar -xf ${ quotePathForShell(tarPath) } -C "${ path.dirname(installedPath) }"`;
 
       console.log(`VMNET tools install required: ${ command }`);
       commands.push(command);
     } finally {
-      commands.push(`rm -fr ${ workdir }`);
+      commands.push(`rm -fr ${ quotedWorkdir }`);
     }
 
     return {
@@ -1359,9 +1390,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     if (updateSudoers) {
       const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
+      const quotedTmpFile = quotePathForShell(tmpFile);
 
       await fs.promises.writeFile(tmpFile, sudoers, { mode: 0o644 });
-      commands.push(`mkdir -p "${ path.dirname(LIMA_SUDOERS_LOCATION) }" && cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
+      commands.push(`mkdir -p "${ path.dirname(LIMA_SUDOERS_LOCATION) }" && cp ${ quotedTmpFile } ${ LIMA_SUDOERS_LOCATION } && rm -f ${ quotedTmpFile }`);
       paths.push(LIMA_SUDOERS_LOCATION);
       console.debug(`Sudoers file ${ LIMA_SUDOERS_LOCATION } needs to be updated.`);
     }
@@ -1419,7 +1451,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     return {
       reason:   'docker-socket',
-      commands: [`ln -sf "${ targetPath }" "${ DEFAULT_DOCKER_SOCK_LOCATION }"`],
+      commands: [`ln -sf ${ quotePathForShell(targetPath) } "${ DEFAULT_DOCKER_SOCK_LOCATION }"`],
       paths:    [DEFAULT_DOCKER_SOCK_LOCATION],
     };
   }
@@ -1485,7 +1517,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * Provide a default network config file with rancher-desktop specific settings.
    *
    * If there's an existing file, replace it if it doesn't contain a
-   * paths.varRun setting for rancher-desktop
+   * paths.varRun setting for rancher-desktop, or if a host or shared network
+   * has an address that is not IPv4.
    */
   protected async installCustomLimaNetworkConfig(allowRoot = true): Promise<LimaNetworkConfiguration> {
     const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
@@ -1494,7 +1527,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     try {
       config = yaml.parse(await fs.promises.readFile(networkPath, 'utf8'));
-      if (config?.paths?.varRun !== NETWORKS_CONFIG.paths.varRun) {
+      if (config?.paths?.varRun !== NETWORKS_CONFIG.paths.varRun || !hasValidNetworkAddresses(config)) {
         const backupName = networkPath.replace(/\.yaml$/, '.orig.yaml');
 
         await fs.promises.rename(networkPath, backupName);
