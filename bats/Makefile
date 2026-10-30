@@ -19,10 +19,10 @@ lint:
 	find tests -name '*.bats' | xargs ./scripts/bats-lint.pl
 	find tests -name '*.bash' | xargs shellcheck -s bats -e $(SC_EXCLUDES)
 	find tests -name '*.bats' | xargs shellcheck -s bats -e $(SC_EXCLUDES)
-	find scripts -name '*.sh' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
+	find scripts ../.github/workflows/bats -name '*.sh' | xargs shellcheck -s bash -e $(SC_EXCLUDES)
 	find tests -name '*.bash' | xargs shfmt --diff
 	find tests -name '*.bats' | xargs shfmt --diff
-	find scripts -name '*.sh' | xargs shfmt --diff
+	find scripts ../.github/workflows/bats -name '*.sh' | xargs shfmt --diff
 
 DEPS = bin/darwin/jq bin/linux/jq
 

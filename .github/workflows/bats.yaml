@@ -151,6 +151,8 @@ jobs:
     # A wedged setup or install step would otherwise inherit GitHub's 6-hour
     # default.  Keep this above the Run BATS step's own 120-minute cap so that
     # step times out first and the log collection still runs.
+    # collect-logs.sh searches the last 150 minutes of the macOS log, so
+    # change both together.
     timeout-minutes: 150
     steps:
     - name: Fetch install script
@@ -163,6 +165,7 @@ jobs:
           scripts/patch-guest-iso.sh
           .github/actions/setup-environment/action.yaml
           .github/workflows/bats/sanitize-artifact-name.sh
+          .github/workflows/bats/collect-logs.sh
 
     - name: Fetch tests from this checkout
       if: inputs.tests-from == 'checkout'
@@ -452,11 +455,16 @@ jobs:
     - name: Consolidate logs
       if: ${{ !cancelled() }}
       run: |
+        # Collect first, so that a failure further down cannot skip it.
+        .github/workflows/bats/collect-logs.sh logs/_collected
         # bats/logs may not exist if the workflow is being tested with e.g. tests/helpers/utils.bats
         if [ -d "bats/logs" ]; then
             cp -R "bats/logs/" logs
         fi
-        cp "bats/report.tap" logs
+        # When a step fails before Run BATS, there is no report.tap.
+        if [ -f "bats/report.tap" ]; then
+            cp "bats/report.tap" logs
+        fi
         # The samplers write outside logs/ because bats requires that
         # directory to be empty when it starts.
         if [ -d diag ]; then
@@ -467,7 +475,10 @@ jobs:
         echo "$OS" > logs/os.txt
         echo "$ENGINE" > logs/engine.txt
         echo "$LOG_NAME" > logs/log-name.txt
-        mv version.txt logs/
+        # version.txt appears only once the download succeeds.
+        if [ -f version.txt ]; then
+            mv version.txt logs/
+        fi
       shell: bash
       env:
         NAME: ${{ matrix.name }}
