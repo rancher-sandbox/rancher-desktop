@@ -59,6 +59,38 @@ export enum Theme {
 /** Locales with a bundled translation file; keep in sync with the enum in command-api.yaml. */
 export type Locale = 'de' | 'en-us' | 'es' | 'fr' | 'it' | 'ja' | 'ko' | 'pt-br' | 'vi' | 'zh-hans';
 
+// The Record type keeps this in sync when a new locale is added to Locale.
+const baseLanguageByLocale: Record<Locale, string> = {
+  de:        'de',
+  'en-us':   'en',
+  es:        'es',
+  fr:        'fr',
+  it:        'it',
+  ja:        'ja',
+  ko:        'ko',
+  'pt-br':   'pt',
+  vi:        'vi',
+  'zh-hans': 'zh',
+};
+
+const localeByBaseLanguage = new Map(
+  Object.entries(baseLanguageByLocale).map(([locale, language]) => [language, locale as Locale]),
+);
+
+/**
+ * Map a BCP 47 language tag to a bundled locale.
+ *
+ * Region and script subtags are ignored because each language has only one
+ * bundled variant; for example, `pt-PT` uses the Brazilian Portuguese
+ * translation, and every Chinese variant uses the Simplified translation.
+ */
+export function localeFromLanguageTag(languageTag: string): Locale | undefined {
+  const normalized = languageTag.trim().toLowerCase().replace(/_/g, '-').split('.')[0];
+  const language = normalized.split('-')[0];
+
+  return localeByBaseLanguage.get(language);
+}
+
 export class SettingsError extends Error {
   toString() {
     // This is needed on linux. Without it, we get a randomish replacement

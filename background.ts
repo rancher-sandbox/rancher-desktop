@@ -39,6 +39,7 @@ import buildApplicationMenu from '@pkg/main/mainmenu';
 import setupNetworking from '@pkg/main/networking';
 import { Snapshots } from '@pkg/main/snapshots/snapshots';
 import { Snapshot, SnapshotDialog } from '@pkg/main/snapshots/types';
+import { getSystemLocale } from '@pkg/main/systemLocale';
 import { Tray } from '@pkg/main/tray';
 import setupUpdate from '@pkg/main/update';
 import { spawnFile } from '@pkg/utils/childProcess';
@@ -243,7 +244,7 @@ Electron.app.whenReady().then(async() => {
       throw ex;
     }
     try {
-      cfg = settingsImpl.load(deploymentProfiles);
+      cfg = settingsImpl.load(deploymentProfiles, getSystemLocale());
       nativeTheme.themeSource = cfg.application.theme;
       settingsImpl.updateLockedFields(deploymentProfiles.locked);
     } catch (err: any) {
@@ -1707,7 +1708,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     await doesBackendLockExist();
     switch (state.vmState) {
     case State.STARTED:
-      cfg = settingsImpl.load(deploymentProfiles);
+      cfg = settingsImpl.load(deploymentProfiles, getSystemLocale());
       mainEvents.emit('settings-update', cfg);
 
       setImmediate(() => {
