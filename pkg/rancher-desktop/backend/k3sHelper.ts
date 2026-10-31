@@ -1122,8 +1122,12 @@ export default class K3sHelper extends events.EventEmitter {
 
         await Promise.all(charts.filter((chart) => {
           const annotations = chart.metadata?.annotations ?? {};
+          const name = chart.metadata?.name;
 
-          return chart.metadata?.name && (annotations['objectset.rio.cattle.io/owner-name'] === ownerName);
+          // Leave `-crd` charts to k3s, whose `--disable` pass deletes them soon
+          // after. That gives Helm time to uninstall the release, because once
+          // the CRDs are gone the uninstall fails and traefik keeps running.
+          return name && !name.endsWith('-crd') && (annotations['objectset.rio.cattle.io/owner-name'] === ownerName);
         }).map((chart) => {
           const name = chart.metadata?.name;
 
