@@ -399,6 +399,16 @@ unique_filename() {
     done
 }
 
+# supervise-daemon logs a service's exit status to the guest syslog, even when
+# the service itself printed nothing. A factory reset destroys that syslog
+# along with the VM.
+capture_guest_syslog() {
+    if is_unix; then
+        RD_TIMEOUT=30s rdsudo cat /var/log/messages \
+            >"$1/guest-messages.log" 2>&1 || :
+    fi
+}
+
 capture_logs() {
     if capturing_logs && [[ -d $PATH_LOGS ]]; then
         local logdir
@@ -416,6 +426,7 @@ capture_logs() {
         # Capture settings.json
         cp "$PATH_CONFIG_FILE" "$logdir"
         foreach_profile export_profile "$logdir"
+        capture_guest_syslog "${logdir}"
     fi
 }
 
