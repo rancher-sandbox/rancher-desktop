@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"strings"
 	"sync"
@@ -85,7 +86,7 @@ func (p *PortProxy) Start() error {
 func (p *PortProxy) UDPPortMappings() map[int]*net.UDPConn {
 	p.udpConnMutex.Lock()
 	defer p.udpConnMutex.Unlock()
-	return p.activeUDPConns
+	return maps.Clone(p.activeUDPConns)
 }
 
 func (p *PortProxy) handleEvent(conn net.Conn) {

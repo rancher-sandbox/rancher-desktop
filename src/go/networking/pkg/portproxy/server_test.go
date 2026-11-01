@@ -169,6 +169,11 @@ func TestNewPortProxyTCP(t *testing.T) {
 	err = marshalAndSend(t.Context(), localListener, portMapping)
 	require.NoError(t, err)
 
+	// The proxy applies a mapping on its own goroutine, so wait for the result.
+	require.Eventually(t, func() bool {
+		return isListening(t.Context(), testPort)
+	}, 5*time.Second, 10*time.Millisecond, "the listener for port %s did not open", testPort)
+
 	resp, err = httpGetRequest(t.Context(), getURL)
 	require.NoError(t, err)
 	require.Equal(t, resp.StatusCode, http.StatusOK)
@@ -190,6 +195,10 @@ func TestNewPortProxyTCP(t *testing.T) {
 	}
 	err = marshalAndSend(t.Context(), localListener, portMapping)
 	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		return !isListening(t.Context(), testPort)
+	}, 5*time.Second, 10*time.Millisecond, "the listener for port %s did not close", testPort)
 
 	resp, err = httpGetRequest(t.Context(), getURL)
 	require.Errorf(t, err, "the listener for port: %s should already be closed", testPort)
@@ -262,6 +271,16 @@ func TestPortProxyClosesListenerOnOtherPort(t *testing.T) {
 			require.NoError(t, socket.Close())
 		})
 	}
+}
+
+func isListening(ctx context.Context, port string) bool {
+	dialer := net.Dialer{}
+	conn, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort("127.0.0.1", port))
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
 }
 
 func httpGetRequest(ctx context.Context, url string) (*http.Response, error) {
