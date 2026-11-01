@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 	"sync"
@@ -147,6 +148,9 @@ func (p *PortProxy) handleUDP(portBindings []ports.PortBinding, remove bool) {
 			logrus.Errorf("failed creating listener for published port [%s]: %s", portBinding.HostPort, err)
 			continue
 		}
+		if closeIfPortDiffers(c, c.LocalAddr().String(), portBinding.HostPort) {
+			continue
+		}
 
 		forwardAddr := net.JoinHostPort(p.config.UpstreamAddress, portBinding.HostPort)
 		targetAddr, err := net.ResolveUDPAddr("udp", forwardAddr)
@@ -224,12 +228,33 @@ func (p *PortProxy) handleTCP(portBindings []ports.PortBinding, remove bool) {
 			logrus.Errorf("failed creating listener for published port [%s]: %s", portBinding.HostPort, err)
 			continue
 		}
+		if closeIfPortDiffers(l, l.Addr().String(), portBinding.HostPort) {
+			continue
+		}
 		p.listenerMutex.Lock()
 		p.activeListeners[port] = l
 		p.listenerMutex.Unlock()
 		logrus.Debugf("created listener for: %s", addr)
 		go p.acceptTraffic(l, portBinding.HostPort)
 	}
+}
+
+// closeIfPortDiffers closes a socket whose address lacks the requested port,
+// and reports whether the port differed.
+func closeIfPortDiffers(socket io.Closer, addr, port string) bool {
+	_, actual, err := net.SplitHostPort(addr)
+	if err == nil && actual == port {
+		return false
+	}
+	// From WSL's source, consomme networking can report a bind() that failed
+	// on Windows as successful. listen() then picks a random port on all
+	// addresses, so other machines can reach a port published on 127.0.0.1 only.
+	if err := socket.Close(); err != nil {
+		logrus.Errorf("error closing listener for published port [%s] at %s: %s", port, addr, err)
+		return true
+	}
+	logrus.Errorf("closed listener for published port [%s] because its address is %s", port, addr)
+	return true
 }
 
 func (p *PortProxy) acceptTraffic(listener net.Listener, port string) {

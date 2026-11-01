@@ -22,10 +22,13 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
+	logrustest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/nettest"
 
@@ -197,6 +200,68 @@ func TestNewPortProxyTCP(t *testing.T) {
 
 	testServer.Close()
 	portProxy.Close()
+}
+
+// TestPortProxyClosesListenerOnOtherPort checks that the proxy closes a
+// listener that missed the requested port, since it may be reachable from
+// other machines. Port 0 injects that hazard, because the kernel picks a
+// random port, which differs from the one requested.
+func TestPortProxyClosesListenerOnOtherPort(t *testing.T) {
+	for _, proto := range []string{"tcp", "udp"} {
+		t.Run(proto, func(t *testing.T) {
+			logs := logrustest.NewGlobal()
+
+			localListener, err := nettest.NewLocalListener("unix")
+			require.NoError(t, err)
+			defer localListener.Close()
+
+			proxyConfig := &portproxy.ProxyConfig{
+				UpstreamAddress: "127.0.0.1",
+				UDPBufferSize:   1024,
+			}
+			portProxy := portproxy.NewPortProxy(t.Context(), localListener, proxyConfig)
+			go portProxy.Start()
+			defer portProxy.Close()
+
+			port, err := ports.NewPort(proto, "0")
+			require.NoError(t, err)
+
+			portMapping := ports.PortMapping{
+				Remove: false,
+				Ports: ports.PortMap{
+					port: []ports.PortBinding{
+						{
+							HostIP:   "127.0.0.1",
+							HostPort: "0",
+						},
+					},
+				},
+			}
+			require.NoError(t, marshalAndSend(t.Context(), localListener, portMapping))
+
+			var address string
+			require.Eventually(t, func() bool {
+				for _, entry := range logs.AllEntries() {
+					if entry.Level == logrus.ErrorLevel && strings.HasPrefix(entry.Message, "closed listener") {
+						address = entry.Message[strings.LastIndex(entry.Message, " ")+1:]
+						return true
+					}
+				}
+				return false
+			}, 5*time.Second, 10*time.Millisecond, "the proxy kept the listener")
+
+			// Binding the same address succeeds only if the proxy closed its socket.
+			listenerConfig := net.ListenConfig{}
+			var socket io.Closer
+			if proto == "tcp" {
+				socket, err = listenerConfig.Listen(t.Context(), proto, address)
+			} else {
+				socket, err = listenerConfig.ListenPacket(t.Context(), proto, address)
+			}
+			require.NoError(t, err)
+			require.NoError(t, socket.Close())
+		})
+	}
 }
 
 func httpGetRequest(ctx context.Context, url string) (*http.Response, error) {
