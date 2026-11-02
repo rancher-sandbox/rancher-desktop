@@ -8,6 +8,7 @@ import util from 'util';
 import { jest } from '@jest/globals';
 import semver from 'semver';
 
+import type { KubeClient } from '@pkg/backend/kube/client';
 import { SemanticVersionEntry } from '@pkg/utils/kubeVersions';
 import paths from '@pkg/utils/paths';
 import mockModules from '@pkg/utils/testUtils/mockModules';
@@ -470,6 +471,32 @@ describe(K3sHelper, () => {
       const desiredSemver = new semver.SemVer('v1.99.3+k3s4');
 
       expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrow(NoCachedK3sVersionsError);
+    });
+  });
+
+  describe('uninstallHelmChart', () => {
+    it('should leave the -crd chart for k3s to delete', async() => {
+      const chart = (name: string, owner: string) => ({
+        metadata: { name, annotations: { 'objectset.rio.cattle.io/owner-name': owner } },
+      });
+      const items = [chart('traefik', 'traefik'), chart('traefik-crd', 'traefik'), chart('other', 'other')];
+      const deleted: string[] = [];
+      const client = {
+        k8sClient: {
+          makeApiClient: () => ({
+            listNamespacedCustomObject:   () => Promise.resolve({ items }),
+            deleteNamespacedCustomObject: ({ name }: { name: string }) => {
+              deleted.push(name);
+
+              return Promise.resolve();
+            },
+          }),
+        },
+      } as unknown as KubeClient;
+
+      await new K3sHelper('x86_64').uninstallHelmChart(client, 'traefik');
+
+      expect(deleted).toEqual(['traefik']);
     });
   });
 });
