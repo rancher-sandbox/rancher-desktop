@@ -581,6 +581,7 @@ async function startBackend() {
  */
 async function startK8sManager() {
   const changedContainerEngine = currentContainerEngine !== cfg.containerEngine.name;
+  const runningStates = [K8s.State.STARTED, K8s.State.DISABLED];
 
   currentContainerEngine = cfg.containerEngine.name;
   enabledK8s = cfg.kubernetes.enabled;
@@ -593,7 +594,7 @@ async function startK8sManager() {
   // start() resolves without a client when the start was aborted, and stop()
   // clears the client, which can happen while the import below loads.  The
   // getter then throws and masks the real failure.
-  if (![K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
+  if (!runningStates.includes(k8smanager.state)) {
     console.log(`Backend is ${ k8smanager.state } after start; skipping post-start setup.`);
 
     return;
@@ -602,7 +603,18 @@ async function startK8sManager() {
 
   const { initializeExtensionManager } = await import('@pkg/main/extensions/manager');
 
-  await initializeExtensionManager(containerEngineClient, cfg);
+  try {
+    await initializeExtensionManager(containerEngineClient, cfg);
+  } catch (ex: any) {
+    // Stopping the backend interrupts this setup, and the next start repeats
+    // it.  A failure on a running backend is a real error.
+    if (runningStates.includes(k8smanager.state)) {
+      throw ex;
+    }
+    console.log(`Backend is ${ k8smanager.state } after extension setup failed; skipping post-start setup.`, ex);
+
+    return;
+  }
   window.send('extensions/changed');
 
   if (!containerExecHandler) {
