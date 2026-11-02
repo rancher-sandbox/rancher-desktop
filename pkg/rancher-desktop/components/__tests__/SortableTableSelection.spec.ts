@@ -121,8 +121,8 @@ function goToPage(wrapper: any, which: 'first' | 'prev' | 'next' | 'last') {
   return wrapper.vm.$nextTick();
 }
 
-function howMuchSelectedOf(wrapper: any) {
-  return wrapper.vm.howMuchSelected;
+function selectionStateOf(wrapper: any) {
+  return wrapper.vm.selectionState;
 }
 
 function threeRows() {
@@ -279,12 +279,12 @@ describe('SortableTable selection', () => {
     await goToPage(wrapper, 'next');
 
     // One row is selected, but it is not on this page.
-    expect(howMuchSelectedOf(wrapper)).toBe('none');
+    expect(selectionStateOf(wrapper)).toBe('none');
 
     await clickCell(wrapper, 0);
-    expect(howMuchSelectedOf(wrapper)).toBe('some');
+    expect(selectionStateOf(wrapper)).toBe('some');
 
     await clickCell(wrapper, 1, ADDS_TO_SELECTION);
-    expect(howMuchSelectedOf(wrapper)).toBe('all');
+    expect(selectionStateOf(wrapper)).toBe('all');
   });
 });

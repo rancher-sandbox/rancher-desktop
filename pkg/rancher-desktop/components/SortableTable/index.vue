@@ -1209,7 +1209,7 @@ export default {
         :row-actions="rowActions"
         :sub-expand-column="subExpandColumn"
         :row-actions-width="rowActionsWidth"
-        :how-much-selected="howMuchSelected"
+        :selection-state="selectionState"
         :sort-by="sortBy"
         :default-sort-by="_defaultSortBy"
         :descending="descending"

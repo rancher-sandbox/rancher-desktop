@@ -39,7 +39,7 @@ export default {
     },
 
     // Used for the table-level selection check-box to show checked (all selected)/intermediate (some selected)/unchecked (none selected)
-    howMuchSelected() {
+    selectionState() {
       const total = this.pagedRows.length;
 
       if ( !total ) {
