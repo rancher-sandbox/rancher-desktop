@@ -159,6 +159,10 @@ export default class BackendHelper {
     const ranges = [
       // versions 1.24.1 to 1.24.3 don't support the --docker option
       '1.24.1 - 1.24.3',
+      // cri-dockerd bundled with these k3s versions can register a gRPC
+      // service after its gRPC server starts, which makes k3s exit at startup
+      // see https://github.com/Mirantis/cri-dockerd/pull/170
+      '1.25.7 - 1.25.16',
       // cri-dockerd bundled with k3s is not compatible with docker 25.x (using API 1.44)
       // see https://github.com/k3s-io/k3s/issues/9279
       '1.26.8 - 1.26.13',

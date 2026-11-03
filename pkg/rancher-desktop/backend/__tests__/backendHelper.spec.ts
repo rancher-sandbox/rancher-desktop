@@ -157,4 +157,16 @@ describe('BackendHelper', () => {
       expect(vmx.result).toHaveProperty('hello', 'world');
     });
   });
+
+  describe('requiresCRIDockerd', () => {
+    it.each`
+    version        | expected
+    ${ '1.25.6' }  | ${ false }
+    ${ '1.25.7' }  | ${ true }
+    ${ '1.25.16' } | ${ true }
+    ${ '1.26.7' }  | ${ false }
+    `('returns $expected for moby on k3s $version', ({ version, expected }) => {
+      expect(BackendHelper.requiresCRIDockerd('moby', version)).toBe(expected);
+    });
+  });
 });
