@@ -9223,9 +9223,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-vue@npm:10.11.1":
-  version: 10.11.1
-  resolution: "eslint-plugin-vue@npm:10.11.1"
+"eslint-plugin-vue@npm:10.12.0":
+  version: 10.12.0
+  resolution: "eslint-plugin-vue@npm:10.12.0"
   dependencies:
     "@eslint-community/eslint-utils": "npm:^4.9.1"
     natural-compare: "npm:^1.4.0"
@@ -9243,7 +9243,7 @@ __metadata:
       optional: true
     "@typescript-eslint/parser":
       optional: true
-  checksum: 10c0/3ea6027fbfc62e80afabd64ff50215312afe2512954505911820b2480842f432c559ed349a7c6c6655594416e2ddad7f45ba466a52ce1e68d44409715a458f6b
+  checksum: 10c0/9886f2a038ccb0fad411188df64bd5b5fd86eb1aeea12ecf5819846592fc511d9d8718e1573eab42b2d9b211468a23941f176281f821fb8337bc6993a57d24fe
   languageName: node
   linkType: hard
 
@@ -14713,7 +14713,7 @@ __metadata:
     electron-builder: "npm:26.18.0"
     electron-updater: "npm:6.8.11"
     eslint: "npm:10.13.0"
-    eslint-plugin-vue: "npm:10.11.1"
+    eslint-plugin-vue: "npm:10.12.0"
     express: "npm:5.3.0"
     extract-zip: "npm:2.0.1"
     floating-vue: "npm:5.4.0"
