@@ -152,7 +152,7 @@ jobs:
     # default.  Keep this above the Run BATS step's own 120-minute cap so that
     # step times out first and the log collection still runs.
     # collect-logs.sh searches the last 35 minutes of the macOS log, so
-    # change both together.
+    # change both together. 
     timeout-minutes: 35
     steps:
     - name: Fetch install script
