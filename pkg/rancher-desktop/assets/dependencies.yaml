@@ -194,30 +194,30 @@ dockerProvidedCredentialHelpers:
 electron:
   assets:
     - arch: amd64
-      checksum: sha256:7877c282e74a52f8d87949536a25735cf9982de1265b544c9cd258dd14eff4de
+      checksum: sha256:b4667d820149e33a6f016d103de0fcf5d6f05b8297a204232a0d970c00b163a5
       platform: darwin
-      url: https://github.com/electron/electron/releases/download/v45.0.0/electron-v45.0.0-darwin-x64.zip
+      url: https://github.com/electron/electron/releases/download/v45.1.0/electron-v45.1.0-darwin-x64.zip
     - arch: arm64
-      checksum: sha256:896c3a50b148e89a158dca08a6996a022ddf39b23aac871e107f5b4087f8caa9
+      checksum: sha256:002b71efcf90e247317d3da486f2d4e51860e9c2889d49f33e229ab2268b0f3b
       platform: darwin
-      url: https://github.com/electron/electron/releases/download/v45.0.0/electron-v45.0.0-darwin-arm64.zip
+      url: https://github.com/electron/electron/releases/download/v45.1.0/electron-v45.1.0-darwin-arm64.zip
     - arch: amd64
-      checksum: sha256:22f6a10bd3f7fef987ddbb379d3375ce664ad0c98a9a50f80c89f1718a0c3e3a
+      checksum: sha256:9dafab2c57ce209f8f716f8f3e4fddd8ffe0820e2455bfbbfc00b0fc13e03a3b
       platform: linux
-      url: https://github.com/electron/electron/releases/download/v45.0.0/electron-v45.0.0-linux-x64.zip
+      url: https://github.com/electron/electron/releases/download/v45.1.0/electron-v45.1.0-linux-x64.zip
     - arch: arm64
-      checksum: sha256:a80d92b1ad6c111545a12632b8a75cedce614a41866e500810d4050d947f90e9
+      checksum: sha256:64b78d93d1129ab805cdc0f2710f446716afbe814a1d08e639dab3175d2285a1
       platform: linux
-      url: https://github.com/electron/electron/releases/download/v45.0.0/electron-v45.0.0-linux-arm64.zip
+      url: https://github.com/electron/electron/releases/download/v45.1.0/electron-v45.1.0-linux-arm64.zip
     - arch: amd64
-      checksum: sha256:ae53887a23bb640369c93dbd38c408a2af5c0deb86f2fa76c6c244cb444b7f47
+      checksum: sha256:55eaba17abff7b5bba6c3bbc85068967379024fe742fe9c7fdba9118922ccbe2
       platform: windows
-      url: https://github.com/electron/electron/releases/download/v45.0.0/electron-v45.0.0-win32-x64.zip
+      url: https://github.com/electron/electron/releases/download/v45.1.0/electron-v45.1.0-win32-x64.zip
     - arch: arm64
-      checksum: sha256:fbae273960b24b81ab7a5cdcf34dd83a8781ee6799ccc621c1d85d5ce197252d
+      checksum: sha256:c0adce10031826896060bba848777bf9f059bfe4a2f7f9d4795008498eeeb248
       platform: windows
-      url: https://github.com/electron/electron/releases/download/v45.0.0/electron-v45.0.0-win32-arm64.zip
-  version: 45.0.0
+      url: https://github.com/electron/electron/releases/download/v45.1.0/electron-v45.1.0-win32-arm64.zip
+  version: 45.1.0
 golangci-lint:
   assets: []
   version: 2.15.0
