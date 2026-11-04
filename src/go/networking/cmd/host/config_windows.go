@@ -77,6 +77,10 @@ func newConfig(subnet config.Subnet, staticPortForwarding map[string]string, deb
 		},
 		DNSSearchDomains: config.SearchDomains(),
 		Forwards:         staticPortForwarding,
+		// Clients connect from the host's WSL adapter address or from LAN and
+		// VPN addresses, and any of these can fall inside a guest network such
+		// as docker0.
+		DisableSourceIPPropagation: true,
 		NAT: map[string]string{
 			subnet.StaticDNSHost: localHost,
 		},

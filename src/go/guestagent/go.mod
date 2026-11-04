@@ -123,5 +123,8 @@ require (
 
 replace github.com/lima-vm/lima => github.com/rancher-sandbox/lima v1.0.3-0.20250115235144-24eb898b3a96
 
+// Same as in networking/go.mod, so builds with and without go.work use the fork.
+replace github.com/containers/gvisor-tap-vsock v0.9.0 => github.com/rancher-sandbox/gvisor-tap-vsock v0.9.1-0.20261104050320-7c755ee13643
+
 // Dependabot does not read go.work, so without this it pins a remote version.
 replace github.com/rancher-sandbox/rancher-desktop/src/go/ports => ../ports
