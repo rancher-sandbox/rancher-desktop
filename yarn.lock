@@ -14791,7 +14791,7 @@ __metadata:
     rancher-icons: "rancher/icons#v2.0.21"
     raw-loader: "npm:4.0.2"
     sass: "npm:1.106.1"
-    sass-loader: "npm:17.0.1"
+    sass-loader: "npm:17.1.0"
     semver: "npm:7.8.5"
     tar-stream: "npm:3.2.2"
     ts-jest: "npm:29.4.15"
@@ -15315,9 +15315,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass-loader@npm:17.0.1":
-  version: 17.0.1
-  resolution: "sass-loader@npm:17.0.1"
+"sass-loader@npm:17.1.0":
+  version: 17.1.0
+  resolution: "sass-loader@npm:17.1.0"
   peerDependencies:
     "@rspack/core": 0.x || ^1.0.0 || ^2.0.0-0
     sass: ^1.3.0
@@ -15332,7 +15332,7 @@ __metadata:
       optional: true
     webpack:
       optional: true
-  checksum: 10c0/a5211341426096acd7b96db6cba95935a86c3ba97a16c16d2f743f42c98ff79281f4f0f6e03fc336b77b22969eb8363379ffd52efe9bf87944cc21f1490c6595
+  checksum: 10c0/6eff347a98c3ff654430562d661f689a48079b16298dc4e59c49cf8730c7abea09cbdbe2493a3b68059d44bd89c0db2e3e5e93facc9ea83e332b0f8ba1b357e9
   languageName: node
   linkType: hard
 
