@@ -154,7 +154,7 @@
     "rancher-icons": "rancher/icons#v2.0.21",
     "raw-loader": "4.0.2",
     "sass": "1.106.1",
-    "sass-loader": "17.0.1",
+    "sass-loader": "17.1.0",
     "ts-jest": "29.4.15",
     "ts-loader": "^9.6.2",
     "tsconfig-paths": "4.2.0",
