@@ -40,5 +40,12 @@ require (
 	golang.org/x/tools v0.51.0 // indirect
 )
 
+// The fork is v0.9.0 plus containers/gvisor-tap-vsock#751 and an option to
+// disable source IP propagation, which host-switch sets. The replace applies
+// only to v0.9.0, so that a newer require here or in guestagent/go.mod makes
+// host-switch fail to compile; without the version, a Dependabot bump would
+// change nothing.
+replace github.com/containers/gvisor-tap-vsock v0.9.0 => github.com/rancher-sandbox/gvisor-tap-vsock v0.9.1-0.20261104050320-7c755ee13643
+
 // Dependabot does not read go.work, so without this it pins a remote version.
 replace github.com/rancher-sandbox/rancher-desktop/src/go/ports => ../ports
