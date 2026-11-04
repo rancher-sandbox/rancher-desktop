@@ -2688,12 +2688,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jsep-plugin/assignment@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@jsep-plugin/assignment@npm:1.4.0"
+  peerDependencies:
+    jsep: ^0.4.0||^1.0.0
+  checksum: 10c0/218984d0c5dab6ba96a6930169d537d291e012caa644cc35d3e04175bae271898eaef250c42561ef20a678d9426fe2a3da08e7f84caf4e8c8c36c535f7a8f9e8
+  languageName: node
+  linkType: hard
+
 "@jsep-plugin/regex@npm:^1.0.4":
   version: 1.0.4
   resolution: "@jsep-plugin/regex@npm:1.0.4"
   peerDependencies:
     jsep: ^0.4.0||^1.0.0
   checksum: 10c0/bec7eb7ea6ab453a2672edc808644c5be3dc06b2a9d77182e18cd595b37deba6dcdb3760849d8684afc5779a86b7d2604dd525cb612a548f9ed9f31a8032ec24
+  languageName: node
+  linkType: hard
+
+"@jsep-plugin/regex@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@jsep-plugin/regex@npm:1.1.0"
+  peerDependencies:
+    jsep: ^0.4.0||^1.0.0
+  checksum: 10c0/b698b3729de70a3de8140f0dedf1ee6c9017cc09fb841f82e91973d7ad59294f599acc0a4c933adb6ed2ad1db27b92315296d8be12999f420859745738601615
   languageName: node
   linkType: hard
 
@@ -11913,6 +11931,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jsep@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "jsep@npm:1.6.0"
+  checksum: 10c0/68b706c9f8873599ecf9c408b063ce661d1f53e5bceb6c25bf59448c73b1b8d4906ee40f892ccf32d83c6dba70b3aae495f00f3855fa0049025a07eadcd672ea
+  languageName: node
+  linkType: hard
+
 "jsesc@npm:^3.0.2":
   version: 3.1.0
   resolution: "jsesc@npm:3.1.0"
@@ -12025,17 +12050,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonpath-plus@npm:11.2.1":
-  version: 11.2.1
-  resolution: "jsonpath-plus@npm:11.2.1"
+"jsonpath-plus@npm:11.2.2":
+  version: 11.2.2
+  resolution: "jsonpath-plus@npm:11.2.2"
   dependencies:
-    "@jsep-plugin/assignment": "npm:^1.3.0"
-    "@jsep-plugin/regex": "npm:^1.0.4"
-    jsep: "npm:^1.4.0"
+    "@jsep-plugin/assignment": "npm:^1.4.0"
+    "@jsep-plugin/regex": "npm:^1.1.0"
+    jsep: "npm:^1.6.0"
   bin:
     jsonpath: ./bin/jsonpath-cli.js
     jsonpath-plus: ./bin/jsonpath-cli.js
-  checksum: 10c0/54a607e4bcc2d62337377483182887f76295bde1eb0709f20ca7a48125e55f41b535f0ebf0798ca9dc7ac4dec40d1c2a6e26b622aa1cb6f556e20aa2fb5d48d8
+  checksum: 10c0/52ca47072c8d9ae90a58a03b3bfb80ce00160efc94fb8e4f88d6c21d9212093c123e111c3122c17edad9a4579a3e6f72f820edb40eb0d8cf9e9e8c8b6259fe5f
   languageName: node
   linkType: hard
 
@@ -14725,7 +14750,7 @@ __metadata:
     jest-environment-jsdom: "npm:30.5.2"
     jquery: "npm:4.0.0"
     js-yaml-loader: "npm:1.2.2"
-    jsonpath-plus: "npm:11.2.1"
+    jsonpath-plus: "npm:11.2.2"
     lodash: "npm:4.18.1"
     marked: "npm:18.1.2"
     mustache: "npm:4.2.0"
