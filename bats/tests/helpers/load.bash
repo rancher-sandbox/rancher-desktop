@@ -142,7 +142,7 @@ setup() {
 
 teardown() {
     if [ -z "$BATS_TEST_SKIPPED" ] && [ -z "$BATS_TEST_COMPLETED" ]; then
-        capture_logs
+        capture_logs --kubernetes
         take_screenshot
     fi
 

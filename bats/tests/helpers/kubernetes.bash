@@ -61,6 +61,69 @@ assert_kube_deployment_available() {
     assert_output "True"
 }
 
+# Save the cluster state next to a failing test's logs.  k3s.log holds only
+# the kubelet's view of an unhealthy pod ("back-off 5m0s restarting failed
+# container"), never what the container printed before it died.
+capture_kubernetes_state() {
+    local logdir="$1/kubernetes"
+    local namespace pod container previous
+
+    # Many suites run with Kubernetes turned off, and a wedged apiserver must
+    # not hold up the capture, so ask /livez once with a short timeout; /readyz
+    # fails while any readiness check does, which is when the capture matters.
+    if ! kubectl --request-timeout=10s get --raw /livez &>/dev/null; then
+        return
+    fi
+
+    mkdir -p "$logdir"
+    kubectl --request-timeout=30s get pods --all-namespaces --output wide \
+        >"$logdir/pods.txt" 2>&1 || :
+    kubectl --request-timeout=30s get events --all-namespaces \
+        --sort-by=.metadata.creationTimestamp \
+        >"$logdir/events.txt" 2>&1 || :
+    kubectl --request-timeout=30s get pods --all-namespaces --output json \
+        >"$logdir/pods.json" 2>"$logdir/pods.err" || :
+    if [[ ! -s $logdir/pods.err ]]; then
+        rm -f "$logdir/pods.err"
+    fi
+    kubectl --request-timeout=30s get all --all-namespaces \
+        >"$logdir/all.txt" 2>&1 || :
+    # helm keeps every release as a secret labelled with its name and status,
+    # which says whether an uninstall ran at all.  k3s deletes the Job that
+    # would have logged it as soon as the chart is gone, so by the time a test
+    # gives up there is often nothing else left to ask.
+    kubectl --request-timeout=30s get secrets --all-namespaces \
+        --selector owner=helm --show-labels \
+        >"$logdir/helm-releases.txt" 2>&1 || :
+
+    # Log only the containers that are unhealthy, init containers included, so
+    # that a healthy pod does not add a file beyond the summaries above.  A
+    # finished Job container is also "not ready", hence the exit code test.
+    # helm-* pods get logged after exit 0 too, because their Job exits 0 even
+    # when the chart's workload outlives the uninstall, and only its log says
+    # what helm did.
+    while read -r namespace pod container; do
+        kubectl --request-timeout=30s logs --namespace "$namespace" "$pod" \
+            --container "$container" --tail=200 \
+            >"$logdir/${namespace}_${pod}_${container}.log" 2>&1 || :
+        # A container that has never restarted has no previous instance, and
+        # the error kubectl prints for that is not worth keeping.
+        previous="$logdir/${namespace}_${pod}_${container}.previous.log"
+        if ! kubectl --request-timeout=30s logs --namespace "$namespace" "$pod" \
+            --container "$container" --tail=200 --previous >"$previous" 2>&1; then
+            rm -f "$previous"
+        fi
+    done < <(jq --raw-output '
+        .items[] | . as $pod
+        | (($pod.status.initContainerStatuses // [])
+           + ($pod.status.containerStatuses // []))[]
+        | select(.ready | not)
+        | select(($pod.metadata.name | startswith("helm-"))
+                 or ((.state.terminated.exitCode // 1) != 0))
+        | "\($pod.metadata.namespace) \($pod.metadata.name) \(.name)"
+    ' "$logdir/pods.json" 2>/dev/null)
+}
+
 wait_for_kube_deployment_available() {
     trace "waiting for deployment $*"
     try assert_kube_deployment_available "$@"
