@@ -130,7 +130,7 @@
     "dompurify": "3.4.17",
     "ejs": "7.0.2",
     "electron": "45.1.0",
-    "electron-builder": "26.18.0",
+    "electron-builder": "26.18.1",
     "eslint": "10.13.0",
     "eslint-plugin-vue": "10.12.0",
     "extract-zip": "2.0.1",
