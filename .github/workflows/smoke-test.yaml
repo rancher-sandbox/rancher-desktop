@@ -118,7 +118,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - { platform: macos-aarch64, runs-on: macos-14 }
+        - { platform: macos-aarch64, runs-on: macos-latest }
         - { platform: macos-x86_64, runs-on: macos-15-intel }
         - { platform: win32, runs-on: windows-latest }
         - { platform: linux, runs-on: ubuntu-latest }
