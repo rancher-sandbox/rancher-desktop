@@ -151,9 +151,9 @@ jobs:
     # A wedged setup or install step would otherwise inherit GitHub's 6-hour
     # default.  Keep this above the Run BATS step's own 120-minute cap so that
     # step times out first and the log collection still runs.
-    # collect-logs.sh searches the last 150 minutes of the macOS log, so
-    # change both together.
-    timeout-minutes: 150
+    # collect-logs.sh searches the last 35 minutes of the macOS log, so
+    # change both together. 
+    timeout-minutes: 35
     steps:
     - name: Fetch install script
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -390,6 +390,7 @@ jobs:
       run: >-
         ${{ env.BATS_COMMAND }}
         ./bats-core/bin/bats
+        --abort
         --gather-test-outputs-in '${{ env.LOGS_DIR }}'
         --print-output-on-failure
         --filter-tags '!ci-skip'
