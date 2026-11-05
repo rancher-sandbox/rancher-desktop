@@ -44,6 +44,7 @@ export default {
     '^@/(.*)$':      '<rootDir>/$1',
   },
   setupFiles: [
+    '<rootDir>/pkg/rancher-desktop/utils/testUtils/setupBrowserApis.ts',
     '<rootDir>/pkg/rancher-desktop/utils/testUtils/setupVue.ts',
   ],
   testEnvironment:        'jsdom',
