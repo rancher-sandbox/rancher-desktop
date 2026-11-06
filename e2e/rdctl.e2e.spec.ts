@@ -713,7 +713,7 @@ test.describe('Command server', () => {
         expect(stderr).toContain('Usage:');
         const options = stderr.split(/\n/)
           .filter(line => /^\s+--/.test(line))
-          .map(line => (/\s+--([-.\w]+)\s/.exec(line) || [])[1])
+          .map(line => (/\s+--([-.\w]+)/.exec(line) || [])[1])
           .filter(line => line);
 
         // This part is a bit subtle
@@ -746,7 +746,7 @@ test.describe('Command server', () => {
           stdout, stderr, error,
         }).toEqual({
           error:  expect.any(Error),
-          stderr: expect.stringContaining('Error: invalid argument "gorb" for "--kubernetes-enabled" flag: strconv.ParseBool: parsing "gorb": invalid syntax'),
+          stderr: expect.stringContaining('Error: invalid argument "gorb" for "--kubernetes-enabled" flag: must be true or false'),
           stdout: '',
         });
         expect(stderr).toContain('Usage:');
