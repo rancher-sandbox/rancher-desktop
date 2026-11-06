@@ -65,7 +65,7 @@ interface commandFlagType {
    */
   enums:           string;
   /**
-   * Used to insert an optional `x-rd-usage` field from a preference spec
+   * Used to insert the `x-rd-usage` field from a preference spec
    * into the help text for the command in the generated go code.
    */
   usageNote?:      string;
@@ -122,11 +122,13 @@ function lastName(s: string): string {
 class Generator {
   constructor() {
     this.commandFlags = [];
+    this.flagsWithoutUsage = [];
     this.settingsTree = { version: { type: 'int' } };
   }
 
-  commandFlags: commandFlagType[];
-  settingsTree: settingsTreeType;
+  commandFlags:      commandFlagType[];
+  flagsWithoutUsage: string[];
+  settingsTree:      settingsTreeType;
 
   protected async loadInput(inputFile: string): Promise<yamlObject> {
     const contents = (await fs.promises.readFile(inputFile)).toString();
@@ -150,6 +152,7 @@ class Generator {
     for (const propertyName of Object.keys(preferences.properties)) {
       this.walkProperty(propertyName, preferences.properties[propertyName], false, this.settingsTree);
     }
+    assert(this.flagsWithoutUsage.length === 0, `Flags without x-rd-usage in ${ inputFile }: ${ this.flagsWithoutUsage.join(', ') }`);
   }
 
   protected async emitOutput(outputFile: string) {
@@ -257,6 +260,12 @@ class Generator {
     settingsTree: settingsTreeType) {
     const enums = this.convertStringsToGolang(preference.enum);
     const usageNote = preference['x-rd-usage'] ?? '';
+
+    // Don't use `notAvailable` here: a flag for another platform must fail on this one too.
+    // Arrays don't get a flag.
+    if (!usageNote && !preference['x-rd-hidden'] && flagType !== 'Array') {
+      this.flagsWithoutUsage.push(`--${ kebabCase(propertyName) }`);
+    }
     const newFlag: commandFlagType = {
       capitalizedName,
       defaultValue,

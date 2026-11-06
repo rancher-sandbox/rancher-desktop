@@ -648,9 +648,11 @@ components:
               type: string
               enum: [qemu, vz]
               x-rd-platforms: [darwin]
+              x-rd-usage: virtual machine type; vz uses the Apple Virtualization framework
             useRosetta:
               type: boolean
               x-rd-platforms: [darwin]
+              x-rd-usage: enable Rosetta support; requires virtual-machine.type=vz
             mount:
               type: object
               x-rd-platforms: [darwin, linux]
@@ -730,9 +732,11 @@ components:
                         securityModel:
                           type: string
                           enum: [passthrough, mapped-xattr, mapped-file, none]
+                          x-rd-usage: security model for the 9p export path
                         protocolVersion:
                           type: string
                           enum: [9p2000, 9p2000.u, 9p2000.L]
+                          x-rd-usage: 9P protocol version
                         msizeInKib:
                           type: integer
                           minimum: 4
@@ -740,6 +744,7 @@ components:
                         cacheMode:
                           type: string
                           enum: [none, loose, fscache, mmap]
+                          x-rd-usage: caching policy for 9p mounts
                 proxy:
                   type: object
                   x-rd-platforms: [win32]
