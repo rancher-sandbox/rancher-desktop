@@ -338,26 +338,26 @@ socketVMNet:
 spinCLI:
   assets:
     - arch: amd64
-      checksum: sha256:1d7be8411ed4d719c542d3ba5adc9dd38a2468b4adb36e693aaa06c6b0ac7bdb
+      checksum: sha256:424d86ba45ab24afc4cc075490c8ceee699d1c5d4fc153eb13686b8039a3846d
       platform: darwin
-      url: https://github.com/spinframework/spin/releases/download/v4.2.6/spin-v4.2.6-macos-amd64.tar.gz
+      url: https://github.com/spinframework/spin/releases/download/v4.3.0/spin-v4.3.0-macos-amd64.tar.gz
     - arch: arm64
-      checksum: sha256:48524aa7679db6382df965fb7014de1c80fc85ccd328b58b42692a881279c4bb
+      checksum: sha256:8ce0a759dca9756d7651f873eaba7d2bb1e0ce5ab34ea10efe5cacdd41175fed
       platform: darwin
-      url: https://github.com/spinframework/spin/releases/download/v4.2.6/spin-v4.2.6-macos-aarch64.tar.gz
+      url: https://github.com/spinframework/spin/releases/download/v4.3.0/spin-v4.3.0-macos-aarch64.tar.gz
     - arch: amd64
-      checksum: sha256:edae4f0106c2d849b62b26171656c6ade8138cf895771cbb41f305018297ae17
+      checksum: sha256:25de087b1f8443e979c8de1339e412c882dcb19eb5990c7888f9d206d0fbfa44
       platform: linux
-      url: https://github.com/spinframework/spin/releases/download/v4.2.6/spin-v4.2.6-static-linux-amd64.tar.gz
+      url: https://github.com/spinframework/spin/releases/download/v4.3.0/spin-v4.3.0-static-linux-amd64.tar.gz
     - arch: arm64
-      checksum: sha256:8a0acfcce9c3588bb283b2a54d35c82d53a926d141a99f8ea596793f2e33ec5d
+      checksum: sha256:bd2205a74f70bada243839e7bdf06f55b572b19e6f799d5369d6c4071802bc94
       platform: linux
-      url: https://github.com/spinframework/spin/releases/download/v4.2.6/spin-v4.2.6-static-linux-aarch64.tar.gz
+      url: https://github.com/spinframework/spin/releases/download/v4.3.0/spin-v4.3.0-static-linux-aarch64.tar.gz
     - arch: amd64
-      checksum: sha256:98388643d0d6c1f586c8233b5b6dfccc2dfe7065023d3e6797bd02b236b44066
+      checksum: sha256:025238e55332cb02da0b4836ee0a6447e1d312d00fe27530455983dd5e4a8db1
       platform: windows
-      url: https://github.com/spinframework/spin/releases/download/v4.2.6/spin-v4.2.6-windows-amd64.zip
-  version: 4.2.6
+      url: https://github.com/spinframework/spin/releases/download/v4.3.0/spin-v4.3.0-windows-amd64.zip
+  version: 4.3.0
 spinKubePlugin:
   assets: []
   version: 0.4.0
