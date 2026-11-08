@@ -819,7 +819,7 @@ func TestAddAlreadyExposedPlusRealFailureReturnsRealFailure(t *testing.T) {
 	require.ErrorIs(t, err, forwarder.ErrExposeAPI,
 		"a real Expose failure must surface, not be masked by the sentinel")
 	require.NotErrorIs(t, err, tracker.ErrPortAlreadyExposed,
-		"the sentinel only applies when every port was already exposed")
+		"Add returns the sentinel only when every Expose call finds a proxy already running")
 }
 
 // TestAddAcrossPortsOneAlreadyExposed verifies that when one of two

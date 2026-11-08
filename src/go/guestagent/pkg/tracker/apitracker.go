@@ -37,10 +37,10 @@ var (
 	ErrAPI         = errors.New("error from API")
 	ErrInvalidIPv4 = errors.New("not an IPv4 address")
 	ErrWSLProxy    = errors.New("error from Rancher Desktop WSL Proxy")
-	// ErrPortAlreadyExposed signals that Add was a no-op because
-	// host-switch already runs a proxy for every port in the request,
-	// usually one another component asked for. It is not a failure, but
-	// the port stays exposed only while that proxy runs.
+	// ErrPortAlreadyExposed signals that Add was a no-op because every
+	// expose call it made found a proxy already running, usually one that
+	// another component asked for. It is not a failure, but the port stays
+	// exposed only while that proxy runs.
 	ErrPortAlreadyExposed = errors.New("port already exposed by another component")
 )
 
