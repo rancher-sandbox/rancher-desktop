@@ -63,7 +63,8 @@ describeUnix('RcFilePathManager', () => {
       profilePath = path.join(testDir, '.profile');
     });
 
-    it('should create rc files if they do not exist', async() => {
+    it('should create csh/fish config files if the shells are installed', async() => {
+      jest.spyOn(pathManager as any, 'isShellInstalled').mockResolvedValue(true);
       const rcNames = ['bashrc', 'zshrc', 'cshrc', 'tcshrc', 'config.fish'];
 
       await pathManager.enforce();
@@ -77,6 +78,17 @@ describeUnix('RcFilePathManager', () => {
       rcNames.forEach((rcName) => {
         expect(fileBlob).not.toMatch(rcName);
       });
+    });
+
+    it('should not create csh/fish config files if the shells are not installed', async() => {
+      jest.spyOn(pathManager as any, 'isShellInstalled').mockResolvedValue(false);
+      await pathManager.enforce();
+      const fileBlob = readdirRecursive(testDir).join(os.EOL);
+
+      ['cshrc', 'tcshrc', 'config.fish'].forEach((rcName) => {
+        expect(fileBlob).not.toMatch(rcName);
+      });
+      expect(fileBlob).toMatch('bashrc');
     });
 
     it('should create .bash_profile if it, .profile or .bash_login does not exist', async() => {

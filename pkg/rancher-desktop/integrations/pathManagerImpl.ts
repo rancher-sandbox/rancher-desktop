@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 
 import { Mutex } from 'async-mutex';
+import which from 'which';
 
 import manageLinesInFile from '@pkg/integrations/manageLinesInFile';
 import { ManualPathManager, PathManagementStrategy, PathManager } from '@pkg/integrations/pathManager';
@@ -57,9 +58,9 @@ export class RcFilePathManager implements PathManager {
   /**
    * Call manageFilesInLine, wrapped in calls to trigger diagnostics updates.
    */
-  protected async manageLinesInFile(fileName: string, filePath: string, lines: string[], desiredPresent: boolean) {
+  protected async manageLinesInFile(fileName: string, filePath: string, lines: string[], desiredPresent: boolean, shouldCreate = true) {
     try {
-      await manageLinesInFile(filePath, lines, desiredPresent);
+      await manageLinesInFile(filePath, lines, desiredPresent, shouldCreate);
       mainEvents.emit('diagnostics-event', {
         id: 'path-management', fileName, error: undefined,
       });
@@ -142,14 +143,36 @@ export class RcFilePathManager implements PathManager {
     });
   }
 
+  /**
+   * Check whether any of the given shells is installed.
+   */
+  protected async isShellInstalled(...shells: string[]): Promise<boolean> {
+    const extraDirs = ['/bin', '/usr/bin', '/usr/local/bin', '/opt/homebrew/bin'];
+    const searchPath = [...(process.env.PATH ?? '').split(path.delimiter).filter(Boolean), ...extraDirs].join(path.delimiter);
+
+    for (const shell of shells) {
+      if (await which(shell, { nothrow: true, path: searchPath })) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   protected async manageCsh(desiredPresent: boolean): Promise<void> {
     await this.cshMutex.runExclusive(async() => {
       const pathLine = `setenv PATH "${ paths.integration }"\\:"$PATH"`;
+      const configs: [string, string[]][] = [
+        ['.cshrc', ['csh', 'tcsh']],
+        ['.tcshrc', ['tcsh']],
+      ];
 
-      await Promise.all(['.cshrc', '.tcshrc'].map((fileName) => {
+      await Promise.all(configs.map(async([fileName, shells]) => {
         const rcPath = path.join(os.homedir(), fileName);
 
-        return this.manageLinesInFile(fileName, rcPath, [pathLine], desiredPresent);
+        const shouldCreate = await this.isShellInstalled(...shells);
+
+        await this.manageLinesInFile(fileName, rcPath, [pathLine], desiredPresent, shouldCreate);
       }));
     });
   }
@@ -162,8 +185,12 @@ export class RcFilePathManager implements PathManager {
       const fishConfigDir = path.join(configHome, 'fish');
       const fishConfigPath = path.join(fishConfigDir, fileName);
 
-      await fs.promises.mkdir(fishConfigDir, { recursive: true, mode: 0o700 });
-      await this.manageLinesInFile(fileName, fishConfigPath, [pathLine], desiredPresent);
+      const shouldCreate = await this.isShellInstalled('fish');
+
+      if (shouldCreate) {
+        await fs.promises.mkdir(fishConfigDir, { recursive: true, mode: 0o700 });
+      }
+      await this.manageLinesInFile(fileName, fishConfigPath, [pathLine], desiredPresent, shouldCreate);
     });
   }
 }
