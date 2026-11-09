@@ -80,12 +80,12 @@ describeUnix('RcFilePathManager', () => {
       });
     });
 
-    it('should not create csh/fish config files if the shells are not installed', async() => {
+    it('should not create zsh/csh/fish config files if the shells are not installed', async() => {
       jest.spyOn(pathManager as any, 'isShellInstalled').mockResolvedValue(false);
       await pathManager.enforce();
       const fileBlob = readdirRecursive(testDir).join(os.EOL);
 
-      ['cshrc', 'tcshrc', 'config.fish'].forEach((rcName) => {
+      ['zshrc', 'cshrc', 'tcshrc', 'config.fish'].forEach((rcName) => {
         expect(fileBlob).not.toMatch(rcName);
       });
       expect(fileBlob).toMatch('bashrc');

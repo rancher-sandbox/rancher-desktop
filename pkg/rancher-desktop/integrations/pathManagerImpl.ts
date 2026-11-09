@@ -132,10 +132,13 @@ export class RcFilePathManager implements PathManager {
       }
 
       // Handle other shells' rc files and .bashrc
-      await Promise.all(['.bashrc', '.zshrc'].map((fileName) => {
-        const rcPath = path.join(os.homedir(), fileName);
+      const rcFiles: [string, string][] = [['.bashrc', 'bash'], ['.zshrc', 'zsh']];
 
-        return this.manageLinesInFile(fileName, rcPath, [pathLine], desiredPresent);
+      await Promise.all(rcFiles.map(async([fileName, shell]) => {
+        const rcPath = path.join(os.homedir(), fileName);
+        const shouldCreate = shell === 'bash' || await this.isShellInstalled(shell);
+
+        await this.manageLinesInFile(fileName, rcPath, [pathLine], desiredPresent, shouldCreate);
       }));
 
       mainEvents.invoke('diagnostics-trigger', 'RD_BIN_IN_BASH_PATH');
