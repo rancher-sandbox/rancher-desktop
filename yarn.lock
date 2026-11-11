@@ -8778,9 +8778,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:45.2.1":
-  version: 45.2.1
-  resolution: "electron@npm:45.2.1"
+"electron@npm:45.2.2":
+  version: 45.2.2
+  resolution: "electron@npm:45.2.2"
   dependencies:
     "@electron-internal/extract-zip": "npm:^1.0.1"
     "@electron/get": "npm:^5.0.0"
@@ -8788,7 +8788,7 @@ __metadata:
   bin:
     electron: cli.js
     install-electron: install.js
-  checksum: 10c0/08ec48252a2fc3267ae753a0c79374ab50649cbb90feb6651a8cb01213124c12fb2588efc7e2c745e1a2edee42997db0bda0bcd2920cf1d33f5b4be22dbcb92a
+  checksum: 10c0/0353786216263b892a8ab5bcf448c0b83859824e074428b704aeac3884e5857caf24d409957143b0dfa4a6dc2374e62e21af66f2c2c5fc1d23b0375f47821e82
   languageName: node
   linkType: hard
 
@@ -14791,7 +14791,7 @@ __metadata:
     dmg-license: "npm:1.0.11"
     dompurify: "npm:3.4.17"
     ejs: "npm:7.0.2"
-    electron: "npm:45.2.1"
+    electron: "npm:45.2.2"
     electron-builder: "npm:26.18.1"
     electron-updater: "npm:6.8.11"
     eslint: "npm:10.14.0"
