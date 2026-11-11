@@ -159,38 +159,38 @@ dockerCompose:
 dockerProvidedCredentialHelpers:
   assets:
     - arch: amd64
-      checksum: sha256:a7031335bebc9a8573fbacae6e56fe7848a360d6746c62a7680849012dac0068
+      checksum: sha256:66e48d8e318afa2cda54c2d3e51d42ee78ed06834b5b931abe4f88df640e11ae
       platform: linux
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.12/docker-credential-secretservice-v0.9.12.linux-amd64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.13/docker-credential-secretservice-v0.9.13.linux-amd64
     - arch: arm64
-      checksum: sha256:8075d247efcb133805d63bebc797833e108c5dca36351d501f87c031c683823f
+      checksum: sha256:3ad619667bc886e30df7d3d4d1c453cacd6b9eeda3e168749921c9c09e0013dc
       platform: linux
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.12/docker-credential-secretservice-v0.9.12.linux-arm64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.13/docker-credential-secretservice-v0.9.13.linux-arm64
     - arch: amd64
-      checksum: sha256:0369caf75820b2a927b8f7435cdd6b447583e0bb30f2b0633ed83f24b4d59a37
+      checksum: sha256:511951c3f27b3bf4f80e50c44558ca406bbbfc048e58d8c17a088c9add1913d4
       platform: linux
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.12/docker-credential-pass-v0.9.12.linux-amd64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.13/docker-credential-pass-v0.9.13.linux-amd64
     - arch: arm64
-      checksum: sha256:cbebaeba45523050a75beabd4fd0dc7267ab095b02961940e41e6fc38d6b3ee0
+      checksum: sha256:3d10c2a8100b8c279bd3114cf627575adf3e59acba660137ee56a171a682a44f
       platform: linux
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.12/docker-credential-pass-v0.9.12.linux-arm64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.13/docker-credential-pass-v0.9.13.linux-arm64
     - arch: amd64
-      checksum: sha256:2b27d34ad2065a3413740b59359dac56f2e1bd00a40629de51e29fa30cf1390f
+      checksum: sha256:6609c5ca7117b2863c59470e662bd055772ec682efbc5383b87b4093ebf47a42
       platform: darwin
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.12/docker-credential-osxkeychain-v0.9.12.darwin-amd64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.13/docker-credential-osxkeychain-v0.9.13.darwin-amd64
     - arch: arm64
-      checksum: sha256:0e43ec22d3fd186b2d69a3c76fd9ac0a1ae4ec4f2c2b2e4ee156e048c8258cb0
+      checksum: sha256:72512a79a6f1757a0b104548614dedc9de26825efcb6a4ee3e719be25578ccc2
       platform: darwin
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.12/docker-credential-osxkeychain-v0.9.12.darwin-arm64
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.13/docker-credential-osxkeychain-v0.9.13.darwin-arm64
     - arch: amd64
-      checksum: sha256:5675c7f677f48beb66713cdfdf67503332f0ce4cf19220022c128634f49625f0
+      checksum: sha256:5d22527531c4234f8a0bca7f803cb4f8a0834a6a7913042f7bc6f462f0af2ac2
       platform: windows
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.12/docker-credential-wincred-v0.9.12.windows-amd64.exe
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.13/docker-credential-wincred-v0.9.13.windows-amd64.exe
     - arch: arm64
-      checksum: sha256:b5fce98cc24108fe4207761133df2fa887c1cea5054daec1ac5e220300d94d43
+      checksum: sha256:b74a94ac8d1a92211ece2f546274f0e12cd968330b755d7e3112343047f9a705
       platform: windows
-      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.12/docker-credential-wincred-v0.9.12.windows-arm64.exe
-  version: 0.9.12
+      url: https://github.com/docker/docker-credential-helpers/releases/download/v0.9.13/docker-credential-wincred-v0.9.13.windows-arm64.exe
+  version: 0.9.13
 electron:
   assets:
     - arch: amd64
