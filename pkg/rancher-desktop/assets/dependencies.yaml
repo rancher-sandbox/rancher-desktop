@@ -132,30 +132,30 @@ dockerCLI:
 dockerCompose:
   assets:
     - arch: amd64
-      checksum: sha256:7758048ad38e580f22559603312874fec8bb638d021a9e64182385fc17cc12a2
+      checksum: sha256:af426722a8af5de812fcee30cc1c39f0639f5f723cbadefb25e5d4db054064cf
       platform: linux
-      url: https://github.com/docker/compose/releases/download/v5.7.0/docker-compose-linux-x86_64
+      url: https://github.com/docker/compose/releases/download/v5.7.1/docker-compose-linux-x86_64
     - arch: arm64
-      checksum: sha256:15861535d14e26555736b49376c95e14bfd94285366c8446bfac7156a972e76f
+      checksum: sha256:f2f49f903240895fa764c0dca3a14548b754ad9426f6b609ccaf55ec5a3aa2a5
       platform: linux
-      url: https://github.com/docker/compose/releases/download/v5.7.0/docker-compose-linux-aarch64
+      url: https://github.com/docker/compose/releases/download/v5.7.1/docker-compose-linux-aarch64
     - arch: amd64
-      checksum: sha256:f57fad1fc3a942309b76da99e0a1c49dc97f7c56d4a03593d71bb01577aeeb29
+      checksum: sha256:c28b37c7bf1cc315acdf511c2c0f34ce19d4d33b6038611617063a99c45417c6
       platform: darwin
-      url: https://github.com/docker/compose/releases/download/v5.7.0/docker-compose-darwin-x86_64
+      url: https://github.com/docker/compose/releases/download/v5.7.1/docker-compose-darwin-x86_64
     - arch: arm64
-      checksum: sha256:54495ff81dd8cae11861455f0308a293a530149beba8f1d90ff3f295b11cf035
+      checksum: sha256:5a9aa8b5fb5b1e3cd83f39c80e570ae30aafd74cd9b47264fbe4ff7e6e6251ca
       platform: darwin
-      url: https://github.com/docker/compose/releases/download/v5.7.0/docker-compose-darwin-aarch64
+      url: https://github.com/docker/compose/releases/download/v5.7.1/docker-compose-darwin-aarch64
     - arch: amd64
-      checksum: sha256:f5dc759702aec5c0602e247aa861d14853216e3f481c4eaaf83621a035ecf92f
+      checksum: sha256:e4316597452650ae92fe9719a2a7c2fce8f56c5ceafed88d2aed6e39b2b2b2d0
       platform: windows
-      url: https://github.com/docker/compose/releases/download/v5.7.0/docker-compose-windows-x86_64.exe
+      url: https://github.com/docker/compose/releases/download/v5.7.1/docker-compose-windows-x86_64.exe
     - arch: arm64
-      checksum: sha256:d622f50e48d0565c1d3ab8c410ef7287a9efe0cf2b2c803ff7878918592e27bf
+      checksum: sha256:3ed47ab4d1cd56d63981246820420e7aaf042f2a48e6ccc95993872980a4e0a9
       platform: windows
-      url: https://github.com/docker/compose/releases/download/v5.7.0/docker-compose-windows-aarch64.exe
-  version: 5.7.0
+      url: https://github.com/docker/compose/releases/download/v5.7.1/docker-compose-windows-aarch64.exe
+  version: 5.7.1
 dockerProvidedCredentialHelpers:
   assets:
     - arch: amd64
