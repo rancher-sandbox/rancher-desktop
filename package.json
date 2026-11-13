@@ -135,7 +135,7 @@
     "eslint-plugin-vue": "10.12.0",
     "extract-zip": "2.0.1",
     "floating-vue": "5.4.0",
-    "glob": "^14.0.3",
+    "glob": "^14.0.4",
     "globals": "17.14.0",
     "jest": "30.5.2",
     "jest-environment-jsdom": "30.5.2",
