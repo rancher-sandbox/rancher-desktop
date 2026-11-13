@@ -61,10 +61,11 @@ export const ErrorWritingFile =
  * @param path The path to the file to work on.
  * @param desiredManagedLines The lines to insert into the file.
  * @param desiredPresent Whether the lines should be present.
+ * @param shouldCreate Whether to create the file if it does not exist.
  * @throws If the file could not be managed; for example, if it has extended
  *         attributes, is not a regular file, or a backup exists.
  */
-export default async function manageLinesInFile(path: string, desiredManagedLines: string[], desiredPresent: boolean): Promise<void> {
+export default async function manageLinesInFile(path: string, desiredManagedLines: string[], desiredPresent: boolean, shouldCreate = true): Promise<void> {
   const desired = getDesiredLines(desiredManagedLines, desiredPresent);
   let fileStats: fs.Stats;
 
@@ -75,7 +76,7 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
       // File does not exist.
       const content = computeTargetContents('', desired);
 
-      if (content) {
+      if (content && shouldCreate) {
         await fs.promises.writeFile(path, content, { mode: DEFAULT_FILE_MODE });
       }
 
