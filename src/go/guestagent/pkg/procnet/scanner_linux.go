@@ -343,8 +343,8 @@ func (p *ProcNetScanner) reassert(port ports.Port, bindings []ports.PortBinding)
 	// an earlier publish stored under this id. If only the wsl-proxy
 	// notify fails, later rechecks get the sentinel and do not resend it,
 	// so other WSL distributions cannot reach the port.
-	if err := p.tracker.Add(id, ports.PortMap{port: bindings}); err != nil &&
-		!errors.Is(err, tracker.ErrPortAlreadyExposed) {
+	err := p.tracker.Add(id, ports.PortMap{port: bindings})
+	if err != nil && !errors.Is(err, tracker.ErrPortAlreadyExposed) {
 		p.logAddFailure(port, fmt.Sprintf("re-asserting expose: %s", err))
 	}
 }
