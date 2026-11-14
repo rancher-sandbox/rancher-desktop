@@ -11,6 +11,7 @@ import {
   CURRENT_SETTINGS_VERSION,
   defaultSettings,
   DeploymentProfileType,
+  Locale,
   LockedSettingsType,
   Settings,
   SettingsError,
@@ -87,11 +88,16 @@ export function getSettings(): Settings {
  * createSettings
  * - Called when either there's no settings file, or for testing purposes, where we want to use a particular deployment profile.
  * @param {DeploymentProfileType} deploymentProfiles
+ * @param {Locale} defaultLocale Locale to use when the deployment profile does not set one.
  * @returns default settings merged with any default profile
  */
-export function createSettings(deploymentProfiles: DeploymentProfileType): Settings {
+export function createSettings(
+  deploymentProfiles: DeploymentProfileType,
+  defaultLocale: Locale = defaultSettings.application.locale,
+): Settings {
   const cfg = clone(defaultSettings);
 
+  cfg.application.locale = defaultLocale;
   cfg.virtualMachine.memoryInGB = getDefaultMemory();
   merge(cfg, deploymentProfiles.defaults);
 
@@ -113,8 +119,13 @@ export function clearSettings() {
 
 /**
  * Load the settings file or create it if not present.
+ * @param deploymentProfiles Deployment profiles to apply.
+ * @param defaultLocale Locale for a new settings file; ignored if one already exists.
  */
-export function load(deploymentProfiles: DeploymentProfileType): Settings {
+export function load(
+  deploymentProfiles: DeploymentProfileType,
+  defaultLocale: Locale = defaultSettings.application.locale,
+): Settings {
   try {
     return finishConfiguringSettings(loadFromDisk(), deploymentProfiles);
   } catch (err: any) {
@@ -122,10 +133,10 @@ export function load(deploymentProfiles: DeploymentProfileType): Settings {
       // See the migrateSettingsLocationOnWindows code to understand how it's impossible to
       // end up in an infinite loop of recursive calls to `load()`
       if (migrateSettingsLocationOnWindows()) {
-        return load(deploymentProfiles);
+        return load(deploymentProfiles, defaultLocale);
       }
 
-      return createSettings(deploymentProfiles);
+      return createSettings(deploymentProfiles, defaultLocale);
     } else {
       // JSON problems in the settings file will be caught, and we let any
       // other errors (e.g. permission-related) bubble up to the surface

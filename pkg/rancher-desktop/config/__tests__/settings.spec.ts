@@ -43,6 +43,58 @@ const modules = mockModules({
 const { readDeploymentProfiles } = await import('@pkg/main/deploymentProfiles');
 
 describe('settings', () => {
+  describe('localeFromLanguageTag', () => {
+    test.each([
+      ['de-DE', 'de'],
+      ['en-GB', 'en-us'],
+      ['es-419', 'es'],
+      ['fr-CA', 'fr'],
+      ['it-IT', 'it'],
+      ['ja-JP', 'ja'],
+      ['ko-KR', 'ko'],
+      ['pt', 'pt-br'],
+      ['pt-BR', 'pt-br'],
+      ['pt_PT', 'pt-br'],
+      ['pt_BR.UTF-8', 'pt-br'],
+      ['vi-VN', 'vi'],
+      ['zh', 'zh-hans'],
+      ['zh-Hans-CN', 'zh-hans'],
+      ['zh-TW', 'zh-hans'],
+    ])('maps %s to %s', (languageTag, expected) => {
+      expect(settings.localeFromLanguageTag(languageTag)).toBe(expected);
+    });
+
+    test.each(['', '  ', 'nl-NL', 'not a locale'])('leaves %s unmapped', (languageTag) => {
+      expect(settings.localeFromLanguageTag(languageTag)).toBeUndefined();
+    });
+  });
+
+  describe('default locale', () => {
+    const writeFileSync = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+
+    afterEach(() => {
+      settingsImpl.turnFirstRunOff();
+    });
+    afterAll(() => {
+      writeFileSync.mockRestore();
+    });
+
+    test('uses the supplied system locale for new settings', () => {
+      const cfg = settingsImpl.createSettings({ defaults: {}, locked: {} }, 'pt-br');
+
+      expect(cfg.application.locale).toBe('pt-br');
+    });
+
+    test('lets a deployment profile default override the system locale', () => {
+      const cfg = settingsImpl.createSettings({
+        defaults: { application: { locale: 'de' } },
+        locked:   {},
+      }, 'pt-br');
+
+      expect(cfg.application.locale).toBe('de');
+    });
+  });
+
   describe('merge', () => {
     test('merges plain objects', () => {
       const input = {
