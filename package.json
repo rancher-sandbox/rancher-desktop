@@ -65,7 +65,7 @@
     "electron-updater": "6.8.11",
     "express": "5.3.0",
     "fs-extra": "11.4.1",
-    "intl-messageformat": "12.1.4",
+    "intl-messageformat": "12.1.5",
     "jsonpath-plus": "11.3.0",
     "lodash": "4.18.1",
     "native-reg": "1.1.1",
