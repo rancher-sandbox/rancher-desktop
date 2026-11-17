@@ -10,30 +10,30 @@
 ECRCredentialHelper:
   assets:
     - arch: amd64
-      checksum: sha256:a22ab6d59dbac777b8fb31984709461da00a4c778b6ae14c8d3729e8d5ded1a6
+      checksum: sha256:4278f07192fe63b5432dec9d0e3326b2bc11296c8954b7afec1eb1a9b198e015
       platform: linux
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/linux-amd64/docker-credential-ecr-login
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.13.0/linux-amd64/docker-credential-ecr-login
     - arch: arm64
-      checksum: sha256:5bdd30fb6c7a92462f5b454cce1aa906ca7926a6c2e39efad9613a7bf7661fac
+      checksum: sha256:f0669e1666c6e1c70f9484df2cbd01c89b82f687f63dc55c50b05e8d20ebd2e1
       platform: linux
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/linux-arm64/docker-credential-ecr-login
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.13.0/linux-arm64/docker-credential-ecr-login
     - arch: amd64
-      checksum: sha256:c168e51ecfcc3a9e3704537da88bf65aa228d4223e80d363f9f346cde18af443
+      checksum: sha256:a97b898374ac0a04242668fe0a3449a526867fe50c692a3184cd89c7ed92f23e
       platform: darwin
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/darwin-amd64/docker-credential-ecr-login
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.13.0/darwin-amd64/docker-credential-ecr-login
     - arch: arm64
-      checksum: sha256:aa9e902a4dd80aa34ac0f753f6ab4723050b9d9846b07237ea56c5f814b9f457
+      checksum: sha256:7dba29abf9897e7897d1f228e979c2150f6826b78d614232ca0d30a13ba42b8e
       platform: darwin
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/darwin-arm64/docker-credential-ecr-login
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.13.0/darwin-arm64/docker-credential-ecr-login
     - arch: amd64
-      checksum: sha256:1545d0c797ad7d539f0b85ef6c8702193a93764d537b01f93b55cefae994c9e1
+      checksum: sha256:e66c610d73f9d109906c00556b1f9b4639f79923daf2fbea55b06410fc4e61e7
       platform: windows
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/windows-amd64/docker-credential-ecr-login.exe
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.13.0/windows-amd64/docker-credential-ecr-login.exe
     - arch: arm64
-      checksum: sha256:42bbcac22405c1a98ae211555918dc37f8e0e9c458a93f4026cf102aa1011256
+      checksum: sha256:edaae71fd4f506787a823fecd8a5947b6a51a4d5518fb72279285bddbf748bdd
       platform: windows
-      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.12.0/windows-arm64/docker-credential-ecr-login.exe
-  version: 0.12.0
+      url: https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.13.0/windows-arm64/docker-credential-ecr-login.exe
+  version: 0.13.0
 WSLDistro:
   assets:
     - checksum: sha256:879548518480df10b40b4501469e5bf648ff6e4f9936e082550c8704e00c3da1
