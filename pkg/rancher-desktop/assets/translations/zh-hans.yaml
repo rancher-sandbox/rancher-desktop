@@ -535,8 +535,8 @@ deploymentProfile:
   # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
   noVersionRegistry: 无效的部署：未在 {path} 指定版本。请添加版本字段使其有效（当前版本为 {version}）。
 diagnostics:
-  # @source {count} failed plus {muted} muted
-  failedCount: '{count} 项失败，{muted} 项已静音'
+  # @source {count} failed{muted, plural, =0 {} other { plus {muted} muted}}
+  failedCount: '{count} 项失败{muted, plural, =0 {} other {，{muted} 项已静音}}'
   # @source Last run:
   lastRun: 上次运行：
   # @reason "从未" is an adverb and cannot stand alone in Chinese; the verb 运行 echoes the adjacent "上次运行：" label

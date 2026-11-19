@@ -525,8 +525,8 @@ deploymentProfile:
   # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
   noVersionRegistry: 'Ungültige Bereitstellung: keine Version angegeben unter {path}. Fügen Sie ein Versionsfeld hinzu (aktuelle Version ist {version}).'
 diagnostics:
-  # @source {count} failed plus {muted} muted
-  failedCount: '{count} fehlgeschlagen plus {muted} stummgeschaltet'
+  # @source {count} failed{muted, plural, =0 {} other { plus {muted} muted}}
+  failedCount: '{count} fehlgeschlagen{muted, plural, =0 {} other { plus {muted} stummgeschaltet}}'
   # @source Last run:
   lastRun: 'Letzter Lauf:'
   # @source (Never)

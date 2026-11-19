@@ -479,8 +479,8 @@ deploymentProfile:
   noVersionRegistry: 'Déploiement non valide : aucune version spécifiée dans {path}. Ajoutez un champ version pour le rendre valide (la version actuelle est {version}).'
 diagnostics:
   # @reason "muted" rendered as "ignoré" throughout the diagnostics page
-  # @source {count} failed plus {muted} muted
-  failedCount: '{count} en échec et {muted} ignorés'
+  # @source {count} failed{muted, plural, =0 {} other { plus {muted} muted}}
+  failedCount: '{count} en échec{muted, plural, =0 {} other { et {muted} ignorés}}'
   # @source Last run:
   lastRun: 'Dernière exécution :'
   # @source (Never)
