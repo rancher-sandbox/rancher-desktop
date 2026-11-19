@@ -63,7 +63,7 @@ describeUnix('RcFilePathManager', () => {
       profilePath = path.join(testDir, '.profile');
     });
 
-    it('should create csh/fish config files if the shells are installed', async() => {
+    it('should create zsh/csh/fish config files if the shells are installed', async() => {
       jest.spyOn(pathManager as any, 'isShellInstalled').mockResolvedValue(true);
       const rcNames = ['bashrc', 'zshrc', 'cshrc', 'tcshrc', 'config.fish'];
 
