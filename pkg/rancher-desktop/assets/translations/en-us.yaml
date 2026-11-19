@@ -806,7 +806,7 @@ diagnostics:
       heading: No problems detected
       # @no-translate Rancher Desktop
       body: Rancher Desktop appears to be functioning correctly.
-  failedCount: '{count} failed plus {muted} muted'
+  failedCount: '{count} failed{muted, plural, =0 {} other { plus {muted} muted}}'
   lastRun: 'Last run:'
   never: (Never)
   noFixes: (No fixes available)

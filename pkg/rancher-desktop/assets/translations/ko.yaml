@@ -466,8 +466,8 @@ deploymentProfile:
   # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
   noVersionRegistry: '잘못된 배포: {path}에 버전이 지정되지 않았습니다. 유효하도록 version 필드를 추가하십시오(현재 버전은 {version}입니다).'
 diagnostics:
-  # @source {count} failed plus {muted} muted
-  failedCount: '{count}개 실패 및 {muted}개 무시됨'
+  # @source {count} failed{muted, plural, =0 {} other { plus {muted} muted}}
+  failedCount: '{count}개 실패{muted, plural, =0 {} other { 및 {muted}개 무시됨}}'
   # @source Last run:
   lastRun: '마지막 실행:'
   # @reason A bare adverb cannot stand alone as a Korean label; expanded to "never run" so it reads as a value after 마지막 실행:

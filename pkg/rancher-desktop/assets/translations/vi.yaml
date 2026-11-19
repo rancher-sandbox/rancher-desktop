@@ -466,8 +466,8 @@ deploymentProfile:
   # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
   noVersionRegistry: 'Cấu hình triển khai không hợp lệ: chưa chỉ định phiên bản tại {path}. Hãy thêm trường version để cấu hình hợp lệ (phiên bản hiện tại là {version}).'
 diagnostics:
-  # @source {count} failed plus {muted} muted
-  failedCount: '{count} lỗi và {muted} đã bỏ qua'
+  # @source {count} failed{muted, plural, =0 {} other { plus {muted} muted}}
+  failedCount: '{count} lỗi{muted, plural, =0 {} other { và {muted} đã bỏ qua}}'
   # @source Last run:
   lastRun: 'Lần chạy gần nhất:'
   # @source (Never)

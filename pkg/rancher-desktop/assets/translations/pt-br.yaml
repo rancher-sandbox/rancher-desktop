@@ -475,8 +475,8 @@ deploymentProfile:
   # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
   noVersionRegistry: 'Implantação inválida: nenhuma versão especificada em {path}. Adicione um campo de versão para torná-la válida (a versão atual é {version}).'
 diagnostics:
-  # @source {count} failed plus {muted} muted
-  failedCount: '{count} com falha, mais {muted} silenciados'
+  # @source {count} failed{muted, plural, =0 {} other { plus {muted} muted}}
+  failedCount: '{count} com falha{muted, plural, =0 {} other {, mais {muted} silenciados}}'
   # @source Last run:
   lastRun: 'Última execução:'
   # @source (Never)

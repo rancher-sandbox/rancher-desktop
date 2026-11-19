@@ -469,8 +469,8 @@ deploymentProfile:
   # @source Invalid deployment: no version specified at {path}. Add a version field to make it valid (current version is {version}).
   noVersionRegistry: デプロイメントが無効です：{path}にバージョンが指定されていません。有効にするにはversionフィールドを追加してください（現在のバージョンは{version}です）。
 diagnostics:
-  # @source {count} failed plus {muted} muted
-  failedCount: '{count}件が失敗、さらに{muted}件がミュートされています'
+  # @source {count} failed{muted, plural, =0 {} other { plus {muted} muted}}
+  failedCount: '{count}件が失敗{muted, plural, =0 {} other {、さらに{muted}件がミュートされています}}'
   # @source Last run:
   lastRun: 最終実行：
   # @reason English "Never" is elliptical for "never run"; Japanese needs the verb, so 未実行 (not yet run). Full-width parentheses match diagnostics.noFixes.
