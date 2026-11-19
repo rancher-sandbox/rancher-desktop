@@ -63,7 +63,8 @@ describeUnix('RcFilePathManager', () => {
       profilePath = path.join(testDir, '.profile');
     });
 
-    it('should create rc files if they do not exist', async() => {
+    it('should create zsh/csh/fish config files if the shells are installed', async() => {
+      jest.spyOn(pathManager as any, 'isShellInstalled').mockResolvedValue(true);
       const rcNames = ['bashrc', 'zshrc', 'cshrc', 'tcshrc', 'config.fish'];
 
       await pathManager.enforce();
@@ -77,6 +78,17 @@ describeUnix('RcFilePathManager', () => {
       rcNames.forEach((rcName) => {
         expect(fileBlob).not.toMatch(rcName);
       });
+    });
+
+    it('should not create zsh/csh/fish config files if the shells are not installed', async() => {
+      jest.spyOn(pathManager as any, 'isShellInstalled').mockResolvedValue(false);
+      await pathManager.enforce();
+      const fileBlob = readdirRecursive(testDir).join(os.EOL);
+
+      ['zshrc', 'cshrc', 'tcshrc', 'config.fish'].forEach((rcName) => {
+        expect(fileBlob).not.toMatch(rcName);
+      });
+      expect(fileBlob).toMatch('bashrc');
     });
 
     it('should create .bash_profile if it, .profile or .bash_login does not exist', async() => {
@@ -143,6 +155,74 @@ describeUnix('RcFilePathManager', () => {
 
       await expect(fs.promises.readFile(profilePath, { encoding: 'utf-8' })).resolves.not.toMatch(managedContent);
       await expect(fs.promises.readFile(profilePath, { encoding: 'utf-8' })).resolves.toMatch(unmanagedContent);
+    });
+  });
+
+  describe('isShellInstalled', () => {
+    let binDir: string;
+    let emptyDir: string;
+    let shellsFile: string;
+
+    beforeEach(async() => {
+      binDir = path.join(testDir, 'bin');
+      emptyDir = path.join(testDir, 'empty');
+      shellsFile = path.join(testDir, 'shells');
+      await fs.promises.mkdir(binDir);
+      await fs.promises.mkdir(emptyDir);
+      await fs.promises.writeFile(path.join(binDir, 'rdtest-shell'), '#!/bin/sh\n', { mode: 0o755 });
+      (pathManager as any).shellsFilePath = path.join(testDir, 'nonexistent');
+    });
+
+    it('should find a shell on PATH', async() => {
+      process.env.PATH = binDir;
+      await expect((pathManager as any).isShellInstalled('rdtest-shell')).resolves.toBe(true);
+    });
+
+    it('should not find a shell that is not installed', async() => {
+      process.env.PATH = emptyDir;
+      await expect((pathManager as any).isShellInstalled('rdtest-shell')).resolves.toBe(false);
+    });
+
+    it('should search the fallback directories', async() => {
+      process.env.PATH = '';
+      await expect((pathManager as any).isShellInstalled('sh')).resolves.toBe(true);
+    });
+
+    it.each([
+      '.nix-profile/bin',
+      '.local/state/nix/profile/bin',
+      '.linuxbrew/bin',
+    ])('should search ~/%s', async(dir) => {
+      const homeBin = path.join(testDir, dir);
+
+      process.env.PATH = emptyDir;
+      await fs.promises.mkdir(homeBin, { recursive: true });
+      await fs.promises.writeFile(path.join(homeBin, 'rdtest-shell'), '#!/bin/sh\n', { mode: 0o755 });
+      await expect((pathManager as any).isShellInstalled('rdtest-shell')).resolves.toBe(true);
+    });
+
+    it('should find an executable shell listed in the shells file', async() => {
+      process.env.PATH = emptyDir;
+      await fs.promises.writeFile(shellsFile, `# comment\n${ path.join(binDir, 'rdtest-shell') }\n`);
+      (pathManager as any).shellsFilePath = shellsFile;
+      await expect((pathManager as any).isShellInstalled('rdtest-shell')).resolves.toBe(true);
+    });
+
+    it('should ignore a missing shell listed in the shells file', async() => {
+      process.env.PATH = emptyDir;
+      await fs.promises.writeFile(shellsFile, `${ path.join(emptyDir, 'rdtest-shell') }\n`);
+      (pathManager as any).shellsFilePath = shellsFile;
+      await expect((pathManager as any).isShellInstalled('rdtest-shell')).resolves.toBe(false);
+    });
+
+    it('should ignore a directory listed in the shells file', async() => {
+      const shellDir = path.join(testDir, 'dirs', 'rdtest-shell');
+
+      process.env.PATH = emptyDir;
+      await fs.promises.mkdir(shellDir, { recursive: true });
+      await fs.promises.writeFile(shellsFile, `${ shellDir }\n`);
+      (pathManager as any).shellsFilePath = shellsFile;
+      await expect((pathManager as any).isShellInstalled('rdtest-shell')).resolves.toBe(false);
     });
   });
 });

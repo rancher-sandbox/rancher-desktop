@@ -197,12 +197,17 @@ check_path() {
     skip_on_windows
     # Check if ./rd/bin was removed from the path
     # TODO add check for config.fish
-    env_profiles=(
-        "$HOME/.bashrc"
-        "$HOME/.zshrc"
-        "$HOME/.cshrc"
-        "$HOME/.tcshrc"
-    )
+    env_profiles=("${HOME}/.bashrc")
+    # Rancher Desktop creates a missing rc file only when its shell is installed
+    if command -v zsh >/dev/null; then
+        env_profiles+=("${HOME}/.zshrc")
+    fi
+    if command -v csh >/dev/null || command -v tcsh >/dev/null; then
+        env_profiles+=("${HOME}/.cshrc")
+    fi
+    if command -v tcsh >/dev/null; then
+        env_profiles+=("${HOME}/.tcshrc")
+    fi
     for candidate in .bash_profile .bash_login .profile; do
         if [ -e "$HOME/$candidate" ]; then
             env_profiles+=("$HOME/$candidate")
