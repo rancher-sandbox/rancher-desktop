@@ -23,6 +23,7 @@ export class RcFilePathManager implements PathManager {
   private readonly posixMutex :Mutex;
   private readonly cshMutex :  Mutex;
   private readonly fishMutex : Mutex;
+  protected shellsFilePath = '/etc/shells';
 
   constructor() {
     const platform = os.platform();
@@ -150,11 +151,51 @@ export class RcFilePathManager implements PathManager {
    * Check whether any of the given shells is installed.
    */
   protected async isShellInstalled(...shells: string[]): Promise<boolean> {
-    const extraDirs = ['/bin', '/usr/bin', '/usr/local/bin', '/opt/homebrew/bin'];
+    // An app launched from Finder gets a minimal PATH, so also search
+    // the usual install locations of system and package-manager shells.
+    const extraDirs = [
+      '/bin',
+      '/usr/bin',
+      '/usr/local/bin',
+      '/opt/homebrew/bin',
+      '/opt/local/bin',
+      '/run/current-system/sw/bin',
+      '/nix/var/nix/profiles/default/bin',
+      path.join('/etc/profiles/per-user', os.userInfo().username, 'bin'),
+      path.join(os.homedir(), '.nix-profile', 'bin'),
+      path.join(os.homedir(), '.local', 'state', 'nix', 'profile', 'bin'),
+      '/home/linuxbrew/.linuxbrew/bin',
+      path.join(os.homedir(), '.linuxbrew', 'bin'),
+    ];
     const searchPath = [...(process.env.PATH ?? '').split(path.delimiter).filter(Boolean), ...extraDirs].join(path.delimiter);
 
     for (const shell of shells) {
       if (await which(shell, { nothrow: true, path: searchPath })) {
+        return true;
+      }
+    }
+
+    return await this.isShellListedInShellsFile(shells);
+  }
+
+  /**
+   * Check whether the shells file (/etc/shells) lists an executable path
+   * for any of the given shells.
+   */
+  protected async isShellListedInShellsFile(shells: string[]): Promise<boolean> {
+    let contents: string;
+
+    try {
+      contents = await fs.promises.readFile(this.shellsFilePath, 'utf-8');
+    } catch {
+      return false;
+    }
+    const candidates = contents.split('\n')
+      .map(line => line.trim())
+      .filter(line => path.isAbsolute(line) && shells.includes(path.basename(line)));
+
+    for (const candidate of candidates) {
+      if (await which(candidate, { nothrow: true })) {
         return true;
       }
     }
