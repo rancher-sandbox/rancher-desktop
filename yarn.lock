@@ -10344,14 +10344,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^14.0.5":
-  version: 14.0.5
-  resolution: "glob@npm:14.0.5"
+"glob@npm:^14.0.6":
+  version: 14.0.6
+  resolution: "glob@npm:14.0.6"
   dependencies:
     minimatch: "npm:^11.0.5"
     minipass: "npm:^7.1.3"
     path-scurry: "npm:^3.0.0"
-  checksum: 10c0/42a3400ab2e6877ee0353496dcb2b60eaa6b02e7b7733264557f285372ad692611c3cbb363b856f38d9a6401f8ed56daa960143ba26083a58e8cb95d6c617363
+  checksum: 10c0/5b8621a6a363abc630de0a542f0f8d0a919a0a5e154626b5fdf1e97425e8709783b0b27cc1eb9d65a5ce097db84e904fe50f8f1dc8c0579c49583c0ac30f8ac7
   languageName: node
   linkType: hard
 
@@ -14912,7 +14912,7 @@ __metadata:
     extract-zip: "npm:2.0.1"
     floating-vue: "npm:5.4.0"
     fs-extra: "npm:11.4.1"
-    glob: "npm:^14.0.5"
+    glob: "npm:^14.0.6"
     globals: "npm:17.14.0"
     intl-messageformat: "npm:12.1.5"
     jest: "npm:30.5.2"
