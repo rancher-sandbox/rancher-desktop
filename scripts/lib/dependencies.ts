@@ -52,17 +52,7 @@ export interface AlpineLimaISOVersion {
   alpineVersion: string
 }
 
-export interface MobyOpenAPISpecVersion {
-  // The Docker API version, e.g. "1.54", which selects the
-  // `api/docs/v${apiVersion}.yaml` file to read.
-  apiVersion: string;
-  // The Moby commit the spec is fetched from.  rddepman resolves the latest
-  // commit that touched `api/docs/v${apiVersion}.yaml` at bump time and pins
-  // it here so the source URL is immutable for install-time verification.
-  commit:     string;
-}
-
-export type Version = string | AlpineLimaISOVersion | MobyOpenAPISpecVersion;
+export type Version = string | AlpineLimaISOVersion;
 
 export interface DependencyVersions {
   lima:                            string;
@@ -81,7 +71,6 @@ export interface DependencyVersions {
   steve:                           string;
   dockerProvidedCredentialHelpers: string;
   ECRCredentialHelper:             string;
-  mobyOpenAPISpec:                 MobyOpenAPISpecVersion;
   wix:                             string;
   moproxy:                         string;
   spinShim:                        string;
@@ -182,13 +171,10 @@ function parseAsset(name: string, path: string, raw: RawAsset): DependencyAsset 
 
 /**
  * Validates a manifest entry's `version`.  Most dependencies track a plain
- * version string; `alpineLimaISO` and `mobyOpenAPISpec` track a structured
- * version (see {@link AlpineLimaISOVersion} / {@link MobyOpenAPISpecVersion}),
- * so those two shapes are accepted too.  A bare YAML number (e.g. `1.0`) is
- * rejected so an unquoted version cannot silently lose precision.  The
- * `mobyOpenAPISpec` commit must be a full 40-char SHA.  A mutable ref (a
- * branch, a short SHA) would otherwise let a regenerate bake a moving target
- * into the install URL, defeating the immutable-source guarantee.
+ * version string; `alpineLimaISO` tracks a structured version (see
+ * {@link AlpineLimaISOVersion}), so that shape is accepted too.  A bare YAML
+ * number (e.g. `1.0`) is rejected so an unquoted version cannot silently lose
+ * precision.
  */
 function parseVersion(name: string, path: string, raw: unknown): Version {
   if (typeof raw === 'string') {
@@ -199,13 +185,6 @@ function parseVersion(name: string, path: string, raw: unknown): Version {
 
     if (typeof obj.isoVersion === 'string' && typeof obj.alpineVersion === 'string') {
       return { isoVersion: obj.isoVersion, alpineVersion: obj.alpineVersion };
-    }
-    if (typeof obj.apiVersion === 'string' && typeof obj.commit === 'string') {
-      if (!/^[0-9a-f]{40}$/i.test(obj.commit)) {
-        throw new Error(`Entry ${ name } in ${ path } has invalid mobyOpenAPISpec commit ${ JSON.stringify(obj.commit) }; expected a 40-char SHA`);
-      }
-
-      return { apiVersion: obj.apiVersion, commit: obj.commit };
     }
   }
 
@@ -620,11 +599,8 @@ export abstract class VersionedDependency implements Dependency {
     if (typeof v === 'string') {
       return v;
     }
-    if ('isoVersion' in v) {
-      return v.isoVersion;
-    }
 
-    return v.apiVersion;
+    return v.isoVersion;
   }
 }
 
