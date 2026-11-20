@@ -3,7 +3,6 @@
 
 import { Electron } from '@/scripts/dependencies/electron';
 import { AlpineLimaISO, Lima, Qemu, SocketVMNet } from '@/scripts/dependencies/lima';
-import { MobyOpenAPISpec } from '@/scripts/dependencies/moby-openapi';
 import * as tools from '@/scripts/dependencies/tools';
 import { Wix } from '@/scripts/dependencies/wix';
 import { Moproxy, WSLDistro } from '@/scripts/dependencies/wsl';
@@ -27,7 +26,6 @@ export const globalDependencies: VersionedDependency[] = [
   new AlpineLimaISO(),
   new WSLDistro(),
   new Wix(),
-  new MobyOpenAPISpec(),
   new Moproxy(),
   new Electron(),
   new tools.WasmShims(),
