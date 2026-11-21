@@ -32,7 +32,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
 )
 
@@ -89,14 +88,7 @@ func TestContainersCreate(t *testing.T) {
 
 		// Emit the request
 		ctx := context.Background()
-		buf, err := json.Marshal(&containersCreateRequestBody{
-			HostConfig: models.HostConfig{
-				Binds: []string{
-					"/foo",
-				},
-			},
-		})
-		require.NoError(t, err)
+		buf := []byte(`{"HostConfig": {"Binds": ["/foo"]}}`)
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodPost,
@@ -123,7 +115,7 @@ func TestContainersCreate(t *testing.T) {
 		require.NoError(t, err)
 
 		// Read the request body
-		var requestBody containersCreateRequestBody
+		var requestBody struct{ HostConfig struct{ Binds []string } }
 		err = readRequestBodyJSON(req, &requestBody)
 		assert.NoError(t, err)
 		assert.Len(t, requestBody.HostConfig.Binds, 1)
@@ -158,15 +150,16 @@ func TestContainersCreate(t *testing.T) {
 		// Emit the request
 		ctx := context.Background()
 		bindPath := t.TempDir()
-		mount := models.Mount{
-			Consistency: "cached",
-			Source:      bindPath,
-			Target:      "/host",
-			Type:        models.MountTypeBind,
-		}
-		buf, err := json.Marshal(&containersCreateRequestBody{
-			HostConfig: models.HostConfig{
-				Mounts: []*models.Mount{&mount},
+		buf, err := json.Marshal(map[string]any{
+			"HostConfig": map[string]any{
+				// The munger must skip a null mount and still translate the
+				// next one.
+				"Mounts": []any{nil, map[string]any{
+					"Consistency": "cached",
+					"Source":      bindPath,
+					"Target":      "/host",
+					"Type":        mountTypeBind,
+				}},
 			},
 		})
 		require.NoError(t, err)
@@ -196,10 +189,12 @@ func TestContainersCreate(t *testing.T) {
 		require.NoError(t, err)
 
 		// Read the request body
-		var requestBody containersCreateRequestBody
+		var requestBody struct {
+			HostConfig struct{ Mounts []map[string]any }
+		}
 		err = readRequestBodyJSON(req, &requestBody)
 		assert.NoError(t, err)
-		assert.Len(t, requestBody.HostConfig.Mounts, 1)
+		assert.Len(t, requestBody.HostConfig.Mounts, 2)
 
 		// Read the response body
 		var responseBody containersCreateResponseBody
@@ -214,12 +209,13 @@ func TestContainersCreate(t *testing.T) {
 		}
 		assert.NotEmpty(t, mountID)
 		assert.Equal(t, "hello", entry.ContainerID)
-		assert.ElementsMatch(t, []*models.Mount{
+		assert.ElementsMatch(t, []map[string]any{
+			nil,
 			{
-				Consistency: "cached",
-				Source:      path.Join(bindManager.mountRoot, mountID),
-				Target:      "/host",
-				Type:        models.MountTypeBind,
+				"Consistency": "cached",
+				"Source":      path.Join(bindManager.mountRoot, mountID),
+				"Target":      "/host",
+				"Type":        mountTypeBind,
 			},
 		}, requestBody.HostConfig.Mounts)
 		assert.Equal(t, "hello", responseBody.ID)

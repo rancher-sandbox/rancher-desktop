@@ -17,11 +17,9 @@ limitations under the License.
 package mungers
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path"
@@ -33,7 +31,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
 )
 
@@ -198,17 +195,9 @@ func (b *bindManager) prepareMountPath(target, bindKey string) error {
 	return nil
 }
 
-// containersCreateRequestBody describes the contents of a /containers/create request.
-type containersCreateRequestBody struct {
-	models.ContainerConfig
-	HostConfig       models.HostConfig
-	NetworkingConfig models.NetworkingConfig
-}
-
 // munge incoming request for POST /containers/create
 func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
-	body := containersCreateRequestBody{}
-	err := readRequestBodyJSON(req, &body)
+	body, err := readContainersCreateBody(req)
 	if err != nil {
 		return err
 	}
@@ -218,7 +207,7 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 	binds := make(map[string]string)
 
 	modified := false
-	for bindIndex, bind := range body.HostConfig.Binds {
+	for bindIndex, bind := range body.Binds {
 		logrus.WithField(fmt.Sprintf("bind %d", bindIndex), bind).Trace("got bind")
 		host, container, options, isPath := platform.ParseBindString(bind)
 		if !isPath {
@@ -230,15 +219,18 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 		host = path.Join(b.mountRoot, bindKey)
 		modified = true
 		if options == "" {
-			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s", host, container)
+			body.Binds[bindIndex] = fmt.Sprintf("%s:%s", host, container)
 		} else {
-			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s:%s", host, container, options)
+			body.Binds[bindIndex] = fmt.Sprintf("%s:%s:%s", host, container, options)
 		}
 	}
 
-	for _, mount := range body.HostConfig.Mounts {
+	for _, mount := range body.Mounts {
+		if mount == nil {
+			continue
+		}
 		logEntry := logrus.WithField("mount", fmt.Sprintf("%+v", mount))
-		if mount.Type != models.MountTypeBind {
+		if mount.Type != mountTypeBind {
 			logEntry.Trace("skipping mount of unsupported type")
 			continue
 		}
@@ -267,14 +259,10 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 	}
 
 	(*contextValue)[contextKey] = &binds
-	buf, err := json.Marshal(&body)
-	if err != nil {
+	if err := body.writeTo(req); err != nil {
 		logrus.WithError(err).Error("could not re-serialize modified body")
 		return err
 	}
-	req.Body = io.NopCloser(bytes.NewBuffer(buf))
-	req.ContentLength = int64(len(buf))
-	req.Header.Set("Content-Length", fmt.Sprintf("%d", len(buf)))
 	logrus.WithField("binds", fmt.Sprintf("%+v", binds)).Debug("modified binds")
 
 	return nil

@@ -32,10 +32,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/sirupsen/logrus"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 )
@@ -106,19 +104,7 @@ func Serve(ctx context.Context, endpoint string, dialer func(ctx context.Context
 			logEntry := logrus.WithField("response", resp)
 			defer func() { logEntry.Debug("got backend response") }()
 
-			// Check the API version response, and if there is one, make sure
-			// it's not newer than the API version we support.
-			backendVersion, err := semver.NewVersion(resp.Header.Get("API-Version"))
-			if err == nil {
-				logEntry = logEntry.WithField("backend version", backendVersion)
-				if backendVersion.GreaterThan(&dockerSpec.Info.Version) {
-					overrideVersion := fmt.Sprintf("v%s", dockerSpec.Info.Version.Original())
-					resp.Header.Set("API-Version", overrideVersion)
-					logEntry = logEntry.WithField("override version", overrideVersion)
-				}
-			}
-
-			err = munger.MungeResponse(resp, dialer)
+			err := munger.MungeResponse(resp, dialer)
 			if err != nil {
 				return err
 			}
@@ -306,14 +292,6 @@ func (m *requestMunger) CanonicalizeContainerID(req *http.Request, id string, di
 	return &body, nil
 }
 
-// dockerSpec contains information about the embedded OpenAPI specification for
-// docker.
-var dockerSpec struct {
-	Info struct {
-		Version semver.Version
-	}
-}
-
 // requestMungerFunc is a munger for an incoming request; it also receives an
 // arbitrary mapping that can be reused in the response munger, as well as a
 // mapping of any path templating patterns that were matched.
@@ -445,8 +423,4 @@ func RegisterResponseMunger(method, apiPath string, munger responseMungerFunc) {
 
 func init() {
 	mungerMapping.mungers = make(map[string]*mungerMethodMapping)
-	err := json.Unmarshal(models.SwaggerJSON, &dockerSpec)
-	if err != nil {
-		panic("could not parse embedded spec version")
-	}
 }
