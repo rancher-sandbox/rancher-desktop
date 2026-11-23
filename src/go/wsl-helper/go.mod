@@ -13,7 +13,7 @@ require (
 	github.com/go-openapi/swag/jsonutils v0.29.2
 	github.com/go-openapi/swag/stringutils v0.29.2
 	github.com/go-openapi/swag/typeutils v0.29.2
-	github.com/go-openapi/validate v1.0.2
+	github.com/go-openapi/validate v1.0.3
 	github.com/go-swagger/go-swagger v0.36.7
 	github.com/google/uuid v1.6.0
 	github.com/linuxkit/virtsock v0.0.0-20220523201153-1a23e78aa7a2
