@@ -139,10 +139,6 @@ export class WSLHelper extends GoDependency {
       version,
     });
   }
-
-  dependencies(context: DownloadContext): string[] {
-    return ['mobyOpenAPISpec:win32'];
-  }
 }
 
 export class NerdctlStub extends GoDependency {

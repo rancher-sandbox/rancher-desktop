@@ -6,7 +6,6 @@ import path from 'path';
 import { Electron } from '@/scripts/dependencies/electron';
 import * as goUtils from '@/scripts/dependencies/go-source';
 import { Lima, Qemu, SocketVMNet, AlpineLimaISO } from '@/scripts/dependencies/lima';
-import { MobyOpenAPISpec } from '@/scripts/dependencies/moby-openapi';
 import { SudoPrompt } from '@/scripts/dependencies/sudo-prompt';
 import { ExtensionProxyImage, WSLDistroImage } from '@/scripts/dependencies/tar-archives';
 import * as tools from '@/scripts/dependencies/tools';
@@ -105,7 +104,6 @@ const vmDependencies = [
 const hostDependencies = [
   new tools.Steve(),
   new Electron(),
-  new MobyOpenAPISpec(),
 ];
 
 async function downloadDependencies(items: DependencyWithContext[]): Promise<void> {

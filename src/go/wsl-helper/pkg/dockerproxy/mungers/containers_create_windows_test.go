@@ -29,7 +29,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/models"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/platform"
 )
 
@@ -37,14 +36,13 @@ func TestContainersCreate(t *testing.T) {
 	t.Run("bind", func(t *testing.T) {
 		ctx := context.Background()
 		bindPath := t.TempDir()
-		body := containersCreateBody{
-			HostConfig: models.HostConfig{
-				Binds: []string{
+		buf, err := json.Marshal(map[string]any{
+			"HostConfig": map[string]any{
+				"Binds": []string{
 					fmt.Sprintf("%s:/host", bindPath),
 				},
 			},
-		}
-		buf, err := json.Marshal(&body)
+		})
 		require.NoError(t, err)
 		req, err := http.NewRequestWithContext(
 			ctx,
@@ -57,29 +55,30 @@ func TestContainersCreate(t *testing.T) {
 		err = mungeContainersCreate(req, contextValue, templates)
 		require.NoError(t, err)
 
-		err = readRequestBodyJSON(req, &body)
+		body, err := readContainersCreateBody(req)
 		assert.NoError(t, err)
 		slashPath, err := platform.TranslatePathFromClient(t.Context(), bindPath)
 		assert.NoError(t, err)
 		expectedBind := fmt.Sprintf("%s:/host", slashPath)
-		assert.Equal(t, []string{expectedBind}, body.HostConfig.Binds)
+		assert.Equal(t, []string{expectedBind}, body.Binds)
 	})
 
 	t.Run("mount", func(t *testing.T) {
 		ctx := context.Background()
 		bindPath := t.TempDir()
-		mount := models.Mount{
-			Consistency: "cached",
-			Source:      bindPath,
-			Target:      "/host",
-			Type:        models.MountTypeBind,
+		mount := map[string]any{
+			"Consistency": "cached",
+			"Source":      bindPath,
+			"Target":      "/host",
+			"Type":        mountTypeBind,
 		}
-		body := containersCreateBody{
-			HostConfig: models.HostConfig{
-				Mounts: []*models.Mount{&mount},
+		buf, err := json.Marshal(map[string]any{
+			"HostConfig": map[string]any{
+				// The munger must skip a null mount and still translate the
+				// next one.
+				"Mounts": []any{nil, mount},
 			},
-		}
-		buf, err := json.Marshal(&body)
+		})
 		require.NoError(t, err)
 		req, err := http.NewRequestWithContext(
 			ctx,
@@ -92,14 +91,14 @@ func TestContainersCreate(t *testing.T) {
 		err = mungeContainersCreate(req, contextValue, templates)
 		require.NoError(t, err)
 
+		var body struct {
+			HostConfig struct{ Mounts []map[string]any }
+		}
 		err = readRequestBodyJSON(req, &body)
 		assert.NoError(t, err)
-		expected := mount
 		slashPath, err := platform.TranslatePathFromClient(t.Context(), bindPath)
-		expected.Source = slashPath
+		mount["Source"] = slashPath
 		assert.NoError(t, err)
-		require.NotEmpty(t, body.HostConfig.Mounts)
-		require.NotNil(t, body.HostConfig.Mounts[0])
-		assert.Equal(t, expected, *body.HostConfig.Mounts[0])
+		assert.Equal(t, []map[string]any{nil, mount}, body.HostConfig.Mounts)
 	})
 }

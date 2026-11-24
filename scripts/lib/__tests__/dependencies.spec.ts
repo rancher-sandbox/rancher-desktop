@@ -80,16 +80,12 @@ describe('dependency manifest', () => {
     expect(roundTripped).toEqual(manifest);
   });
 
-  it('round-trips structured versions (alpineLimaISO, mobyOpenAPISpec)', async() => {
+  it('round-trips the structured alpineLimaISO version', async() => {
     const file = path.join(tmpDir, 'structured.yaml');
     const structured: DependencyManifest = {
       alpineLimaISO: {
         version: { isoVersion: '0.2.47.rd9', alpineVersion: '3.24.1' },
         assets:  [{ platform: 'linux', arch: 'amd64', url: 'https://example.test/alpine.iso', checksum: sha('11') }],
-      },
-      mobyOpenAPISpec: {
-        version: { apiVersion: '1.55', commit: 'a'.repeat(40) },
-        assets:  [{ platform: 'linux', url: 'https://example.test/v1.55.yaml', checksum: sha('22') }],
       },
     };
 
@@ -141,13 +137,6 @@ describe('dependency manifest', () => {
 
     await fs.promises.writeFile(file, 'helm:\n  version: 1.0\n  assets: []\n', 'utf-8');
     await expect(readDependencyManifest(file)).rejects.toThrow(/invalid version 1; expected a string/);
-  });
-
-  it('rejects a mobyOpenAPISpec commit that is not a 40-char SHA', async() => {
-    const file = path.join(tmpDir, 'bad-commit.yaml');
-
-    await fs.promises.writeFile(file, 'mobyOpenAPISpec:\n  version:\n    apiVersion: "1.55"\n    commit: main\n  assets: []\n', 'utf-8');
-    await expect(readDependencyManifest(file)).rejects.toThrow(/invalid mobyOpenAPISpec commit "main"; expected a 40-char SHA/);
   });
 });
 
