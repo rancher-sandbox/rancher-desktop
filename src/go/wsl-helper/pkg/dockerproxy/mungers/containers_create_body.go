@@ -59,6 +59,11 @@ type containersCreateMount struct {
 // matches it case-insensitively, because dockerd decodes the body with
 // encoding/json, which matches field names that way.  It returns an empty string
 // if there is no such key, or if its value is null.
+//
+// Call findKey only on an object whose JSON passed checkDuplicateKeys, so that
+// at most one key matches name.  If two keys matched, dockerd would decode both
+// into the same field, but findKey would return only the exact match, or an
+// arbitrary one if neither matched exactly.
 func findKey(object map[string]json.RawMessage, name string) string {
 	key := ""
 	if _, ok := object[name]; ok {
