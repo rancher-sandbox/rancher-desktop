@@ -11965,10 +11965,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jquery@npm:4.0.0":
-  version: 4.0.0
-  resolution: "jquery@npm:4.0.0"
-  checksum: 10c0/06d8d0f51121af5a691f8b59c74823157bb5b60eea915b30eaa920d6c0ffd91e60ba81e9b97bd8203f331f9dd8d0ec9a4b010935ea314bdd2f15453c29bc780b
+"jquery@npm:4.1.0":
+  version: 4.1.0
+  resolution: "jquery@npm:4.1.0"
+  checksum: 10c0/e4fff455c4f604b64594e14b75ceeb89647bdcc79def4cbaa1d6089d9ae81bdcef6f4dab5a795a196939926e2b81e3fb0a7cd762c736ab4aaddaa308ed6a99d6
   languageName: node
   linkType: hard
 
@@ -14998,7 +14998,7 @@ __metadata:
     intl-messageformat: "npm:12.1.5"
     jest: "npm:30.5.2"
     jest-environment-jsdom: "npm:30.5.2"
-    jquery: "npm:4.0.0"
+    jquery: "npm:4.1.0"
     js-yaml-loader: "npm:1.2.2"
     jsonpath-plus: "npm:11.3.0"
     lodash: "npm:4.18.1"

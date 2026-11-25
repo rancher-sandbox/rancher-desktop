@@ -139,7 +139,7 @@
     "globals": "17.14.0",
     "jest": "30.5.2",
     "jest-environment-jsdom": "30.5.2",
-    "jquery": "4.0.0",
+    "jquery": "4.1.0",
     "js-yaml-loader": "1.2.2",
     "marked": "18.2.1",
     "mustache": "4.2.0",
