@@ -46,3 +46,20 @@ skip_unless_network_allows_ping() {
 @test 'ping host.rancher-desktop.internal from a container' {
     verify_host_connectivity "host.rancher-desktop.internal"
 }
+
+@test 'host-gateway resolves to the host outside Lima' {
+    if is_windows || ! using_docker; then
+        skip "This test requires the Lima backend and Moby"
+    fi
+
+    run rdshell getent hosts host.lima.internal
+    assert_success
+    local host_ip
+    read -r host_ip _ <<<"$output"
+
+    # shellcheck disable=SC2016 # awk fields, not shell variables
+    run ctrctl run --rm --add-host=host.docker.internal:host-gateway "$IMAGE_BUSYBOX" \
+        awk '$2 == "host.docker.internal" {print $1}' /etc/hosts
+    assert_success
+    assert_output "$host_ip"
+}
