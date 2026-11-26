@@ -1,3 +1,4 @@
+import { isIP } from 'net';
 import path from 'path';
 
 import Electron from 'electron';
@@ -455,6 +456,27 @@ export default class BackendHelper {
       // to avoid breaking cri-dockerd.
       await vmx.execCommand({ root: true }, 'mkdir', '-p', '/var/lib/docker/image');
     }
+    await vmx.writeFile(DOCKER_DAEMON_JSON, jsonStringifyWithWhiteSpace(config), 0o644);
+  }
+
+  /**
+   * Point host-gateway at the host outside Lima, rather than Docker's bridge
+   * inside the VM. configureMobyStorage has already created daemon.json.
+   */
+  static async configureMobyHostGateway(vmx: VMExecutor): Promise<void> {
+    const config: Record<string, any> = JSON.parse(await vmx.readFile(DOCKER_DAEMON_JSON));
+
+    if ('host-gateway-ip' in config || 'host-gateway-ips' in config) {
+      return;
+    }
+
+    const hosts = await vmx.execCommand({ capture: true }, 'getent', 'hosts', 'host.lima.internal');
+    const ip = hosts.trim().split(/\s+/)[0];
+
+    if (!isIP(ip)) {
+      throw new Error(`Invalid Lima host gateway IP address: ${ ip }`);
+    }
+    config['host-gateway-ips'] = [ip];
     await vmx.writeFile(DOCKER_DAEMON_JSON, jsonStringifyWithWhiteSpace(config), 0o644);
   }
 
