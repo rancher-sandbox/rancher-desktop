@@ -17,7 +17,7 @@ fi
 if is_macos; then
     CRED_HELPER="$PATH_RESOURCES/$PLATFORM/bin/docker-credential-osxkeychain"
 elif is_linux; then
-    if command -v pass; then
+    if command -v pass >/dev/null; then
         CRED_HELPER="$PATH_RESOURCES/$PLATFORM/bin/docker-credential-pass"
     else
         CRED_HELPER="$PATH_RESOURCES/$PLATFORM/bin/docker-credential-secretservice"

@@ -668,6 +668,17 @@ get_json_test_data() {
 
 ########################################################################
 
+@test 'capture_host_sockets succeeds without ss or lsof' {
+    # The Unix branch, with PATH holding only the tr that using_windows_exe
+    # needs.
+    mkdir "${BATS_TEST_TMPDIR}/bin"
+    run -0 command -v tr
+    ln -s "${output}" "${BATS_TEST_TMPDIR}/bin/tr"
+    RD_USE_WINDOWS_EXE=false PATH="${BATS_TEST_TMPDIR}/bin" run -0 capture_host_sockets "$BATS_TEST_TMPDIR"
+}
+
+########################################################################
+
 @test 'save_var existing variables' {
     FOO=baz BAR=foo
     save_var FOO BAR

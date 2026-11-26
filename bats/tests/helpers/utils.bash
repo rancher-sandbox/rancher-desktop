@@ -399,7 +399,76 @@ unique_filename() {
     done
 }
 
+# Save the host's socket table, which shows whether anything on the host
+# listened on a test's published ports.  Without passwordless sudo, the lsof
+# table lists only the user's own sockets.
+capture_host_sockets() {
+    local logdir=$1
+    local timeout_cmd=
+    local candidate
+
+    # The tools below print numeric addresses, so none of them waits on a
+    # name lookup.  Where a timeout exists it guards the dump anyway, since a
+    # stall in teardown would hold up the rest of the step.  macOS has no
+    # timeout(1), and some Homebrew coreutils releases install only gtimeout.
+    for candidate in timeout gtimeout; do
+        if command -v "$candidate" >/dev/null; then
+            timeout_cmd=$candidate
+            break
+        fi
+    done
+
+    if using_windows_exe; then
+        # host-switch.exe binds published ports on the Windows host, and only a
+        # Windows tool can list them.  Windows netstat has no long options.
+        set -- netstat.exe -ano
+    elif command -v ss >/dev/null; then
+        set -- ss --all --tcp --udp --processes --numeric
+    elif command -v lsof >/dev/null; then
+        set -- lsof -i -P -n
+        # lsof lists other users' sockets only as root.  --reset-timestamp
+        # ignores cached credentials and does not extend them, so only
+        # passwordless sudo, as on the CI runners, passes this check.
+        if sudo --non-interactive --reset-timestamp true 2>/dev/null; then
+            set -- sudo --non-interactive "$@"
+        fi
+    else
+        return 0
+    fi
+
+    if [[ -n $timeout_cmd ]]; then
+        set -- "$timeout_cmd" --kill-after=1 30 "$@"
+    fi
+    "$@" >"$logdir/sockets.txt" 2>&1 || :
+}
+
+# Rancher Desktop only symlinks the lima logs into its own log directory once
+# `limactl start` returns, so a VM that hangs while booting leaves the capture
+# without serialv.log, the one file that shows a guest-side crash.  Copy the
+# logs that have no symlink, under the name that the symlink would have had.
+capture_lima_logs() {
+    local logdir=$1
+    local file
+    local name
+    if [[ -d ${LIMA_HOME:-}/0 ]]; then
+        for file in "$LIMA_HOME"/0/*.log; do
+            name=lima.$(basename "${file}")
+            if [[ -f ${file} && ! -e ${PATH_LOGS}/${name} ]]; then
+                cp "${file}" "${logdir}/${name}"
+            fi
+        done
+    fi
+}
+
+# capture_logs [--kubernetes]
+#
+# --kubernetes also saves the cluster state, which costs several kubectl
+# calls.  Pass it only when a test has failed.
 capture_logs() {
+    local with_kubernetes=false
+    if [[ ${1:-} == "--kubernetes" ]]; then
+        with_kubernetes=true
+    fi
     if capturing_logs && [[ -d $PATH_LOGS ]]; then
         local logdir
         logdir=$(unique_filename "${PATH_BATS_LOGS}/${RD_TEST_FILENAME}")
@@ -412,10 +481,15 @@ capture_logs() {
             -exec rm -f -- '{}' ';' \
             -exec echo 'Removed dangling symlink:' '{}' ';'
         cp -LR "${PATH_LOGS}/" "$logdir"
+        capture_lima_logs "$logdir"
         echo "${BATS_TEST_DESCRIPTION:-teardown}" >"${logdir}/test_description"
         # Capture settings.json
         cp "$PATH_CONFIG_FILE" "$logdir"
         foreach_profile export_profile "$logdir"
+        capture_host_sockets "$logdir"
+        if "$with_kubernetes"; then
+            capture_kubernetes_state "$logdir"
+        fi
     fi
 }
 
