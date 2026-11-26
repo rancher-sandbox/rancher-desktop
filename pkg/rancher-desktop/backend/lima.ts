@@ -2043,6 +2043,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           }
           break;
         case ContainerEngine.MOBY:
+          await BackendHelper.configureMobyHostGateway(this);
           // The string is for shell expansion, not a JS template string.
           // eslint-disable-next-line no-template-curly-in-string
           await this.writeConf('docker', { DOCKER_OPTS: '--host=unix:///var/run/docker.sock --host=unix:///var/run/docker.sock.raw ${DOCKER_OPTS:-}' });

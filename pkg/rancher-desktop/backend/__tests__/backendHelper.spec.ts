@@ -1,5 +1,6 @@
 /** @jest-environment node */
 
+import { jest } from '@jest/globals';
 import _ from 'lodash';
 
 import type { VMExecutor } from '@pkg/backend/backend';
@@ -7,13 +8,78 @@ import type BackendHelperType from '@pkg/backend/backendHelper';
 import mockModules from '@pkg/utils/testUtils/mockModules';
 
 const modules = mockModules({
-  electron: undefined,
+  electron:             undefined,
+  '@pkg/utils/logging':  undefined,
+  '@pkg/utils/paths':    {},
 });
 
 describe('BackendHelper', () => {
   let BackendHelper: typeof BackendHelperType;
   beforeAll(async() => {
     BackendHelper = (await import('@pkg/backend/backendHelper')).default;
+  });
+
+  describe('configureMobyHostGateway', () => {
+    const daemonFile = '/etc/docker/daemon.json';
+    let vmx: ReturnType<typeof createExecutor>;
+
+    function createExecutor() {
+      return {
+        readFile:    jest.fn<(filePath: string) => Promise<string>>().mockResolvedValue('{}'),
+        writeFile:   jest.fn<(filePath: string, contents: string, permissions?: number) => Promise<void>>().mockResolvedValue(undefined),
+        execCommand: jest.fn<(...args: unknown[]) => Promise<string>>().mockResolvedValue('192.168.5.2 host.lima.internal\n'),
+      };
+    }
+
+    beforeEach(() => {
+      vmx = createExecutor();
+    });
+
+    it.each(['192.168.5.2', '192.168.10.2', 'fd00::2'])('uses the resolved Lima host address %s', async(ip) => {
+      jest.mocked(vmx.execCommand).mockResolvedValue(`  ${ ip }\thost.lima.internal host.lima.internal\n`);
+      jest.mocked(vmx.readFile).mockResolvedValue(JSON.stringify({
+        features:           { 'containerd-snapshotter': true },
+        'registry-mirrors': ['https://mirror.example.com'],
+      }));
+
+      await BackendHelper.configureMobyHostGateway(vmx as unknown as VMExecutor);
+
+      expect(vmx.execCommand).toHaveBeenCalledWith({ capture: true }, 'getent', 'hosts', 'host.lima.internal');
+      expect(vmx.writeFile).toHaveBeenCalledWith(daemonFile, expect.any(String), 0o644);
+      const config = JSON.parse(jest.mocked(vmx.writeFile).mock.calls[0][1]);
+
+      expect(config).toEqual({
+        features:           { 'containerd-snapshotter': true },
+        'registry-mirrors':  ['https://mirror.example.com'],
+        'host-gateway-ips':  [ip],
+      });
+    });
+
+    it.each([
+      { 'host-gateway-ip': '192.168.20.2' },
+      { 'host-gateway-ips': ['192.168.20.2', 'fd00::3'] },
+    ])('preserves an explicit host gateway setting: %j', async(config) => {
+      jest.mocked(vmx.readFile).mockResolvedValue(JSON.stringify(config));
+
+      await BackendHelper.configureMobyHostGateway(vmx as unknown as VMExecutor);
+
+      expect(vmx.execCommand).not.toHaveBeenCalled();
+      expect(vmx.writeFile).not.toHaveBeenCalled();
+    });
+
+    it.each(['', 'not-an-ip host.lima.internal\n'])('does not write an invalid address: %j', async(hosts) => {
+      jest.mocked(vmx.execCommand).mockResolvedValue(hosts);
+
+      await expect(BackendHelper.configureMobyHostGateway(vmx as unknown as VMExecutor)).rejects.toThrow('Invalid Lima host gateway IP address');
+      expect(vmx.writeFile).not.toHaveBeenCalled();
+    });
+
+    it('does not overwrite an unreadable daemon configuration', async() => {
+      jest.mocked(vmx.readFile).mockRejectedValue(new Error('read failed'));
+
+      await expect(BackendHelper.configureMobyHostGateway(vmx as unknown as VMExecutor)).rejects.toThrow('read failed');
+      expect(vmx.writeFile).not.toHaveBeenCalled();
+    });
   });
 
   describe('configureMobyStorage', () => {
