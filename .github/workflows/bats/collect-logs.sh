@@ -207,7 +207,13 @@ dump_lima_guest() {
 
     echo
     echo "=== Guest: dmesg ==="
-    with_timeout 20 "$limactl" shell 0 sudo dmesg | tail -100
+    with_timeout 20 "$limactl" shell 0 sudo dmesg
+
+    echo
+    echo "=== Guest: buildkitd.log ==="
+    # Lima leaves this log in the guest.  Print all of it, because a Go crash
+    # names its cause above the stack traces.
+    with_timeout 20 "$limactl" shell 0 cat /var/log/buildkitd.log
 }
 
 dump_wsl_guest() {
