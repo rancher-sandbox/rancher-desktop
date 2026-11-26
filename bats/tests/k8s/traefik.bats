@@ -160,7 +160,7 @@ assert_traefik_on_localhost() {
     if ! is_windows; then
         skip "kubernetes.ingress.localhost-only is a Windows-only setting"
     fi
-    rdctl set --kubernetes.options.traefik --kubernetes.ingress.localhost-only
+    set_and_wait_for_restart --kubernetes.options.traefik --kubernetes.ingress.localhost-only
     wait_for_kubelet
     # Check if the traefik pods come up
     try --max 30 --delay 10 assert_traefik_pods_are_up

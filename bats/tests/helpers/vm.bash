@@ -506,3 +506,30 @@ wait_for_backend() {
     trace "waiting for backend to be available"
     try --max 60 --delay 10 assert_backend_available
 }
+
+refute_backend_available() {
+    if assert_backend_available; then
+        return 1
+    fi
+}
+
+# Wait until the backend has restarted after a settings change.  The change
+# returns before the restart begins, and the backend stops its services before
+# it stops the VM, so checks against the VM can still pass on the old one.
+# Call wait_for_backend before the change.  While the backend is busy it
+# defers the restart, and this function would then return before the restart
+# begins.
+wait_for_backend_restart() {
+    trace "waiting for backend to restart"
+    try --max 30 --delay 1 refute_backend_available
+    wait_for_backend
+}
+
+# Change settings that need a restart, and wait until the backend is ready
+# again.
+set_and_wait_for_restart() {
+    wait_for_backend
+    run -0 rdctl set "$@"
+    assert_output --partial 'reconfiguring Rancher Desktop to apply changes'
+    wait_for_backend_restart
+}
