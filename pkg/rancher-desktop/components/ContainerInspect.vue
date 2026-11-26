@@ -392,6 +392,7 @@ const formatDate = (iso: string): string => {
 
 // Collapsible sections
 .inspect-section {
+  flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: var(--border-radius);
   overflow: hidden;
