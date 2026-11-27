@@ -30,6 +30,7 @@ const SECCOMP_PROFILE = _SECCOMP_PROFILE_RAW as unknown as string;
 
 const CONTAINERD_CONFIG_TOML = '/etc/containerd/config.toml';
 const DOCKER_DAEMON_JSON = '/etc/docker/daemon.json';
+const NERDCTL_CONFIG_TOML = '/etc/nerdctl/nerdctl.toml';
 const SECCOMP_PROFILE_PATH = '/etc/rancher-desktop/seccomp.json';
 
 const MANIFEST_DIR = '/var/lib/rancher/k3s/server/manifests';
@@ -487,6 +488,22 @@ export default class BackendHelper {
   static async writeSeccompProfile(vmx: VMExecutor): Promise<void> {
     await vmx.execCommand({ root: true }, 'mkdir', '-p', '/etc/rancher-desktop');
     await vmx.writeFile(SECCOMP_PROFILE_PATH, SECCOMP_PROFILE, 0o644);
+  }
+
+  /**
+   * Point nerdctl's host-gateway at hostAddress. Without host_gateway_ip in
+   * nerdctl.toml, nerdctl maps host-gateway to the VM's own address.
+   */
+  static async configureNerdctlHostGateway(vmx: VMExecutor, hostAddress: string): Promise<void> {
+    try {
+      // Keep an existing file, since it may hold the user's own settings.
+      await vmx.readFile(NERDCTL_CONFIG_TOML);
+
+      return;
+    } catch {
+      await vmx.execCommand({ root: true }, 'mkdir', '-p', path.dirname(NERDCTL_CONFIG_TOML));
+    }
+    await vmx.writeFile(NERDCTL_CONFIG_TOML, `host_gateway_ip = "${ hostAddress }"\n`, 0o644);
   }
 
   static async configureContainerEngine(vmx: VMExecutor, configureWASM: boolean, mobyStorageDriver: 'classic' | 'snapshotter' | 'auto') {
