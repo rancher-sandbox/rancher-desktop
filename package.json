@@ -162,7 +162,7 @@
     "typescript": "6.0.3",
     "vue": "3.5.46",
     "vue-3-slider-component": "1.0.2",
-    "vue-chartjs": "5.3.4",
+    "vue-chartjs": "5.3.7",
     "vue-router": "5.5.1",
     "vue-select": "3.20.4",
     "vuex": "4.1.0",
