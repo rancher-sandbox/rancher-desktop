@@ -116,10 +116,19 @@ export default defineComponent({
 
   .title-top{
     display: flex;
+    align-items: center;
+    padding-bottom: 10px;
+  }
+
+  .title-top > h1 {
+    margin: 0;
   }
 
   .btn-back {
-    height: 27px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
     font-weight: bolder;
     font-size: 1.5em;
   }
