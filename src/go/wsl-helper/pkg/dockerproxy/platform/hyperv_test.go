@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/linuxkit/virtsock/pkg/hvsock"
+	"github.com/Microsoft/go-winio"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,12 +34,12 @@ func TestRacer(t *testing.T) {
 
 		go func() {
 			time.Sleep(time.Millisecond)
-			r.resolve(hvsock.GUIDLoopback)
+			r.resolve(winio.HvsockGUIDLoopback())
 		}()
 
 		v, err := r.wait()
 		assert.NoError(t, err)
-		assert.Equal(t, hvsock.GUIDLoopback, v)
+		assert.Equal(t, winio.HvsockGUIDLoopback(), v)
 	})
 
 	t.Run("simple-reject", func(t *testing.T) {
@@ -62,12 +62,12 @@ func TestRacer(t *testing.T) {
 		go func() {
 			time.Sleep(time.Millisecond)
 			r.reject(os.ErrInvalid)
-			r.resolve(hvsock.GUIDLoopback)
+			r.resolve(winio.HvsockGUIDLoopback())
 		}()
 
 		v, err := r.wait()
 		if assert.NoError(t, err) {
-			assert.Equal(t, v, hvsock.GUIDLoopback)
+			assert.Equal(t, v, winio.HvsockGUIDLoopback())
 		}
 	})
 
@@ -77,13 +77,13 @@ func TestRacer(t *testing.T) {
 
 		go func() {
 			time.Sleep(time.Millisecond)
-			r.resolve(hvsock.GUIDLoopback)
-			r.resolve(hvsock.GUIDParent)
+			r.resolve(winio.HvsockGUIDLoopback())
+			r.resolve(winio.HvsockGUIDParent())
 		}()
 
 		v, err := r.wait()
 		if assert.NoError(t, err) {
-			assert.Equal(t, v, hvsock.GUIDLoopback)
+			assert.Equal(t, v, winio.HvsockGUIDLoopback())
 		}
 	})
 }

@@ -23,10 +23,11 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/Microsoft/go-winio"
-	"github.com/linuxkit/virtsock/pkg/hvsock"
+	"github.com/Microsoft/go-winio/pkg/guid"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 )
 
 // DefaultEndpoint is the platform-specific location that dockerd listens on by
@@ -40,51 +41,39 @@ func MakeDialer(port uint32) (func(ctx context.Context) (net.Conn, error), error
 		return nil, fmt.Errorf("could not detect WSL2 VM: %w", err)
 	}
 	dial := func(ctx context.Context) (net.Conn, error) {
-		conn, err := dialHvsock(vmGUID, port)
-		if err != nil {
-			return nil, err
-		}
-		return conn, nil
+		// Don't give this dial a timeout of its own.  The guest sets up
+		// incoming Hyper-V socket connections one at a time, so during a
+		// burst of requests the later connections wait for the earlier ones.
+		// The dial still ends when ctx ends; for a proxied request, that
+		// happens when the client disconnects.
+		return dialHvsock(ctx, vmGUID, port)
 	}
 	return dial, nil
 }
 
 // dialHvsock creates a net.Conn to a Hyper-V VM running Linux with the given
-// GUID, listening on the given vsock port.
-func dialHvsock(vmGUID hvsock.GUID, port uint32) (net.Conn, error) {
-	// go-winio doesn't implement DialHvsock(), but luckily LinuxKit has an
-	// implementation.  We still need go-winio to convert port to GUID.
-	svcGUID, err := hvsock.GUIDFromString(winio.VsockServiceID(port).String())
-	if err != nil {
-		return nil, fmt.Errorf("could not parse Hyper-V service GUID: %w", err)
-	}
-	addr := hvsock.Addr{
+// GUID, listening on the given vsock port.  It returns when ctx ends even if
+// the connect is still pending.
+func dialHvsock(ctx context.Context, vmGUID guid.GUID, port uint32) (net.Conn, error) {
+	addr := &winio.HvsockAddr{
 		VMID:      vmGUID,
-		ServiceID: svcGUID,
+		ServiceID: winio.VsockServiceID(port),
 	}
-
-	// Normally dial times out after 30 seconds, but we want to time out faster.
-	ch := make(chan struct {
-		conn net.Conn
-		err  error
-	}, 1)
-	go func() {
-		conn, err := hvsock.Dial(addr)
-		ch <- struct {
-			conn net.Conn
-			err  error
-		}{conn: conn, err: err}
-	}()
-
-	select {
-	case result := <-ch:
-		if result.err != nil {
-			return nil, fmt.Errorf("could not dial Hyper-V socket: %w", result.err)
+	conn, err := util.DialCancelable(ctx, func() (net.Conn, error) {
+		// winio.Dial cannot abort a pending connect when ctx ends.  On error,
+		// return an untyped nil.  A nil *winio.HvsockConn stored in a
+		// net.Conn does not compare equal to nil, so DialCancelable may call
+		// Close on it, and that panics.
+		conn, err := winio.Dial(ctx, addr)
+		if err != nil {
+			return nil, err
 		}
-		return result.conn, nil
-	case <-time.After(time.Second):
-		return nil, fmt.Errorf("timed out dialing Hyper-V socket")
+		return conn, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not dial Hyper-V socket: %w", err)
 	}
+	return conn, nil
 }
 
 // Listen on the given Windows named pipe endpoint.
