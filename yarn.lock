@@ -14164,13 +14164,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"plist@npm:5.1.1":
-  version: 5.1.1
-  resolution: "plist@npm:5.1.1"
+"plist@npm:5.1.2":
+  version: 5.1.2
+  resolution: "plist@npm:5.1.2"
   dependencies:
     "@xmldom/xmldom": "npm:^0.9.10"
     xmlbuilder: "npm:^15.1.1"
-  checksum: 10c0/937d9012b3596e768f56a1ce7aedfec53f2e8fcabffca6a6c20b97b7e1a1aae27d00d80c086d57a45162b914ed09d719a43511b687183a0717dc10c5aa931e53
+  checksum: 10c0/a5295dd1a59897e7e17f16ac6ac13d86c0b04b4aa984f53f243f75c2175da920b254cab427507cb868bb0a9eccf7d95ac499de5a552a75d177a0e2c8849a80bb
   languageName: node
   linkType: hard
 
@@ -15012,7 +15012,7 @@ __metadata:
     node-gyp-build: "npm:4.8.4"
     node-loader: "npm:^2.1.0"
     octokit: "npm:5.0.5"
-    plist: "npm:5.1.1"
+    plist: "npm:5.1.2"
     posix-node: "npm:0.12.0"
     proxy-agent: "npm:^8.0.3"
     ps-tree: "npm:1.2.0"
