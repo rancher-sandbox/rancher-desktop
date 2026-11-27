@@ -49,7 +49,7 @@ export default {
       type:     Boolean,
       required: true,
     },
-    howMuchSelected: {
+    selectionState: {
       type:     String,
       required: true,
     },
@@ -115,7 +115,7 @@ export default {
   computed: {
     isAll: {
       get() {
-        return this.howMuchSelected !== NONE;
+        return this.selectionState !== NONE;
       },
 
       set(value) {
@@ -136,7 +136,7 @@ export default {
     },
 
     isIndeterminate() {
-      return this.howMuchSelected === SOME;
+      return this.selectionState === SOME;
     },
     hasColumnWithSubLabel() {
       return this.columns.some((col) => col.subLabel);
