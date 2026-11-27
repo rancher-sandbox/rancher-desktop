@@ -19,11 +19,13 @@ limitations under the License.
 package platform
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/linuxkit/virtsock/pkg/hvsock"
+	"github.com/Microsoft/go-winio/pkg/guid"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows/registry"
 )
@@ -32,7 +34,7 @@ import (
 // the Hyper-V virtual machine for WSL2), or an error if all attempts have
 // failed.
 type racer struct {
-	result hvsock.GUID
+	result guid.GUID
 	errors []error
 	count  int
 	lock   sync.Locker
@@ -44,7 +46,7 @@ type racer struct {
 func newRacer(n int) *racer {
 	mutex := &sync.Mutex{}
 	return &racer{
-		result: hvsock.GUIDZero,
+		result: guid.GUID{},
 		count:  n,
 		lock:   mutex,
 		cond:   sync.NewCond(mutex),
@@ -53,24 +55,24 @@ func newRacer(n int) *racer {
 
 // Wait for a result; either the parameter of any resolve() call, or the last
 // error from a reject() call.
-func (r *racer) wait() (hvsock.GUID, error) {
+func (r *racer) wait() (guid.GUID, error) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	for r.count > 0 {
 		r.cond.Wait()
 	}
-	if r.result != hvsock.GUIDZero {
+	if r.result != (guid.GUID{}) {
 		return r.result, nil
 	}
-	return hvsock.GUIDZero, r
+	return guid.GUID{}, r
 }
 
 // Resolve the racer with the given successful result.
-func (r *racer) resolve(guid hvsock.GUID) {
+func (r *racer) resolve(vmGUID guid.GUID) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	if r.result == hvsock.GUIDZero {
-		r.result = guid
+	if r.result == (guid.GUID{}) {
+		r.result = vmGUID
 	}
 	r.count = 0
 	r.cond.Signal()
@@ -110,30 +112,40 @@ func (r racer) Unwrap() error {
 	return nil
 }
 
+// probeTimeout limits how long probeVMGUID waits for a VM to answer.  Until the
+// docker proxy in the WSL VM is listening, the guest drops connections to its
+// port without answering, so the connect does not complete.  The probe gives up
+// after probeTimeout instead; wsl-helper then exits, and Rancher Desktop starts
+// it again, which retries the probe.
+const probeTimeout = time.Second
+
 // Probe the system to detect the correct VM GUID for the WSL virtual machine.
 // This requires that WSL2 is already running.
-func probeVMGUID(port uint32) (hvsock.GUID, error) {
+func probeVMGUID(port uint32) (guid.GUID, error) {
 	key, err := registry.OpenKey(
 		registry.LOCAL_MACHINE,
 		`SOFTWARE\Microsoft\Windows NT\CurrentVersion\HostComputeService\VolatileStore\ComputeSystem`,
 		registry.ENUMERATE_SUB_KEYS)
 	if err != nil {
-		return hvsock.GUIDZero, fmt.Errorf("could not open registry key: %w", err)
+		return guid.GUID{}, fmt.Errorf("could not open registry key: %w", err)
 	}
 	names, err := key.ReadSubKeyNames(0)
 	if err != nil {
-		return hvsock.GUIDZero, fmt.Errorf("could not list virtual machine IDs: %w", err)
+		return guid.GUID{}, fmt.Errorf("could not list virtual machine IDs: %w", err)
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), probeTimeout)
+	defer cancel()
 
 	r := newRacer(len(names))
 	for _, name := range names {
 		go func(name string) {
-			guid, err := hvsock.GUIDFromString(name)
+			vmGUID, err := guid.FromString(name)
 			if err != nil {
 				r.reject(fmt.Errorf("invalid VM name %w", err))
 				return
 			}
-			conn, err := dialHvsock(guid, port)
+			conn, err := dialHvsock(ctx, vmGUID, port)
 			if err != nil {
 				err := fmt.Errorf("could not dial VM %s: %w", name, err)
 				r.reject(err)
@@ -141,14 +153,14 @@ func probeVMGUID(port uint32) (hvsock.GUID, error) {
 			}
 			defer conn.Close()
 
-			logrus.WithField("guid", guid.String()).Info("Got WSL2 VM")
-			r.resolve(guid)
+			logrus.WithField("guid", vmGUID.String()).Info("Got WSL2 VM")
+			r.resolve(vmGUID)
 		}(name)
 	}
 
 	result, err := r.wait()
 	if err != nil {
-		return hvsock.GUIDZero, fmt.Errorf("could not find WSL2 VM ID: %w", err)
+		return guid.GUID{}, fmt.Errorf("could not find WSL2 VM ID: %w", err)
 	}
 	return result, nil
 }
