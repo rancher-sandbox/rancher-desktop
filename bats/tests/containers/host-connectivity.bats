@@ -48,8 +48,8 @@ skip_unless_network_allows_ping() {
 }
 
 @test 'host-gateway resolves to the host outside Lima' {
-    if is_windows || ! using_docker; then
-        skip "This test requires the Lima backend and Moby"
+    if is_windows; then
+        skip "This test requires the Lima backend"
     fi
 
     run rdshell getent hosts host.lima.internal

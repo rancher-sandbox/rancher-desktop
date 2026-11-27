@@ -223,4 +223,38 @@ describe('BackendHelper', () => {
       expect(vmx.result).toHaveProperty('hello', 'world');
     });
   });
+
+  describe('configureNerdctlHostGateway', () => {
+    const configFile = '/etc/nerdctl/nerdctl.toml';
+    const hostAddress = '1.1.1.1';
+    let vmx: ReturnType<typeof createExecutor>;
+
+    function createExecutor() {
+      return {
+        readFile:    jest.fn<(filePath: string) => Promise<string>>().mockRejectedValue(new Error('No such file or directory')),
+        writeFile:   jest.fn<(filePath: string, contents: string, permissions?: number) => Promise<void>>().mockResolvedValue(undefined),
+        execCommand: jest.fn<(...args: unknown[]) => Promise<void>>().mockResolvedValue(undefined),
+      };
+    }
+
+    beforeEach(() => {
+      vmx = createExecutor();
+    });
+
+    it('writes the host address to a new nerdctl configuration', async() => {
+      await BackendHelper.configureNerdctlHostGateway(vmx as unknown as VMExecutor, hostAddress);
+
+      expect(vmx.execCommand).toHaveBeenCalledWith({ root: true }, 'mkdir', '-p', '/etc/nerdctl');
+      expect(vmx.writeFile).toHaveBeenCalledWith(configFile, `host_gateway_ip = "${ hostAddress }"\n`, 0o644);
+    });
+
+    it('keeps an existing nerdctl configuration', async() => {
+      jest.mocked(vmx.readFile).mockResolvedValue('namespace = "k8s.io"\n');
+
+      await BackendHelper.configureNerdctlHostGateway(vmx as unknown as VMExecutor, hostAddress);
+
+      expect(vmx.readFile).toHaveBeenCalledWith(configFile);
+      expect(vmx.writeFile).not.toHaveBeenCalled();
+    });
+  });
 });

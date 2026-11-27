@@ -1603,6 +1603,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       const mobyStorageDriver = this.cfg?.containerEngine?.mobyStorageDriver ?? 'auto';
 
       await this.writeFile('/usr/local/bin/nerdctl', NERDCTL, 0o755);
+      await BackendHelper.configureNerdctlHostGateway(this, SLIRP.HOST_GATEWAY);
 
       await this.execCommand({ root: true }, 'mkdir', '-p', '/etc/cni/net.d');
       if (this.cfg?.kubernetes.options.flannel) {
